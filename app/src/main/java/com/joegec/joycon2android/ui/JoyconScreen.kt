@@ -1,0 +1,186 @@
+package com.joegec.joycon2android.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.joegec.joycon2android.model.Joycon2State
+import com.joegec.joycon2android.ui.components.BatteryPill
+import com.joegec.joycon2android.ui.components.ButtonsCard
+import com.joegec.joycon2android.ui.components.ScanningIndicator
+import com.joegec.joycon2android.ui.components.StickCard
+import com.joegec.joycon2android.ui.components.TriggerBar
+import com.joegec.joycon2android.ui.theme.Accent
+import com.joegec.joycon2android.ui.theme.TextDim
+
+@Composable
+fun JoyconScreen(
+    state: Joycon2State,
+    onConnect: () -> Unit,
+    onStop: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier.fillMaxSize().systemBarsPadding().padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Header(state)
+        if (state.connected) {
+            ConnectedContent(state, onStop)
+        } else {
+            DisconnectedContent(state, onConnect)
+        }
+    }
+}
+
+@Composable
+private fun Header(state: Joycon2State) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                "JOY-CON 2",
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 4.sp,
+            )
+            val status = when {
+                state.connected -> "CONNECTED · ${state.side}"
+                state.connecting -> "CONNECTING…"
+                state.scanning -> "SCANNING…"
+                else -> "DISCONNECTED"
+            }
+            Text(
+                status,
+                color = if (state.connected) Accent else TextDim,
+                fontSize = 12.sp,
+                letterSpacing = 2.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+        if (state.connected) {
+            BatteryPill(state.batteryVolts)
+        }
+    }
+}
+
+@Composable
+private fun DisconnectedContent(state: Joycon2State, onConnect: () -> Unit) {
+    val isBusy = state.scanning || state.connecting
+
+    Button(
+        onClick = onConnect,
+        modifier = Modifier.fillMaxWidth().height(52.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Accent),
+        enabled = !isBusy,
+    ) {
+        if (isBusy) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = Color(0xFF0E1116),
+                strokeWidth = 2.dp,
+            )
+            Spacer(Modifier.size(10.dp))
+        }
+        Text(
+            when {
+                state.connecting -> "Connecting…"
+                state.scanning -> "Scanning…"
+                else -> "Scan & Connect"
+            },
+            color = Color(0xFF0E1116),
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+        )
+    }
+
+    if (state.scanning) {
+        ScanningIndicator()
+    }
+
+    if (state.foundDeviceName != null && state.connecting) {
+        Text(
+            "Found: ${state.foundDeviceName}",
+            color = Accent,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+
+    if (state.error != null) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF2D1B1B), RoundedCornerShape(12.dp))
+                .padding(14.dp)
+        ) {
+            Text(state.error, color = Color(0xFFFF6B6B), fontSize = 13.sp)
+        }
+    }
+
+    if (!isBusy && state.error == null) {
+        Text(
+            "Press the Joy-Con SYNC button first. If it won't connect after a few tries, wait a minute (connect cooldown).",
+            color = TextDim,
+            fontSize = 12.sp,
+        )
+    }
+}
+
+@Composable
+private fun ConnectedContent(state: Joycon2State, onStop: () -> Unit) {
+    OutlinedButton(
+        onClick = onStop,
+        modifier = Modifier.fillMaxWidth().height(44.dp),
+        shape = RoundedCornerShape(12.dp),
+    ) { Text("Disconnect", color = TextDim) }
+
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        StickCard("LEFT STICK", state.leftStickX, state.leftStickY, Modifier.weight(1f))
+        StickCard("RIGHT STICK", state.rightStickX, state.rightStickY, Modifier.weight(1f))
+    }
+
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        TriggerBar("ZL/L", state.triggerL, Modifier.weight(1f))
+        TriggerBar("ZR/R", state.triggerR, Modifier.weight(1f))
+    }
+
+    ButtonsCard(state.pressed)
+
+    Text(
+        "Accel ${state.accelX}, ${state.accelY}, ${state.accelZ}   " +
+            "Gyro ${state.gyroX}, ${state.gyroY}, ${state.gyroZ}",
+        color = TextDim,
+        fontSize = 11.sp,
+        fontFamily = FontFamily.Monospace,
+    )
+    Text(
+        "pkt ${state.packetId}",
+        color = Color(0xFF44505C),
+        fontSize = 10.sp,
+        fontFamily = FontFamily.Monospace,
+    )
+}
