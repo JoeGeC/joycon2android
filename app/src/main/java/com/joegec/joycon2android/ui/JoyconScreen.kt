@@ -51,7 +51,7 @@ fun JoyconScreen(
     ) {
         Header(state)
         if (state.anyConnected) {
-            ConnectedContent(state, onStop)
+            ConnectedContent(state, onConnect, onStop)
         } else {
             DisconnectedContent(state, onConnect)
         }
@@ -167,8 +167,37 @@ private fun DisconnectedContent(state: ControllerState, onConnect: () -> Unit) {
 }
 
 @Composable
-private fun ConnectedContent(state: ControllerState, onStop: () -> Unit) {
+private fun ConnectedContent(state: ControllerState, onConnect: () -> Unit, onStop: () -> Unit) {
     ControllerLayout(state)
+
+    if (!state.bothConnected) {
+        val isBusy = state.scanning || state.anyConnecting
+        Button(
+            onClick = onConnect,
+            modifier = Modifier.fillMaxWidth().height(44.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Accent),
+            enabled = !isBusy,
+        ) {
+            if (isBusy) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = Color(0xFF0E1116),
+                    strokeWidth = 2.dp,
+                )
+                Spacer(Modifier.size(8.dp))
+            }
+            Text(
+                when {
+                    state.scanning -> "Scanning…"
+                    else -> "Scan for other Joy-Con"
+                },
+                color = Color(0xFF0E1116),
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+            )
+        }
+    }
 
     OutlinedButton(
         onClick = onStop,

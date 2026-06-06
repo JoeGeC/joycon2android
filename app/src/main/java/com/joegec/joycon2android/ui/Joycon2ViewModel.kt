@@ -73,8 +73,6 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun startScan() {
-        leftCollecting = false
-        rightCollecting = false
         manager.startScan()
     }
 

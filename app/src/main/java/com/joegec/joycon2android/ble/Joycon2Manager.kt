@@ -48,13 +48,16 @@ class Joycon2Manager(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun startScan() {
+        if (scanning) return
+        if (leftConnection != null && rightConnection != null) return
+
         val scanner = adapter?.bluetoothLeScanner ?: run {
-            _state.value = ControllerState(error = "Bluetooth is off or unavailable")
+            updateState(error = "Bluetooth is off or unavailable")
             return
         }
 
         scanning = true
-        _state.value = ControllerState(scanning = true)
+        updateState()
 
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -65,17 +68,17 @@ class Joycon2Manager(private val context: Context) {
         mainHandler.postDelayed({
             if (scanning) {
                 stopScanning()
-                if (!_state.value.anyConnected) {
-                    _state.value = ControllerState(
-                        error = "No Joy-Con found. Press SYNC on the controller and try again."
-                    )
-                }
+                updateState(
+                    error = if (!_state.value.anyConnected) {
+                        "No Joy-Con found. Press SYNC on the controller and try again."
+                    } else null
+                )
             }
         }, SCAN_TIMEOUT_MS)
     }
 
     fun emitError(message: String) {
-        _state.value = ControllerState(error = message)
+        updateState(error = message)
     }
 
     @SuppressLint("MissingPermission")
@@ -139,7 +142,7 @@ class Joycon2Manager(private val context: Context) {
         override fun onScanFailed(errorCode: Int) {
             Log.e(TAG, "Scan failed: $errorCode")
             scanning = false
-            _state.value = ControllerState(
+            updateState(
                 error = when (errorCode) {
                     SCAN_FAILED_ALREADY_STARTED -> "Scan already in progress"
                     SCAN_FAILED_APPLICATION_REGISTRATION_FAILED -> "BLE app registration failed"
@@ -167,8 +170,8 @@ class Joycon2Manager(private val context: Context) {
         )
     }
 
-    private fun updateState() {
-        _state.value = buildState()
+    private fun updateState(error: String? = null) {
+        _state.value = buildState().copy(error = error)
     }
 
     fun getLeftConnection(): JoyconConnection? = leftConnection
