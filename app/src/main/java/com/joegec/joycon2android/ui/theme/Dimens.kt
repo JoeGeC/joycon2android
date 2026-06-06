@@ -29,6 +29,10 @@ object Dimens {
     val stickRingStroke = 2f
     val stickRingStrokePressed = 3f
 
+    val imuTitleGap = 4.dp
+    val imuRowSpacing = 8.dp
+    val imuSectionSpacing = 6.dp
+
     val pillCorner = 20.dp
     val pillPaddingHorizontal = 10.dp
     val pillPaddingVertical = 4.dp

@@ -26,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -234,14 +236,7 @@ private fun LeftSidewaysLayout(
             }
         }
 
-        // IMU: accel and gyro on the same row
-        SidewaysImuRow(input)
-
-        // Packet ID
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            ImuLabel(stringResource(R.string.imu_packet))
-            ImuValue(input.packetId.toString())
-        }
+        SidewaysImuSection(input)
     }
 }
 
@@ -339,35 +334,39 @@ private fun RightSidewaysLayout(
             }
         }
 
-        // IMU: accel and gyro on the same row
-        SidewaysImuRow(input)
-
-        // Packet ID
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            ImuLabel(stringResource(R.string.imu_packet))
-            ImuValue(input.packetId.toString())
-        }
+        SidewaysImuSection(input)
     }
 }
 
 // --- Shared helpers ---
 
 @Composable
-private fun SidewaysImuRow(input: JoyconInput) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        SidewaysImuColumn(stringResource(R.string.imu_accel), input.accelX, input.accelY, input.accelZ, Modifier.weight(1f))
-        SidewaysImuColumn(stringResource(R.string.imu_gyro), input.gyroX, input.gyroY, input.gyroZ, Modifier.weight(1f))
+private fun SidewaysImuSection(input: JoyconInput) {
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.imuRowSpacing)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.cardPadding),
+        ) {
+            SidewaysImuColumn(stringResource(R.string.imu_accel), input.accelX, input.accelY, input.accelZ, Modifier.weight(1f))
+            SidewaysImuColumn(stringResource(R.string.imu_gyro), input.gyroX, input.gyroY, input.gyroZ, Modifier.weight(1f))
+        }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.cardPadding),
+        ) {
+            Spacer(Modifier.weight(1f))
+            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceBetween) {
+                ImuLabel(stringResource(R.string.imu_packet))
+                ImuValue(input.packetId.toString())
+            }
+        }
     }
 }
 
 @Composable
 private fun SidewaysImuColumn(title: String, x: Int, y: Int, z: Int, modifier: Modifier = Modifier) {
-    Column(modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.imuTitleGap)) {
         ImuLabel(title)
-        Spacer(Modifier.height(2.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             ImuAxisValue("X", x)
             ImuAxisValue("Y", y)
@@ -378,18 +377,21 @@ private fun SidewaysImuColumn(title: String, x: Int, y: Int, z: Int, modifier: M
 
 @Composable
 private fun ImuAxisValue(axis: String, value: Int) {
+    val style = imuTextStyle
     Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
         Text(
             axis,
             color = TextDim.copy(alpha = 0.6f),
             fontSize = Dimens.fontSizeLabel,
             fontFamily = FontFamily.Monospace,
+            style = style,
         )
         Text(
             "%+6d".format(value),
             color = TextDim,
             fontSize = Dimens.fontSizeLabel,
             fontFamily = FontFamily.Monospace,
+            style = style,
         )
     }
 }
@@ -402,6 +404,7 @@ private fun ImuLabel(text: String) {
         fontSize = Dimens.fontSizeLabel,
         fontWeight = FontWeight.Bold,
         letterSpacing = Dimens.fontSizeLabel * 0.1f,
+        style = imuTextStyle,
     )
 }
 
@@ -412,8 +415,14 @@ private fun ImuValue(text: String) {
         color = TextDim,
         fontSize = Dimens.fontSizeLabel,
         fontFamily = FontFamily.Monospace,
+        style = imuTextStyle,
     )
 }
+
+private val imuTextStyle = TextStyle(
+    lineHeight = Dimens.fontSizeLabel * 1.1f,
+    platformStyle = PlatformTextStyle(includeFontPadding = false),
+)
 
 @Composable
 private fun MinusButtonRow(input: JoyconInput, pressed: Set<String>) {

@@ -8,6 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -18,7 +20,7 @@ import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
 internal fun ImuDisplay(input: JoyconInput, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.imuSectionSpacing)) {
         SensorRow(stringResource(R.string.imu_accel), "X" to input.accelX, "Y" to input.accelY, "Z" to input.accelZ)
         SensorRow(stringResource(R.string.imu_gyro), "X" to input.gyroX, "Y" to input.gyroY, "Z" to input.gyroZ)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -30,7 +32,7 @@ internal fun ImuDisplay(input: JoyconInput, modifier: Modifier = Modifier) {
 
 @Composable
 private fun SensorRow(title: String, vararg axes: Pair<String, Int>) {
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(Dimens.imuTitleGap)) {
         ImuLabel(title)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             axes.forEach { (axis, value) ->
@@ -42,18 +44,21 @@ private fun SensorRow(title: String, vararg axes: Pair<String, Int>) {
 
 @Composable
 private fun AxisValue(axis: String, value: Int) {
+    val style = imuTextStyle
     Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
             axis,
             color = TextDim.copy(alpha = 0.6f),
             fontSize = Dimens.fontSizeLabel,
             fontFamily = FontFamily.Monospace,
+            style = style,
         )
         Text(
             "%+6d".format(value),
             color = TextDim,
             fontSize = Dimens.fontSizeLabel,
             fontFamily = FontFamily.Monospace,
+            style = style,
         )
     }
 }
@@ -66,6 +71,7 @@ private fun ImuLabel(text: String) {
         fontSize = Dimens.fontSizeLabel,
         fontWeight = FontWeight.Bold,
         letterSpacing = Dimens.fontSizeLabel * 0.1f,
+        style = imuTextStyle,
     )
 }
 
@@ -76,5 +82,11 @@ private fun ImuValue(text: String) {
         color = TextDim,
         fontSize = Dimens.fontSizeLabel,
         fontFamily = FontFamily.Monospace,
+        style = imuTextStyle,
     )
 }
+
+private val imuTextStyle = TextStyle(
+    lineHeight = Dimens.fontSizeLabel * 1.1f,
+    platformStyle = PlatformTextStyle(includeFontPadding = false),
+)
