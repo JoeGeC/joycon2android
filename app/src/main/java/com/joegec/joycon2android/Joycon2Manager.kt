@@ -54,6 +54,7 @@ class Joycon2Manager(
 
         private const val DESIRED_MTU = 247
         private const val INIT_GAP_MS = 500L
+        private const val SCAN_TIMEOUT_MS = 15_000L
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -96,28 +97,37 @@ class Joycon2Manager(
     fun startScan() {
         val scanner = adapter?.bluetoothLeScanner ?: run {
             Log.e(TAG, "No BLE scanner (bluetooth off?)")
+            onState(Joycon2State(error = "Bluetooth is off or unavailable"))
             return
         }
         scanning = true
-        // We don't filter by service UUID in the scan filter because the input
-        // service isn't always in the advertisement; we match on manufacturer
-        // data in the callback instead.
+        onState(Joycon2State(scanning = true))
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
         scanner.startScan(null, settings, scanCallback)
         Log.i(TAG, "Scanning for Joy-Con 2 ...")
+
+        mainHandler.postDelayed({
+            if (scanning) {
+                scanning = false
+                adapter?.bluetoothLeScanner?.stopScan(scanCallback)
+                onState(Joycon2State(error = "No Joy-Con found. Press SYNC on the controller and try again."))
+            }
+        }, SCAN_TIMEOUT_MS)
     }
 
     @SuppressLint("MissingPermission")
     fun stop() {
         scanning = false
+        mainHandler.removeCallbacksAndMessages(null)
         adapter?.bluetoothLeScanner?.stopScan(scanCallback)
         gatt?.disconnect()
         gatt?.close()
         gatt = null
         opQueue.clear()
         opInFlight = false
+        onState(Joycon2State())
     }
 
     // ---- Scanning -----------------------------------------------------------
@@ -127,17 +137,15 @@ class Joycon2Manager(
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val record: ScanRecord = result.scanRecord ?: return
             val mfr = record.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) ?: return
-            // It's a Nintendo BLE controller. Stop scanning and connect.
             if (!scanning) return
             scanning = false
             adapter?.bluetoothLeScanner?.stopScan(this)
 
-            val name = result.device.name ?: record.deviceName ?: ""
+            val name = result.device.name ?: record.deviceName ?: "Joy-Con 2"
             side = detectSide(name)
             Log.i(TAG, "Found Joy-Con: '$name' side=$side mfrLen=${mfr.size}")
-            onState(Joycon2State(connected = false, connecting = true, side = side))
+            onState(Joycon2State(connecting = true, side = side, foundDeviceName = name))
 
-            // TRANSPORT_LE is important — forces BLE, not classic.
             gatt = result.device.connectGatt(
                 context, false, gattCallback, BluetoothDevice.TRANSPORT_LE
             )
@@ -145,6 +153,15 @@ class Joycon2Manager(
 
         override fun onScanFailed(errorCode: Int) {
             Log.e(TAG, "Scan failed: $errorCode")
+            scanning = false
+            val msg = when (errorCode) {
+                SCAN_FAILED_ALREADY_STARTED -> "Scan already in progress"
+                SCAN_FAILED_APPLICATION_REGISTRATION_FAILED -> "BLE app registration failed"
+                SCAN_FAILED_FEATURE_UNSUPPORTED -> "BLE scanning not supported"
+                SCAN_FAILED_INTERNAL_ERROR -> "Internal BLE error"
+                else -> "Scan failed (code $errorCode)"
+            }
+            onState(Joycon2State(error = msg))
         }
     }
 
@@ -163,12 +180,13 @@ class Joycon2Manager(
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.i(TAG, "Connected. Requesting MTU $DESIRED_MTU")
                 onState(Joycon2State(connected = true, connecting = false, side = side))
-                // Request a larger MTU BEFORE discovering services so the
-                // 63-byte notifications aren't truncated to the 23-byte default.
                 g.requestMtu(DESIRED_MTU)
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.w(TAG, "Disconnected (status=$status)")
-                onState(Joycon2State(connected = false, connecting = false, side = side))
+                val error = if (status != BluetoothGatt.GATT_SUCCESS) {
+                    "Connection lost (status $status). Try pressing SYNC and reconnecting."
+                } else null
+                onState(Joycon2State(connected = false, connecting = false, side = side, error = error))
                 opQueue.clear()
                 opInFlight = false
             }
@@ -313,7 +331,10 @@ class Joycon2Manager(
 data class Joycon2State(
     val connected: Boolean = false,
     val connecting: Boolean = false,
+    val scanning: Boolean = false,
     val side: Joycon2Manager.Side = Joycon2Manager.Side.UNKNOWN,
+    val error: String? = null,
+    val foundDeviceName: String? = null,
     val packetId: Int = 0,
     val buttons: Long = 0,
     val pressed: Set<String> = emptySet(),

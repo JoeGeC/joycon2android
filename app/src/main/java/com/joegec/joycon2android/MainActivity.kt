@@ -5,7 +5,14 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,15 +25,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +60,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var manager: Joycon2Manager
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         val stateHolder = mutableStateOf(Joycon2State())
@@ -58,12 +69,19 @@ class MainActivity : ComponentActivity() {
         val permLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { grants ->
-            if (grants.values.all { it }) manager.startScan()
+            if (grants.values.all { it }) {
+                manager.startScan()
+            } else {
+                stateHolder.value = Joycon2State(error = "Bluetooth permissions denied")
+            }
         }
 
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                Surface(Modifier.fillMaxSize(), color = Color(0xFF0E1116)) {
+                Surface(
+                    Modifier.fillMaxSize(),
+                    color = Color(0xFF0E1116),
+                ) {
                     JoyconScreen(
                         state = stateHolder.value,
                         onConnect = { permLauncher.launch(requiredPermissions()) },
@@ -99,7 +117,7 @@ private val textDim = Color(0xFF8B98A5)
 @Composable
 fun JoyconScreen(state: Joycon2State, onConnect: () -> Unit, onStop: () -> Unit) {
     Column(
-        Modifier.fillMaxSize().padding(20.dp),
+        Modifier.fillMaxSize().systemBarsPadding().padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
@@ -113,6 +131,7 @@ fun JoyconScreen(state: Joycon2State, onConnect: () -> Unit, onStop: () -> Unit)
                 val status = when {
                     state.connected -> "CONNECTED · ${state.side}"
                     state.connecting -> "CONNECTING…"
+                    state.scanning -> "SCANNING…"
                     else -> "DISCONNECTED"
                 }
                 Text(
@@ -127,21 +146,60 @@ fun JoyconScreen(state: Joycon2State, onConnect: () -> Unit, onStop: () -> Unit)
 
         // Connect / stop
         if (!state.connected) {
+            val isBusy = state.scanning || state.connecting
             Button(
                 onClick = onConnect,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = accent),
+                enabled = !isBusy,
             ) {
+                if (isBusy) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color(0xFF0E1116),
+                        strokeWidth = 2.dp,
+                    )
+                    Spacer(Modifier.size(10.dp))
+                }
                 Text(
-                    if (state.connecting) "Scanning…" else "Scan & Connect",
+                    when {
+                        state.connecting -> "Connecting…"
+                        state.scanning -> "Scanning…"
+                        else -> "Scan & Connect"
+                    },
                     color = Color(0xFF0E1116), fontWeight = FontWeight.Bold, fontSize = 16.sp,
                 )
             }
-            Text(
-                "Press the Joy-Con SYNC button first. If it won't connect after a few tries, wait a minute (connect cooldown).",
-                color = textDim, fontSize = 12.sp,
-            )
+
+            if (state.scanning) {
+                ScanningIndicator()
+            }
+
+            if (state.foundDeviceName != null && state.connecting) {
+                Text(
+                    "Found: ${state.foundDeviceName}",
+                    color = accent, fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                )
+            }
+
+            if (state.error != null) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF2D1B1B), RoundedCornerShape(12.dp))
+                        .padding(14.dp)
+                ) {
+                    Text(state.error, color = Color(0xFFFF6B6B), fontSize = 13.sp)
+                }
+            }
+
+            if (!isBusy && state.error == null) {
+                Text(
+                    "Press the Joy-Con SYNC button first. If it won't connect after a few tries, wait a minute (connect cooldown).",
+                    color = textDim, fontSize = 12.sp,
+                )
+            }
         } else {
             OutlinedButton(
                 onClick = onStop,
@@ -172,6 +230,34 @@ fun JoyconScreen(state: Joycon2State, onConnect: () -> Unit, onStop: () -> Unit)
             Text(
                 "pkt ${state.packetId}",
                 color = Color(0xFF44505C), fontSize = 10.sp, fontFamily = FontFamily.Monospace,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScanningIndicator() {
+    val transition = rememberInfiniteTransition(label = "scan")
+    val dots by transition.animateFloat(
+        initialValue = 0f, targetValue = 3f,
+        animationSpec = infiniteRepeatable(tween(1200, easing = LinearEasing), RepeatMode.Restart),
+        label = "dots",
+    )
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .background(cardBg, RoundedCornerShape(12.dp))
+            .padding(14.dp)
+    ) {
+        Column {
+            Text(
+                "Looking for Joy-Con 2" + ".".repeat(dots.toInt() + 1),
+                color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Make sure the controller is in pairing mode (SYNC button held)",
+                color = textDim, fontSize = 12.sp,
             )
         }
     }
