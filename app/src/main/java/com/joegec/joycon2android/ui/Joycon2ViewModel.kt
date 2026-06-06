@@ -76,11 +76,11 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     private fun manageFlowCollectors(connections: Map<String, JoyconConnection>) {
         val currentAddresses = connections.keys
 
-        // Cancel collectors for disconnected devices
+        // Cancel collectors and unassign disconnected devices
         val removed = connectionJobs.keys - currentAddresses
         removed.forEach { address ->
-            manager.getConnection(address)?.clearPlayerLed()
             connectionJobs.remove(address)?.cancel()
+            assignmentManager.unassign(address)
         }
 
         // Start collectors for new devices

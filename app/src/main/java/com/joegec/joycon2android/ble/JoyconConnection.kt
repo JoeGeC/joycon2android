@@ -48,14 +48,22 @@ class JoyconConnection(
         )
 
         // Subcommand 0x07: set LED pattern via bitmask (16 bytes)
-        // Bitmask: 0x01=P1, 0x02=P2, 0x04=P3, 0x08=P4, 0x00=default animation
+        // Lower nibble = solid LEDs (0x01=P1, 0x02=P2, 0x04=P3, 0x08=P4)
+        // Upper nibble = flashing LEDs (0x10=P1, 0x20=P2, 0x40=P3, 0x80=P4)
+        // 0xF0 = all flashing = default cycling animation
         private fun playerLedCmd(player: Int): ByteArray {
-            val bitmask = if (player > 0) (1 shl (player - 1)).toByte() else 0x00
+            val bitmask = (1 shl (player - 1)).toByte()
             return byteArrayOf(
                 0x09, 0x91.toByte(), 0x01, 0x07, 0x00, 0x08, 0x00, 0x00,
                 bitmask, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             )
         }
+
+        // All 4 player LEDs solid on (0x0F = P1+P2+P3+P4)
+        private val LED_ALL_ON_CMD = byteArrayOf(
+            0x09, 0x91.toByte(), 0x01, 0x07, 0x00, 0x08, 0x00, 0x00,
+            0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        )
 
         private const val DESIRED_MTU = 247
         private const val INIT_GAP_MS = 500L
@@ -176,19 +184,10 @@ class JoyconConnection(
             enqueueInitWrite(g, INIT_CMD_1)
             enqueueInitWrite(g, INIT_CMD_2)
 
-            // After init writes complete, send any pending LED command
+            // After init writes complete, set LEDs (pending player or all-on default)
             opQueue.enqueue {
                 initComplete = true
-                val pending = pendingPlayerLed
-                pendingPlayerLed = null
-                if (pending != null) {
-                    @Suppress("DEPRECATION")
-                    writeChar!!.value = playerLedCmd(pending.index)
-                    @Suppress("DEPRECATION")
-                    g.writeCharacteristic(writeChar)
-                } else {
-                    opQueue.complete()
-                }
+                sendLedCommand(g)
             }
         }
 
@@ -202,7 +201,8 @@ class JoyconConnection(
         override fun onCharacteristicWrite(
             g: BluetoothGatt, ch: BluetoothGattCharacteristic, status: Int
         ) {
-            mainHandler.postDelayed({ opQueue.complete() }, INIT_GAP_MS)
+            val delay = if (initComplete) 0L else INIT_GAP_MS
+            mainHandler.postDelayed({ opQueue.complete() }, delay)
         }
 
         @Suppress("DEPRECATION")
@@ -219,12 +219,10 @@ class JoyconConnection(
 
     @SuppressLint("MissingPermission")
     fun setPlayerLed(player: PlayerNumber) {
-        if (!initComplete) {
-            pendingPlayerLed = player
-            return
-        }
+        pendingPlayerLed = player
+        if (!initComplete) return
         val g = gatt ?: return
-        enqueueInitWrite(g, playerLedCmd(player.index))
+        opQueue.enqueue { sendLedCommand(g) }
     }
 
     @SuppressLint("MissingPermission")
@@ -232,7 +230,18 @@ class JoyconConnection(
         pendingPlayerLed = null
         if (!initComplete) return
         val g = gatt ?: return
-        enqueueInitWrite(g, playerLedCmd(0))
+        opQueue.enqueue { sendLedCommand(g) }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun sendLedCommand(g: BluetoothGatt) {
+        val pending = pendingPlayerLed
+        pendingPlayerLed = null
+        val cmd = if (pending != null) playerLedCmd(pending.index) else LED_ALL_ON_CMD
+        @Suppress("DEPRECATION")
+        writeChar!!.value = cmd
+        @Suppress("DEPRECATION")
+        g.writeCharacteristic(writeChar)
     }
 
     @SuppressLint("MissingPermission")
