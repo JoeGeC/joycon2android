@@ -1,29 +1,25 @@
 package com.joegec.joycon2android.ble
 
+import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.Side
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-/**
- * Parses the 63-byte BLE notification packets from Joy-Con 2.
- * All offsets and formats are from the working macOS implementation
- * (see joycon2_android_reference.md).
- */
 object PacketParser {
 
-    private const val MIN_PACKET_SIZE = 0x3B // need through offset 0x3A for gyro
+    private const val MIN_PACKET_SIZE = 0x3B
 
-    // Button bitmask → name (uint32 at packet offset 0x03, little-endian)
-    private val buttonMasks: List<Pair<Long, String>> = listOf(
-        0x80000000L to "ZL", 0x40000000L to "L", 0x00010000L to "-",
-        0x00080000L to "LS", 0x01000000L to "Down", 0x02000000L to "Up",
-        0x04000000L to "Right", 0x08000000L to "Left", 0x00200000L to "Camera",
-        0x10000000L to "SR(L)", 0x20000000L to "SL(L)", 0x00100000L to "Home",
-        0x00400000L to "Chat", 0x00020000L to "+", 0x00001000L to "SR(R)",
-        0x00002000L to "SL(R)", 0x00004000L to "R", 0x00008000L to "ZR",
-        0x00040000L to "RS", 0x00000100L to "Y", 0x00000200L to "X",
-        0x00000400L to "B", 0x00000800L to "A",
+    // Button bitmask → enum (uint32 at packet offset 0x03, little-endian)
+    private val buttonMasks: List<Pair<Long, JoyconButton>> = listOf(
+        0x80000000L to JoyconButton.ZL, 0x40000000L to JoyconButton.L, 0x00010000L to JoyconButton.Minus,
+        0x00080000L to JoyconButton.LS, 0x01000000L to JoyconButton.Down, 0x02000000L to JoyconButton.Up,
+        0x04000000L to JoyconButton.Right, 0x08000000L to JoyconButton.Left, 0x00200000L to JoyconButton.Camera,
+        0x10000000L to JoyconButton.SrLeft, 0x20000000L to JoyconButton.SlLeft, 0x00100000L to JoyconButton.Home,
+        0x00400000L to JoyconButton.Chat, 0x00020000L to JoyconButton.Plus, 0x00001000L to JoyconButton.SrRight,
+        0x00002000L to JoyconButton.SlRight, 0x00004000L to JoyconButton.R, 0x00008000L to JoyconButton.ZR,
+        0x00040000L to JoyconButton.RS, 0x00000100L to JoyconButton.Y, 0x00000200L to JoyconButton.X,
+        0x00000400L to JoyconButton.B, 0x00000800L to JoyconButton.A,
     )
 
     fun parse(data: ByteArray, side: Side): JoyconInput? {
@@ -70,5 +66,5 @@ object PacketParser {
             ((data[offset + 2].toInt() and 0xFF) shl 16)
 
     private fun decodeButtons(buttons: Long): Set<String> =
-        buttonMasks.filter { (mask, _) -> buttons and mask != 0L }.map { it.second }.toSet()
+        buttonMasks.filter { (mask, _) -> buttons and mask != 0L }.map { it.second.id }.toSet()
 }

@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
+import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.ButtonOff
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -23,10 +24,10 @@ internal fun DPad(
     buttonSize: Dp = Dimens.dpadSize,
 ) {
     Box(modifier.size(buttonSize * 3), contentAlignment = Alignment.Center) {
-        DPadButton("▲", "Up" in pressed, buttonSize, Modifier.align(Alignment.TopCenter))
-        DPadButton("▼", "Down" in pressed, buttonSize, Modifier.align(Alignment.BottomCenter))
-        DPadButton("◀", "Left" in pressed, buttonSize, Modifier.align(Alignment.CenterStart))
-        DPadButton("▶", "Right" in pressed, buttonSize, Modifier.align(Alignment.CenterEnd))
+        DPadButton("▲", JoyconButton.Up.id in pressed, buttonSize, Modifier.align(Alignment.TopCenter))
+        DPadButton("▼", JoyconButton.Down.id in pressed, buttonSize, Modifier.align(Alignment.BottomCenter))
+        DPadButton("◀", JoyconButton.Left.id in pressed, buttonSize, Modifier.align(Alignment.CenterStart))
+        DPadButton("▶", JoyconButton.Right.id in pressed, buttonSize, Modifier.align(Alignment.CenterEnd))
     }
 }
 

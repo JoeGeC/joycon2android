@@ -12,7 +12,6 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -45,7 +44,7 @@ private fun SensorRow(title: String, vararg axes: Pair<String, Int>) {
 @Composable
 private fun AxisValue(axis: String, value: Int) {
     val style = imuTextStyle
-    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.imuAxisGap)) {
         Text(
             axis,
             color = TextDim.copy(alpha = 0.6f),

@@ -8,7 +8,10 @@ object Dimens {
     val cardPadding = 16.dp
     val cardCorner = 20.dp
     val cardBorderWidth = 2.dp
+    val cardBorderAlpha = 0.4f
     val sectionSpacing = 14.dp
+    val elementSpacing = 8.dp
+    val dualJoyconGap = 10.dp
 
     val buttonCorner = 12.dp
     val buttonHeight = 44.dp
@@ -20,15 +23,21 @@ object Dimens {
     val dpadSize = 46.dp
     val faceButtonSize = 46.dp
     val iconButtonSize = 36.dp
+    val iconSizeSmall = 18.dp
+    val iconSizeMedium = 20.dp
 
     val stickCanvasSize = 110.dp
     val sidewaysStickSize = 100.dp
     val sidewaysDpadSize = 38.dp
     val sidewaysFaceSize = 38.dp
+    val sidewaysShoulderWidth = 36.dp
+    val sidewaysShoulderGap = 4.dp
+    val sidewaysContentGap = 10.dp
     val stickDotRadius = 8f
     val stickRingStroke = 2f
     val stickRingStrokePressed = 3f
 
+    val imuAxisGap = 2.dp
     val imuTitleGap = 4.dp
     val imuRowSpacing = 8.dp
     val imuSectionSpacing = 6.dp

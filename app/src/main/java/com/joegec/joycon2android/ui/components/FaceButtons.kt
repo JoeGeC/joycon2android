@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.ButtonOff
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -27,10 +28,10 @@ internal fun FaceButtons(
 ) {
     val offset = (buttonSize * 0.09f).coerceAtLeast(2.dp)
     Box(modifier.size(buttonSize * 3), contentAlignment = Alignment.Center) {
-        FaceButton("Y", "Y" in pressed, buttonSize, Modifier.align(Alignment.CenterStart).offset(x = offset))
-        FaceButton("X", "X" in pressed, buttonSize, Modifier.align(Alignment.TopCenter).offset(y = offset))
-        FaceButton("A", "A" in pressed, buttonSize, Modifier.align(Alignment.CenterEnd).offset(x = -offset))
-        FaceButton("B", "B" in pressed, buttonSize, Modifier.align(Alignment.BottomCenter).offset(y = -offset))
+        FaceButton(JoyconButton.Y.label, JoyconButton.Y.id in pressed, buttonSize, Modifier.align(Alignment.CenterStart).offset(x = offset))
+        FaceButton(JoyconButton.X.label, JoyconButton.X.id in pressed, buttonSize, Modifier.align(Alignment.TopCenter).offset(y = offset))
+        FaceButton(JoyconButton.A.label, JoyconButton.A.id in pressed, buttonSize, Modifier.align(Alignment.CenterEnd).offset(x = -offset))
+        FaceButton(JoyconButton.B.label, JoyconButton.B.id in pressed, buttonSize, Modifier.align(Alignment.BottomCenter).offset(y = -offset))
     }
 }
 

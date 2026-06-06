@@ -1,0 +1,27 @@
+package com.joegec.joycon2android.model
+
+enum class JoyconButton(val id: String, val label: String) {
+    ZL("ZL", "ZL"),
+    L("L", "L"),
+    Minus("-", "-"),
+    LS("LS", "LS"),
+    Down("Down", "Down"),
+    Up("Up", "Up"),
+    Right("Right", "Right"),
+    Left("Left", "Left"),
+    Camera("Camera", "Camera"),
+    SrLeft("SR(L)", "SR"),
+    SlLeft("SL(L)", "SL"),
+    Home("Home", "Home"),
+    Chat("Chat", "C"),
+    Plus("+", "+"),
+    SrRight("SR(R)", "SR"),
+    SlRight("SL(R)", "SL"),
+    R("R", "R"),
+    ZR("ZR", "ZR"),
+    RS("RS", "RS"),
+    Y("Y", "Y"),
+    X("X", "X"),
+    B("B", "B"),
+    A("A", "A"),
+}
