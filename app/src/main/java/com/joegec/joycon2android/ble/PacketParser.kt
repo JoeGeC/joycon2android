@@ -12,7 +12,7 @@ import java.nio.ByteOrder
  */
 object PacketParser {
 
-    private const val MIN_PACKET_SIZE = 0x3E // need through offset 0x3D for triggers
+    private const val MIN_PACKET_SIZE = 0x3B // need through offset 0x3A for gyro
 
     // Button bitmask → name (uint32 at packet offset 0x03, little-endian)
     private val buttonMasks: List<Pair<Long, String>> = listOf(
@@ -42,8 +42,6 @@ object PacketParser {
             pressed = decodeButtons(buttons),
             leftStickX = lx, leftStickY = ly,
             rightStickX = rx, rightStickY = ry,
-            triggerL = data[0x3C].toInt() and 0xFF,
-            triggerR = data[0x3D].toInt() and 0xFF,
             accelX = bb.getShort(0x30).toInt(),
             accelY = bb.getShort(0x32).toInt(),
             accelZ = bb.getShort(0x34).toInt(),

@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,10 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.joegec.joycon2android.model.Joycon2State
 import com.joegec.joycon2android.ui.components.BatteryPill
-import com.joegec.joycon2android.ui.components.ButtonsCard
+import com.joegec.joycon2android.ui.components.ControllerLayout
 import com.joegec.joycon2android.ui.components.ScanningIndicator
-import com.joegec.joycon2android.ui.components.StickCard
-import com.joegec.joycon2android.ui.components.TriggerBar
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.TextDim
 
@@ -43,8 +43,12 @@ fun JoyconScreen(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier.fillMaxSize().systemBarsPadding().padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier
+            .fillMaxSize()
+            .systemBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Header(state)
         if (state.connected) {
@@ -152,24 +156,9 @@ private fun DisconnectedContent(state: Joycon2State, onConnect: () -> Unit) {
 
 @Composable
 private fun ConnectedContent(state: Joycon2State, onStop: () -> Unit) {
-    OutlinedButton(
-        onClick = onStop,
-        modifier = Modifier.fillMaxWidth().height(44.dp),
-        shape = RoundedCornerShape(12.dp),
-    ) { Text("Disconnect", color = TextDim) }
+    ControllerLayout(state)
 
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        StickCard("LEFT STICK", state.leftStickX, state.leftStickY, Modifier.weight(1f))
-        StickCard("RIGHT STICK", state.rightStickX, state.rightStickY, Modifier.weight(1f))
-    }
-
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        TriggerBar("ZL/L", state.triggerL, Modifier.weight(1f))
-        TriggerBar("ZR/R", state.triggerR, Modifier.weight(1f))
-    }
-
-    ButtonsCard(state.pressed)
-
+    // IMU data + packet counter
     Text(
         "Accel ${state.accelX}, ${state.accelY}, ${state.accelZ}   " +
             "Gyro ${state.gyroX}, ${state.gyroY}, ${state.gyroZ}",
@@ -183,4 +172,10 @@ private fun ConnectedContent(state: Joycon2State, onStop: () -> Unit) {
         fontSize = 10.sp,
         fontFamily = FontFamily.Monospace,
     )
+
+    OutlinedButton(
+        onClick = onStop,
+        modifier = Modifier.fillMaxWidth().height(44.dp),
+        shape = RoundedCornerShape(12.dp),
+    ) { Text("Disconnect", color = TextDim) }
 }

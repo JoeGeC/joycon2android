@@ -14,8 +14,6 @@ data class Joycon2State(
     val leftStickY: Int = 2048,
     val rightStickX: Int = 2048,
     val rightStickY: Int = 2048,
-    val triggerL: Int = 0,
-    val triggerR: Int = 0,
     val accelX: Int = 0,
     val accelY: Int = 0,
     val accelZ: Int = 0,
