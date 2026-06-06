@@ -198,7 +198,6 @@ private fun ConnectedContent(
         PlayerView(
             playerState = playerState,
             onUnassign = onUnassign,
-            onDisconnect = onDisconnect,
         )
     }
 

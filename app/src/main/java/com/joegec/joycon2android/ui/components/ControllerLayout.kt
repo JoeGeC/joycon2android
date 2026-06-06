@@ -2,6 +2,7 @@ package com.joegec.joycon2android.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerState
@@ -30,27 +32,38 @@ import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 
 @Composable
-internal fun PlayerControllerLayout(state: PlayerState, modifier: Modifier = Modifier) {
+internal fun PlayerControllerLayout(
+    state: PlayerState,
+    onUnassign: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (state.left != null) {
-            LeftJoycon(state, Modifier.weight(1f))
+            LeftJoycon(state, onUnassign, Modifier.weight(1f))
         }
         if (state.right != null) {
-            RightJoycon(state, Modifier.weight(1f))
+            RightJoycon(state, onUnassign, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun LeftJoycon(state: PlayerState, modifier: Modifier = Modifier) {
+private fun LeftJoycon(
+    state: PlayerState,
+    onUnassign: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val shape = RoundedCornerShape(Dimens.cardCorner)
     val input = state.leftInput
+    val address = state.left!!.address
 
     Column(
         modifier
+            .clip(shape)
+            .clickable { onUnassign(address) }
             .background(CardBg, shape)
             .border(Dimens.cardBorderWidth, LeftJoyconColor.copy(alpha = 0.4f), shape)
             .padding(Dimens.cardPadding),
@@ -75,12 +88,19 @@ private fun LeftJoycon(state: PlayerState, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun RightJoycon(state: PlayerState, modifier: Modifier = Modifier) {
+private fun RightJoycon(
+    state: PlayerState,
+    onUnassign: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val shape = RoundedCornerShape(Dimens.cardCorner)
     val input = state.rightInput
+    val address = state.right!!.address
 
     Column(
         modifier
+            .clip(shape)
+            .clickable { onUnassign(address) }
             .background(CardBg, shape)
             .border(Dimens.cardBorderWidth, RightJoyconColor.copy(alpha = 0.4f), shape)
             .padding(Dimens.cardPadding),

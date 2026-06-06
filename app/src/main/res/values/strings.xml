@@ -48,9 +48,6 @@
     <string name="button_scan_more">Scan for more</string>
     <string name="side_left">Left</string>
     <string name="side_right">Right</string>
-    <string name="button_unassign_left">−L</string>
-    <string name="button_unassign_right">−R</string>
-    <string name="button_disconnect_left">✕L</string>
-    <string name="button_disconnect_right">✕R</string>
+    <string name="button_unassign">Unassign</string>
     <string name="button_disconnect_all">Disconnect All</string>
 </resources>
