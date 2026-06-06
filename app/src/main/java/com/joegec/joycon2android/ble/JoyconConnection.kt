@@ -13,6 +13,7 @@ import android.os.Looper
 import android.util.Log
 import com.joegec.joycon2android.model.JoyconConnectionState
 import com.joegec.joycon2android.model.JoyconInput
+import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.Side
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,8 +26,8 @@ import java.util.UUID
  */
 class JoyconConnection(
     private val context: Context,
-    private val side: Side,
-    private val deviceName: String,
+    val side: Side,
+    val deviceName: String,
 ) {
     companion object {
         private const val TAG = "Joycon2"
@@ -58,7 +59,6 @@ class JoyconConnection(
 
         private const val DESIRED_MTU = 247
         private const val INIT_GAP_MS = 500L
-        private const val LED_DELAY_MS = 2000L
     }
 
     private val _connectionState = MutableStateFlow(
@@ -75,6 +75,8 @@ class JoyconConnection(
     private var writeChar: BluetoothGattCharacteristic? = null
     private var notifyChar: BluetoothGattCharacteristic? = null
     private var cmdResponseChar: BluetoothGattCharacteristic? = null
+    private var pendingPlayerLed: PlayerNumber? = null
+    private var initComplete = false
 
     @SuppressLint("MissingPermission")
     fun connect(device: BluetoothDevice) {
@@ -174,10 +176,20 @@ class JoyconConnection(
             enqueueInitWrite(g, INIT_CMD_1)
             enqueueInitWrite(g, INIT_CMD_2)
 
-            // Send player LED after data starts flowing
-            mainHandler.postDelayed({
-                gatt?.let { enqueueInitWrite(it, playerLedCmd(playerNumber())) }
-            }, LED_DELAY_MS)
+            // After init writes complete, send any pending LED command
+            opQueue.enqueue {
+                initComplete = true
+                val pending = pendingPlayerLed
+                pendingPlayerLed = null
+                if (pending != null) {
+                    @Suppress("DEPRECATION")
+                    writeChar!!.value = playerLedCmd(pending.index)
+                    @Suppress("DEPRECATION")
+                    g.writeCharacteristic(writeChar)
+                } else {
+                    opQueue.complete()
+                }
+            }
         }
 
         override fun onDescriptorWrite(
@@ -205,10 +217,14 @@ class JoyconConnection(
         }
     }
 
-    private fun playerNumber(): Int = when (side) {
-        Side.LEFT -> 1
-        Side.RIGHT -> 2
-        else -> 1
+    @SuppressLint("MissingPermission")
+    fun setPlayerLed(player: PlayerNumber) {
+        if (!initComplete) {
+            pendingPlayerLed = player
+            return
+        }
+        val g = gatt ?: return
+        enqueueInitWrite(g, playerLedCmd(player.index))
     }
 
     @SuppressLint("MissingPermission")

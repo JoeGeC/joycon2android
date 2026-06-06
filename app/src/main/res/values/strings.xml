@@ -39,4 +39,14 @@
 
     <!-- Battery -->
     <string name="battery_format">%.2f V</string>
+
+    <!-- Multi-player -->
+    <string name="status_connected_count">%1$d CONNECTED</string>
+    <string name="unassigned_title">Unassigned Controllers</string>
+    <string name="player_label">P%1$d</string>
+    <string name="assign_prompt">Tap a player to assign</string>
+    <string name="button_scan_more">Scan for more</string>
+    <string name="side_left">Left</string>
+    <string name="side_right">Right</string>
+    <string name="button_disconnect_all">Disconnect All</string>
 </resources>

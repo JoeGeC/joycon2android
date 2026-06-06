@@ -26,15 +26,16 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.joegec.joycon2android.ui.theme.TextOnAccent
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.joegec.joycon2android.R
-import com.joegec.joycon2android.model.ControllerState
-import com.joegec.joycon2android.ui.components.ControllerLayout
+import com.joegec.joycon2android.model.AppUiState
+import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.ui.components.AssignmentPanel
+import com.joegec.joycon2android.ui.components.PlayerView
 import com.joegec.joycon2android.ui.components.ScanningIndicator
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Background
@@ -42,13 +43,16 @@ import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.ErrorBg
 import com.joegec.joycon2android.ui.theme.ErrorText
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextOnAccent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoyconScreen(
-    state: ControllerState,
-    onConnect: () -> Unit,
-    onStop: () -> Unit,
+    state: AppUiState,
+    onScan: () -> Unit,
+    onDisconnectAll: () -> Unit,
+    onAssign: (String, PlayerNumber) -> Unit,
+    onUnassign: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -59,7 +63,7 @@ fun JoyconScreen(
         topBar = {
             TopAppBar(
                 title = { AppTitle(state) },
-                actions = { ScanAction(state, onConnect) },
+                actions = { ScanAction(state, onScan) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Background,
                     scrolledContainerColor = Background,
@@ -76,17 +80,17 @@ fun JoyconScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
         ) {
-            if (state.anyConnected) {
-                ConnectedContent(state, onStop)
-            } else {
-                DisconnectedContent(state, onConnect)
+            when {
+                !state.anyConnected && !state.scanning -> IdleContent(state, onScan)
+                state.anyConnected -> ConnectedContent(state, onScan, onDisconnectAll, onAssign, onUnassign)
+                else -> ScanningContent(state)
             }
         }
     }
 }
 
 @Composable
-private fun AppTitle(state: ControllerState) {
+private fun AppTitle(state: AppUiState) {
     Column {
         Text(
             stringResource(R.string.app_title),
@@ -106,12 +110,11 @@ private fun AppTitle(state: ControllerState) {
 }
 
 @Composable
-private fun ScanAction(state: ControllerState, onConnect: () -> Unit) {
-    if (!state.anyConnected || state.bothConnected) return
+private fun ScanAction(state: AppUiState, onScan: () -> Unit) {
+    if (!state.anyConnected) return
 
-    val isBusy = state.scanning || state.anyConnecting
-    TextButton(onClick = onConnect, enabled = !isBusy) {
-        if (isBusy) {
+    TextButton(onClick = onScan, enabled = !state.scanning) {
+        if (state.scanning) {
             CircularProgressIndicator(
                 modifier = Modifier.size(14.dp),
                 color = Accent,
@@ -122,7 +125,7 @@ private fun ScanAction(state: ControllerState, onConnect: () -> Unit) {
         Text(
             if (state.scanning) stringResource(R.string.status_scanning)
             else stringResource(R.string.button_scan),
-            color = if (isBusy) TextDim else Accent,
+            color = if (state.scanning) TextDim else Accent,
             fontWeight = FontWeight.Bold,
             fontSize = Dimens.fontSizeBody,
         )
@@ -130,84 +133,82 @@ private fun ScanAction(state: ControllerState, onConnect: () -> Unit) {
 }
 
 @Composable
-private fun statusText(state: ControllerState): String = when {
-    state.bothConnected -> stringResource(R.string.status_both_connected)
-    state.left.connected -> stringResource(R.string.status_left_connected)
-    state.right.connected -> stringResource(R.string.status_right_connected)
-    state.anyConnecting -> stringResource(R.string.status_connecting)
-    state.scanning -> stringResource(R.string.status_scanning)
-    else -> stringResource(R.string.status_disconnected)
-}
-
-@Composable
-private fun DisconnectedContent(state: ControllerState, onConnect: () -> Unit) {
-    val isBusy = state.scanning || state.anyConnecting
-
-    ScanConnectButton(state, isBusy, onConnect)
-
-    if (state.scanning) {
-        ScanningIndicator()
+private fun statusText(state: AppUiState): String {
+    val totalConnected = state.unassignedJoycons.size + state.activePlayers.sumOf {
+        (if (it.left != null) 1 else 0) + (if (it.right != null) 1 else 0) as Int
     }
-
-    FoundDevices(state)
-    ErrorMessage(state.error)
-
-    if (!isBusy && state.error == null) {
-        Text(
-            stringResource(R.string.scan_idle_hint),
-            color = TextDim,
-            fontSize = Dimens.fontSizeMedium,
-        )
+    return when {
+        totalConnected > 0 -> stringResource(R.string.status_connected_count, totalConnected)
+        state.scanning -> stringResource(R.string.status_scanning)
+        else -> stringResource(R.string.status_disconnected)
     }
 }
 
 @Composable
-private fun ScanConnectButton(state: ControllerState, isBusy: Boolean, onConnect: () -> Unit) {
+private fun IdleContent(state: AppUiState, onScan: () -> Unit) {
     Button(
-        onClick = onConnect,
+        onClick = onScan,
         modifier = Modifier.fillMaxWidth().height(Dimens.buttonHeightLarge),
         shape = RoundedCornerShape(Dimens.buttonCorner),
         colors = ButtonDefaults.buttonColors(containerColor = Accent),
-        enabled = !isBusy,
     ) {
-        if (isBusy) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color = TextOnAccent,
-                strokeWidth = 2.dp,
-            )
-            Spacer(Modifier.size(10.dp))
-        }
         Text(
-            when {
-                state.anyConnecting -> stringResource(R.string.status_connecting)
-                state.scanning -> stringResource(R.string.status_scanning)
-                else -> stringResource(R.string.button_scan_connect)
-            },
+            stringResource(R.string.button_scan_connect),
             color = TextOnAccent,
             fontWeight = FontWeight.Bold,
             fontSize = Dimens.fontSizeButtonLarge,
         )
     }
+
+    ErrorMessage(state.error)
+
+    Text(
+        stringResource(R.string.scan_idle_hint),
+        color = TextDim,
+        fontSize = Dimens.fontSizeMedium,
+    )
 }
 
 @Composable
-private fun FoundDevices(state: ControllerState) {
-    if (state.left.connecting && state.left.deviceName != null) {
-        Text(
-            stringResource(R.string.found_device, state.left.deviceName),
-            color = Accent,
-            fontSize = Dimens.fontSizeBody,
-            fontWeight = FontWeight.Medium,
+private fun ScanningContent(state: AppUiState) {
+    ScanningIndicator()
+    ErrorMessage(state.error)
+}
+
+@Composable
+private fun ConnectedContent(
+    state: AppUiState,
+    onScan: () -> Unit,
+    onDisconnectAll: () -> Unit,
+    onAssign: (String, PlayerNumber) -> Unit,
+    onUnassign: (String) -> Unit,
+) {
+    if (state.unassignedJoycons.isNotEmpty()) {
+        AssignmentPanel(
+            unassigned = state.unassignedJoycons,
+            onAssign = onAssign,
         )
     }
-    if (state.right.connecting && state.right.deviceName != null) {
-        Text(
-            stringResource(R.string.found_device, state.right.deviceName),
-            color = Accent,
-            fontSize = Dimens.fontSizeBody,
-            fontWeight = FontWeight.Medium,
+
+    state.activePlayers.forEach { playerState ->
+        PlayerView(
+            playerState = playerState,
+            onUnassign = onUnassign,
         )
+    }
+
+    if (state.scanning) {
+        ScanningIndicator()
+    }
+
+    ErrorMessage(state.error)
+
+    OutlinedButton(
+        onClick = onDisconnectAll,
+        modifier = Modifier.fillMaxWidth().height(Dimens.buttonHeight),
+        shape = RoundedCornerShape(Dimens.buttonCorner),
+    ) {
+        Text(stringResource(R.string.button_disconnect_all), color = TextDim)
     }
 }
 
@@ -221,18 +222,5 @@ private fun ErrorMessage(error: String?) {
             .padding(Dimens.cardPadding)
     ) {
         Text(error, color = ErrorText, fontSize = Dimens.fontSizeBody)
-    }
-}
-
-@Composable
-private fun ConnectedContent(state: ControllerState, onStop: () -> Unit) {
-    ControllerLayout(state)
-
-    OutlinedButton(
-        onClick = onStop,
-        modifier = Modifier.fillMaxWidth().height(Dimens.buttonHeight),
-        shape = RoundedCornerShape(Dimens.buttonCorner),
-    ) {
-        Text(stringResource(R.string.button_disconnect), color = TextDim)
     }
 }

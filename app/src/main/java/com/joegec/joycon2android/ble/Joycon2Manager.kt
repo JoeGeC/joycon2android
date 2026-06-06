@@ -4,28 +4,32 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Context
 import com.joegec.joycon2android.R
-import com.joegec.joycon2android.model.ControllerState
 import com.joegec.joycon2android.model.Side
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Orchestrates BLE scanning and Joy-Con connection management.
- * Delegates scanning to [BleScanner] and connection tracking to [ConnectionRegistry].
+ * Orchestrates BLE scanning and Joy-Con connection lifecycle.
+ * Delegates scanning to [BleScanner] and connection tracking to [ConnectionPool].
  */
 class Joycon2Manager(private val context: Context) {
 
+    companion object {
+        private const val MAX_CONNECTIONS = 8
+    }
+
     private val scanner = BleScanner(context)
-    private val registry = ConnectionRegistry(context)
+    private val pool = ConnectionPool(context)
 
-    private val _state = MutableStateFlow(ControllerState())
-    val state: StateFlow<ControllerState> = _state.asStateFlow()
+    private val _connections = MutableStateFlow<Map<String, JoyconConnection>>(emptyMap())
+    val connections: StateFlow<Map<String, JoyconConnection>> = _connections.asStateFlow()
 
-    val isScanning: Boolean get() = scanner.isScanning
+    private val _scanning = MutableStateFlow(false)
+    val scanning: StateFlow<Boolean> = _scanning.asStateFlow()
 
-    fun getLeftConnection(): JoyconConnection? = registry.left
-    fun getRightConnection(): JoyconConnection? = registry.right
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     init {
         scanner.onDeviceFound = ::onDeviceFound
@@ -34,51 +38,64 @@ class Joycon2Manager(private val context: Context) {
     }
 
     fun startScan() {
-        if (scanner.isScanning || registry.bothConnected) return
+        if (scanner.isScanning) return
+        if (pool.size >= MAX_CONNECTIONS) return
 
         if (!scanner.isAvailable) {
-            emitError(context.getString(R.string.error_bluetooth_off))
+            _error.value = context.getString(R.string.error_bluetooth_off)
             return
         }
 
-        scanner.start(registry.knownAddresses)
-        updateState()
+        _error.value = null
+        scanner.start(pool.addresses)
+        _scanning.value = true
     }
 
-    fun stop() {
+    fun stopScan() {
         scanner.stop()
-        registry.disconnectAll()
-        _state.value = ControllerState()
+        _scanning.value = false
     }
+
+    fun disconnectAll() {
+        scanner.stop()
+        pool.disconnectAll()
+        _scanning.value = false
+        _error.value = null
+        _connections.value = emptyMap()
+    }
+
+    fun disconnect(address: String) {
+        pool.disconnect(address)
+        _connections.value = pool.all
+    }
+
+    fun getConnection(address: String): JoyconConnection? = pool.get(address)
 
     fun emitError(message: String) {
-        updateState(error = message)
+        _error.value = message
     }
 
-    fun buildState(): ControllerState = registry.buildState(scanner.isScanning)
-
     private fun onDeviceFound(result: ScanResult, side: Side, name: String) {
-        if (registry.hasSide(side)) return
+        if (pool.size >= MAX_CONNECTIONS) {
+            scanner.stop()
+            _scanning.value = false
+            return
+        }
 
-        registry.connect(result, side, name)
-        updateState()
-
-        if (registry.bothConnected) scanner.stop()
+        pool.connect(result, side, name)
+        _connections.value = pool.all
     }
 
     private fun onScanFailed(errorCode: Int) {
-        updateState(error = scanErrorMessage(errorCode))
+        _scanning.value = false
+        _error.value = scanErrorMessage(errorCode)
     }
 
     private fun onTimeout() {
-        val error = if (!_state.value.anyConnected) {
-            context.getString(R.string.error_no_joycon)
-        } else null
-        updateState(error = error)
-    }
-
-    private fun updateState(error: String? = null) {
-        _state.value = buildState().copy(error = error)
+        _scanning.value = false
+        if (pool.size == 0) {
+            _error.value = context.getString(R.string.error_no_joycon)
+        }
     }
 
     private fun scanErrorMessage(errorCode: Int): String = when (errorCode) {

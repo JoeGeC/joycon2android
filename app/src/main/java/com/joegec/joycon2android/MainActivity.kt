@@ -39,11 +39,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             Joycon2AndroidTheme {
                 Surface(Modifier.fillMaxSize(), color = Background) {
-                    val state by viewModel.state.collectAsState()
+                    val state by viewModel.uiState.collectAsState()
                     JoyconScreen(
                         state = state,
-                        onConnect = { permLauncher.launch(requiredPermissions()) },
-                        onStop = { viewModel.stop() },
+                        onScan = { permLauncher.launch(requiredPermissions()) },
+                        onDisconnectAll = viewModel::disconnectAll,
+                        onAssign = viewModel::assignToPlayer,
+                        onUnassign = viewModel::unassign,
                     )
                 }
             }

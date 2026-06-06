@@ -5,82 +5,61 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.ble.Joycon2Manager
-import com.joegec.joycon2android.model.ControllerState
-import com.joegec.joycon2android.model.JoyconConnectionState
-import com.joegec.joycon2android.model.JoyconInput
+import com.joegec.joycon2android.ble.JoyconConnection
+import com.joegec.joycon2android.domain.PlayerAssignmentManager
+import com.joegec.joycon2android.model.AppUiState
+import com.joegec.joycon2android.model.ConnectedJoycon
+import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.PlayerState
+import com.joegec.joycon2android.model.Side
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class Joycon2ViewModel(application: Application) : AndroidViewModel(application) {
 
     private val manager = Joycon2Manager(application)
+    private val assignmentManager = PlayerAssignmentManager()
 
-    private val _state = MutableStateFlow(ControllerState())
-    val state: StateFlow<ControllerState> = _state.asStateFlow()
+    private val _uiState = MutableStateFlow(AppUiState())
+    val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
+
+    private val connectionJobs = mutableMapOf<String, Job>()
 
     init {
-        // Collect the manager's own state (scanning/error/connection events)
         viewModelScope.launch {
-            manager.state.collectLatest { managerState ->
-                _state.value = managerState
-                // When connections appear, start collecting their individual flows
-                startCollectingConnections()
-            }
+            combine(
+                manager.connections,
+                manager.scanning,
+                manager.error,
+                assignmentManager.assignments,
+            ) { connections, scanning, error, assignments ->
+                manageFlowCollectors(connections)
+                buildUiState(connections, scanning, error, assignments)
+            }.collect { _uiState.value = it }
         }
     }
 
-    private var leftCollecting = false
-    private var rightCollecting = false
+    fun startScan() = manager.startScan()
+    fun stopScan() = manager.stopScan()
 
-    private fun startCollectingConnections() {
-        val left = manager.getLeftConnection()
-        val right = manager.getRightConnection()
-
-        if (left != null && !leftCollecting) {
-            leftCollecting = true
-            viewModelScope.launch {
-                left.connectionState.collectLatest { rebuildState() }
-            }
-            viewModelScope.launch {
-                left.input.collectLatest { rebuildState() }
-            }
-        }
-
-        if (right != null && !rightCollecting) {
-            rightCollecting = true
-            viewModelScope.launch {
-                right.connectionState.collectLatest { rebuildState() }
-            }
-            viewModelScope.launch {
-                right.input.collectLatest { rebuildState() }
-            }
-        }
+    fun disconnectAll() {
+        assignmentManager.unassignAll()
+        cancelAllCollectors()
+        manager.disconnectAll()
     }
 
-    private fun rebuildState() {
-        val left = manager.getLeftConnection()
-        val right = manager.getRightConnection()
-        _state.value = ControllerState(
-            scanning = manager.state.value.scanning,
-            error = manager.state.value.error,
-            left = left?.connectionState?.value ?: JoyconConnectionState(),
-            right = right?.connectionState?.value ?: JoyconConnectionState(),
-            leftInput = left?.input?.value ?: JoyconInput(),
-            rightInput = right?.input?.value ?: JoyconInput(),
-        )
+    fun assignToPlayer(address: String, player: PlayerNumber) {
+        assignmentManager.assign(address, player)
+        manager.getConnection(address)?.setPlayerLed(player)
     }
 
-    fun startScan() {
-        manager.startScan()
-    }
-
-    fun stop() {
-        leftCollecting = false
-        rightCollecting = false
-        manager.stop()
+    fun unassign(address: String) {
+        assignmentManager.unassign(address)
     }
 
     fun onPermissionsDenied() {
@@ -89,6 +68,75 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     override fun onCleared() {
         super.onCleared()
-        manager.stop()
+        manager.disconnectAll()
+    }
+
+    private fun manageFlowCollectors(connections: Map<String, JoyconConnection>) {
+        val currentAddresses = connections.keys
+
+        // Cancel collectors for disconnected devices
+        val removed = connectionJobs.keys - currentAddresses
+        removed.forEach { address ->
+            connectionJobs.remove(address)?.cancel()
+        }
+
+        // Start collectors for new devices
+        val added = currentAddresses - connectionJobs.keys
+        added.forEach { address ->
+            val connection = connections[address] ?: return@forEach
+            connectionJobs[address] = viewModelScope.launch {
+                launch { connection.connectionState.collectLatest { rebuildState() } }
+                launch { connection.input.collectLatest { rebuildState() } }
+            }
+        }
+    }
+
+    private fun rebuildState() {
+        _uiState.value = buildUiState(
+            manager.connections.value,
+            manager.scanning.value,
+            manager.error.value,
+            assignmentManager.assignments.value,
+        )
+    }
+
+    private fun buildUiState(
+        connections: Map<String, JoyconConnection>,
+        scanning: Boolean,
+        error: String?,
+        assignments: Map<String, PlayerNumber>,
+    ): AppUiState {
+        val joycons = connections.map { (address, connection) ->
+            ConnectedJoycon(
+                address = address,
+                side = connection.side,
+                deviceName = connection.deviceName,
+                connectionState = connection.connectionState.value,
+                input = connection.input.value,
+                assignedPlayer = assignments[address],
+            )
+        }
+
+        val unassigned = joycons.filter { it.assignedPlayer == null }
+        val players = PlayerNumber.entries.map { player ->
+            val assigned = joycons.filter { it.assignedPlayer == player }
+            PlayerState(
+                player = player,
+                left = assigned.find { it.side == Side.LEFT },
+                right = assigned.find { it.side == Side.RIGHT || it.side == Side.PRO || it.side == Side.UNKNOWN },
+            )
+        }
+
+        return AppUiState(
+            scanning = scanning,
+            error = error,
+            unassignedJoycons = unassigned,
+            players = players,
+        )
+    }
+
+    private fun cancelAllCollectors() {
+        connectionJobs.values.forEach { it.cancel() }
+        connectionJobs.clear()
     }
 }

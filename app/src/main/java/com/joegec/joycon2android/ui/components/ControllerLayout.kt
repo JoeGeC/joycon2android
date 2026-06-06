@@ -20,7 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.joegec.joycon2android.model.ControllerState
+import com.joegec.joycon2android.model.JoyconInput
+import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.LeftJoyconColor
@@ -29,19 +30,24 @@ import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 
 @Composable
-internal fun ControllerLayout(state: ControllerState, modifier: Modifier = Modifier) {
+internal fun PlayerControllerLayout(state: PlayerState, modifier: Modifier = Modifier) {
     Row(
         modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        LeftJoycon(state, Modifier.weight(1f))
-        RightJoycon(state, Modifier.weight(1f))
+        if (state.left != null) {
+            LeftJoycon(state, Modifier.weight(1f))
+        }
+        if (state.right != null) {
+            RightJoycon(state, Modifier.weight(1f))
+        }
     }
 }
 
 @Composable
-private fun LeftJoycon(state: ControllerState, modifier: Modifier = Modifier) {
+private fun LeftJoycon(state: PlayerState, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(Dimens.cardCorner)
+    val input = state.leftInput
 
     Column(
         modifier
@@ -54,25 +60,24 @@ private fun LeftJoycon(state: ControllerState, modifier: Modifier = Modifier) {
         ShoulderButton("ZL", "ZL" in state.pressed, Modifier.fillMaxWidth())
         ShoulderButton("L", "L" in state.pressed, Modifier.fillMaxWidth())
 
-        MinusButtonRow(state)
+        MinusButtonRow(input, state.pressed)
         StickCard(state.leftStickX, state.leftStickY, "LS" in state.pressed)
         DPad(state.pressed)
-        CaptureButtonRow(state)
+        CaptureButtonRow(state.pressed)
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RailButton("SL", "SL(L)" in state.pressed, Modifier.weight(1f))
             RailButton("SR", "SR(L)" in state.pressed, Modifier.weight(1f))
         }
 
-        if (state.left.connected) {
-            ImuDisplay(state.leftInput)
-        }
+        ImuDisplay(input)
     }
 }
 
 @Composable
-private fun RightJoycon(state: ControllerState, modifier: Modifier = Modifier) {
+private fun RightJoycon(state: PlayerState, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(Dimens.cardCorner)
+    val input = state.rightInput
 
     Column(
         modifier
@@ -85,48 +90,46 @@ private fun RightJoycon(state: ControllerState, modifier: Modifier = Modifier) {
         ShoulderButton("ZR", "ZR" in state.pressed, Modifier.fillMaxWidth())
         ShoulderButton("R", "R" in state.pressed, Modifier.fillMaxWidth())
 
-        PlusButtonRow(state)
+        PlusButtonRow(input, state.pressed)
         FaceButtons(state.pressed)
         StickCard(state.rightStickX, state.rightStickY, "RS" in state.pressed)
-        HomeButtonRow(state)
+        HomeButtonRow(state.pressed)
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RailButton("SL", "SL(R)" in state.pressed, Modifier.weight(1f))
             RailButton("SR", "SR(R)" in state.pressed, Modifier.weight(1f))
         }
 
-        if (state.right.connected) {
-            ImuDisplay(state.rightInput)
-        }
+        ImuDisplay(input)
     }
 }
 
 @Composable
-private fun MinusButtonRow(state: ControllerState) {
+private fun MinusButtonRow(input: JoyconInput, pressed: Set<String>) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (state.left.connected && state.leftInput.batteryVolts > 0f) {
-            BatteryPill(state.leftInput.batteryVolts)
+        if (input.batteryVolts > 0f) {
+            BatteryPill(input.batteryVolts)
         } else {
             Spacer(Modifier)
         }
-        SmallButton("-", "-" in state.pressed)
+        SmallButton("-", "-" in pressed)
     }
 }
 
 @Composable
-private fun PlusButtonRow(state: ControllerState) {
+private fun PlusButtonRow(input: JoyconInput, pressed: Set<String>) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SmallButton("+", "+" in state.pressed)
-        if (state.right.connected && state.rightInput.batteryVolts > 0f) {
-            BatteryPill(state.rightInput.batteryVolts)
+        SmallButton("+", "+" in pressed)
+        if (input.batteryVolts > 0f) {
+            BatteryPill(input.batteryVolts)
         } else {
             Spacer(Modifier)
         }
@@ -134,41 +137,41 @@ private fun PlusButtonRow(state: ControllerState) {
 }
 
 @Composable
-private fun CaptureButtonRow(state: ControllerState) {
+private fun CaptureButtonRow(pressed: Set<String>) {
     Box(Modifier.fillMaxWidth()) {
         ControllerIconButton(
-            on = "Camera" in state.pressed,
+            on = "Camera" in pressed,
             modifier = Modifier.size(Dimens.iconButtonSize).align(Alignment.CenterEnd),
         ) {
             Icon(
                 Icons.Outlined.Circle,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp),
-                tint = if ("Camera" in state.pressed) TextOnAccent else TextDim,
+                tint = if ("Camera" in pressed) TextOnAccent else TextDim,
             )
         }
     }
 }
 
 @Composable
-private fun HomeButtonRow(state: ControllerState) {
+private fun HomeButtonRow(pressed: Set<String>) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ControllerIconButton(
-            on = "Home" in state.pressed,
+            on = "Home" in pressed,
             modifier = Modifier.size(Dimens.iconButtonSize),
         ) {
             Icon(
                 Icons.Filled.Home,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = if ("Home" in state.pressed) TextOnAccent else TextDim,
+                tint = if ("Home" in pressed) TextOnAccent else TextDim,
             )
         }
         Spacer(Modifier.width(10.dp))
-        SmallButton("C", "Chat" in state.pressed)
+        SmallButton("C", "Chat" in pressed)
     }
 }
