@@ -48,9 +48,9 @@ class JoyconConnection(
         )
 
         // Subcommand 0x07: set LED pattern via bitmask (16 bytes)
-        // Bitmask: 0x01=P1, 0x02=P2, 0x04=P3, 0x08=P4
+        // Bitmask: 0x01=P1, 0x02=P2, 0x04=P3, 0x08=P4, 0x00=default animation
         private fun playerLedCmd(player: Int): ByteArray {
-            val bitmask = (1 shl (player - 1)).toByte()
+            val bitmask = if (player > 0) (1 shl (player - 1)).toByte() else 0x00
             return byteArrayOf(
                 0x09, 0x91.toByte(), 0x01, 0x07, 0x00, 0x08, 0x00, 0x00,
                 bitmask, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -225,6 +225,14 @@ class JoyconConnection(
         }
         val g = gatt ?: return
         enqueueInitWrite(g, playerLedCmd(player.index))
+    }
+
+    @SuppressLint("MissingPermission")
+    fun clearPlayerLed() {
+        pendingPlayerLed = null
+        if (!initComplete) return
+        val g = gatt ?: return
+        enqueueInitWrite(g, playerLedCmd(0))
     }
 
     @SuppressLint("MissingPermission")

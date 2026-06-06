@@ -61,6 +61,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     fun unassign(address: String) {
         assignmentManager.unassign(address)
+        manager.getConnection(address)?.clearPlayerLed()
     }
 
     fun onPermissionsDenied() {
@@ -78,6 +79,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         // Cancel collectors for disconnected devices
         val removed = connectionJobs.keys - currentAddresses
         removed.forEach { address ->
+            manager.getConnection(address)?.clearPlayerLed()
             connectionJobs.remove(address)?.cancel()
         }
 
