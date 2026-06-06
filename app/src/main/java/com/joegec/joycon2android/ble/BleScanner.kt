@@ -39,12 +39,12 @@ class BleScanner(context: Context) {
     val isAvailable: Boolean get() = adapter?.bluetoothLeScanner != null
 
     @SuppressLint("MissingPermission")
-    fun start(knownAddresses: Set<String>) {
+    fun start(isKnownAddress: (String) -> Boolean) {
         if (isScanning) return
         val scanner = adapter?.bluetoothLeScanner ?: return
 
         isScanning = true
-        scanner.startScan(null, lowLatencySettings(), createCallback(knownAddresses))
+        scanner.startScan(null, lowLatencySettings(), createCallback(isKnownAddress))
         Log.i(TAG, "Scanning for Joy-Con 2 controllers...")
         scheduleTimeout()
     }
@@ -60,13 +60,13 @@ class BleScanner(context: Context) {
 
     private var activeCallback: ScanCallback? = null
 
-    private fun createCallback(knownAddresses: Set<String>): ScanCallback {
+    private fun createCallback(isKnownAddress: (String) -> Boolean): ScanCallback {
         val callback = object : ScanCallback() {
             @SuppressLint("MissingPermission")
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 if (!isScanning) return
                 if (!isNintendoDevice(result)) return
-                if (result.device.address in knownAddresses) return
+                if (isKnownAddress(result.device.address)) return
 
                 val name = result.device.name
                     ?: result.scanRecord?.deviceName

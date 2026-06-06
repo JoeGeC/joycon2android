@@ -35,6 +35,7 @@ class Joycon2Manager(private val context: Context) {
         scanner.onDeviceFound = ::onDeviceFound
         scanner.onScanFailed = ::onScanFailed
         scanner.onTimeout = ::onTimeout
+        pool.onPoolChanged = { _connections.value = pool.all }
     }
 
     fun startScan() {
@@ -47,7 +48,7 @@ class Joycon2Manager(private val context: Context) {
         }
 
         _error.value = null
-        scanner.start(pool.addresses)
+        scanner.start { address -> address in pool.addresses }
         _scanning.value = true
     }
 
@@ -82,7 +83,7 @@ class Joycon2Manager(private val context: Context) {
             return
         }
 
-        pool.connect(result, side, name)
+        pool.connect(result, side, name) ?: return
         _connections.value = pool.all
     }
 

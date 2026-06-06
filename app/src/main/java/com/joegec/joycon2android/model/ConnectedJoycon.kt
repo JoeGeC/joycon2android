@@ -7,4 +7,5 @@ data class ConnectedJoycon(
     val connectionState: JoyconConnectionState = JoyconConnectionState(),
     val input: JoyconInput = JoyconInput(),
     val assignedPlayer: PlayerNumber? = null,
+    val ready: Boolean = false,
 )

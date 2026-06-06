@@ -28,6 +28,7 @@ class JoyconConnection(
     private val context: Context,
     val side: Side,
     val deviceName: String,
+    private val onDisconnected: (() -> Unit)? = null,
 ) {
     companion object {
         private const val TAG = "Joycon2"
@@ -84,7 +85,9 @@ class JoyconConnection(
     private var notifyChar: BluetoothGattCharacteristic? = null
     private var cmdResponseChar: BluetoothGattCharacteristic? = null
     private var pendingPlayerLed: PlayerNumber? = null
-    private var initComplete = false
+    @Volatile var initComplete = false
+        private set
+    private var ledSentAfterFirstPacket = false
 
     @SuppressLint("MissingPermission")
     fun connect(device: BluetoothDevice) {
@@ -116,12 +119,18 @@ class JoyconConnection(
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.w(TAG, "[$side] Disconnected (status=$status)")
                     opQueue.clear()
+                    g.close()
+                    gatt = null
+                    initComplete = false
+                    ledSentAfterFirstPacket = false
                     _connectionState.value = JoyconConnectionState(
                         deviceName = deviceName,
                         error = if (status != BluetoothGatt.GATT_SUCCESS) {
                             "Connection lost (status $status)"
                         } else null
                     )
+                    _input.value = JoyconInput()
+                    onDisconnected?.invoke()
                 }
             }
         }
@@ -134,6 +143,7 @@ class JoyconConnection(
 
         @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
+            Log.i(TAG, "[$side] Services discovered (status=$status)")
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 _connectionState.value = JoyconConnectionState(
                     error = "Service discovery failed", deviceName = deviceName
@@ -163,31 +173,44 @@ class JoyconConnection(
             // Subscribe to command response notifications (required for LED commands)
             if (cmdResponseChar != null) {
                 g.setCharacteristicNotification(cmdResponseChar, true)
-                opQueue.enqueue {
-                    val cccd = cmdResponseChar!!.getDescriptor(CCCD)
-                    @Suppress("DEPRECATION")
-                    cccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                    @Suppress("DEPRECATION")
-                    g.writeDescriptor(cccd)
+                val cmdCccd = cmdResponseChar!!.getDescriptor(CCCD)
+                if (cmdCccd != null) {
+                    opQueue.enqueue {
+                        Log.d(TAG, "[$side] Writing CMD_RESPONSE CCCD")
+                        @Suppress("DEPRECATION")
+                        cmdCccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                        @Suppress("DEPRECATION")
+                        g.writeDescriptor(cmdCccd)
+                    }
+                } else {
+                    Log.w(TAG, "[$side] CMD_RESPONSE char has no CCCD descriptor")
                 }
             }
 
             // Subscribe to input notifications
             g.setCharacteristicNotification(notifyChar, true)
-            opQueue.enqueue {
-                val cccd = notifyChar!!.getDescriptor(CCCD)
-                @Suppress("DEPRECATION")
-                cccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                @Suppress("DEPRECATION")
-                g.writeDescriptor(cccd)
+            val notifyCccd = notifyChar!!.getDescriptor(CCCD)
+            if (notifyCccd != null) {
+                opQueue.enqueue {
+                    Log.d(TAG, "[$side] Writing NOTIFY CCCD")
+                    @Suppress("DEPRECATION")
+                    notifyCccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    @Suppress("DEPRECATION")
+                    g.writeDescriptor(notifyCccd)
+                }
+            } else {
+                Log.e(TAG, "[$side] NOTIFY char has no CCCD descriptor — notifications won't work!")
             }
             enqueueInitWrite(g, INIT_CMD_1)
             enqueueInitWrite(g, INIT_CMD_2)
 
-            // After init writes complete, set LEDs (pending player or all-on default)
             opQueue.enqueue {
                 initComplete = true
-                sendLedCommand(g)
+                _connectionState.value = JoyconConnectionState(
+                    connected = true, ready = true, deviceName = deviceName
+                )
+                Log.i(TAG, "[$side] Init sequence complete")
+                false // no GATT op — advance immediately
             }
         }
 
@@ -195,12 +218,13 @@ class JoyconConnection(
             g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int
         ) {
             Log.i(TAG, "[$side] CCCD write status=$status")
-            opQueue.complete()
+            mainHandler.post { opQueue.complete() }
         }
 
         override fun onCharacteristicWrite(
             g: BluetoothGatt, ch: BluetoothGattCharacteristic, status: Int
         ) {
+            Log.d(TAG, "[$side] Char write status=$status initComplete=$initComplete")
             val delay = if (initComplete) 0L else INIT_GAP_MS
             mainHandler.postDelayed({ opQueue.complete() }, delay)
         }
@@ -211,7 +235,13 @@ class JoyconConnection(
         ) {
             val data = ch.value ?: return
             when (ch.uuid) {
-                NOTIFY_CHAR -> PacketParser.parse(data, side)?.let { _input.value = it }
+                NOTIFY_CHAR -> {
+                    PacketParser.parse(data, side)?.let { _input.value = it }
+                    if (!ledSentAfterFirstPacket && initComplete) {
+                        ledSentAfterFirstPacket = true
+                        mainHandler.post { opQueue.enqueue { sendLedCommand(g) } }
+                    }
+                }
                 CMD_RESPONSE_CHAR -> Log.d(TAG, "[$side] Cmd response: ${data.size} bytes")
             }
         }
@@ -234,14 +264,15 @@ class JoyconConnection(
     }
 
     @SuppressLint("MissingPermission")
-    private fun sendLedCommand(g: BluetoothGatt) {
+    private fun sendLedCommand(g: BluetoothGatt): Boolean {
         val pending = pendingPlayerLed
         pendingPlayerLed = null
         val cmd = if (pending != null) playerLedCmd(pending.index) else LED_ALL_ON_CMD
+        Log.i(TAG, "[$side] Sending LED cmd: ${cmd.joinToString(" ") { "%02X".format(it) }}")
         @Suppress("DEPRECATION")
         writeChar!!.value = cmd
         @Suppress("DEPRECATION")
-        g.writeCharacteristic(writeChar)
+        return g.writeCharacteristic(writeChar)
     }
 
     @SuppressLint("MissingPermission")
@@ -253,4 +284,5 @@ class JoyconConnection(
             g.writeCharacteristic(writeChar)
         }
     }
+
 }

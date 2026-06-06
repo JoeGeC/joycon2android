@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Text
@@ -78,19 +80,36 @@ private fun JoyconAssignmentRow(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            sideLabel,
-            color = sideColor,
-            fontSize = Dimens.fontSizeBody,
-            fontWeight = FontWeight.Medium,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                sideLabel,
+                color = sideColor,
+                fontSize = Dimens.fontSizeBody,
+                fontWeight = FontWeight.Medium,
+            )
+            if (!joycon.ready) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(12.dp),
+                    color = sideColor,
+                    strokeWidth = 2.dp,
+                )
+                Text(
+                    stringResource(R.string.status_connecting),
+                    color = TextDim,
+                    fontSize = Dimens.fontSizeSmall,
+                )
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PlayerNumber.entries.forEach { player ->
                 val slotTaken = isSlotTaken(joycon.side, player, players)
                 FilterChip(
                     selected = false,
                     onClick = { onAssign(joycon.address, player) },
-                    enabled = !slotTaken,
+                    enabled = joycon.ready && !slotTaken,
                     label = {
                         Text(
                             stringResource(R.string.player_label, player.index),

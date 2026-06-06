@@ -117,6 +117,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
                 connectionState = connection.connectionState.value,
                 input = connection.input.value,
                 assignedPlayer = assignments[address],
+                ready = connection.initComplete,
             )
         }
 

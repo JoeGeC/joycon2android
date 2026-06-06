@@ -14,15 +14,24 @@ class ConnectionPool(private val context: Context) {
 
     private val connections = ConcurrentHashMap<String, JoyconConnection>()
 
+    var onPoolChanged: (() -> Unit)? = null
+
     val all: Map<String, JoyconConnection> get() = connections.toMap()
     val addresses: Set<String> get() = connections.keys.toSet()
     val size: Int get() = connections.size
 
+    /**
+     * Atomically creates and starts a connection for [result].
+     * Returns null if this address is already in the pool (duplicate scan result).
+     */
     @SuppressLint("MissingPermission")
-    fun connect(result: ScanResult, side: Side, name: String): JoyconConnection {
+    fun connect(result: ScanResult, side: Side, name: String): JoyconConnection? {
         val address = result.device.address
-        val connection = JoyconConnection(context, side, name)
-        connections[address] = connection
+        val connection = JoyconConnection(context, side, name) {
+            connections.remove(address)
+            onPoolChanged?.invoke()
+        }
+        if (connections.putIfAbsent(address, connection) != null) return null
         connection.connect(result.device)
         return connection
     }
