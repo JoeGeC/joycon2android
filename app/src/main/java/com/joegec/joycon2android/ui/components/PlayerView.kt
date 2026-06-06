@@ -22,19 +22,24 @@ import com.joegec.joycon2android.ui.theme.TextDim
 internal fun PlayerView(
     playerState: PlayerState,
     onUnassign: (String) -> Unit,
+    onDisconnect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        PlayerHeader(playerState, onUnassign)
+        PlayerHeader(playerState, onUnassign, onDisconnect)
         PlayerControllerLayout(playerState)
     }
 }
 
 @Composable
-private fun PlayerHeader(playerState: PlayerState, onUnassign: (String) -> Unit) {
+private fun PlayerHeader(
+    playerState: PlayerState,
+    onUnassign: (String) -> Unit,
+    onDisconnect: (String) -> Unit,
+) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -49,12 +54,18 @@ private fun PlayerHeader(playerState: PlayerState, onUnassign: (String) -> Unit)
         Row {
             playerState.left?.let {
                 TextButton(onClick = { onUnassign(it.address) }) {
-                    Text("−L", color = TextDim, fontSize = Dimens.fontSizeMedium)
+                    Text(stringResource(R.string.button_unassign_left), color = TextDim, fontSize = Dimens.fontSizeSmall)
+                }
+                TextButton(onClick = { onDisconnect(it.address) }) {
+                    Text(stringResource(R.string.button_disconnect_left), color = TextDim, fontSize = Dimens.fontSizeSmall)
                 }
             }
             playerState.right?.let {
                 TextButton(onClick = { onUnassign(it.address) }) {
-                    Text("−R", color = TextDim, fontSize = Dimens.fontSizeMedium)
+                    Text(stringResource(R.string.button_unassign_right), color = TextDim, fontSize = Dimens.fontSizeSmall)
+                }
+                TextButton(onClick = { onDisconnect(it.address) }) {
+                    Text(stringResource(R.string.button_disconnect_right), color = TextDim, fontSize = Dimens.fontSizeSmall)
                 }
             }
         }

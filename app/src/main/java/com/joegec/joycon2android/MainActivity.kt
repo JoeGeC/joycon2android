@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
                         onDisconnectAll = viewModel::disconnectAll,
                         onAssign = viewModel::assignToPlayer,
                         onUnassign = viewModel::unassign,
+                        onDisconnect = viewModel::disconnect,
                     )
                 }
             }

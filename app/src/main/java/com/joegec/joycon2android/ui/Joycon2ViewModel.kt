@@ -64,6 +64,11 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         manager.getConnection(address)?.clearPlayerLed()
     }
 
+    fun disconnect(address: String) {
+        assignmentManager.unassign(address)
+        manager.disconnect(address)
+    }
+
     fun onPermissionsDenied() {
         manager.emitError(getApplication<Application>().getString(R.string.error_permissions_denied))
     }

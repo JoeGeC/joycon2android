@@ -53,6 +53,7 @@ fun JoyconScreen(
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
     onUnassign: (String) -> Unit,
+    onDisconnect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -82,7 +83,7 @@ fun JoyconScreen(
         ) {
             when {
                 !state.anyConnected && !state.scanning -> IdleContent(state, onScan)
-                state.anyConnected -> ConnectedContent(state, onScan, onDisconnectAll, onAssign, onUnassign)
+                state.anyConnected -> ConnectedContent(state, onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect)
                 else -> ScanningContent(state)
             }
         }
@@ -182,12 +183,14 @@ private fun ConnectedContent(
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
     onUnassign: (String) -> Unit,
+    onDisconnect: (String) -> Unit,
 ) {
     if (state.unassignedJoycons.isNotEmpty()) {
         AssignmentPanel(
             unassigned = state.unassignedJoycons,
             players = state.players,
             onAssign = onAssign,
+            onDisconnect = onDisconnect,
         )
     }
 
@@ -195,6 +198,7 @@ private fun ConnectedContent(
         PlayerView(
             playerState = playerState,
             onUnassign = onUnassign,
+            onDisconnect = onDisconnect,
         )
     }
 

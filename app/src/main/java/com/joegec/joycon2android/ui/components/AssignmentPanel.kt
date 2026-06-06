@@ -13,6 +13,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,7 @@ internal fun AssignmentPanel(
     unassigned: List<ConnectedJoycon>,
     players: List<PlayerState>,
     onAssign: (String, PlayerNumber) -> Unit,
+    onDisconnect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(Dimens.cardCorner)
@@ -57,7 +59,7 @@ internal fun AssignmentPanel(
         )
 
         unassigned.forEach { joycon ->
-            JoyconAssignmentRow(joycon, players, onAssign)
+            JoyconAssignmentRow(joycon, players, onAssign, onDisconnect)
         }
     }
 }
@@ -67,6 +69,7 @@ private fun JoyconAssignmentRow(
     joycon: ConnectedJoycon,
     players: List<PlayerState>,
     onAssign: (String, PlayerNumber) -> Unit,
+    onDisconnect: (String) -> Unit,
 ) {
     val sideColor = when (joycon.side) {
         Side.LEFT -> LeftJoyconColor
@@ -81,23 +84,36 @@ private fun JoyconAssignmentRow(
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
-                sideLabel,
-                color = sideColor,
-                fontSize = Dimens.fontSizeBody,
-                fontWeight = FontWeight.Medium,
-            )
-            if (!joycon.ready) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(12.dp),
-                    color = sideColor,
-                    strokeWidth = 2.dp,
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 Text(
-                    stringResource(R.string.status_connecting),
+                    sideLabel,
+                    color = sideColor,
+                    fontSize = Dimens.fontSizeBody,
+                    fontWeight = FontWeight.Medium,
+                )
+                if (!joycon.ready) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(12.dp),
+                        color = sideColor,
+                        strokeWidth = 2.dp,
+                    )
+                    Text(
+                        stringResource(R.string.status_connecting),
+                        color = TextDim,
+                        fontSize = Dimens.fontSizeSmall,
+                    )
+                }
+            }
+            TextButton(onClick = { onDisconnect(joycon.address) }) {
+                Text(
+                    stringResource(R.string.button_disconnect),
                     color = TextDim,
                     fontSize = Dimens.fontSizeSmall,
                 )
