@@ -7,25 +7,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.joegec.joycon2android.R
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AccentDim
+import com.joegec.joycon2android.ui.theme.Dimens
 
 @Composable
-internal fun BatteryPill(volts: Float, label: String? = null, modifier: Modifier = Modifier) {
+internal fun BatteryPill(volts: Float, modifier: Modifier = Modifier) {
     Box(
         modifier
-            .background(AccentDim, RoundedCornerShape(20.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .background(AccentDim, RoundedCornerShape(Dimens.pillCorner))
+            .padding(horizontal = Dimens.pillPaddingHorizontal, vertical = Dimens.pillPaddingVertical)
     ) {
-        val text = if (label != null) "$label %.2f V".format(volts) else "%.2f V".format(volts)
         Text(
-            text,
+            stringResource(R.string.battery_format, volts),
             color = Accent,
-            fontSize = 11.sp,
+            fontSize = Dimens.fontSizeBattery,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,
         )

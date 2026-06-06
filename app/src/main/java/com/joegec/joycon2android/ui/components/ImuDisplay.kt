@@ -7,21 +7,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.JoyconInput
+import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
 internal fun ImuDisplay(input: JoyconInput, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SensorRow("Accel", "X" to input.accelX, "Y" to input.accelY, "Z" to input.accelZ)
-        SensorRow("Gyro", "X" to input.gyroX, "Y" to input.gyroY, "Z" to input.gyroZ)
+        SensorRow(stringResource(R.string.imu_accel), "X" to input.accelX, "Y" to input.accelY, "Z" to input.accelZ)
+        SensorRow(stringResource(R.string.imu_gyro), "X" to input.gyroX, "Y" to input.gyroY, "Z" to input.gyroZ)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Label("Packet")
-            Value(input.packetId.toString())
+            ImuLabel(stringResource(R.string.imu_packet))
+            ImuValue(input.packetId.toString())
         }
     }
 }
@@ -29,7 +31,7 @@ internal fun ImuDisplay(input: JoyconInput, modifier: Modifier = Modifier) {
 @Composable
 private fun SensorRow(title: String, vararg axes: Pair<String, Int>) {
     Column {
-        Label(title)
+        ImuLabel(title)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             axes.forEach { (axis, value) ->
                 AxisValue(axis, value)
@@ -44,35 +46,35 @@ private fun AxisValue(axis: String, value: Int) {
         Text(
             axis,
             color = TextDim.copy(alpha = 0.6f),
-            fontSize = 9.sp,
+            fontSize = Dimens.fontSizeLabel,
             fontFamily = FontFamily.Monospace,
         )
         Text(
             "%+6d".format(value),
             color = TextDim,
-            fontSize = 9.sp,
+            fontSize = Dimens.fontSizeLabel,
             fontFamily = FontFamily.Monospace,
         )
     }
 }
 
 @Composable
-private fun Label(text: String) {
+private fun ImuLabel(text: String) {
     Text(
         text,
         color = TextDim.copy(alpha = 0.7f),
-        fontSize = 9.sp,
+        fontSize = Dimens.fontSizeLabel,
         fontWeight = FontWeight.Bold,
-        letterSpacing = 1.sp,
+        letterSpacing = Dimens.fontSizeLabel * 0.1f,
     )
 }
 
 @Composable
-private fun Value(text: String) {
+private fun ImuValue(text: String) {
     Text(
         text,
         color = TextDim,
-        fontSize = 9.sp,
+        fontSize = Dimens.fontSizeLabel,
         fontFamily = FontFamily.Monospace,
     )
 }

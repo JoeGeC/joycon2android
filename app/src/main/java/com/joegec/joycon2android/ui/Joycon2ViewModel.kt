@@ -3,6 +3,7 @@ package com.joegec.joycon2android.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.joegec.joycon2android.R
 import com.joegec.joycon2android.ble.Joycon2Manager
 import com.joegec.joycon2android.model.ControllerState
 import com.joegec.joycon2android.model.JoyconConnectionState
@@ -82,7 +83,9 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         manager.stop()
     }
 
-    fun onPermissionsDenied() = manager.emitError("Bluetooth permissions denied")
+    fun onPermissionsDenied() {
+        manager.emitError(getApplication<Application>().getString(R.string.error_permissions_denied))
+    }
 
     override fun onCleared() {
         super.onCleared()

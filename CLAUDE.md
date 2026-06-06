@@ -9,6 +9,10 @@
 - Follow current Android, Kotlin, and Compose conventions
 - Clean Architecture and SOLID principles
 - Boy Scout Rule: leave code better than you found it
+- One class per file
+- Code should read like well-written prose
+- Methods should be short enough that they explain themselves
+- Methods and composables should be reusable like components
 - Self-describing code — comments only when context or "why" is non-obvious
 - This project benefits from comments explaining BLE protocol details, timing constraints, and byte-level formats since these are not self-evident from code alone
 
@@ -19,7 +23,9 @@
 - Protocol reference: `joycon2_android_reference.md` is authoritative over any external docs
 
 ## Conventions
-- Use `enableEdgeToEdge()` + `systemBarsPadding()` for proper inset handling
+- Use `enableEdgeToEdge()` with `WindowInsets.systemBars` for edge-to-edge inset handling
+- Avoid hard-coded strings — use string resources where possible
+- Use theme for dimensions and colors rather than inline literals
 - Prefer immutable data classes for state
 - Use `@SuppressLint("MissingPermission")` only on methods guarded by the permission launcher
 - Deprecated BLE APIs (`.value =` pattern) used intentionally for broad compatibility (API 24+)

@@ -17,9 +17,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AccentDim
+import com.joegec.joycon2android.ui.theme.CrosshairColor
+import com.joegec.joycon2android.ui.theme.Dimens
+import com.joegec.joycon2android.ui.theme.StickBg
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
@@ -29,22 +31,34 @@ internal fun StickCard(x: Int, y: Int, pressed: Boolean, modifier: Modifier = Mo
     val ringColor = if (pressed) Accent else AccentDim
 
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Canvas(Modifier.size(110.dp)) {
-            val r = size.minDimension / 2f
-            val dotRadius = 8f
-            val c = Offset(size.width / 2f, size.height / 2f)
-            drawCircle(color = Color(0xFF0E1116), radius = r, center = c)
-            drawCircle(color = ringColor, radius = r, center = c, style = Stroke(if (pressed) 3f else 2f))
-            drawLine(Color(0xFF222C36), Offset(c.x - r, c.y), Offset(c.x + r, c.y), 1f)
-            drawLine(Color(0xFF222C36), Offset(c.x, c.y - r), Offset(c.x, c.y + r), 1f)
-            val dot = Offset(c.x + nx * r, c.y - ny * r)
-            drawCircle(color = Accent, radius = dotRadius, center = dot)
-        }
+        StickCanvas(nx, ny, ringColor, pressed)
         Spacer(Modifier.height(6.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            StickAxisValue("X", x)
-            StickAxisValue("Y", y)
-        }
+        StickValues(x, y)
+    }
+}
+
+@Composable
+private fun StickCanvas(nx: Float, ny: Float, ringColor: Color, pressed: Boolean) {
+    Canvas(Modifier.size(Dimens.stickCanvasSize)) {
+        val r = size.minDimension / 2f
+        val c = Offset(size.width / 2f, size.height / 2f)
+        val strokeWidth = if (pressed) Dimens.stickRingStrokePressed else Dimens.stickRingStroke
+
+        drawCircle(color = StickBg, radius = r, center = c)
+        drawCircle(color = ringColor, radius = r, center = c, style = Stroke(strokeWidth))
+        drawLine(CrosshairColor, Offset(c.x - r, c.y), Offset(c.x + r, c.y), 1f)
+        drawLine(CrosshairColor, Offset(c.x, c.y - r), Offset(c.x, c.y + r), 1f)
+
+        val dot = Offset(c.x + nx * r, c.y - ny * r)
+        drawCircle(color = Accent, radius = Dimens.stickDotRadius, center = dot)
+    }
+}
+
+@Composable
+private fun StickValues(x: Int, y: Int) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        StickAxisValue("X", x)
+        StickAxisValue("Y", y)
     }
 }
 
@@ -54,13 +68,13 @@ private fun StickAxisValue(axis: String, value: Int) {
         Text(
             axis,
             color = TextDim.copy(alpha = 0.6f),
-            fontSize = 9.sp,
+            fontSize = Dimens.fontSizeLabel,
             fontFamily = FontFamily.Monospace,
         )
         Text(
             "%4d".format(value),
             color = TextDim,
-            fontSize = 9.sp,
+            fontSize = Dimens.fontSizeLabel,
             fontFamily = FontFamily.Monospace,
         )
     }

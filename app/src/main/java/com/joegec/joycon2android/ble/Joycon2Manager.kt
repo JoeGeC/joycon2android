@@ -11,6 +11,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.ControllerState
 import com.joegec.joycon2android.model.JoyconConnectionState
 import com.joegec.joycon2android.model.Side
@@ -52,7 +53,7 @@ class Joycon2Manager(private val context: Context) {
         if (leftConnection != null && rightConnection != null) return
 
         val scanner = adapter?.bluetoothLeScanner ?: run {
-            updateState(error = "Bluetooth is off or unavailable")
+            updateState(error = context.getString(R.string.error_bluetooth_off))
             return
         }
 
@@ -70,7 +71,7 @@ class Joycon2Manager(private val context: Context) {
                 stopScanning()
                 updateState(
                     error = if (!_state.value.anyConnected) {
-                        "No Joy-Con found. Press SYNC on the controller and try again."
+                        context.getString(R.string.error_no_joycon)
                     } else null
                 )
             }
@@ -144,11 +145,11 @@ class Joycon2Manager(private val context: Context) {
             scanning = false
             updateState(
                 error = when (errorCode) {
-                    SCAN_FAILED_ALREADY_STARTED -> "Scan already in progress"
-                    SCAN_FAILED_APPLICATION_REGISTRATION_FAILED -> "BLE app registration failed"
-                    SCAN_FAILED_FEATURE_UNSUPPORTED -> "BLE scanning not supported"
-                    SCAN_FAILED_INTERNAL_ERROR -> "Internal BLE error"
-                    else -> "Scan failed (code $errorCode)"
+                    SCAN_FAILED_ALREADY_STARTED -> context.getString(R.string.error_scan_already_started)
+                    SCAN_FAILED_APPLICATION_REGISTRATION_FAILED -> context.getString(R.string.error_ble_registration_failed)
+                    SCAN_FAILED_FEATURE_UNSUPPORTED -> context.getString(R.string.error_ble_unsupported)
+                    SCAN_FAILED_INTERNAL_ERROR -> context.getString(R.string.error_ble_internal)
+                    else -> context.getString(R.string.error_scan_failed, errorCode)
                 }
             )
         }
