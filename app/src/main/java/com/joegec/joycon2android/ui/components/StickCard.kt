@@ -43,7 +43,7 @@ internal fun StickCard(label: String, x: Int, y: Int, modifier: Modifier = Modif
             drawCircle(color = AccentDim, radius = r, center = c, style = Stroke(2f))
             drawLine(Color(0xFF222C36), Offset(c.x - r, c.y), Offset(c.x + r, c.y), 1f)
             drawLine(Color(0xFF222C36), Offset(c.x, c.y - r), Offset(c.x, c.y + r), 1f)
-            val dot = Offset(c.x + nx * r * 0.85f, c.y + ny * r * 0.85f)
+            val dot = Offset(c.x + nx * r * 0.85f, c.y - ny * r * 0.85f)
             drawCircle(color = Accent, radius = 10f, center = dot)
         }
 
