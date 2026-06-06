@@ -1,6 +1,6 @@
 package com.joegec.joycon2android.ble
 
-import com.joegec.joycon2android.model.Joycon2State
+import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.Side
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -26,22 +26,26 @@ object PacketParser {
         0x00000400L to "B", 0x00000800L to "A",
     )
 
-    fun parse(data: ByteArray, side: Side): Joycon2State? {
+    fun parse(data: ByteArray, side: Side): JoyconInput? {
         if (data.size < MIN_PACKET_SIZE) return null
         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
 
         val buttons = bb.getInt(0x03).toLong() and 0xFFFFFFFFL
-        val (lx, ly) = decodeStick(data, 0x0A)
-        val (rx, ry) = decodeStick(data, 0x0D)
 
-        return Joycon2State(
-            connected = true,
-            side = side,
+        // Left Joy-Con uses offset 0x0A, Right uses 0x0D
+        val stickOffset = when (side) {
+            Side.LEFT -> 0x0A
+            Side.RIGHT -> 0x0D
+            else -> 0x0A // Pro/Unknown: default to left
+        }
+        val (sx, sy) = decodeStick(data, stickOffset)
+
+        return JoyconInput(
             packetId = decodeUint24(data, 0),
             buttons = buttons,
             pressed = decodeButtons(buttons),
-            leftStickX = lx, leftStickY = ly,
-            rightStickX = rx, rightStickY = ry,
+            stickX = sx,
+            stickY = sy,
             accelX = bb.getShort(0x30).toInt(),
             accelY = bb.getShort(0x32).toInt(),
             accelZ = bb.getShort(0x34).toInt(),

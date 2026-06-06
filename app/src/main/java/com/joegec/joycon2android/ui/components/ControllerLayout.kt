@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.joegec.joycon2android.model.Joycon2State
+import com.joegec.joycon2android.model.ControllerState
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.TextDim
@@ -38,7 +38,7 @@ private val RightJoyconColor = Color(0xFFE33D2D)
 private val ButtonOff = Color(0xFF1A1F26)
 
 @Composable
-internal fun ControllerLayout(state: Joycon2State, modifier: Modifier = Modifier) {
+internal fun ControllerLayout(state: ControllerState, modifier: Modifier = Modifier) {
     Row(
         modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -49,7 +49,7 @@ internal fun ControllerLayout(state: Joycon2State, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun LeftJoycon(state: Joycon2State, modifier: Modifier = Modifier) {
+private fun LeftJoycon(state: ControllerState, modifier: Modifier = Modifier) {
     Column(
         modifier
             .background(CardBg, RoundedCornerShape(20.dp))
@@ -97,7 +97,7 @@ private fun LeftJoycon(state: Joycon2State, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun RightJoycon(state: Joycon2State, modifier: Modifier = Modifier) {
+private fun RightJoycon(state: ControllerState, modifier: Modifier = Modifier) {
     Column(
         modifier
             .background(CardBg, RoundedCornerShape(20.dp))

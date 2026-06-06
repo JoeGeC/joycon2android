@@ -15,16 +15,17 @@ import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AccentDim
 
 @Composable
-internal fun BatteryPill(volts: Float, modifier: Modifier = Modifier) {
+internal fun BatteryPill(volts: Float, label: String? = null, modifier: Modifier = Modifier) {
     Box(
         modifier
             .background(AccentDim, RoundedCornerShape(20.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
+        val text = if (label != null) "$label %.2f V".format(volts) else "%.2f V".format(volts)
         Text(
-            "%.2f V".format(volts),
+            text,
             color = Accent,
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,
         )
