@@ -24,7 +24,11 @@ import java.util.UUID
 /**
  * Manages a single BLE GATT connection to one Joy-Con 2.
  * Each Joy-Con gets its own instance with independent state.
+ *
+ * All BLE operations require BLUETOOTH_CONNECT permission, which is verified
+ * by the permission launcher in MainActivity before any BLE code is reached.
  */
+@SuppressLint("MissingPermission")
 class JoyconConnection(
     private val context: Context,
     val side: Side,
@@ -90,12 +94,10 @@ class JoyconConnection(
         private set
     private var ledSentAfterFirstPacket = false
 
-    @SuppressLint("MissingPermission")
     fun connect(device: BluetoothDevice) {
         gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
     }
 
-    @SuppressLint("MissingPermission")
     fun disconnect() {
         mainHandler.removeCallbacksAndMessages(null)
         gatt?.disconnect()
@@ -107,7 +109,6 @@ class JoyconConnection(
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
-        @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
@@ -136,13 +137,11 @@ class JoyconConnection(
             }
         }
 
-        @SuppressLint("MissingPermission")
         override fun onMtuChanged(g: BluetoothGatt, mtu: Int, status: Int) {
             Log.i(TAG, "[$side] MTU=$mtu. Discovering services.")
             g.discoverServices()
         }
 
-        @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
             Log.i(TAG, "[$side] Services discovered (status=$status)")
             if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -238,7 +237,6 @@ class JoyconConnection(
         }
     }
 
-    @SuppressLint("MissingPermission")
     fun setPlayerLed(player: PlayerNumber) {
         pendingPlayerLed = player
         if (!initComplete) return
@@ -246,7 +244,6 @@ class JoyconConnection(
         opQueue.enqueue { sendLedCommand(g) }
     }
 
-    @SuppressLint("MissingPermission")
     fun clearPlayerLed() {
         pendingPlayerLed = null
         if (!initComplete) return
@@ -254,7 +251,6 @@ class JoyconConnection(
         opQueue.enqueue { sendLedCommand(g) }
     }
 
-    @SuppressLint("MissingPermission")
     private fun sendLedCommand(g: BluetoothGatt): Boolean {
         val pending = pendingPlayerLed
         pendingPlayerLed = null
@@ -263,7 +259,6 @@ class JoyconConnection(
         return writeCharacteristic(g, writeChar!!, cmd)
     }
 
-    @SuppressLint("MissingPermission")
     private fun enqueueInitWrite(g: BluetoothGatt, bytes: ByteArray) {
         opQueue.enqueue { writeCharacteristic(g, writeChar!!, bytes) }
     }
@@ -281,7 +276,6 @@ class JoyconConnection(
         }
     }
 
-    @SuppressLint("MissingPermission")
     private fun writeCharacteristic(
         g: BluetoothGatt,
         ch: BluetoothGattCharacteristic,
@@ -298,7 +292,6 @@ class JoyconConnection(
         }
     }
 
-    @SuppressLint("MissingPermission")
     private fun writeDescriptor(
         g: BluetoothGatt,
         descriptor: BluetoothGattDescriptor,

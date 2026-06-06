@@ -15,7 +15,11 @@ import com.joegec.joycon2android.model.Side
 /**
  * Handles BLE scanning for Nintendo Joy-Con 2 controllers.
  * Emits discovered devices via the [onDeviceFound] callback.
+ *
+ * All BLE operations require BLUETOOTH_SCAN and BLUETOOTH_CONNECT permissions,
+ * which are verified by the permission launcher in MainActivity before any BLE code is reached.
  */
+@SuppressLint("MissingPermission")
 class BleScanner(context: Context) {
 
     companion object {
@@ -38,7 +42,6 @@ class BleScanner(context: Context) {
 
     val isAvailable: Boolean get() = adapter?.bluetoothLeScanner != null
 
-    @SuppressLint("MissingPermission")
     fun start(isKnownAddress: (String) -> Boolean) {
         if (isScanning) return
         val scanner = adapter?.bluetoothLeScanner ?: return
@@ -49,7 +52,6 @@ class BleScanner(context: Context) {
         scheduleTimeout()
     }
 
-    @SuppressLint("MissingPermission")
     fun stop() {
         if (!isScanning) return
         isScanning = false
@@ -62,7 +64,6 @@ class BleScanner(context: Context) {
 
     private fun createCallback(isKnownAddress: (String) -> Boolean): ScanCallback {
         val callback = object : ScanCallback() {
-            @SuppressLint("MissingPermission")
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 if (!isScanning) return
                 if (!isNintendoDevice(result)) return

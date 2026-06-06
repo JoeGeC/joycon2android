@@ -9,7 +9,11 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Manages all active Joy-Con BLE connections, keyed by device address.
  * Thread-safe: BLE callbacks arrive on binder threads.
+ *
+ * All BLE operations require BLUETOOTH_CONNECT permission, which is verified
+ * by the permission launcher in MainActivity before any BLE code is reached.
  */
+@SuppressLint("MissingPermission")
 class ConnectionPool(private val context: Context) {
 
     private val connections = ConcurrentHashMap<String, JoyconConnection>()
@@ -24,7 +28,6 @@ class ConnectionPool(private val context: Context) {
      * Atomically creates and starts a connection for [result].
      * Returns null if this address is already in the pool (duplicate scan result).
      */
-    @SuppressLint("MissingPermission")
     fun connect(result: ScanResult, side: Side, name: String): JoyconConnection? {
         val address = result.device.address
         val connection = JoyconConnection(context, side, name) {
@@ -38,12 +41,10 @@ class ConnectionPool(private val context: Context) {
 
     fun get(address: String): JoyconConnection? = connections[address]
 
-    @SuppressLint("MissingPermission")
     fun disconnect(address: String) {
         connections.remove(address)?.disconnect()
     }
 
-    @SuppressLint("MissingPermission")
     fun disconnectAll() {
         connections.values.forEach { it.disconnect() }
         connections.clear()
