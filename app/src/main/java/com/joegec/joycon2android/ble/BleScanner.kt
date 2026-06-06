@@ -71,7 +71,7 @@ class BleScanner(context: Context) {
                 val name = result.device.name
                     ?: result.scanRecord?.deviceName
                     ?: "Joy-Con 2"
-                val side = detectSide(name)
+                val side = detectSide(result, name)
                 onDeviceFound?.invoke(result, side, name)
             }
 
@@ -102,10 +102,33 @@ class BleScanner(context: Context) {
         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
         .build()
 
-    private fun detectSide(name: String): Side = when {
+    private fun detectSide(result: ScanResult, name: String): Side {
+        sideFromName(name)?.let { return it }
+        sideFromManufacturerData(result)?.let { return it }
+        return Side.UNKNOWN
+    }
+
+    private fun sideFromName(name: String): Side? = when {
         name.contains("(L)") || name.contains("Left") -> Side.LEFT
         name.contains("(R)") || name.contains("Right") -> Side.RIGHT
         name.contains("Pro") -> Side.PRO
-        else -> Side.UNKNOWN
+        else -> null
+    }
+
+    /**
+     * Nintendo manufacturer data (0x0553) typically contains a device type byte.
+     * Known values: 0x2D = Left Joy-Con 2, 0x2E = Right Joy-Con 2.
+     */
+    private fun sideFromManufacturerData(result: ScanResult): Side? {
+        val mfgData = result.scanRecord
+            ?.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) ?: return null
+        if (mfgData.isEmpty()) return null
+        Log.d(TAG, "Manufacturer data: ${mfgData.joinToString(" ") { "%02X".format(it) }}")
+        val typeByte = mfgData[0].toInt() and 0xFF
+        return when (typeByte) {
+            0x2D -> Side.LEFT
+            0x2E -> Side.RIGHT
+            else -> null
+        }
     }
 }

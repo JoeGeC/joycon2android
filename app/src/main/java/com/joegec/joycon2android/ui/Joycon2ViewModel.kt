@@ -54,8 +54,9 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun assignToPlayer(address: String, player: PlayerNumber) {
-        assignmentManager.assign(address, player)
-        manager.getConnection(address)?.setPlayerLed(player)
+        val connection = manager.getConnection(address) ?: return
+        if (!assignmentManager.assign(address, connection.side, player)) return
+        connection.setPlayerLed(player)
     }
 
     fun unassign(address: String) {

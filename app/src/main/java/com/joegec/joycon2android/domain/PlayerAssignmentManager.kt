@@ -1,28 +1,36 @@
 package com.joegec.joycon2android.domain
 
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.Side
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Maps Joy-Con BLE addresses to player numbers.
- * Pure domain logic with no Android dependencies.
+ * Enforces that each player can have at most one Left and one Right controller.
  */
 class PlayerAssignmentManager {
 
     private val _assignments = MutableStateFlow<Map<String, PlayerNumber>>(emptyMap())
     val assignments: StateFlow<Map<String, PlayerNumber>> = _assignments.asStateFlow()
 
-    fun assign(address: String, player: PlayerNumber) {
+    private val sides = mutableMapOf<String, Side>()
+
+    fun assign(address: String, side: Side, player: PlayerNumber): Boolean {
+        if (isSlotTaken(side, player)) return false
+        sides[address] = side
         _assignments.value = _assignments.value + (address to player)
+        return true
     }
 
     fun unassign(address: String) {
+        sides.remove(address)
         _assignments.value = _assignments.value - address
     }
 
     fun unassignAll() {
+        sides.clear()
         _assignments.value = emptyMap()
     }
 
@@ -30,4 +38,16 @@ class PlayerAssignmentManager {
 
     fun addressesForPlayer(player: PlayerNumber): List<String> =
         _assignments.value.filterValues { it == player }.keys.toList()
+
+    private fun isSlotTaken(side: Side, player: PlayerNumber): Boolean {
+        val assignedToPlayer = _assignments.value.filterValues { it == player }.keys
+        return assignedToPlayer.any { address ->
+            val existingSide = sides[address] ?: return@any false
+            when (side) {
+                Side.LEFT -> existingSide == Side.LEFT
+                Side.RIGHT -> existingSide == Side.RIGHT
+                else -> false
+            }
+        }
+    }
 }

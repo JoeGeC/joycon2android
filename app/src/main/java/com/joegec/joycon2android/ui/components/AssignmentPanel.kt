@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.Side
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
@@ -32,6 +33,7 @@ import com.joegec.joycon2android.ui.theme.TextOnAccent
 @Composable
 internal fun AssignmentPanel(
     unassigned: List<ConnectedJoycon>,
+    players: List<PlayerState>,
     onAssign: (String, PlayerNumber) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -53,7 +55,7 @@ internal fun AssignmentPanel(
         )
 
         unassigned.forEach { joycon ->
-            JoyconAssignmentRow(joycon, onAssign)
+            JoyconAssignmentRow(joycon, players, onAssign)
         }
     }
 }
@@ -61,6 +63,7 @@ internal fun AssignmentPanel(
 @Composable
 private fun JoyconAssignmentRow(
     joycon: ConnectedJoycon,
+    players: List<PlayerState>,
     onAssign: (String, PlayerNumber) -> Unit,
 ) {
     val sideColor = when (joycon.side) {
@@ -83,9 +86,11 @@ private fun JoyconAssignmentRow(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PlayerNumber.entries.forEach { player ->
+                val slotTaken = isSlotTaken(joycon.side, player, players)
                 FilterChip(
                     selected = false,
                     onClick = { onAssign(joycon.address, player) },
+                    enabled = !slotTaken,
                     label = {
                         Text(
                             stringResource(R.string.player_label, player.index),
@@ -101,5 +106,14 @@ private fun JoyconAssignmentRow(
                 )
             }
         }
+    }
+}
+
+private fun isSlotTaken(side: Side, player: PlayerNumber, players: List<PlayerState>): Boolean {
+    val playerState = players.find { it.player == player } ?: return false
+    return when (side) {
+        Side.LEFT -> playerState.left != null
+        Side.RIGHT -> playerState.right != null
+        else -> playerState.left != null && playerState.right != null
     }
 }

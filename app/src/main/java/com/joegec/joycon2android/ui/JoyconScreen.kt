@@ -186,6 +186,7 @@ private fun ConnectedContent(
     if (state.unassignedJoycons.isNotEmpty()) {
         AssignmentPanel(
             unassigned = state.unassignedJoycons,
+            players = state.players,
             onAssign = onAssign,
         )
     }
