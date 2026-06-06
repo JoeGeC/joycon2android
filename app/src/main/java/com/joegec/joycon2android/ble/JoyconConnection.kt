@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothProfile
 import android.content.Context
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -177,10 +178,7 @@ class JoyconConnection(
                 if (cmdCccd != null) {
                     opQueue.enqueue {
                         Log.d(TAG, "[$side] Writing CMD_RESPONSE CCCD")
-                        @Suppress("DEPRECATION")
-                        cmdCccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                        @Suppress("DEPRECATION")
-                        g.writeDescriptor(cmdCccd)
+                        writeDescriptor(g, cmdCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
                     }
                 } else {
                     Log.w(TAG, "[$side] CMD_RESPONSE char has no CCCD descriptor")
@@ -193,10 +191,7 @@ class JoyconConnection(
             if (notifyCccd != null) {
                 opQueue.enqueue {
                     Log.d(TAG, "[$side] Writing NOTIFY CCCD")
-                    @Suppress("DEPRECATION")
-                    notifyCccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                    @Suppress("DEPRECATION")
-                    g.writeDescriptor(notifyCccd)
+                    writeDescriptor(g, notifyCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
                 }
             } else {
                 Log.e(TAG, "[$side] NOTIFY char has no CCCD descriptor — notifications won't work!")
@@ -229,21 +224,17 @@ class JoyconConnection(
             mainHandler.postDelayed({ opQueue.complete() }, delay)
         }
 
-        @Suppress("DEPRECATION")
+        @Deprecated("Deprecated in Java - used for API < 33")
         override fun onCharacteristicChanged(
             g: BluetoothGatt, ch: BluetoothGattCharacteristic
         ) {
-            val data = ch.value ?: return
-            when (ch.uuid) {
-                NOTIFY_CHAR -> {
-                    PacketParser.parse(data, side)?.let { _input.value = it }
-                    if (!ledSentAfterFirstPacket && initComplete) {
-                        ledSentAfterFirstPacket = true
-                        mainHandler.post { opQueue.enqueue { sendLedCommand(g) } }
-                    }
-                }
-                CMD_RESPONSE_CHAR -> Log.d(TAG, "[$side] Cmd response: ${data.size} bytes")
-            }
+            handleCharacteristicChanged(g, ch.uuid, ch.value ?: return)
+        }
+
+        override fun onCharacteristicChanged(
+            g: BluetoothGatt, ch: BluetoothGattCharacteristic, value: ByteArray
+        ) {
+            handleCharacteristicChanged(g, ch.uuid, value)
         }
     }
 
@@ -269,19 +260,57 @@ class JoyconConnection(
         pendingPlayerLed = null
         val cmd = if (pending != null) playerLedCmd(pending.index) else LED_ALL_ON_CMD
         Log.i(TAG, "[$side] Sending LED cmd: ${cmd.joinToString(" ") { "%02X".format(it) }}")
-        @Suppress("DEPRECATION")
-        writeChar!!.value = cmd
-        @Suppress("DEPRECATION")
-        return g.writeCharacteristic(writeChar)
+        return writeCharacteristic(g, writeChar!!, cmd)
     }
 
     @SuppressLint("MissingPermission")
     private fun enqueueInitWrite(g: BluetoothGatt, bytes: ByteArray) {
-        opQueue.enqueue {
+        opQueue.enqueue { writeCharacteristic(g, writeChar!!, bytes) }
+    }
+
+    private fun handleCharacteristicChanged(g: BluetoothGatt, uuid: UUID, data: ByteArray) {
+        when (uuid) {
+            NOTIFY_CHAR -> {
+                PacketParser.parse(data, side)?.let { _input.value = it }
+                if (!ledSentAfterFirstPacket && initComplete) {
+                    ledSentAfterFirstPacket = true
+                    mainHandler.post { opQueue.enqueue { sendLedCommand(g) } }
+                }
+            }
+            CMD_RESPONSE_CHAR -> Log.d(TAG, "[$side] Cmd response: ${data.size} bytes")
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun writeCharacteristic(
+        g: BluetoothGatt,
+        ch: BluetoothGattCharacteristic,
+        value: ByteArray,
+    ): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            g.writeCharacteristic(ch, value, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE) ==
+                BluetoothGatt.GATT_SUCCESS
+        } else {
             @Suppress("DEPRECATION")
-            writeChar!!.value = bytes
+            ch.value = value
             @Suppress("DEPRECATION")
-            g.writeCharacteristic(writeChar)
+            g.writeCharacteristic(ch)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun writeDescriptor(
+        g: BluetoothGatt,
+        descriptor: BluetoothGattDescriptor,
+        value: ByteArray,
+    ): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            g.writeDescriptor(descriptor, value) == BluetoothGatt.GATT_SUCCESS
+        } else {
+            @Suppress("DEPRECATION")
+            descriptor.value = value
+            @Suppress("DEPRECATION")
+            g.writeDescriptor(descriptor)
         }
     }
 
