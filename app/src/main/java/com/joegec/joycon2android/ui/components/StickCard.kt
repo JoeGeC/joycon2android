@@ -26,15 +26,16 @@ internal fun StickCard(x: Int, y: Int, pressed: Boolean, modifier: Modifier = Mo
     val ringColor = if (pressed) Accent else AccentDim
 
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Canvas(Modifier.size(90.dp)) {
+        Canvas(Modifier.size(110.dp)) {
             val r = size.minDimension / 2f
+            val dotRadius = 8f
             val c = Offset(size.width / 2f, size.height / 2f)
             drawCircle(color = Color(0xFF0E1116), radius = r, center = c)
             drawCircle(color = ringColor, radius = r, center = c, style = Stroke(if (pressed) 3f else 2f))
             drawLine(Color(0xFF222C36), Offset(c.x - r, c.y), Offset(c.x + r, c.y), 1f)
             drawLine(Color(0xFF222C36), Offset(c.x, c.y - r), Offset(c.x, c.y + r), 1f)
-            val dot = Offset(c.x + nx * r * 0.85f, c.y - ny * r * 0.85f)
-            drawCircle(color = Accent, radius = 8f, center = dot)
+            val dot = Offset(c.x + nx * r, c.y - ny * r)
+            drawCircle(color = Accent, radius = dotRadius, center = dot)
         }
         Spacer(Modifier.height(6.dp))
         Text(
