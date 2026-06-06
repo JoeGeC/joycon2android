@@ -33,7 +33,7 @@
 - Single-activity Compose app
 - State flows from BLE layer → domain state → ViewModel → Compose UI
 - GATT operations are queued (Android allows only one at a time)
-- Protocol reference: `joycon2_android_reference.md` is authoritative over any external docs
+- Read `README.md` for project context, BLE protocol reference, packet layout, and Android-specific gotchas
 
 ## Conventions
 - Use `enableEdgeToEdge()` with `WindowInsets.systemBars` for edge-to-edge inset handling
