@@ -7,7 +7,6 @@
 
 ## Code Style
 - Follow current Android, Kotlin, and Compose conventions
-- Clean Architecture and SOLID principles
 - Boy Scout Rule: leave code better than you found it
 - One class per file
 - Code should read like well-written prose
@@ -16,9 +15,23 @@
 - Self-describing code — comments only when context or "why" is non-obvious
 - This project benefits from comments explaining BLE protocol details, timing constraints, and byte-level formats since these are not self-evident from code alone
 
+## SOLID Principles
+- **Single Responsibility:** each class has one reason to change — if you need "Manager" or "Handler" in the name, it's probably doing too much
+- **Open/Closed:** add behaviour through new classes, not by editing existing ones
+- **Liskov Substitution:** subtypes must be interchangeable with their parent
+- **Interface Segregation:** prefer small, focused interfaces over broad ones
+- **Dependency Inversion:** depend on abstractions, not concretions; inject dependencies via constructors
+
+## Clean Architecture
+- Split responsibilities into focused collaborators, not regions within a single class
+- An orchestrator should delegate, not implement — keep it under ~100 lines
+- Each class should be independently testable
+- Identify boundaries by asking "what changes for what reason?"
+- If a class exceeds ~200 lines or has multiple clusters of private fields serving different concerns, it needs splitting
+
 ## Architecture
 - Single-activity Compose app
-- State flows from `Joycon2Manager` (BLE engine) → `Joycon2State` data class → Compose UI
+- State flows from BLE layer → domain state → ViewModel → Compose UI
 - GATT operations are queued (Android allows only one at a time)
 - Protocol reference: `joycon2_android_reference.md` is authoritative over any external docs
 
