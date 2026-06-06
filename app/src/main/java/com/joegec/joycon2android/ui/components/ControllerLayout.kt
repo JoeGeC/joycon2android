@@ -282,7 +282,7 @@ private fun RightSidewaysLayout(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
             ) {
-                // Home/Chat left, battery center, + right
+                // Chat/Home left, battery center, + right
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -292,6 +292,7 @@ private fun RightSidewaysLayout(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        SmallButton("C", "Chat" in state.pressed)
                         ControllerIconButton(
                             on = "Home" in state.pressed,
                             modifier = Modifier.size(Dimens.iconButtonSize),
@@ -303,7 +304,6 @@ private fun RightSidewaysLayout(
                                 tint = if ("Home" in state.pressed) TextOnAccent else TextDim,
                             )
                         }
-                        SmallButton("C", "Chat" in state.pressed)
                     }
                     if (input.batteryVolts > 0f) {
                         BatteryPill(input.batteryVolts)
