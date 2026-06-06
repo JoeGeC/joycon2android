@@ -25,13 +25,21 @@ internal fun FaceButtons(
     pressed: Set<String>,
     modifier: Modifier = Modifier,
     buttonSize: Dp = Dimens.faceButtonSize,
+    sideways: Boolean = false,
 ) {
     val offset = (buttonSize * 0.09f).coerceAtLeast(2.dp)
     Box(modifier.size(buttonSize * 3), contentAlignment = Alignment.Center) {
-        FaceButton(JoyconButton.Y.label, JoyconButton.Y.id in pressed, buttonSize, Modifier.align(Alignment.CenterStart).offset(x = offset))
-        FaceButton(JoyconButton.X.label, JoyconButton.X.id in pressed, buttonSize, Modifier.align(Alignment.TopCenter).offset(y = offset))
-        FaceButton(JoyconButton.A.label, JoyconButton.A.id in pressed, buttonSize, Modifier.align(Alignment.CenterEnd).offset(x = -offset))
-        FaceButton(JoyconButton.B.label, JoyconButton.B.id in pressed, buttonSize, Modifier.align(Alignment.BottomCenter).offset(y = -offset))
+        if (sideways) {
+            FaceButton(JoyconButton.Y.label, JoyconButton.Y.id in pressed, buttonSize, Modifier.align(Alignment.TopCenter).offset(y = offset))
+            FaceButton(JoyconButton.X.label, JoyconButton.X.id in pressed, buttonSize, Modifier.align(Alignment.CenterEnd).offset(x = -offset))
+            FaceButton(JoyconButton.A.label, JoyconButton.A.id in pressed, buttonSize, Modifier.align(Alignment.BottomCenter).offset(y = -offset))
+            FaceButton(JoyconButton.B.label, JoyconButton.B.id in pressed, buttonSize, Modifier.align(Alignment.CenterStart).offset(x = offset))
+        } else {
+            FaceButton(JoyconButton.Y.label, JoyconButton.Y.id in pressed, buttonSize, Modifier.align(Alignment.CenterStart).offset(x = offset))
+            FaceButton(JoyconButton.X.label, JoyconButton.X.id in pressed, buttonSize, Modifier.align(Alignment.TopCenter).offset(y = offset))
+            FaceButton(JoyconButton.A.label, JoyconButton.A.id in pressed, buttonSize, Modifier.align(Alignment.CenterEnd).offset(x = -offset))
+            FaceButton(JoyconButton.B.label, JoyconButton.B.id in pressed, buttonSize, Modifier.align(Alignment.BottomCenter).offset(y = -offset))
+        }
     }
 }
 

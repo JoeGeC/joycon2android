@@ -104,17 +104,20 @@ private fun TopRow(state: PlayerState) {
 
 @Composable
 private fun StickAndFaceButtons(state: PlayerState) {
+    val rotatedX = state.rightStickY
+    val rotatedY = 4096 - state.rightStickX
+
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            StickCard(state.rightStickX, state.rightStickY, JoyconButton.RS.id in state.pressed,
+            StickCard(rotatedX, rotatedY, JoyconButton.RS.id in state.pressed,
                 canvasSize = Dimens.sidewaysStickSize)
         }
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            FaceButtons(state.pressed, buttonSize = Dimens.sidewaysFaceSize)
+            FaceButtons(state.pressed, buttonSize = Dimens.sidewaysFaceSize, sideways = true)
         }
     }
 }

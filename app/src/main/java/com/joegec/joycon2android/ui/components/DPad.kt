@@ -22,12 +22,20 @@ internal fun DPad(
     pressed: Set<String>,
     modifier: Modifier = Modifier,
     buttonSize: Dp = Dimens.dpadSize,
+    sideways: Boolean = false,
 ) {
     Box(modifier.size(buttonSize * 3), contentAlignment = Alignment.Center) {
-        DPadButton("▲", JoyconButton.Up.id in pressed, buttonSize, Modifier.align(Alignment.TopCenter))
-        DPadButton("▼", JoyconButton.Down.id in pressed, buttonSize, Modifier.align(Alignment.BottomCenter))
-        DPadButton("◀", JoyconButton.Left.id in pressed, buttonSize, Modifier.align(Alignment.CenterStart))
-        DPadButton("▶", JoyconButton.Right.id in pressed, buttonSize, Modifier.align(Alignment.CenterEnd))
+        if (sideways) {
+            DPadButton("▲", JoyconButton.Right.id in pressed, buttonSize, Modifier.align(Alignment.TopCenter))
+            DPadButton("▼", JoyconButton.Left.id in pressed, buttonSize, Modifier.align(Alignment.BottomCenter))
+            DPadButton("◀", JoyconButton.Up.id in pressed, buttonSize, Modifier.align(Alignment.CenterStart))
+            DPadButton("▶", JoyconButton.Down.id in pressed, buttonSize, Modifier.align(Alignment.CenterEnd))
+        } else {
+            DPadButton("▲", JoyconButton.Up.id in pressed, buttonSize, Modifier.align(Alignment.TopCenter))
+            DPadButton("▼", JoyconButton.Down.id in pressed, buttonSize, Modifier.align(Alignment.BottomCenter))
+            DPadButton("◀", JoyconButton.Left.id in pressed, buttonSize, Modifier.align(Alignment.CenterStart))
+            DPadButton("▶", JoyconButton.Right.id in pressed, buttonSize, Modifier.align(Alignment.CenterEnd))
+        }
     }
 }
 
