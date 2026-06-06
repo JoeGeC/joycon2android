@@ -62,9 +62,18 @@ private fun LeftJoycon(state: ControllerState, modifier: Modifier = Modifier) {
         ShoulderButton("ZL", "ZL" in state.pressed, Modifier.fillMaxWidth())
         ShoulderButton("L", "L" in state.pressed, Modifier.fillMaxWidth())
 
-        // Minus
-        Box(Modifier.fillMaxWidth()) {
-            SmallButton("-", "-" in state.pressed, Modifier.align(Alignment.CenterEnd))
+        // Minus + Battery
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (state.left.connected && state.leftInput.batteryVolts > 0f) {
+                BatteryPill(state.leftInput.batteryVolts)
+            } else {
+                Spacer(Modifier)
+            }
+            SmallButton("-", "-" in state.pressed)
         }
 
         // Left stick
@@ -115,9 +124,18 @@ private fun RightJoycon(state: ControllerState, modifier: Modifier = Modifier) {
         ShoulderButton("ZR", "ZR" in state.pressed, Modifier.fillMaxWidth())
         ShoulderButton("R", "R" in state.pressed, Modifier.fillMaxWidth())
 
-        // Plus
-        Box(Modifier.fillMaxWidth()) {
-            SmallButton("+", "+" in state.pressed, Modifier.align(Alignment.CenterStart))
+        // Plus + Battery
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SmallButton("+", "+" in state.pressed)
+            if (state.right.connected && state.rightInput.batteryVolts > 0f) {
+                BatteryPill(state.rightInput.batteryVolts)
+            } else {
+                Spacer(Modifier)
+            }
         }
 
         // Face buttons

@@ -28,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.joegec.joycon2android.model.ControllerState
-import com.joegec.joycon2android.ui.components.BatteryPill
 import com.joegec.joycon2android.ui.components.ControllerLayout
 import com.joegec.joycon2android.ui.components.ScanningIndicator
 import com.joegec.joycon2android.ui.theme.Accent
@@ -84,15 +83,6 @@ private fun Header(state: ControllerState) {
                 letterSpacing = 2.sp,
                 fontWeight = FontWeight.Medium,
             )
-        }
-        // Show battery for each connected side
-        Column(horizontalAlignment = Alignment.End) {
-            if (state.left.connected && state.leftInput.batteryVolts > 0f) {
-                BatteryPill(state.leftInput.batteryVolts, "L")
-            }
-            if (state.right.connected && state.rightInput.batteryVolts > 0f) {
-                BatteryPill(state.rightInput.batteryVolts, "R")
-            }
         }
     }
 }
