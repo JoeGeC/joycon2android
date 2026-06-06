@@ -1,8 +1,11 @@
 package com.joegec.joycon2android.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
@@ -38,10 +41,26 @@ internal fun StickCard(x: Int, y: Int, pressed: Boolean, modifier: Modifier = Mo
             drawCircle(color = Accent, radius = dotRadius, center = dot)
         }
         Spacer(Modifier.height(6.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            StickAxisValue("X", x)
+            StickAxisValue("Y", y)
+        }
+    }
+}
+
+@Composable
+private fun StickAxisValue(axis: String, value: Int) {
+    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
-            "$x, $y",
+            axis,
+            color = TextDim.copy(alpha = 0.6f),
+            fontSize = 9.sp,
+            fontFamily = FontFamily.Monospace,
+        )
+        Text(
+            "%4d".format(value),
             color = TextDim,
-            fontSize = 11.sp,
+            fontSize = 9.sp,
             fontFamily = FontFamily.Monospace,
         )
     }
