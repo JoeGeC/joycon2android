@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.Dp
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.ButtonOff
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -16,20 +17,24 @@ import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 
 @Composable
-internal fun DPad(pressed: Set<String>, modifier: Modifier = Modifier) {
-    Box(modifier.size(Dimens.dpadSize * 3), contentAlignment = Alignment.Center) {
-        DPadButton("▲", "Up" in pressed, Modifier.align(Alignment.TopCenter))
-        DPadButton("▼", "Down" in pressed, Modifier.align(Alignment.BottomCenter))
-        DPadButton("◀", "Left" in pressed, Modifier.align(Alignment.CenterStart))
-        DPadButton("▶", "Right" in pressed, Modifier.align(Alignment.CenterEnd))
+internal fun DPad(
+    pressed: Set<String>,
+    modifier: Modifier = Modifier,
+    buttonSize: Dp = Dimens.dpadSize,
+) {
+    Box(modifier.size(buttonSize * 3), contentAlignment = Alignment.Center) {
+        DPadButton("▲", "Up" in pressed, buttonSize, Modifier.align(Alignment.TopCenter))
+        DPadButton("▼", "Down" in pressed, buttonSize, Modifier.align(Alignment.BottomCenter))
+        DPadButton("◀", "Left" in pressed, buttonSize, Modifier.align(Alignment.CenterStart))
+        DPadButton("▶", "Right" in pressed, buttonSize, Modifier.align(Alignment.CenterEnd))
     }
 }
 
 @Composable
-private fun DPadButton(symbol: String, on: Boolean, modifier: Modifier = Modifier) {
+private fun DPadButton(symbol: String, on: Boolean, buttonSize: Dp, modifier: Modifier = Modifier) {
     Box(
         modifier
-            .size(Dimens.dpadSize)
+            .size(buttonSize)
             .clip(CircleShape)
             .background(if (on) Accent else ButtonOff),
         contentAlignment = Alignment.Center,

@@ -22,6 +22,9 @@ object Dimens {
     val iconButtonSize = 36.dp
 
     val stickCanvasSize = 110.dp
+    val sidewaysStickSize = 100.dp
+    val sidewaysDpadSize = 38.dp
+    val sidewaysFaceSize = 38.dp
     val stickDotRadius = 8f
     val stickRingStroke = 2f
     val stickRingStrokePressed = 3f

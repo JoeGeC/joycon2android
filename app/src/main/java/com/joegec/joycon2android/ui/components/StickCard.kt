@@ -16,6 +16,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AccentDim
@@ -25,21 +26,27 @@ import com.joegec.joycon2android.ui.theme.StickBg
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
-internal fun StickCard(x: Int, y: Int, pressed: Boolean, modifier: Modifier = Modifier) {
+internal fun StickCard(
+    x: Int,
+    y: Int,
+    pressed: Boolean,
+    modifier: Modifier = Modifier,
+    canvasSize: Dp = Dimens.stickCanvasSize,
+) {
     val nx = (x - 2048f) / 2048f
     val ny = (y - 2048f) / 2048f
     val ringColor = if (pressed) Accent else AccentDim
 
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        StickCanvas(nx, ny, ringColor, pressed)
+        StickCanvas(nx, ny, ringColor, pressed, canvasSize)
         Spacer(Modifier.height(6.dp))
         StickValues(x, y)
     }
 }
 
 @Composable
-private fun StickCanvas(nx: Float, ny: Float, ringColor: Color, pressed: Boolean) {
-    Canvas(Modifier.size(Dimens.stickCanvasSize)) {
+private fun StickCanvas(nx: Float, ny: Float, ringColor: Color, pressed: Boolean, canvasSize: Dp) {
+    Canvas(Modifier.size(canvasSize)) {
         val r = size.minDimension / 2f
         val c = Offset(size.width / 2f, size.height / 2f)
         val strokeWidth = if (pressed) Dimens.stickRingStrokePressed else Dimens.stickRingStroke

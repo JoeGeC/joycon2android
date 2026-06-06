@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.ButtonOff
@@ -19,20 +20,25 @@ import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 
 @Composable
-internal fun FaceButtons(pressed: Set<String>, modifier: Modifier = Modifier) {
-    Box(modifier.size(Dimens.faceButtonSize * 3), contentAlignment = Alignment.Center) {
-        FaceButton("Y", "Y" in pressed, Modifier.align(Alignment.CenterStart).offset(x = 4.dp))
-        FaceButton("X", "X" in pressed, Modifier.align(Alignment.TopCenter).offset(y = 4.dp))
-        FaceButton("A", "A" in pressed, Modifier.align(Alignment.CenterEnd).offset(x = (-4).dp))
-        FaceButton("B", "B" in pressed, Modifier.align(Alignment.BottomCenter).offset(y = (-4).dp))
+internal fun FaceButtons(
+    pressed: Set<String>,
+    modifier: Modifier = Modifier,
+    buttonSize: Dp = Dimens.faceButtonSize,
+) {
+    val offset = (buttonSize * 0.09f).coerceAtLeast(2.dp)
+    Box(modifier.size(buttonSize * 3), contentAlignment = Alignment.Center) {
+        FaceButton("Y", "Y" in pressed, buttonSize, Modifier.align(Alignment.CenterStart).offset(x = offset))
+        FaceButton("X", "X" in pressed, buttonSize, Modifier.align(Alignment.TopCenter).offset(y = offset))
+        FaceButton("A", "A" in pressed, buttonSize, Modifier.align(Alignment.CenterEnd).offset(x = -offset))
+        FaceButton("B", "B" in pressed, buttonSize, Modifier.align(Alignment.BottomCenter).offset(y = -offset))
     }
 }
 
 @Composable
-private fun FaceButton(label: String, on: Boolean, modifier: Modifier = Modifier) {
+private fun FaceButton(label: String, on: Boolean, buttonSize: Dp, modifier: Modifier = Modifier) {
     Box(
         modifier
-            .size(Dimens.faceButtonSize)
+            .size(buttonSize)
             .clip(CircleShape)
             .background(if (on) Accent else ButtonOff),
         contentAlignment = Alignment.Center,
