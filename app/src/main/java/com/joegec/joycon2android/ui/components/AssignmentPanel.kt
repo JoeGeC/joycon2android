@@ -9,11 +9,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -111,11 +114,15 @@ private fun JoyconAssignmentRow(
                     )
                 }
             }
-            TextButton(onClick = { onDisconnect(joycon.address) }) {
-                Text(
-                    stringResource(R.string.button_disconnect),
-                    color = TextDim,
-                    fontSize = Dimens.fontSizeSmall,
+            IconButton(
+                onClick = { onDisconnect(joycon.address) },
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.button_disconnect),
+                    tint = TextDim,
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
