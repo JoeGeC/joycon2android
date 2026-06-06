@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -170,24 +169,6 @@ private fun DisconnectedContent(state: ControllerState, onConnect: () -> Unit) {
 @Composable
 private fun ConnectedContent(state: ControllerState, onStop: () -> Unit) {
     ControllerLayout(state)
-
-    // Per-side IMU and packet data
-    if (state.left.connected) {
-        Text(
-            "L: Accel ${state.leftInput.accelX}, ${state.leftInput.accelY}, ${state.leftInput.accelZ}  " +
-                "Gyro ${state.leftInput.gyroX}, ${state.leftInput.gyroY}, ${state.leftInput.gyroZ}  " +
-                "pkt ${state.leftInput.packetId}",
-            color = TextDim, fontSize = 10.sp, fontFamily = FontFamily.Monospace,
-        )
-    }
-    if (state.right.connected) {
-        Text(
-            "R: Accel ${state.rightInput.accelX}, ${state.rightInput.accelY}, ${state.rightInput.accelZ}  " +
-                "Gyro ${state.rightInput.gyroX}, ${state.rightInput.gyroY}, ${state.rightInput.gyroZ}  " +
-                "pkt ${state.rightInput.packetId}",
-            color = TextDim, fontSize = 10.sp, fontFamily = FontFamily.Monospace,
-        )
-    }
 
     OutlinedButton(
         onClick = onStop,

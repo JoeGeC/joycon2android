@@ -93,6 +93,11 @@ private fun LeftJoycon(state: ControllerState, modifier: Modifier = Modifier) {
             RailButton("SL", "SL(L)" in state.pressed, Modifier.weight(1f))
             RailButton("SR", "SR(L)" in state.pressed, Modifier.weight(1f))
         }
+
+        // IMU data
+        if (state.left.connected) {
+            ImuDisplay(state.leftInput)
+        }
     }
 }
 
@@ -146,6 +151,11 @@ private fun RightJoycon(state: ControllerState, modifier: Modifier = Modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             RailButton("SL", "SL(R)" in state.pressed, Modifier.weight(1f))
             RailButton("SR", "SR(R)" in state.pressed, Modifier.weight(1f))
+        }
+
+        // IMU data
+        if (state.right.connected) {
+            ImuDisplay(state.rightInput)
         }
     }
 }
