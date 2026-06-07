@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,11 +20,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -42,6 +46,7 @@ import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.ErrorBg
 import com.joegec.joycon2android.ui.theme.ErrorText
+import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 
@@ -49,11 +54,14 @@ import com.joegec.joycon2android.ui.theme.TextOnAccent
 @Composable
 fun JoyconScreen(
     state: AppUiState,
+    gamepadEnabled: Boolean,
+    gamepadError: String?,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
     onUnassign: (String) -> Unit,
     onDisconnect: (String) -> Unit,
+    onGamepadToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -83,7 +91,10 @@ fun JoyconScreen(
         ) {
             when {
                 !state.anyConnected && !state.scanning -> IdleContent(state, onScan)
-                state.anyConnected -> ConnectedContent(state, onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect)
+                state.anyConnected -> ConnectedContent(
+                    state, gamepadEnabled, gamepadError,
+                    onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect, onGamepadToggle,
+                )
                 else -> ScanningContent(state)
             }
         }
@@ -179,11 +190,14 @@ private fun ScanningContent(state: AppUiState) {
 @Composable
 private fun ConnectedContent(
     state: AppUiState,
+    gamepadEnabled: Boolean,
+    gamepadError: String?,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
     onUnassign: (String) -> Unit,
     onDisconnect: (String) -> Unit,
+    onGamepadToggle: (Boolean) -> Unit,
 ) {
     if (state.unassignedJoycons.isNotEmpty()) {
         AssignmentPanel(
@@ -201,6 +215,10 @@ private fun ConnectedContent(
         )
     }
 
+    if (state.activePlayers.isNotEmpty()) {
+        GamepadToggle(gamepadEnabled, gamepadError, onGamepadToggle)
+    }
+
     if (state.scanning) {
         ScanningIndicator()
     }
@@ -213,6 +231,57 @@ private fun ConnectedContent(
         shape = RoundedCornerShape(Dimens.buttonCorner),
     ) {
         Text(stringResource(R.string.button_disconnect_all), color = TextDim)
+    }
+}
+
+@Composable
+private fun GamepadToggle(
+    enabled: Boolean,
+    error: String?,
+    onToggle: (Boolean) -> Unit,
+) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .background(CardBg, RoundedCornerShape(Dimens.buttonCorner))
+            .padding(Dimens.cardPadding)
+    ) {
+        Column {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.gamepad_title),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = Dimens.fontSizeBody,
+                    )
+                    Text(
+                        stringResource(
+                            if (enabled) R.string.gamepad_subtitle_on
+                            else R.string.gamepad_subtitle_off
+                        ),
+                        color = if (enabled) Accent else TextDim,
+                        fontSize = Dimens.fontSizeSmall,
+                    )
+                }
+                Switch(
+                    checked = enabled,
+                    onCheckedChange = onToggle,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = Accent,
+                    ),
+                )
+            }
+            if (error != null) {
+                Spacer(Modifier.height(8.dp))
+                Text(error, color = ErrorText, fontSize = Dimens.fontSizeSmall)
+            }
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.ui
 
 import android.app.Application
+import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.R
@@ -12,6 +13,9 @@ import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.Side
+import com.joegec.joycon2android.service.GamepadForegroundService
+import com.joegec.joycon2android.uhid.GamepadManager
+import com.joegec.joycon2android.uhid.ShizukuPermissionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +34,17 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     private val connectionJobs = mutableMapOf<String, Job>()
 
+    private val gamepadManager = GamepadManager(viewModelScope, application)
+    private val playerStateFlows = PlayerNumber.entries.associateWith {
+        MutableStateFlow(PlayerState(it))
+    }
+
+    private val _gamepadEnabled = MutableStateFlow(false)
+    val gamepadEnabled: StateFlow<Boolean> = _gamepadEnabled.asStateFlow()
+
+    private val _gamepadError = MutableStateFlow<String?>(null)
+    val gamepadError: StateFlow<String?> = _gamepadError.asStateFlow()
+
     init {
         viewModelScope.launch {
             combine(
@@ -40,7 +55,14 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
             ) { connections, scanning, error, assignments ->
                 manageFlowCollectors(connections)
                 buildUiState(connections, scanning, error, assignments)
-            }.collect { _uiState.value = it }
+            }.collect { state ->
+                _uiState.value = state
+                if (_gamepadEnabled.value) {
+                    for (playerState in state.players) {
+                        playerStateFlows[playerState.player]?.value = playerState
+                    }
+                }
+            }
         }
     }
 
@@ -48,6 +70,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     fun stopScan() = manager.stopScan()
 
     fun disconnectAll() {
+        disableGamepad()
         assignmentManager.unassignAll()
         cancelAllCollectors()
         manager.disconnectAll()
@@ -57,11 +80,28 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         val connection = manager.getConnection(address) ?: return
         if (!assignmentManager.assign(address, connection.side, player)) return
         connection.setPlayerLed(player)
+
+        if (_gamepadEnabled.value) {
+            viewModelScope.launch {
+                val flow = playerStateFlows[player]!!
+                if (gamepadManager.createGamepad(player)) {
+                    gamepadManager.startReporting(player, flow)
+                }
+            }
+        }
     }
 
     fun unassign(address: String) {
+        val player = assignmentManager.assignments.value[address]
         assignmentManager.unassign(address)
         manager.getConnection(address)?.clearPlayerLed()
+
+        if (_gamepadEnabled.value && player != null) {
+            gamepadManager.destroyGamepad(player)
+            if (gamepadManager.activeCount == 0) {
+                disableGamepad()
+            }
+        }
     }
 
     fun disconnect(address: String) {
@@ -73,8 +113,70 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         manager.emitError(getApplication<Application>().getString(R.string.error_permissions_denied))
     }
 
+    fun enableGamepad() {
+        if (_gamepadEnabled.value) return
+
+        if (ShizukuPermissionHandler.isShizukuAvailable) {
+            ShizukuPermissionHandler.requestPermission { granted ->
+                if (granted) {
+                    viewModelScope.launch { startGamepadOutput() }
+                } else {
+                    _gamepadError.value = "Shizuku permission denied"
+                }
+            }
+        } else {
+            _gamepadError.value = "Shizuku is not running"
+        }
+    }
+
+    fun disableGamepad() {
+        _gamepadEnabled.value = false
+        gamepadManager.destroyAll()
+        stopGamepadService()
+    }
+
+    private suspend fun startGamepadOutput() {
+        val activePlayers = _uiState.value.activePlayers
+
+        if (activePlayers.isEmpty()) {
+            _gamepadError.value = "No controllers assigned"
+            return
+        }
+
+        var anyCreated = false
+        for (playerState in activePlayers) {
+            if (gamepadManager.createGamepad(playerState.player)) {
+                val flow = playerStateFlows[playerState.player]!!
+                flow.value = playerState
+                gamepadManager.startReporting(playerState.player, flow)
+                anyCreated = true
+            }
+        }
+
+        if (anyCreated) {
+            _gamepadEnabled.value = true
+            _gamepadError.value = null
+            startGamepadService()
+        } else {
+            _gamepadError.value = "Failed to create virtual gamepad — check Shizuku/root"
+        }
+    }
+
+    private fun startGamepadService() {
+        val app = getApplication<Application>()
+        val intent = Intent(app, GamepadForegroundService::class.java)
+        app.startForegroundService(intent)
+    }
+
+    private fun stopGamepadService() {
+        val app = getApplication<Application>()
+        app.stopService(Intent(app, GamepadForegroundService::class.java))
+    }
+
     override fun onCleared() {
         super.onCleared()
+        gamepadManager.destroyAll()
+        stopGamepadService()
         manager.disconnectAll()
     }
 
@@ -100,12 +202,19 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun rebuildState() {
-        _uiState.value = buildUiState(
+        val state = buildUiState(
             manager.connections.value,
             manager.scanning.value,
             manager.error.value,
             assignmentManager.assignments.value,
         )
+        _uiState.value = state
+
+        if (_gamepadEnabled.value) {
+            for (playerState in state.players) {
+                playerStateFlows[playerState.player]?.value = playerState
+            }
+        }
     }
 
     private fun buildUiState(

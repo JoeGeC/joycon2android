@@ -40,13 +40,21 @@ class MainActivity : ComponentActivity() {
             Joycon2AndroidTheme {
                 Surface(Modifier.fillMaxSize(), color = Background) {
                     val state by viewModel.uiState.collectAsState()
+                    val gamepadEnabled by viewModel.gamepadEnabled.collectAsState()
+                    val gamepadError by viewModel.gamepadError.collectAsState()
                     JoyconScreen(
                         state = state,
+                        gamepadEnabled = gamepadEnabled,
+                        gamepadError = gamepadError,
                         onScan = { permLauncher.launch(requiredPermissions()) },
                         onDisconnectAll = viewModel::disconnectAll,
                         onAssign = viewModel::assignToPlayer,
                         onUnassign = viewModel::unassign,
                         onDisconnect = viewModel::disconnect,
+                        onGamepadToggle = { enabled ->
+                            if (enabled) viewModel.enableGamepad()
+                            else viewModel.disableGamepad()
+                        },
                     )
                 }
             }
