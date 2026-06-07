@@ -42,6 +42,9 @@
     <string name="side_right">Right</string>
     <string name="button_disconnect_all">Disconnect All</string>
 
+    <!-- Ko-fi -->
+    <string name="kofi_banner">If you found this useful, buy me a coffee!</string>
+
     <!-- Gamepad -->
     <string name="gamepad_title">Virtual Gamepad</string>
     <string name="gamepad_subtitle_off">Output Joy-Con input as a system gamepad</string>

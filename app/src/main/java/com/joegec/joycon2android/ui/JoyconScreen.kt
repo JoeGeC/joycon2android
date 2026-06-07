@@ -8,6 +8,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +23,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,8 +41,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
@@ -53,10 +60,12 @@ import com.joegec.joycon2android.ui.components.PlayerView
 import com.joegec.joycon2android.ui.components.ScanningIndicator
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Background
+import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.ErrorBg
 import com.joegec.joycon2android.ui.theme.ErrorText
-import com.joegec.joycon2android.ui.theme.CardBg
+import com.joegec.joycon2android.ui.theme.LeftJoyconColor
+import com.joegec.joycon2android.ui.theme.RightJoyconColor
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 
@@ -103,29 +112,35 @@ fun JoyconScreen(
             }
         }
 
-        Crossfade(targetState = screenState, label = "screen") { target ->
-            when (target) {
-                ScreenState.IDLE -> IdleContent(
-                    state, onScan,
-                    Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = Dimens.screenPaddingHorizontal),
-                )
-                ScreenState.SCANNING, ScreenState.CONNECTED -> Column(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = Dimens.screenPaddingHorizontal)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
-                ) {
-                    when (target) {
-                        ScreenState.CONNECTED -> ConnectedContent(
-                            state, gamepadEnabled, gamepadError,
-                            onDisconnectAll, onAssign, onUnassign, onDisconnect, onGamepadToggle,
-                        )
-                        else -> ScanningContent(state)
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            KofiBanner()
+
+            Crossfade(targetState = screenState, modifier = Modifier.weight(1f), label = "screen") { target ->
+                when (target) {
+                    ScreenState.IDLE -> IdleContent(
+                        state, onScan,
+                        Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = Dimens.screenPaddingHorizontal),
+                    )
+                    ScreenState.SCANNING, ScreenState.CONNECTED -> Column(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = Dimens.screenPaddingHorizontal)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
+                    ) {
+                        when (target) {
+                            ScreenState.CONNECTED -> ConnectedContent(
+                                state, gamepadEnabled, gamepadError,
+                                onDisconnectAll, onAssign, onUnassign, onDisconnect, onGamepadToggle,
+                            )
+                            else -> ScanningContent(state)
+                        }
                     }
                 }
             }
@@ -255,6 +270,46 @@ private fun ErrorMessage(error: String?) {
                 Text(it, color = ErrorText, fontSize = Dimens.fontSizeBody)
             }
         }
+    }
+}
+
+@Composable
+private fun KofiBanner(modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    val shape = RoundedCornerShape(Dimens.cardCorner)
+    val gradientBorder = Brush.linearGradient(listOf(LeftJoyconColor, RightJoyconColor))
+
+    Row(
+        modifier
+            .padding(horizontal = Dimens.screenPaddingHorizontal)
+            .padding(bottom = Dimens.sectionSpacing)
+            .fillMaxWidth()
+            .clip(shape)
+            .border(Dimens.cardBorderWidth, gradientBorder, shape)
+            .background(CardBg)
+            .clickable { uriHandler.openUri("https://ko-fi.com/joycon2android") }
+            .padding(Dimens.cardPadding),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.kofi),
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+        )
+        Text(
+            stringResource(R.string.kofi_banner),
+            color = Color.White,
+            fontSize = Dimens.fontSizeBody,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            Icons.AutoMirrored.Filled.OpenInNew,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = TextDim,
+        )
     }
 }
 
