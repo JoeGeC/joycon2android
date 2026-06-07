@@ -1,21 +1,70 @@
 # Joycon2Android
 
-Use Nintendo Switch 2 **Joy-Con 2** controllers as gamepads on an Android device over BLE.
+Use Nintendo Switch 2 **Joy-Con 2** controllers as system-wide gamepads on Android over BLE.
 
-Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-GATT), so Android can't pair them through normal Bluetooth settings. This app connects over GATT, sends vendor init commands, and parses raw notification packets to display live controller input.
+Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-GATT), so Android can't pair them through normal Bluetooth settings. This app connects over GATT, sends vendor init commands, parses raw notification packets, and creates virtual gamepad devices via UHID so any Android app can use them.
 
 ## Features
 
 - Connect multiple Joy-Con 2 controllers simultaneously
 - Assign controllers to up to 4 players (left, right, or paired)
+- **Virtual gamepad output** — appears as a standard HID gamepad to all apps
 - Dual Joy-Con layout when both L+R assigned to one player
 - Sideways single Joy-Con layout with rotated inputs (stick, d-pad, face buttons)
 - Live display of buttons, sticks, IMU (accelerometer + gyroscope), and battery
+
+## Setup Guide
+
+### Prerequisites
+
+- Android device running API 24+ with BLE support
+- [Shizuku](https://shizuku.rikka.app/) installed and running (required for virtual gamepad)
+- Joy-Con 2 controller(s)
+
+### Step 1: Install Shizuku
+
+1. Install Shizuku from [Google Play](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api) or [GitHub](https://github.com/RikkaApps/Shizuku/releases)
+2. Open Shizuku and start it using one of:
+   - **Wireless debugging (recommended, no root):** Enable Developer Options → Wireless Debugging → pair Shizuku via the notification shade pairing method
+   - **ADB:** Run `adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh` from a computer
+   - **Root:** Tap "Start" in Shizuku (if rooted)
+3. Verify Shizuku shows "Running" with a green status
+
+### Step 2: Install Joycon2Android
+
+Build from source or install the APK. Grant Bluetooth permissions when prompted.
+
+### Step 3: Connect Controllers
+
+1. Put your Joy-Con 2 into pairing mode by pressing the SYNC button
+2. Tap "Scan" in the app — the controller should appear within a few seconds
+3. Once connected, assign it to a player slot (P1–P4)
+
+### Step 4: Enable Virtual Gamepad
+
+1. With at least one controller assigned, toggle the **Gamepad** switch
+2. Grant Shizuku permission when prompted (first time only)
+3. The virtual gamepad will appear as a system input device
+
+Once enabled, any app that supports gamepads (games, emulators, etc.) will see the virtual controller. The app runs a foreground service to keep the connection alive in the background.
+
+### Troubleshooting
+
+| Issue | Fix |
+|---|---|
+| "Shizuku is not running" | Open Shizuku app and start the service |
+| "Shizuku permission denied" | Open Shizuku → Apps → grant permission to Joycon2Android |
+| Controller not found during scan | Press SYNC again; move closer to device |
+| Gamepad not appearing in games | Check `adb shell getevent -p` for "Joy-Con Virtual Gamepad" |
+| Controller stops responding | Press SYNC to reset, then reconnect |
+
+---
 
 ## Architecture
 
 ```
 BLE layer ─→ Domain state ─→ ViewModel ─→ Compose UI
+                                    └──→ UHID relay ─→ /dev/uhid ─→ Android input system
 ```
 
 | Layer | Key files |
@@ -23,24 +72,42 @@ BLE layer ─→ Domain state ─→ ViewModel ─→ Compose UI
 | BLE | `BleScanner`, `ConnectionPool`, `JoyconConnection`, `GattOpQueue`, `PacketParser` |
 | Domain | `PlayerAssignmentManager`, `Joycon2Manager` |
 | Model | `PlayerState`, `JoyconInput`, `JoyconButton`, `ConnectedJoycon`, `Side` |
-| UI | `JoyconScreen`, `PlayerView`, `ControllerLayout` (routes to `DualJoyconLayout`, `SidewaysLeftLayout`, `SidewaysRightLayout`) |
+| UHID | `UhidRelay`, `GamepadManager`, `ReportMapper`, `ShizukuPermissionHandler` |
+| Native | `uhid_relay.c` (standalone binary run via Shizuku) |
+| UI | `JoyconScreen`, `PlayerView`, `ControllerLayout` |
+| Service | `GamepadForegroundService` |
 
-Single-activity Compose app. State flows from BLE notifications through `Joycon2Manager` into `Joycon2ViewModel` and down to Compose.
+Single-activity Compose app. State flows from BLE notifications through `Joycon2Manager` into `Joycon2ViewModel` and down to Compose. When gamepad output is enabled, `PlayerState` changes are also fed to `GamepadManager` which converts them to HID reports and pipes them to the UHID relay process.
+
+### Virtual Gamepad (UHID)
+
+The app creates system-wide virtual gamepads using Linux's UHID (User-space HID) interface:
+
+1. **`uhid_relay.c`** — A small native binary that opens `/dev/uhid` and writes UHID events using `write()`. Runs as a Shizuku shell process (`u:r:shell:s0` SELinux context, which has `/dev/uhid` access).
+
+2. **`UhidRelay.kt`** — Launches the relay binary via `IShizukuService.newProcess()`, sends a UHID_CREATE2 event (4380-byte struct with HID report descriptor), then streams UHID_INPUT2 events through the stdin pipe.
+
+3. **`ReportMapper.kt`** — Converts `PlayerState` into a 13-byte HID input report: 14 buttons + hat switch + 2x 16-bit sticks + 2x 8-bit triggers.
+
+4. **`GamepadManager.kt`** — Manages per-player relay instances and collects from `StateFlow<PlayerState>` to drive reports at input rate.
+
+The virtual device uses BUS_USB with generic vendor/product IDs (0x1234:0x5678) to ensure the kernel's `hid-generic` driver binds it (Nintendo VID/PID causes the `hid-nintendo` driver to claim and reject the device).
 
 ## Requirements
 
 - Android API 24+ (minSdk 24, targetSdk 36)
 - BLE-capable device
 - Joy-Con 2 controller(s) in pairing mode (press SYNC)
+- Shizuku running (for virtual gamepad feature)
 
 ### Permissions
 
 ```xml
-<uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-<uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
-<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+<uses-permission android:name="android.permission.WAKE_LOCK" />
 ```
 
 ---
@@ -122,6 +189,25 @@ Command 2 (IMU/extended):      0C 91 01 04 00 04 00 00 FF 00 00 00
 Each Joy-Con is an independent BLE peripheral with its own connection and notification stream. Side detection is by peripheral name: `(L)` = Left, `(R)` = Right, `Pro Controller2` = Pro.
 
 Left Joy-Con's right-stick bytes are garbage (ignored); Right Joy-Con's left-stick bytes are garbage.
+
+---
+
+## HID Report Descriptor
+
+The virtual gamepad uses a standard HID gamepad descriptor (13-byte reports):
+
+| Field | Bits | Range | Mapping |
+|---|---|---|---|
+| Buttons 1-14 | 14 | 0/1 | A, B, X, Y, L, R, ZL, ZR, -, +, LS, RS, Home, Camera |
+| Padding | 2 | - | |
+| Hat switch | 4 | 0-7 or null | D-pad (0=N, 1=NE, 2=E, ..., 7=NW, 0xF=center) |
+| Padding | 4 | - | |
+| Left Stick X | 16 | -32767..32767 | |
+| Left Stick Y | 16 | -32767..32767 | inverted (up = negative) |
+| Right Stick X | 16 | -32767..32767 | |
+| Right Stick Y | 16 | -32767..32767 | inverted |
+| Left Trigger | 8 | 0-255 | digital: 0 or 255 |
+| Right Trigger | 8 | 0-255 | digital: 0 or 255 |
 
 ---
 
