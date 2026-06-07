@@ -20,13 +20,13 @@ class PlayerAssignmentManager {
     fun assign(address: String, side: Side, player: PlayerNumber): Boolean {
         if (isSlotTaken(side, player)) return false
         sides[address] = side
-        _assignments.value = _assignments.value + (address to player)
+        _assignments.value += (address to player)
         return true
     }
 
     fun unassign(address: String) {
         sides.remove(address)
-        _assignments.value = _assignments.value - address
+        _assignments.value -= address
     }
 
     fun unassignAll() {

@@ -1,6 +1,6 @@
 package com.joegec.joycon2android.uhid
 
-import com.joegec.joycon2android.model.GamepadState
+import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 
 object ReportMapper {
@@ -9,20 +9,20 @@ object ReportMapper {
 
     // Button bit positions matching the HID report descriptor order (Button 1-14)
     private val BUTTON_MAP: Map<String, Int> = mapOf(
-        "A" to 0,
-        "B" to 1,
-        "X" to 2,
-        "Y" to 3,
-        "L" to 4,
-        "R" to 5,
-        "ZL" to 6,
-        "ZR" to 7,
-        "-" to 8,
-        "+" to 9,
-        "LS" to 10,
-        "RS" to 11,
-        "Home" to 12,
-        "Camera" to 13,
+        JoyconButton.A.id to 0,
+        JoyconButton.B.id to 1,
+        JoyconButton.X.id to 2,
+        JoyconButton.Y.id to 3,
+        JoyconButton.L.id to 4,
+        JoyconButton.R.id to 5,
+        JoyconButton.ZL.id to 6,
+        JoyconButton.ZR.id to 7,
+        JoyconButton.Minus.id to 8,
+        JoyconButton.Plus.id to 9,
+        JoyconButton.LS.id to 10,
+        JoyconButton.RS.id to 11,
+        JoyconButton.Home.id to 12,
+        JoyconButton.Camera.id to 13,
     )
 
     private const val HAT_CENTER = 0x0F
@@ -53,9 +53,9 @@ object ReportMapper {
         putInt16LE(report, 9, mapStick(4096 - gamepad.rightStickY))
 
         // Byte 11: left trigger (digital: 0 or 255)
-        report[11] = if ("ZL" in pressed) 0xFF.toByte() else 0x00
+        report[11] = if (JoyconButton.ZL.id in pressed) 0xFF.toByte() else 0x00
         // Byte 12: right trigger (digital: 0 or 255)
-        report[12] = if ("ZR" in pressed) 0xFF.toByte() else 0x00
+        report[12] = if (JoyconButton.ZR.id in pressed) 0xFF.toByte() else 0x00
 
         return report
     }
@@ -72,10 +72,10 @@ object ReportMapper {
 
     // Hat switch: 0=N, 1=NE, 2=E, 3=SE, 4=S, 5=SW, 6=W, 7=NW, 0x0F=center
     private fun hatFromPressed(pressed: Set<String>): Int {
-        val up = "Up" in pressed
-        val down = "Down" in pressed
-        val left = "Left" in pressed
-        val right = "Right" in pressed
+        val up = JoyconButton.Up.id in pressed
+        val down = JoyconButton.Down.id in pressed
+        val left = JoyconButton.Left.id in pressed
+        val right = JoyconButton.Right.id in pressed
         return when {
             up && right -> 1
             right && down -> 3
