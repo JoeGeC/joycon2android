@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(uhid_gamepad C)
-
-add_library(uhid_gamepad SHARED uhid_gamepad.c)
-find_library(log-lib log)
-target_link_libraries(uhid_gamepad ${log-lib})
+project(uhid_relay C)
 
 # Executable disguised as shared library for APK packaging.
 # Android's build system only packages lib*.so from native builds.

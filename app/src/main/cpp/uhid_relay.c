@@ -1,11 +1,9 @@
-// Standalone UHID relay: opens /dev/uhid, creates a virtual gamepad,
-// then relays binary UHID_INPUT2 events from stdin to the device.
-// Runs under Shizuku shell context (u:r:shell:s0) for /dev/uhid access.
+// UHID relay process — runs under Shizuku shell context (u:r:shell:s0).
+// Opens /dev/uhid and relays length-prefixed UHID events from stdin.
 //
-// Protocol: stdin receives raw uhid_event structs.
-//   First message from stdin: 4-byte little-endian size N, then N bytes of UHID_CREATE2 event.
-//   Subsequent messages: 4-byte LE size N, then N bytes of UHID_INPUT2 event.
-//   Size 0 = shutdown.
+// Protocol (little-endian):
+//   [4-byte length N] [N bytes of partial uhid_event]  (padded to full struct on write)
+//   Length 0 = graceful shutdown.
 
 #include <linux/uhid.h>
 #include <fcntl.h>
@@ -13,7 +11,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include <stdlib.h>
 
 static int read_exact(int fd, void *buf, size_t count) {
     size_t total = 0;

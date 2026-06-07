@@ -13,7 +13,7 @@ import kotlinx.coroutines.withContext
 
 class GamepadManager(private val scope: CoroutineScope, private val context: Context) {
 
-    private val devices = mutableMapOf<PlayerNumber, UhidShellProcess>()
+    private val devices = mutableMapOf<PlayerNumber, UhidRelay>()
     private val reportJobs = mutableMapOf<PlayerNumber, Job>()
 
     val activeCount: Int get() = devices.size
@@ -21,7 +21,7 @@ class GamepadManager(private val scope: CoroutineScope, private val context: Con
     suspend fun createGamepad(player: PlayerNumber): Boolean = withContext(Dispatchers.IO) {
         if (player in devices) return@withContext true
 
-        val device = UhidShellProcess("Joy-Con Virtual Gamepad", player.index)
+        val device = UhidRelay("Joy-Con Virtual Gamepad", player.index)
         val success = device.create(context)
 
         if (success) {

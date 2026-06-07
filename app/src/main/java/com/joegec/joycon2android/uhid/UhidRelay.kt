@@ -9,9 +9,13 @@ import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class UhidShellProcess(private val name: String, private val playerIndex: Int) {
+class UhidRelay(private val name: String, private val playerIndex: Int) {
 
     private var outputStream: OutputStream? = null
+
+    // Pre-allocated buffers for sendReport (called at ~60Hz)
+    private val inputHeader = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
+    private val inputEventBuf = ByteBuffer.allocate(4 + 2 + REPORT_SIZE).order(ByteOrder.LITTLE_ENDIAN)
 
     fun create(context: Context): Boolean {
         return try {
@@ -65,11 +69,16 @@ class UhidShellProcess(private val name: String, private val playerIndex: Int) {
     fun sendReport(report: ByteArray): Boolean {
         val os = outputStream ?: return false
         return try {
-            val event = buildInputEvent(report)
-            val header = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
-            header.putInt(event.size)
-            os.write(header.array())
-            os.write(event)
+            inputHeader.clear()
+            inputHeader.putInt(4 + 2 + report.size)
+
+            inputEventBuf.clear()
+            inputEventBuf.putInt(UHID_INPUT2)
+            inputEventBuf.putShort(report.size.toShort())
+            inputEventBuf.put(report)
+
+            os.write(inputHeader.array(), 0, 4)
+            os.write(inputEventBuf.array(), 0, 4 + 2 + report.size)
             true
         } catch (e: IOException) {
             Log.e(TAG, "Failed to send report", e)
@@ -122,18 +131,8 @@ class UhidShellProcess(private val name: String, private val playerIndex: Int) {
         return buf.array()
     }
 
-    private fun buildInputEvent(report: ByteArray): ByteArray {
-        // UHID_INPUT2: type(4) + size(2) + data
-        // Relay writes the full sizeof(uhid_event) padded struct to the kernel
-        val buf = ByteBuffer.allocate(4 + 2 + report.size).order(ByteOrder.LITTLE_ENDIAN)
-        buf.putInt(UHID_INPUT2)
-        buf.putShort(report.size.toShort())
-        buf.put(report)
-        return buf.array()
-    }
-
     companion object {
-        private const val TAG = "UhidShellProcess"
+        private const val TAG = "UhidRelay"
         private const val RELAY_REMOTE_PATH = "/data/local/tmp/.uhid_relay"
 
         @Volatile
@@ -159,6 +158,7 @@ class UhidShellProcess(private val name: String, private val playerIndex: Int) {
         private const val UHID_INPUT2 = 12
         private const val BUS_USB = 3
         private const val UHID_EVENT_SIZE = 4380
+        private const val REPORT_SIZE = 13
 
         // Avoid Nintendo VID/PID — the hid-nintendo kernel driver intercepts those
         // and fails to initialize (since this isn't a real Joy-Con).
