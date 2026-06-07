@@ -81,21 +81,29 @@ fun JoyconScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = Dimens.screenPaddingHorizontal)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
-        ) {
-            when {
-                !state.anyConnected && !state.scanning -> IdleContent(state, onScan)
-                state.anyConnected -> ConnectedContent(
-                    state, gamepadEnabled, gamepadError,
-                    onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect, onGamepadToggle,
-                )
-                else -> ScanningContent(state)
+        when {
+            !state.anyConnected && !state.scanning -> IdleContent(
+                state, onScan,
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = Dimens.screenPaddingHorizontal),
+            )
+            else -> Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = Dimens.screenPaddingHorizontal)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
+            ) {
+                when {
+                    state.anyConnected -> ConnectedContent(
+                        state, gamepadEnabled, gamepadError,
+                        onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect, onGamepadToggle,
+                    )
+                    else -> ScanningContent(state)
+                }
             }
         }
     }
@@ -157,28 +165,35 @@ private fun statusText(state: AppUiState): String {
 }
 
 @Composable
-private fun IdleContent(state: AppUiState, onScan: () -> Unit) {
-    Button(
-        onClick = onScan,
-        modifier = Modifier.fillMaxWidth().height(Dimens.buttonHeightLarge),
-        shape = RoundedCornerShape(Dimens.buttonCorner),
-        colors = ButtonDefaults.buttonColors(containerColor = Accent),
+private fun IdleContent(state: AppUiState, onScan: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
     ) {
+        ErrorMessage(state.error)
+
+        Spacer(Modifier.weight(1f))
+
+        Button(
+            onClick = onScan,
+            modifier = Modifier.fillMaxWidth().height(Dimens.buttonHeightLarge),
+            shape = RoundedCornerShape(Dimens.buttonCorner),
+            colors = ButtonDefaults.buttonColors(containerColor = Accent),
+        ) {
+            Text(
+                stringResource(R.string.button_scan_connect),
+                color = TextOnAccent,
+                fontWeight = FontWeight.Bold,
+                fontSize = Dimens.fontSizeButtonLarge,
+            )
+        }
+
         Text(
-            stringResource(R.string.button_scan_connect),
-            color = TextOnAccent,
-            fontWeight = FontWeight.Bold,
-            fontSize = Dimens.fontSizeButtonLarge,
+            stringResource(R.string.scan_idle_hint),
+            color = TextDim,
+            fontSize = Dimens.fontSizeMedium,
         )
     }
-
-    ErrorMessage(state.error)
-
-    Text(
-        stringResource(R.string.scan_idle_hint),
-        color = TextDim,
-        fontSize = Dimens.fontSizeMedium,
-    )
 }
 
 @Composable
