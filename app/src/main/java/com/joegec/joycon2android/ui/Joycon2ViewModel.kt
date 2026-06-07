@@ -1,43 +1,30 @@
 package com.joegec.joycon2android.ui
 
 import android.app.Application
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
+import android.os.IBinder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.R
-import com.joegec.joycon2android.ble.Joycon2Manager
-import com.joegec.joycon2android.ble.JoyconConnection
-import com.joegec.joycon2android.domain.PlayerAssignmentManager
 import com.joegec.joycon2android.model.AppUiState
-import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
-import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.model.Side
-import com.joegec.joycon2android.service.GamepadForegroundService
-import com.joegec.joycon2android.uhid.GamepadManager
-import com.joegec.joycon2android.uhid.ShizukuPermissionHandler
+import com.joegec.joycon2android.service.Joycon2Service
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class Joycon2ViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val manager = Joycon2Manager(application)
-    private val assignmentManager = PlayerAssignmentManager()
+    private var service: Joycon2Service? = null
+    private var bound = false
 
     private val _uiState = MutableStateFlow(AppUiState())
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
-
-    private val connectionJobs = mutableMapOf<String, Job>()
-
-    private val gamepadManager = GamepadManager(viewModelScope, application)
-    private val playerStateFlows = PlayerNumber.entries.associateWith {
-        MutableStateFlow(PlayerState(it))
-    }
 
     private val _gamepadEnabled = MutableStateFlow(false)
     val gamepadEnabled: StateFlow<Boolean> = _gamepadEnabled.asStateFlow()
@@ -45,216 +32,106 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     private val _gamepadError = MutableStateFlow<String?>(null)
     val gamepadError: StateFlow<String?> = _gamepadError.asStateFlow()
 
+    private var stateJob: Job? = null
+    private var gamepadEnabledJob: Job? = null
+    private var gamepadErrorJob: Job? = null
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+            val svc = (binder as Joycon2Service.LocalBinder).service
+            service = svc
+            bound = true
+            collectServiceState(svc)
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            service = null
+            bound = false
+            cancelCollection()
+        }
+    }
+
     init {
-        viewModelScope.launch {
-            combine(
-                manager.connections,
-                manager.scanning,
-                manager.error,
-                assignmentManager.assignments,
-            ) { connections, scanning, error, assignments ->
-                manageFlowCollectors(connections)
-                buildUiState(connections, scanning, error, assignments)
-            }.collect { state ->
-                _uiState.value = state
-                if (_gamepadEnabled.value) {
-                    for (playerState in state.players) {
-                        playerStateFlows[playerState.player]?.value = playerState
-                    }
-                }
-            }
-        }
-    }
-
-    fun startScan() = manager.startScan()
-    fun stopScan() = manager.stopScan()
-
-    fun disconnectAll() {
-        disableGamepad()
-        assignmentManager.unassignAll()
-        cancelAllCollectors()
-        manager.disconnectAll()
-    }
-
-    fun assignToPlayer(address: String, player: PlayerNumber) {
-        val connection = manager.getConnection(address) ?: return
-        if (!assignmentManager.assign(address, connection.side, player)) return
-        connection.setPlayerLed(player)
-
-        if (_gamepadEnabled.value) {
-            viewModelScope.launch {
-                val flow = playerStateFlows[player]!!
-                if (gamepadManager.createGamepad(player)) {
-                    gamepadManager.startReporting(player, flow)
-                }
-            }
-        }
-    }
-
-    fun unassign(address: String) {
-        val player = assignmentManager.assignments.value[address]
-        assignmentManager.unassign(address)
-        manager.getConnection(address)?.clearPlayerLed()
-
-        if (_gamepadEnabled.value && player != null) {
-            gamepadManager.destroyGamepad(player)
-            if (gamepadManager.activeCount == 0) {
-                disableGamepad()
-            }
-        }
-    }
-
-    fun disconnect(address: String) {
-        assignmentManager.unassign(address)
-        manager.disconnect(address)
-    }
-
-    fun onPermissionsDenied() {
-        manager.emitError(getApplication<Application>().getString(R.string.error_permissions_denied))
-    }
-
-    fun enableGamepad() {
-        if (_gamepadEnabled.value) return
-
-        if (ShizukuPermissionHandler.isShizukuAvailable) {
-            ShizukuPermissionHandler.requestPermission { granted ->
-                if (granted) {
-                    viewModelScope.launch { startGamepadOutput() }
-                } else {
-                    _gamepadError.value = "Shizuku permission denied"
-                }
-            }
-        } else {
-            _gamepadError.value = "Shizuku is not running"
-        }
-    }
-
-    fun disableGamepad() {
-        _gamepadEnabled.value = false
-        gamepadManager.destroyAll()
-        stopGamepadService()
-    }
-
-    private suspend fun startGamepadOutput() {
-        val activePlayers = _uiState.value.activePlayers
-
-        if (activePlayers.isEmpty()) {
-            _gamepadError.value = "No controllers assigned"
-            return
-        }
-
-        var anyCreated = false
-        for (playerState in activePlayers) {
-            if (gamepadManager.createGamepad(playerState.player)) {
-                val flow = playerStateFlows[playerState.player]!!
-                flow.value = playerState
-                gamepadManager.startReporting(playerState.player, flow)
-                anyCreated = true
-            }
-        }
-
-        if (anyCreated) {
-            _gamepadEnabled.value = true
-            _gamepadError.value = null
-            startGamepadService()
-        } else {
-            _gamepadError.value = "Failed to create virtual gamepad — check Shizuku/root"
-        }
-    }
-
-    private fun startGamepadService() {
-        val app = getApplication<Application>()
-        val intent = Intent(app, GamepadForegroundService::class.java)
-        app.startForegroundService(intent)
-    }
-
-    private fun stopGamepadService() {
-        val app = getApplication<Application>()
-        app.stopService(Intent(app, GamepadForegroundService::class.java))
+        startAndBind()
     }
 
     override fun onCleared() {
         super.onCleared()
-        gamepadManager.destroyAll()
-        stopGamepadService()
-        manager.disconnectAll()
-    }
-
-    private fun manageFlowCollectors(connections: Map<String, JoyconConnection>) {
-        val currentAddresses = connections.keys
-
-        // Cancel collectors and unassign disconnected devices
-        val removed = connectionJobs.keys - currentAddresses
-        removed.forEach { address ->
-            connectionJobs.remove(address)?.cancel()
-            assignmentManager.unassign(address)
-        }
-
-        // Start collectors for new devices
-        val added = currentAddresses - connectionJobs.keys
-        added.forEach { address ->
-            val connection = connections[address] ?: return@forEach
-            connectionJobs[address] = viewModelScope.launch {
-                launch { connection.connectionState.collectLatest { rebuildState() } }
-                launch { connection.input.collectLatest { rebuildState() } }
-            }
+        cancelCollection()
+        if (bound) {
+            getApplication<Application>().unbindService(connection)
+            bound = false
         }
     }
 
-    private fun rebuildState() {
-        val state = buildUiState(
-            manager.connections.value,
-            manager.scanning.value,
-            manager.error.value,
-            assignmentManager.assignments.value,
-        )
-        _uiState.value = state
+    fun startScan() {
+        service?.startScan()
+    }
 
-        if (_gamepadEnabled.value) {
-            for (playerState in state.players) {
-                playerStateFlows[playerState.player]?.value = playerState
-            }
+    fun stopScan() {
+        service?.stopScan()
+    }
+
+    fun disconnectAll() {
+        service?.disconnectAll()
+    }
+
+    fun assignToPlayer(address: String, player: PlayerNumber) {
+        service?.assignToPlayer(address, player)
+    }
+
+    fun unassign(address: String) {
+        service?.unassign(address)
+    }
+
+    fun disconnect(address: String) {
+        service?.disconnect(address)
+    }
+
+    fun onPermissionsDenied() {
+        service?.emitError(getApplication<Application>().getString(R.string.error_permissions_denied))
+    }
+
+    fun enableGamepad() {
+        service?.enableGamepad()
+    }
+
+    fun disableGamepad() {
+        service?.disableGamepad()
+    }
+
+    /**
+     * Stops the service entirely — disconnects all devices and removes the notification.
+     * Called when the user explicitly wants to shut everything down.
+     */
+    fun stopService() {
+        service?.disconnectAll()
+        val app = getApplication<Application>()
+        app.stopService(Intent(app, Joycon2Service::class.java))
+    }
+
+    private fun startAndBind() {
+        val app = getApplication<Application>()
+        val intent = Intent(app, Joycon2Service::class.java)
+        app.startForegroundService(intent)
+        app.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+    }
+
+    private fun collectServiceState(svc: Joycon2Service) {
+        stateJob = viewModelScope.launch {
+            svc.uiState.collect { _uiState.value = it }
+        }
+        gamepadEnabledJob = viewModelScope.launch {
+            svc.gamepadEnabled.collect { _gamepadEnabled.value = it }
+        }
+        gamepadErrorJob = viewModelScope.launch {
+            svc.gamepadError.collect { _gamepadError.value = it }
         }
     }
 
-    private fun buildUiState(
-        connections: Map<String, JoyconConnection>,
-        scanning: Boolean,
-        error: String?,
-        assignments: Map<String, PlayerNumber>,
-    ): AppUiState {
-        val joycons = connections.map { (address, connection) ->
-            ConnectedJoycon(
-                address = address,
-                side = connection.side,
-                deviceName = connection.deviceName,
-                connectionState = connection.connectionState.value,
-                input = connection.input.value,
-                assignedPlayer = assignments[address],
-                ready = connection.initComplete,
-            )
-        }
-
-        val unassigned = joycons.filter { it.assignedPlayer == null }
-        val players = PlayerNumber.entries.map { player ->
-            val assigned = joycons.filter { it.assignedPlayer == player }
-            PlayerState(
-                player = player,
-                left = assigned.find { it.side == Side.LEFT },
-                right = assigned.find { it.side == Side.RIGHT || it.side == Side.PRO || it.side == Side.UNKNOWN },
-            )
-        }
-
-        return AppUiState(
-            scanning = scanning,
-            error = error,
-            unassignedJoycons = unassigned,
-            players = players,
-        )
-    }
-
-    private fun cancelAllCollectors() {
-        connectionJobs.values.forEach { it.cancel() }
-        connectionJobs.clear()
+    private fun cancelCollection() {
+        stateJob?.cancel()
+        gamepadEnabledJob?.cancel()
+        gamepadErrorJob?.cancel()
     }
 }

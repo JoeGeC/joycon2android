@@ -31,7 +31,7 @@
         </activity>
 
         <service
-            android:name=".service.GamepadForegroundService"
+            android:name=".service.Joycon2Service"
             android:foregroundServiceType="connectedDevice"
             android:exported="false" />
 
