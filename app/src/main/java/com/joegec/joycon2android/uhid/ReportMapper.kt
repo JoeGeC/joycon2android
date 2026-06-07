@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.uhid
 
+import com.joegec.joycon2android.model.GamepadState
 import com.joegec.joycon2android.model.PlayerState
 
 object ReportMapper {
@@ -27,8 +28,9 @@ object ReportMapper {
     private const val HAT_CENTER = 0x0F
 
     fun buildReport(state: PlayerState): ByteArray {
+        val gamepad = state.gamepad
         val report = ByteArray(REPORT_SIZE)
-        val pressed = state.pressed
+        val pressed = gamepad.pressed
 
         // Bytes 0-1: 14 button bits + 2 padding (little-endian)
         var buttons = 0
@@ -42,13 +44,13 @@ object ReportMapper {
         report[2] = hatFromPressed(pressed).toByte()
 
         // Bytes 3-4: left stick X (16-bit signed LE)
-        putInt16LE(report, 3, mapStick(state.leftStickX))
+        putInt16LE(report, 3, mapStick(gamepad.leftStickX))
         // Bytes 5-6: left stick Y (16-bit signed LE, inverted for HID convention)
-        putInt16LE(report, 5, mapStick(4096 - state.leftStickY))
+        putInt16LE(report, 5, mapStick(4096 - gamepad.leftStickY))
         // Bytes 7-8: right stick X
-        putInt16LE(report, 7, mapStick(state.rightStickX))
+        putInt16LE(report, 7, mapStick(gamepad.rightStickX))
         // Bytes 9-10: right stick Y (inverted)
-        putInt16LE(report, 9, mapStick(4096 - state.rightStickY))
+        putInt16LE(report, 9, mapStick(4096 - gamepad.rightStickY))
 
         // Byte 11: left trigger (digital: 0 or 255)
         report[11] = if ("ZL" in pressed) 0xFF.toByte() else 0x00
