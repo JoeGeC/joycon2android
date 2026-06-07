@@ -292,6 +292,7 @@ class Joycon2Service : Service() {
         connectionJobs.clear()
     }
 
+    @SuppressLint("NewApi")
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,

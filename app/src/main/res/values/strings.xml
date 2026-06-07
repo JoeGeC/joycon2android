@@ -3,9 +3,6 @@
     <string name="app_title">JOY-CON 2</string>
 
     <!-- Connection status -->
-    <string name="status_both_connected">BOTH CONNECTED</string>
-    <string name="status_left_connected">LEFT CONNECTED</string>
-    <string name="status_right_connected">RIGHT CONNECTED</string>
     <string name="status_connecting">CONNECTING…</string>
     <string name="status_scanning">SCANNING…</string>
     <string name="status_disconnected">DISCONNECTED</string>
@@ -13,14 +10,12 @@
     <!-- Buttons -->
     <string name="button_scan_connect">Scan &amp; Connect</string>
     <string name="button_scan">Scan</string>
-    <string name="button_scan_other">Scan for other Joy-Con</string>
     <string name="button_disconnect">Disconnect</string>
 
     <!-- Scanning -->
     <string name="scanning_title">Looking for Joy-Con 2</string>
     <string name="scanning_hint">Make sure the controller is in pairing mode (SYNC button held)</string>
     <string name="scan_idle_hint">Press and hold SYNC on your Joy-Con(s). Both left and right will be detected automatically.</string>
-    <string name="found_device">Found: %1$s</string>
 
     <!-- Errors -->
     <string name="error_bluetooth_off">Bluetooth is off or unavailable</string>
@@ -44,11 +39,8 @@
     <string name="status_connected_count">%1$d CONNECTED</string>
     <string name="unassigned_title">Unassigned Controllers</string>
     <string name="player_label">P%1$d</string>
-    <string name="assign_prompt">Tap a player to assign</string>
-    <string name="button_scan_more">Scan for more</string>
     <string name="side_left">Left</string>
     <string name="side_right">Right</string>
-    <string name="button_unassign">Unassign</string>
     <string name="button_disconnect_all">Disconnect All</string>
 
     <!-- Gamepad -->

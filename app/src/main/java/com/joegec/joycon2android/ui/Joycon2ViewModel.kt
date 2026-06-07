@@ -1,11 +1,13 @@
 package com.joegec.joycon2android.ui
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.R
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+@SuppressLint("StaticFieldLeak") // Service ref is cleared in onCleared/onServiceDisconnected
 class Joycon2ViewModel(application: Application) : AndroidViewModel(application) {
 
     private var service: Joycon2Service? = null
@@ -113,7 +116,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     private fun startAndBind() {
         val app = getApplication<Application>()
         val intent = Intent(app, Joycon2Service::class.java)
-        app.startForegroundService(intent)
+        ContextCompat.startForegroundService(app, intent)
         app.bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
