@@ -123,7 +123,7 @@ fun JoyconScreen(
                     when (target) {
                         ScreenState.CONNECTED -> ConnectedContent(
                             state, gamepadEnabled, gamepadError,
-                            onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect, onGamepadToggle,
+                            onDisconnectAll, onAssign, onUnassign, onDisconnect, onGamepadToggle,
                         )
                         else -> ScanningContent(state)
                     }
@@ -197,7 +197,7 @@ private fun statusText(state: AppUiState): String {
 @Composable
 private fun IdleContent(state: AppUiState, onScan: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier,
+        modifier = modifier.padding(bottom = Dimens.screenPaddingVertical),
         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
     ) {
         ErrorMessage(state.error)
@@ -217,12 +217,6 @@ private fun IdleContent(state: AppUiState, onScan: () -> Unit, modifier: Modifie
                 fontSize = Dimens.fontSizeButtonLarge,
             )
         }
-
-        Text(
-            stringResource(R.string.scan_idle_hint),
-            color = TextDim,
-            fontSize = Dimens.fontSizeMedium,
-        )
     }
 }
 
@@ -269,7 +263,6 @@ private fun ConnectedContent(
     state: AppUiState,
     gamepadEnabled: Boolean,
     gamepadError: String?,
-    onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
     onUnassign: (String) -> Unit,
@@ -384,4 +377,3 @@ private fun GamepadToggle(
 }
 
 private enum class ScreenState { IDLE, SCANNING, CONNECTED }
-

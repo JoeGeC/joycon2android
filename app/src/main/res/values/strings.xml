@@ -15,7 +15,6 @@
     <!-- Scanning -->
     <string name="scanning_title">Looking for Joy-Con 2</string>
     <string name="scanning_hint">Make sure the controller is in pairing mode (SYNC button held)</string>
-    <string name="scan_idle_hint">Press and hold SYNC on your Joy-Con(s). Both left and right will be detected automatically.</string>
 
     <!-- Errors -->
     <string name="error_bluetooth_off">Bluetooth is off or unavailable</string>

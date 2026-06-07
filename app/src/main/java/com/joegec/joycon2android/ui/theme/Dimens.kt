@@ -5,6 +5,7 @@ import androidx.compose.ui.unit.sp
 
 object Dimens {
     val screenPaddingHorizontal = 16.dp
+    val screenPaddingVertical = 16.dp
     val cardPadding = 16.dp
     val cardCorner = 20.dp
     val cardBorderWidth = 2.dp
