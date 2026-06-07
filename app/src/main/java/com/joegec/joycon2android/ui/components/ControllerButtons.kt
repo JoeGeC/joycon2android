@@ -1,7 +1,9 @@
 package com.joegec.joycon2android.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,10 +29,12 @@ internal fun MinusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier:
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (input.batteryVolts > 0f) {
+        AnimatedVisibility(
+            visible = input.batteryVolts > 0f,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
             BatteryPill(input.batteryVolts)
-        } else {
-            Spacer(Modifier)
         }
         SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in pressed)
     }
@@ -44,10 +48,12 @@ internal fun PlusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier: 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in pressed)
-        if (input.batteryVolts > 0f) {
+        AnimatedVisibility(
+            visible = input.batteryVolts > 0f,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
             BatteryPill(input.batteryVolts)
-        } else {
-            Spacer(Modifier)
         }
     }
 }

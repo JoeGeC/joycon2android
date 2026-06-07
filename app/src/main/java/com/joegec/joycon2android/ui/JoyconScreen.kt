@@ -1,5 +1,11 @@
 package com.joegec.joycon2android.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -81,28 +87,36 @@ fun JoyconScreen(
             )
         },
     ) { innerPadding ->
-        when {
-            !state.anyConnected && !state.scanning -> IdleContent(
-                state, onScan,
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = Dimens.screenPaddingHorizontal),
-            )
-            else -> Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = Dimens.screenPaddingHorizontal)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
-            ) {
-                when {
-                    state.anyConnected -> ConnectedContent(
-                        state, gamepadEnabled, gamepadError,
-                        onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect, onGamepadToggle,
-                    )
-                    else -> ScanningContent(state)
+        val screenState = when {
+            !state.anyConnected && !state.scanning -> ScreenState.IDLE
+            !state.anyConnected -> ScreenState.SCANNING
+            else -> ScreenState.CONNECTED
+        }
+
+        Crossfade(targetState = screenState, label = "screen") { target ->
+            when (target) {
+                ScreenState.IDLE -> IdleContent(
+                    state, onScan,
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(horizontal = Dimens.screenPaddingHorizontal),
+                )
+                ScreenState.SCANNING, ScreenState.CONNECTED -> Column(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(horizontal = Dimens.screenPaddingHorizontal)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
+                ) {
+                    when (target) {
+                        ScreenState.CONNECTED -> ConnectedContent(
+                            state, gamepadEnabled, gamepadError,
+                            onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect, onGamepadToggle,
+                        )
+                        else -> ScanningContent(state)
+                    }
                 }
             }
         }
@@ -134,13 +148,19 @@ private fun ScanAction(state: AppUiState, onScan: () -> Unit) {
     if (!state.anyConnected) return
 
     TextButton(onClick = onScan, enabled = !state.scanning) {
-        if (state.scanning) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(14.dp),
-                color = Accent,
-                strokeWidth = 2.dp,
-            )
-            Spacer(Modifier.size(6.dp))
+        AnimatedVisibility(
+            visible = state.scanning,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            Row {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    color = Accent,
+                    strokeWidth = 2.dp,
+                )
+                Spacer(Modifier.size(6.dp))
+            }
         }
         Text(
             if (state.scanning) stringResource(R.string.status_scanning)
@@ -203,6 +223,26 @@ private fun ScanningContent(state: AppUiState) {
 }
 
 @Composable
+private fun ErrorMessage(error: String?) {
+    AnimatedVisibility(
+        visible = error != null,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
+        error?.let {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(ErrorBg, RoundedCornerShape(Dimens.buttonCorner))
+                    .padding(Dimens.cardPadding)
+            ) {
+                Text(it, color = ErrorText, fontSize = Dimens.fontSizeBody)
+            }
+        }
+    }
+}
+
+@Composable
 private fun ConnectedContent(
     state: AppUiState,
     gamepadEnabled: Boolean,
@@ -214,7 +254,11 @@ private fun ConnectedContent(
     onDisconnect: (String) -> Unit,
     onGamepadToggle: (Boolean) -> Unit,
 ) {
-    if (state.unassignedJoycons.isNotEmpty()) {
+    AnimatedVisibility(
+        visible = state.unassignedJoycons.isNotEmpty(),
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
         AssignmentPanel(
             unassigned = state.unassignedJoycons,
             players = state.players,
@@ -230,11 +274,19 @@ private fun ConnectedContent(
         )
     }
 
-    if (state.activePlayers.isNotEmpty()) {
+    AnimatedVisibility(
+        visible = state.activePlayers.isNotEmpty(),
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
         GamepadToggle(gamepadEnabled, gamepadError, onGamepadToggle)
     }
 
-    if (state.scanning) {
+    AnimatedVisibility(
+        visible = state.scanning,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
         ScanningIndicator()
     }
 
@@ -292,23 +344,19 @@ private fun GamepadToggle(
                     ),
                 )
             }
-            if (error != null) {
-                Spacer(Modifier.height(8.dp))
-                Text(error, color = ErrorText, fontSize = Dimens.fontSizeSmall)
+            AnimatedVisibility(
+                visible = error != null,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                Column {
+                    Spacer(Modifier.height(8.dp))
+                    Text(error ?: "", color = ErrorText, fontSize = Dimens.fontSizeSmall)
+                }
             }
         }
     }
 }
 
-@Composable
-private fun ErrorMessage(error: String?) {
-    if (error == null) return
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .background(ErrorBg, RoundedCornerShape(Dimens.buttonCorner))
-            .padding(Dimens.cardPadding)
-    ) {
-        Text(error, color = ErrorText, fontSize = Dimens.fontSizeBody)
-    }
-}
+private enum class ScreenState { IDLE, SCANNING, CONNECTED }
+

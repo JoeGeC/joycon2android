@@ -1,5 +1,10 @@
 package com.joegec.joycon2android.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -101,17 +106,26 @@ private fun JoyconAssignmentRow(
                     fontSize = Dimens.fontSizeBody,
                     fontWeight = FontWeight.Medium,
                 )
-                if (!joycon.ready) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(12.dp),
-                        color = sideColor,
-                        strokeWidth = 2.dp,
-                    )
-                    Text(
-                        stringResource(R.string.status_connecting),
-                        color = TextDim,
-                        fontSize = Dimens.fontSizeSmall,
-                    )
+                AnimatedVisibility(
+                    visible = !joycon.ready,
+                    enter = fadeIn() + expandHorizontally(),
+                    exit = fadeOut() + shrinkHorizontally(),
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(12.dp),
+                            color = sideColor,
+                            strokeWidth = 2.dp,
+                        )
+                        Text(
+                            stringResource(R.string.status_connecting),
+                            color = TextDim,
+                            fontSize = Dimens.fontSizeSmall,
+                        )
+                    }
                 }
             }
             IconButton(

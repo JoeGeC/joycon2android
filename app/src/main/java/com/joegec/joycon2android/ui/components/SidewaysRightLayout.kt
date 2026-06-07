@@ -1,5 +1,8 @@
 package com.joegec.joycon2android.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -95,7 +98,11 @@ private fun TopRow(state: PlayerState) {
             SmallButton(JoyconButton.Chat.label, JoyconButton.Chat.id in state.pressed)
             HomeButton(state.pressed)
         }
-        if (state.rightInput.batteryVolts > 0f) {
+        AnimatedVisibility(
+            visible = state.rightInput.batteryVolts > 0f,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
             BatteryPill(state.rightInput.batteryVolts)
         }
         SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in state.pressed)
