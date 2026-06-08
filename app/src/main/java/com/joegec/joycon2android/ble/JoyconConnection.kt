@@ -58,8 +58,7 @@ class JoyconConnection(
         // Lower nibble = solid LEDs (0x01=P1, 0x02=P2, 0x04=P3, 0x08=P4)
         // Upper nibble = flashing LEDs (0x10=P1, 0x20=P2, 0x40=P3, 0x80=P4)
         // 0xF0 = all flashing = default cycling animation
-        private fun playerLedCmd(player: Int): ByteArray {
-            val bitmask = (1 shl (player - 1)).toByte()
+        private fun playerLedCmd(bitmask: Byte): ByteArray {
             return byteArrayOf(
                 0x09, 0x91.toByte(), 0x01, 0x07, 0x00, 0x08, 0x00, 0x00,
                 bitmask, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -255,7 +254,7 @@ class JoyconConnection(
     private fun sendLedCommand(g: BluetoothGatt): Boolean {
         val pending = pendingPlayerLed
         pendingPlayerLed = null
-        val cmd = if (pending != null) playerLedCmd(pending.index) else LED_ALL_ON_CMD
+        val cmd = if (pending != null) playerLedCmd(pending.ledBitmask) else LED_ALL_ON_CMD
         Log.i(TAG, "[$side] Sending LED cmd: ${cmd.joinToString(" ") { "%02X".format(it) }}")
         return writeCharacteristic(g, writeChar!!, cmd)
     }
