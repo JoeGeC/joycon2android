@@ -170,6 +170,7 @@ private fun isSlotTaken(side: Side, player: PlayerNumber, players: List<PlayerSt
     return when (side) {
         Side.LEFT -> playerState.left != null
         Side.RIGHT -> playerState.right != null
-        else -> playerState.left != null && playerState.right != null
+        Side.PRO -> playerState.hasController
+        Side.UNKNOWN -> playerState.left != null && playerState.right != null
     }
 }

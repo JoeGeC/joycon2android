@@ -28,13 +28,7 @@ object PacketParser {
 
         val buttons = bb.getInt(0x03).toLong() and 0xFFFFFFFFL
 
-        // Left Joy-Con uses offset 0x0A, Right uses 0x0D
-        val stickOffset = when (side) {
-            Side.LEFT -> 0x0A
-            Side.RIGHT -> 0x0D
-            else -> 0x0A // Pro/Unknown: default to left
-        }
-        val (sx, sy) = decodeStick(data, stickOffset)
+        val (sx, sy) = resolveStick(data, side)
 
         return JoyconInput(
             packetId = decodeUint24(data, 0),
@@ -50,6 +44,29 @@ object PacketParser {
             gyroZ = bb.getShort(0x3A).toInt(),
             batteryVolts = (bb.getShort(0x1F).toInt() and 0xFFFF) / 1000f,
         )
+    }
+
+    private fun resolveStick(data: ByteArray, side: Side): Pair<Int, Int> {
+        if (side == Side.LEFT) return decodeStick(data, 0x0A)
+        if (side == Side.RIGHT) return decodeStick(data, 0x0D)
+
+        // For UNKNOWN/PRO: check both offsets and use whichever has non-center data
+        val left = decodeStick(data, 0x0A)
+        val right = decodeStick(data, 0x0D)
+        val leftActive = isStickActive(left)
+        val rightActive = isStickActive(right)
+        return when {
+            leftActive && !rightActive -> left
+            rightActive && !leftActive -> right
+            leftActive -> left // both active, prefer left
+            else -> left // both centered, doesn't matter
+        }
+    }
+
+    private fun isStickActive(stick: Pair<Int, Int>): Boolean {
+        val (x, y) = stick
+        // Non-zero and not all-zeros (dead joycon offset reads as 0,0)
+        return x != 0 || y != 0
     }
 
     /** 12-bit packed stick: 3 bytes → (x, y) each 0..4095 */

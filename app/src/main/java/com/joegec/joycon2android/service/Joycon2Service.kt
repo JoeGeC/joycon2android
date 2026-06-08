@@ -18,6 +18,7 @@ import com.joegec.joycon2android.R
 import com.joegec.joycon2android.ble.Joycon2Manager
 import com.joegec.joycon2android.ble.JoyconConnection
 import com.joegec.joycon2android.domain.PlayerAssignmentManager
+import com.joegec.joycon2android.domain.SideInference
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
@@ -282,11 +283,7 @@ class Joycon2Service : Service() {
         val unassigned = joycons.filter { it.assignedPlayer == null }
         val players = PlayerNumber.entries.map { player ->
             val assigned = joycons.filter { it.assignedPlayer == player }
-            PlayerState(
-                player = player,
-                left = assigned.find { it.side == Side.LEFT },
-                right = assigned.find { it.side == Side.RIGHT || it.side == Side.PRO || it.side == Side.UNKNOWN },
-            )
+            resolvePlayerState(player, assigned)
         }
 
         return AppUiState(
@@ -294,6 +291,55 @@ class Joycon2Service : Service() {
             error = error,
             unassignedJoycons = unassigned,
             players = players,
+        )
+    }
+
+    private fun resolvePlayerState(
+        player: PlayerNumber,
+        assigned: List<ConnectedJoycon>,
+    ): PlayerState {
+        val knownLeft = assigned.find { it.side == Side.LEFT }
+        val knownRight = assigned.find { it.side == Side.RIGHT || it.side == Side.PRO }
+        val unknowns = assigned.filter { it.side == Side.UNKNOWN }
+
+        if (unknowns.isEmpty() || (knownLeft != null && knownRight != null)) {
+            return PlayerState(player = player, left = knownLeft, right = knownRight ?: unknowns.firstOrNull())
+        }
+
+        if (unknowns.size == 1) {
+            val joycon = unknowns.first()
+            return if (knownLeft != null) {
+                PlayerState(player = player, left = knownLeft, right = joycon)
+            } else if (knownRight != null) {
+                PlayerState(player = player, left = joycon, right = knownRight)
+            } else {
+                val inferred = SideInference.inferSide(joycon.input)
+                when (inferred) {
+                    Side.LEFT -> PlayerState(player = player, left = joycon, right = null)
+                    Side.RIGHT -> PlayerState(player = player, left = null, right = joycon)
+                    else -> PlayerState(player = player, left = null, right = joycon)
+                }
+            }
+        }
+
+        // Two UNKNOWN joycons — infer sides from input
+        val first = unknowns[0]
+        val second = unknowns[1]
+        val firstSide = SideInference.inferSide(first.input)
+        val secondSide = SideInference.inferSide(second.input)
+
+        val (left, right) = when {
+            firstSide == Side.LEFT && secondSide != Side.LEFT -> first to second
+            secondSide == Side.LEFT && firstSide != Side.LEFT -> second to first
+            firstSide == Side.RIGHT && secondSide != Side.RIGHT -> second to first
+            secondSide == Side.RIGHT && firstSide != Side.RIGHT -> first to second
+            else -> first to second // can't distinguish yet; arbitrary
+        }
+
+        return PlayerState(
+            player = player,
+            left = knownLeft ?: left,
+            right = knownRight ?: right,
         )
     }
 

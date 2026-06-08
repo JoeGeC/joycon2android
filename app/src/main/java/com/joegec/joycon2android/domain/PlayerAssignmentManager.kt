@@ -41,13 +41,11 @@ class PlayerAssignmentManager {
 
     private fun isSlotTaken(side: Side, player: PlayerNumber): Boolean {
         val assignedToPlayer = _assignments.value.filterValues { it == player }.keys
-        return assignedToPlayer.any { address ->
-            val existingSide = sides[address] ?: return@any false
-            when (side) {
-                Side.LEFT -> existingSide == Side.LEFT
-                Side.RIGHT -> existingSide == Side.RIGHT
-                else -> false
-            }
+        return when (side) {
+            Side.LEFT -> assignedToPlayer.any { sides[it] == Side.LEFT }
+            Side.RIGHT -> assignedToPlayer.any { sides[it] == Side.RIGHT }
+            Side.UNKNOWN -> assignedToPlayer.count { sides[it] == Side.UNKNOWN } >= 2
+            Side.PRO -> assignedToPlayer.isNotEmpty()
         }
     }
 }
