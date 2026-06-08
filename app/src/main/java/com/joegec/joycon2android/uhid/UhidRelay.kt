@@ -114,9 +114,13 @@ class UhidRelay(private val name: String, private val playerIndex: Int) {
         buf.position(4 + 128)
 
         // phys[64]
+        val physBytes = "joycon2android/$playerIndex".toByteArray(Charsets.UTF_8)
+        buf.put(physBytes, 0, minOf(physBytes.size, 63))
         buf.position(4 + 128 + 64)
 
         // uniq[64]
+        val uniqBytes = "player-$playerIndex".toByteArray(Charsets.UTF_8)
+        buf.put(uniqBytes, 0, minOf(uniqBytes.size, 63))
         buf.position(4 + 128 + 64 + 64)
 
         buf.putShort(RDESC.size.toShort())
