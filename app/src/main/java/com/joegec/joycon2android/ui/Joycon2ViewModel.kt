@@ -1,19 +1,16 @@
 package com.joegec.joycon2android.ui
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.joegec.joycon2android.R
+import com.joegec.joycon2android.ble.BlePermissionHandler
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.service.Joycon2Service
@@ -25,6 +22,8 @@ import kotlinx.coroutines.launch
 
 @SuppressLint("StaticFieldLeak") // Service ref is cleared in onCleared/onServiceDisconnected
 class Joycon2ViewModel(application: Application) : AndroidViewModel(application) {
+
+    val permissionHandler = BlePermissionHandler(application)
 
     private var service: Joycon2Service? = null
     private var bound = false
@@ -61,7 +60,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     }
 
     init {
-        if (hasBlePermissions()) {
+        if (permissionHandler.isGranted()) {
             startAndBind()
         }
     }
@@ -81,7 +80,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun recheckPermissions() {
-        if (_permissionDenied.value && hasBlePermissions()) {
+        if (_permissionDenied.value && permissionHandler.isGranted()) {
             onPermissionsGranted()
         }
     }
@@ -157,13 +156,4 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         gamepadErrorJob?.cancel()
     }
 
-    private fun hasBlePermissions(): Boolean {
-        val app = getApplication<Application>()
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ContextCompat.checkSelfPermission(app, Manifest.permission.BLUETOOTH_CONNECT) ==
-                PackageManager.PERMISSION_GRANTED
-        } else {
-            true
-        }
-    }
 }

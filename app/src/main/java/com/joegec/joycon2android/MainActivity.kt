@@ -1,11 +1,6 @@
 package com.joegec.joycon2android
 
-import android.Manifest
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -34,6 +29,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        val permissionHandler = viewModel.permissionHandler
+
         val permLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { grants ->
@@ -57,7 +54,7 @@ class MainActivity : ComponentActivity() {
                         gamepadEnabled = gamepadEnabled,
                         gamepadError = gamepadError,
                         permissionDenied = permissionDenied,
-                        onScan = { permLauncher.launch(requiredPermissions()) },
+                        onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
                         onDisconnectAll = viewModel::disconnectAll,
                         onAssign = viewModel::assignToPlayer,
                         onUnassign = viewModel::unassign,
@@ -66,39 +63,11 @@ class MainActivity : ComponentActivity() {
                             if (enabled) viewModel.enableGamepad()
                             else viewModel.disableGamepad()
                         },
-                        onOpenSettings = ::openAppSettings,
+                        onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },
                     )
                 }
             }
         }
     }
 
-    private fun openAppSettings() {
-        val nearbyIntent = Intent("android.settings.MANAGE_APP_PERMISSION").apply {
-            putExtra("android.intent.extra.PACKAGE_NAME", packageName)
-            putExtra("android.intent.extra.PERMISSION_GROUP_NAME",
-                "android.permission-group.NEARBY_DEVICES")
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            nearbyIntent.resolveActivity(packageManager) != null
-        ) {
-            startActivity(nearbyIntent)
-        } else {
-            val fallback = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", packageName, null)
-            }
-            startActivity(fallback)
-        }
-    }
-
-    private fun requiredPermissions(): Array<String> =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
-        } else {
-            arrayOf(
-                Manifest.permission.BLUETOOTH,
-                Manifest.permission.BLUETOOTH_ADMIN,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-            )
-        }
 }
