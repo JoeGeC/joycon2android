@@ -59,7 +59,7 @@ internal fun AssignmentPanel(
             .fillMaxWidth()
             .background(CardBg, shape)
             .border(Dimens.cardBorderWidth, Accent.copy(alpha = 0.3f), shape)
-            .padding(Dimens.cardPadding),
+            .padding(vertical = Dimens.cardPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
@@ -67,6 +67,7 @@ internal fun AssignmentPanel(
             color = Accent,
             fontSize = Dimens.fontSizeButton,
             fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = Dimens.cardPadding),
         )
 
         unassigned.forEach { joycon ->
@@ -97,7 +98,7 @@ private fun JoyconAssignmentRow(
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.cardPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -145,30 +146,42 @@ private fun JoyconAssignmentRow(
                 )
             }
         }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-        ) {
-            PlayerNumber.entries.forEach { player ->
-                val slotTaken = isSlotTaken(joycon.side, player, players)
-                FilterChip(
-                    selected = false,
-                    onClick = { onAssign(joycon.address, player) },
-                    enabled = joycon.ready && !slotTaken,
-                    label = {
-                        Text(
-                            stringResource(R.string.player_label, player.index),
-                            fontWeight = FontWeight.Bold,
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = CardBg,
-                        labelColor = TextDim,
-                        selectedContainerColor = Accent,
-                        selectedLabelColor = TextOnAccent,
-                    ),
-                )
-            }
+        PlayerSelection(joycon, players, onAssign)
+    }
+}
+
+@Composable
+private fun PlayerSelection(
+    joycon: ConnectedJoycon,
+    players: List<PlayerState>,
+    onAssign: (String, PlayerNumber) -> Unit
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .padding(horizontal = Dimens.cardBorderWidth)
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = Dimens.cardPadding),
+    ) {
+        PlayerNumber.entries.forEach { player ->
+            val slotTaken = isSlotTaken(joycon.side, player, players)
+            FilterChip(
+                selected = false,
+                onClick = { onAssign(joycon.address, player) },
+                enabled = joycon.ready && !slotTaken,
+                label = {
+                    Text(
+                        stringResource(R.string.player_label, player.index),
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = CardBg,
+                    labelColor = TextDim,
+                    selectedContainerColor = Accent,
+                    selectedLabelColor = TextOnAccent,
+                ),
+            )
         }
     }
 }
