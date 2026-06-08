@@ -75,12 +75,14 @@ fun JoyconScreen(
     state: AppUiState,
     gamepadEnabled: Boolean,
     gamepadError: String?,
+    permissionDenied: Boolean,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
     onUnassign: (String) -> Unit,
     onDisconnect: (String) -> Unit,
     onGamepadToggle: (Boolean) -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -122,7 +124,7 @@ fun JoyconScreen(
             Crossfade(targetState = screenState, modifier = Modifier.weight(1f), label = "screen") { target ->
                 when (target) {
                     ScreenState.IDLE -> IdleContent(
-                        state, onScan,
+                        state, permissionDenied, onScan, onOpenSettings,
                         Modifier
                             .fillMaxSize()
                             .padding(horizontal = Dimens.screenPaddingHorizontal),
@@ -210,12 +212,19 @@ private fun statusText(state: AppUiState): String {
 }
 
 @Composable
-private fun IdleContent(state: AppUiState, onScan: () -> Unit, modifier: Modifier = Modifier) {
+private fun IdleContent(
+    state: AppUiState,
+    permissionDenied: Boolean,
+    onScan: () -> Unit,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier.padding(bottom = Dimens.screenPaddingVertical),
         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
     ) {
         ErrorMessage(state.error)
+        PermissionError(permissionDenied, onOpenSettings)
 
         Spacer(Modifier.weight(1f))
 
@@ -269,6 +278,30 @@ private fun ErrorMessage(error: String?) {
             ) {
                 Text(it, color = ErrorText, fontSize = Dimens.fontSizeBody)
             }
+        }
+    }
+}
+
+@Composable
+private fun PermissionError(visible: Boolean, onOpenSettings: () -> Unit) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(Dimens.buttonCorner))
+                .background(ErrorBg)
+                .clickable(onClick = onOpenSettings)
+                .padding(Dimens.cardPadding)
+        ) {
+            Text(
+                stringResource(R.string.error_permissions_denied),
+                color = ErrorText,
+                fontSize = Dimens.fontSizeBody,
+            )
         }
     }
 }

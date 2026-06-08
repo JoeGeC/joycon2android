@@ -19,7 +19,7 @@
     <!-- Errors -->
     <string name="error_bluetooth_off">Bluetooth is off or unavailable</string>
     <string name="error_no_joycon">No Joy-Con found. Press SYNC on the controller and try again.</string>
-    <string name="error_permissions_denied">Bluetooth permissions denied</string>
+    <string name="error_permissions_denied">Nearby Devices permission is required. Tap here to open Settings.</string>
     <string name="error_scan_already_started">Scan already in progress</string>
     <string name="error_ble_registration_failed">BLE app registration failed</string>
     <string name="error_ble_unsupported">BLE scanning not supported</string>

@@ -1,11 +1,14 @@
 package com.joegec.joycon2android.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
@@ -35,6 +38,9 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     private val _gamepadError = MutableStateFlow<String?>(null)
     val gamepadError: StateFlow<String?> = _gamepadError.asStateFlow()
 
+    private val _permissionDenied = MutableStateFlow(false)
+    val permissionDenied: StateFlow<Boolean> = _permissionDenied.asStateFlow()
+
     private var stateJob: Job? = null
     private var gamepadEnabledJob: Job? = null
     private var gamepadErrorJob: Job? = null
@@ -55,7 +61,9 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     }
 
     init {
-        startAndBind()
+        if (hasBlePermissions()) {
+            startAndBind()
+        }
     }
 
     override fun onCleared() {
@@ -64,6 +72,17 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         if (bound) {
             getApplication<Application>().unbindService(connection)
             bound = false
+        }
+    }
+
+    fun onPermissionsGranted() {
+        _permissionDenied.value = false
+        if (!bound) startAndBind()
+    }
+
+    fun recheckPermissions() {
+        if (_permissionDenied.value && hasBlePermissions()) {
+            onPermissionsGranted()
         }
     }
 
@@ -92,7 +111,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun onPermissionsDenied() {
-        service?.emitError(getApplication<Application>().getString(R.string.error_permissions_denied))
+        _permissionDenied.value = true
     }
 
     fun enableGamepad() {
@@ -136,5 +155,15 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         stateJob?.cancel()
         gamepadEnabledJob?.cancel()
         gamepadErrorJob?.cancel()
+    }
+
+    private fun hasBlePermissions(): Boolean {
+        val app = getApplication<Application>()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(app, Manifest.permission.BLUETOOTH_CONNECT) ==
+                PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
     }
 }
