@@ -56,13 +56,13 @@ import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.ui.components.AssignmentPanel
+import com.joegec.joycon2android.ui.components.ErrorBox
 import com.joegec.joycon2android.ui.components.PlayerView
 import com.joegec.joycon2android.ui.components.ScanningIndicator
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.ErrorBg
 import com.joegec.joycon2android.ui.theme.ErrorText
 import com.joegec.joycon2android.ui.theme.LeftJoyconColor
 import com.joegec.joycon2android.ui.theme.RightJoyconColor
@@ -223,8 +223,11 @@ private fun IdleContent(
         modifier = modifier.padding(bottom = Dimens.screenPaddingVertical),
         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
     ) {
-        ErrorMessage(state.error)
-        PermissionError(permissionDenied, onOpenSettings)
+        ErrorBox(text = state.error)
+        ErrorBox(
+            text = if (permissionDenied) stringResource(R.string.error_permissions_denied) else null,
+            onClick = onOpenSettings,
+        )
 
         Spacer(Modifier.weight(1f))
 
@@ -248,7 +251,7 @@ private fun IdleContent(
 private fun ScanningContent(state: AppUiState) {
     ScanningIndicator()
     SyncButtonGraphic()
-    ErrorMessage(state.error)
+    ErrorBox(text = state.error)
 }
 
 @Composable
@@ -262,49 +265,6 @@ private fun SyncButtonGraphic(modifier: Modifier = Modifier) {
     )
 }
 
-@Composable
-private fun ErrorMessage(error: String?) {
-    AnimatedVisibility(
-        visible = error != null,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically(),
-    ) {
-        error?.let {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(ErrorBg, RoundedCornerShape(Dimens.buttonCorner))
-                    .padding(Dimens.cardPadding)
-            ) {
-                Text(it, color = ErrorText, fontSize = Dimens.fontSizeBody)
-            }
-        }
-    }
-}
-
-@Composable
-private fun PermissionError(visible: Boolean, onOpenSettings: () -> Unit) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically(),
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(Dimens.buttonCorner))
-                .background(ErrorBg)
-                .clickable(onClick = onOpenSettings)
-                .padding(Dimens.cardPadding)
-        ) {
-            Text(
-                stringResource(R.string.error_permissions_denied),
-                color = ErrorText,
-                fontSize = Dimens.fontSizeBody,
-            )
-        }
-    }
-}
 
 @Composable
 private fun KofiBanner(modifier: Modifier = Modifier) {
@@ -396,7 +356,7 @@ private fun ConnectedContent(
         }
     }
 
-    ErrorMessage(state.error)
+    ErrorBox(text = state.error)
 
     OutlinedButton(
         onClick = onDisconnectAll,
