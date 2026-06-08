@@ -298,8 +298,13 @@ class Joycon2Service : Service() {
         player: PlayerNumber,
         assigned: List<ConnectedJoycon>,
     ): PlayerState {
+        val pro = assigned.find { it.side == Side.PRO }
+        if (pro != null) {
+            return PlayerState(player = player, left = pro, right = pro)
+        }
+
         val knownLeft = assigned.find { it.side == Side.LEFT }
-        val knownRight = assigned.find { it.side == Side.RIGHT || it.side == Side.PRO }
+        val knownRight = assigned.find { it.side == Side.RIGHT }
         val unknowns = assigned.filter { it.side == Side.UNKNOWN }
 
         if (unknowns.isEmpty() || (knownLeft != null && knownRight != null)) {

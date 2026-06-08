@@ -41,6 +41,7 @@ class PlayerAssignmentManager {
 
     private fun isSlotTaken(side: Side, player: PlayerNumber): Boolean {
         val assignedToPlayer = _assignments.value.filterValues { it == player }.keys
+        if (assignedToPlayer.any { sides[it] == Side.PRO }) return true
         return when (side) {
             Side.LEFT -> assignedToPlayer.any { sides[it] == Side.LEFT }
             Side.RIGHT -> assignedToPlayer.any { sides[it] == Side.RIGHT }

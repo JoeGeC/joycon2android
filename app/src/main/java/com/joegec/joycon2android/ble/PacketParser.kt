@@ -27,8 +27,8 @@ object PacketParser {
         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
 
         val buttons = bb.getInt(0x03).toLong() and 0xFFFFFFFFL
-
         val (sx, sy) = resolveStick(data, side)
+        val (rsx, rsy) = if (side == Side.PRO) decodeStick(data, 0x0D) else (2048 to 2048)
 
         return JoyconInput(
             packetId = decodeUint24(data, 0),
@@ -36,6 +36,8 @@ object PacketParser {
             pressed = decodeButtons(buttons),
             stickX = sx,
             stickY = sy,
+            rightStickX = rsx,
+            rightStickY = rsy,
             accelX = bb.getShort(0x30).toInt(),
             accelY = bb.getShort(0x32).toInt(),
             accelZ = bb.getShort(0x34).toInt(),
@@ -47,10 +49,10 @@ object PacketParser {
     }
 
     private fun resolveStick(data: ByteArray, side: Side): Pair<Int, Int> {
-        if (side == Side.LEFT) return decodeStick(data, 0x0A)
+        if (side == Side.LEFT || side == Side.PRO) return decodeStick(data, 0x0A)
         if (side == Side.RIGHT) return decodeStick(data, 0x0D)
 
-        // For UNKNOWN/PRO: check both offsets and use whichever has non-center data
+        // For UNKNOWN: check both offsets and use whichever has non-center data
         val left = decodeStick(data, 0x0A)
         val right = decodeStick(data, 0x0D)
         val leftActive = isStickActive(left)
@@ -58,14 +60,13 @@ object PacketParser {
         return when {
             leftActive && !rightActive -> left
             rightActive && !leftActive -> right
-            leftActive -> left // both active, prefer left
-            else -> left // both centered, doesn't matter
+            leftActive -> left
+            else -> left
         }
     }
 
     private fun isStickActive(stick: Pair<Int, Int>): Boolean {
         val (x, y) = stick
-        // Non-zero and not all-zeros (dead joycon offset reads as 0,0)
         return x != 0 || y != 0
     }
 

@@ -167,6 +167,7 @@ private fun JoyconAssignmentRow(
 
 private fun isSlotTaken(side: Side, player: PlayerNumber, players: List<PlayerState>): Boolean {
     val playerState = players.find { it.player == player } ?: return false
+    if (playerState.hasPro) return true
     return when (side) {
         Side.LEFT -> playerState.left != null
         Side.RIGHT -> playerState.right != null

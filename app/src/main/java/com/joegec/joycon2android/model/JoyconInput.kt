@@ -6,6 +6,8 @@ data class JoyconInput(
     val pressed: Set<String> = emptySet(),
     val stickX: Int = 2048,
     val stickY: Int = 2048,
+    val rightStickX: Int = 2048,
+    val rightStickY: Int = 2048,
     val accelX: Int = 0,
     val accelY: Int = 0,
     val accelZ: Int = 0,
