@@ -328,6 +328,15 @@ class Joycon2Service : Service() {
         val firstSide = SideInference.inferSide(first.input)
         val secondSide = SideInference.inferSide(second.input)
 
+        // Both inferred as the same known side — unassign the second one
+        if (firstSide == secondSide && firstSide != Side.UNKNOWN) {
+            assignmentManager.unassign(second.address)
+            return when (firstSide) {
+                Side.LEFT -> PlayerState(player = player, left = knownLeft ?: first, right = knownRight)
+                else -> PlayerState(player = player, left = knownLeft, right = knownRight ?: first)
+            }
+        }
+
         val (left, right) = when {
             firstSide == Side.LEFT && secondSide != Side.LEFT -> first to second
             secondSide == Side.LEFT && firstSide != Side.LEFT -> second to first
