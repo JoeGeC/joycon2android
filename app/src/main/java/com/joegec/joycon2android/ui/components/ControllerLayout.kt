@@ -12,6 +12,7 @@ internal fun PlayerControllerLayout(
     modifier: Modifier = Modifier,
 ) {
     val layoutType = when {
+        state.hasPro -> LayoutType.PRO
         state.hasFullController -> LayoutType.DUAL
         state.left != null -> LayoutType.LEFT
         state.right != null -> LayoutType.RIGHT
@@ -20,6 +21,7 @@ internal fun PlayerControllerLayout(
 
     Crossfade(targetState = layoutType, modifier = modifier, label = "controller") { target ->
         when (target) {
+            LayoutType.PRO -> ProControllerLayout(state, onUnassign)
             LayoutType.DUAL -> DualJoyconLayout(state, onUnassign)
             LayoutType.LEFT -> LeftSidewaysLayout(state, onUnassign)
             LayoutType.RIGHT -> RightSidewaysLayout(state, onUnassign)
@@ -27,4 +29,4 @@ internal fun PlayerControllerLayout(
     }
 }
 
-private enum class LayoutType { DUAL, LEFT, RIGHT }
+private enum class LayoutType { PRO, DUAL, LEFT, RIGHT }

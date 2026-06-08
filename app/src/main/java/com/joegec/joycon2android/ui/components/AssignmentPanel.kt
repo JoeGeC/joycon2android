@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,12 +83,14 @@ private fun JoyconAssignmentRow(
     val sideColor = when (joycon.side) {
         Side.LEFT -> LeftJoyconColor
         Side.RIGHT -> RightJoyconColor
-        else -> TextDim
+        Side.PRO -> Color.White
+        Side.UNKNOWN -> TextDim
     }
     val sideLabel = when (joycon.side) {
         Side.LEFT -> stringResource(R.string.side_left)
         Side.RIGHT -> stringResource(R.string.side_right)
-        else -> joycon.deviceName
+        Side.PRO -> stringResource(R.string.side_pro)
+        Side.UNKNOWN -> joycon.deviceName
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
