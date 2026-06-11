@@ -1,8 +1,5 @@
 package com.joegec.joycon2android.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,18 +7,12 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.JoyconDefaultColor
-import com.joegec.joycon2android.ui.theme.joyconBorderColor
 
 @Composable
 internal fun ProControllerLayout(
@@ -29,18 +20,10 @@ internal fun ProControllerLayout(
     onUnassign: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(Dimens.cardCorner)
-    val borderColor = joyconBorderColor(state.left?.accentColor, JoyconDefaultColor)
-
-    Column(
-        modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .clickable { onUnassign(state.left!!.address) }
-            .background(CardBg, shape)
-            .border(Dimens.cardBorderWidth, borderColor.copy(alpha = Dimens.cardBorderAlpha), shape)
-            .padding(Dimens.cardPadding),
-        verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
+    JoyconCard(
+        accentColor = state.left?.accentColor,
+        onClick = { onUnassign(state.left!!.address) },
+        modifier = modifier.fillMaxWidth(),
     ) {
         ShoulderButtons(state.pressed)
         ButtonRow(state)
