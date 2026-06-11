@@ -64,8 +64,8 @@ import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.ErrorText
-import com.joegec.joycon2android.ui.theme.LeftJoyconColor
-import com.joegec.joycon2android.ui.theme.RightJoyconColor
+import com.joegec.joycon2android.ui.theme.JoyconBlue
+import com.joegec.joycon2android.ui.theme.JoyconRed
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 
@@ -270,7 +270,7 @@ private fun SyncButtonGraphic(modifier: Modifier = Modifier) {
 private fun KofiBanner(modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
     val shape = RoundedCornerShape(Dimens.cardCorner)
-    val gradientBorder = Brush.linearGradient(listOf(LeftJoyconColor, RightJoyconColor))
+    val gradientBorder = Brush.linearGradient(listOf(JoyconBlue, JoyconRed))
 
     Row(
         modifier

@@ -54,6 +54,19 @@ class JoyconConnection(
             0x00, 0x00, 0xFF.toByte(), 0x00, 0x00, 0x00
         )
 
+        // SPI read (report 0x02, cmd 0x04): read 0x40 bytes from the DeviceInfo block
+        // at 0x013000, which contains the shell colors (body color at 0x013019).
+        // Payload: read length (0x40), 0x7E magic, then the 4-byte LE source address.
+        // The reply arrives on the command-response characteristic and is decoded
+        // by [SpiColorParser].
+        // Byte [2] is 0x00 for SPI reads (matching HandHeldLegend procon2tool);
+        // the INIT_CMD_* feature commands use 0x01 there, but SPI reads only
+        // reply when this is 0x00.
+        private val SPI_READ_COLOR_CMD = byteArrayOf(
+            0x02, 0x91.toByte(), 0x00, 0x04, 0x00, 0x08, 0x00, 0x00,
+            0x40, 0x7E, 0x00, 0x00, 0x00, 0x30, 0x01, 0x00
+        )
+
         // Subcommand 0x07: set LED pattern via bitmask (16 bytes)
         // Lower nibble = solid LEDs (0x01=P1, 0x02=P2, 0x04=P3, 0x08=P4)
         // Upper nibble = flashing LEDs (0x10=P1, 0x20=P2, 0x40=P3, 0x80=P4)
@@ -197,10 +210,11 @@ class JoyconConnection(
             }
             enqueueInitWrite(g, INIT_CMD_1)
             enqueueInitWrite(g, INIT_CMD_2)
+            enqueueInitWrite(g, SPI_READ_COLOR_CMD)
 
             opQueue.enqueue {
                 initComplete = true
-                _connectionState.value = JoyconConnectionState(
+                _connectionState.value = _connectionState.value.copy(
                     connected = true, ready = true, deviceName = deviceName
                 )
                 Log.i(TAG, "[$side] Init sequence complete")
@@ -272,7 +286,13 @@ class JoyconConnection(
                     mainHandler.post { opQueue.enqueue { sendLedCommand(g) } }
                 }
             }
-            CMD_RESPONSE_CHAR -> Log.d(TAG, "[$side] Cmd response: ${data.size} bytes")
+            CMD_RESPONSE_CHAR -> {
+                Log.d(TAG, "[$side] Cmd response: ${data.size} bytes")
+                SpiColorParser.parseAccentColor(data)?.let { color ->
+                    Log.i(TAG, "[$side] Accent color: #${"%06X".format(color)}")
+                    _connectionState.value = _connectionState.value.copy(accentColor = color)
+                }
+            }
         }
     }
 

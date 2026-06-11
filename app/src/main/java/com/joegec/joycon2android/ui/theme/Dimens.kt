@@ -9,7 +9,7 @@ object Dimens {
     val cardPadding = 16.dp
     val cardCorner = 20.dp
     val cardBorderWidth = 2.dp
-    val cardBorderAlpha = 0.4f
+    val cardBorderAlpha = 1f
     val sectionSpacing = 14.dp
     val elementSpacing = 8.dp
     val dualJoyconGap = 10.dp

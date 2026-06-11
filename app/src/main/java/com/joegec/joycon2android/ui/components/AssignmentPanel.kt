@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,10 +38,10 @@ import com.joegec.joycon2android.model.Side
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.LeftJoyconColor
-import com.joegec.joycon2android.ui.theme.RightJoyconColor
+import com.joegec.joycon2android.ui.theme.JoyconDefaultColor
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
+import com.joegec.joycon2android.ui.theme.joyconBorderColor
 
 @Composable
 internal fun AssignmentPanel(
@@ -83,12 +82,7 @@ private fun JoyconAssignmentRow(
     onAssign: (String, PlayerNumber) -> Unit,
     onDisconnect: (String) -> Unit,
 ) {
-    val sideColor = when (joycon.side) {
-        Side.LEFT -> LeftJoyconColor
-        Side.RIGHT -> RightJoyconColor
-        Side.PRO -> Color.White
-        Side.UNKNOWN -> TextDim
-    }
+    val sideColor = joyconBorderColor(joycon.accentColor, JoyconDefaultColor)
     val sideLabel = when (joycon.side) {
         Side.LEFT -> stringResource(R.string.side_left)
         Side.RIGHT -> stringResource(R.string.side_right)

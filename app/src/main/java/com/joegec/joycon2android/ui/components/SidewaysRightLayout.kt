@@ -26,7 +26,8 @@ import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.RightJoyconColor
+import com.joegec.joycon2android.ui.theme.JoyconDefaultColor
+import com.joegec.joycon2android.ui.theme.joyconBorderColor
 
 @Composable
 internal fun RightSidewaysLayout(
@@ -35,6 +36,7 @@ internal fun RightSidewaysLayout(
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(Dimens.cardCorner)
+    val borderColor = joyconBorderColor(state.right?.accentColor, JoyconDefaultColor)
 
     Column(
         modifier
@@ -42,7 +44,7 @@ internal fun RightSidewaysLayout(
             .clip(shape)
             .clickable { onUnassign(state.right!!.address) }
             .background(CardBg, shape)
-            .border(Dimens.cardBorderWidth, RightJoyconColor.copy(alpha = Dimens.cardBorderAlpha), shape)
+            .border(Dimens.cardBorderWidth, borderColor.copy(alpha = Dimens.cardBorderAlpha), shape)
             .padding(Dimens.cardPadding),
         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
     ) {
