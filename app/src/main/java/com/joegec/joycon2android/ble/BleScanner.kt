@@ -66,7 +66,12 @@ class BleScanner(context: Context) {
         val callback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 if (!isScanning) return
-                if (!isNintendoDevice(result)) return
+                val manufacturerData = nintendoData(result) ?: return
+                logAdvertisement(result, manufacturerData)
+                // A button press wakes a synced Joy-Con into a short-lived reconnect
+                // advertisement that only its bonded host can connect to (foreign
+                // connects fail with status 133) — connecting just flashes the UI
+                if (!JoyconAdvertisement.isPairing(manufacturerData)) return
                 if (isKnownAddress(result.device.address)) return
 
                 val name = result.device.name
@@ -94,9 +99,15 @@ class BleScanner(context: Context) {
         }, SCAN_TIMEOUT_MS)
     }
 
-    private fun isNintendoDevice(result: ScanResult): Boolean {
-        val record = result.scanRecord ?: return false
-        return record.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) != null
+    private fun nintendoData(result: ScanResult): ByteArray? =
+        result.scanRecord?.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID)
+
+    private fun logAdvertisement(result: ScanResult, data: ByteArray) {
+        Log.d(
+            TAG,
+            "Adv ${result.device.address} name=${result.device.name ?: result.scanRecord?.deviceName} " +
+                "mfg=${data.joinToString(" ") { "%02X".format(it) }}",
+        )
     }
 
     private fun lowLatencySettings() = ScanSettings.Builder()

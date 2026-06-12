@@ -287,7 +287,7 @@ class JoyconConnection(
                 }
             }
             CMD_RESPONSE_CHAR -> {
-                Log.d(TAG, "[$side] Cmd response: ${data.size} bytes")
+                Log.d(TAG, "[$side] Cmd response: ${data.joinToString(" ") { "%02X".format(it) }}")
                 SpiColorParser.parseAccentColor(data)?.let { color ->
                     Log.i(TAG, "[$side] Accent color: #${"%06X".format(color)}")
                     _connectionState.value = _connectionState.value.copy(accentColor = color)

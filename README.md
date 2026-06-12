@@ -215,6 +215,30 @@ All values extracted from the confirmed-working macOS implementation (`Joycon2BL
 
 The write characteristic is **WRITE WITHOUT RESPONSE**. Writing to the wrong characteristic (`...fdf`) produces an enabled subscription but no data.
 
+### Advertising
+
+Joy-Con 2 advertisements carry manufacturer data for ID `0x0553`. Bytes `[10..15]` hold the
+**bonded host's MAC address**: a button press wakes a synced controller into a short-lived
+reconnect advertisement carrying that address, while holding SYNC (pairing mode) zeroes the
+field. The scanner only accepts controllers with a zeroed host field — otherwise every stray
+button press on a nearby synced Joy-Con would flash in and out of the device list.
+
+```
+pairing:  01 00 03 7E 05 66 20 00 01 00 [00 00 00 00 00 00] 0F ...
+wake:     01 00 03 7E 05 66 20 00 01 00 [09 A7 9A 55 E2 98] 0F ...   <- host MAC
+```
+
+**Reconnect-on-button-press is console-exclusive** (investigated 2026-06): during a wake
+advertisement the Joy-Con refuses GATT connections from anyone but its bonded host
+(immediate status 133). Standard SMP bonding is rejected (the controller drops the
+connection, status 22). The console pairs at the application layer instead — report
+`0x15` cmd `0x01` "PairingSetAddress" exists, but a lone SetAddress write doesn't change
+the stored host (the reply just echoes the controller's own MAC), and the rest of the
+handshake (cmds `0x02`–`0x04`, presumably the LTK exchange backing the `ConsoleMacA/B` /
+`LtkA/B` SPI slots) is undocumented. Even with it documented, reconnect likely requires
+link-layer encryption with that LTK, which Android's BLE API cannot inject. Hence: SYNC
+is required for every (re)connection.
+
 ### Connection Sequence
 
 ```
