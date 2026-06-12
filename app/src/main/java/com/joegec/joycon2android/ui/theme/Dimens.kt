@@ -47,6 +47,13 @@ object Dimens {
     val pillPaddingHorizontal = 10.dp
     val pillPaddingVertical = 4.dp
 
+    val batteryIconWidth = 18.dp
+    val batteryIconHeight = 10.dp
+    val batteryIconCapWidth = 2.dp
+    val batteryIconCorner = 2.dp
+    val batteryIconStroke = 1.dp
+    val batteryIconTextGap = 5.dp
+
     val fontSizeTitle = 22.sp
     val fontSizeStatus = 11.sp
     val fontSizeButton = 14.sp

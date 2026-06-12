@@ -32,7 +32,7 @@
     <string name="imu_packet">Packet</string>
 
     <!-- Battery -->
-    <string name="battery_format">%.2f V</string>
+    <string name="battery_percent_format">%d%%</string>
 
     <!-- Multi-player -->
     <string name="status_connected_count">%1$d CONNECTED</string>
