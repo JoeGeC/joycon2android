@@ -74,6 +74,22 @@
     <string name="dsu_mapping_missing">SL, SR and C have no DSU equivalent and aren\'t streamed. Exception: a solo sideways Joy-Con, where SL/SR act as its shoulder buttons.</string>
     <string name="dsu_mapping_trouble_gamepad">If the Virtual Gamepad is also on, detection grabs your press from it instead — turn it off while mapping DSU inputs.</string>
 
+    <!-- Wireless debugging (Shizuku-free privileged path) -->
+    <string name="adb_title">Wireless Debugging</string>
+    <string name="adb_subtitle_disconnected">Set up to use the gamepad without Shizuku</string>
+    <string name="adb_subtitle_working">Connecting…</string>
+    <string name="adb_subtitle_connected">Connected — virtual gamepad ready</string>
+    <string name="adb_disconnect">Disconnect</string>
+    <string name="adb_instructions">Tap Pair device, turn on Wireless debugging, then \"Pair device with pairing code\". A notification will ask for the code — keep Settings open while you enter it. After a reboot it reconnects on its own once Wireless debugging is back on.</string>
+    <string name="adb_pair_device">Pair device</string>
+    <string name="adb_notifications_required">Pairing needs notifications — the code is entered from a notification while Settings stays open.</string>
+    <string name="adb_enable_notifications">Enable notifications</string>
+    <string name="adb_pairing_channel_name">Wireless debugging pairing</string>
+    <string name="adb_pairing_notif_title">Pair Joycon2Android</string>
+    <string name="adb_pairing_notif_text">Enter the code from the Wireless debugging pairing dialog</string>
+    <string name="adb_pairing_notif_action">Enter code</string>
+    <string name="adb_pairing_code_label">Pairing code</string>
+
     <!-- Foreground service notification -->
     <string name="notification_channel_name">Joy-Con Service</string>
     <string name="notification_channel_description">Joy-Con BLE connections active</string>

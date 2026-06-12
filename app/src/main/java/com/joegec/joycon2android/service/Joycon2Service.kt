@@ -14,8 +14,10 @@ import com.joegec.joycon2android.domain.PlayerStateResolver
 import com.joegec.joycon2android.domain.UiStateAggregator
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.uhid.AdbState
 import com.joegec.joycon2android.uhid.GamepadManager
 import com.joegec.joycon2android.uhid.GamepadOutput
+import com.joegec.joycon2android.uhid.PrivilegedAccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,6 +39,7 @@ class Joycon2Service : Service() {
     private val assignments = PlayerAssignmentManager()
 
     private lateinit var manager: Joycon2Manager
+    private lateinit var access: PrivilegedAccess
     private lateinit var gamepads: GamepadOutput
     private lateinit var dsu: DsuServer
     private lateinit var assigner: ControllerAssigner
@@ -46,6 +49,9 @@ class Joycon2Service : Service() {
     val uiState: StateFlow<AppUiState> get() = aggregator.uiState
     val gamepadEnabled: StateFlow<Boolean> get() = gamepads.enabled
     val gamepadError: StateFlow<String?> get() = gamepads.error
+    val adbState: StateFlow<AdbState> get() = access.adbState
+    val adbError: StateFlow<String?> get() = access.adbError
+    val shizukuAvailable: Boolean get() = access.shizukuAvailable
     val dsuEnabled: StateFlow<Boolean> get() = dsu.enabled
     val dsuError: StateFlow<String?> get() = dsu.error
     val dsuClientCount: StateFlow<Int> get() = dsu.clientCount
@@ -57,11 +63,13 @@ class Joycon2Service : Service() {
         startInForeground()
         wakeLock.acquire()
         aggregator.start()
+        access.startAdbDiscovery()
     }
 
     override fun onDestroy() {
         gamepads.destroyAll()
         dsu.disable()
+        access.stopAdbDiscovery()
         manager.disconnectAll()
         aggregator.stopInputCollectors()
         wakeLock.release()
@@ -72,10 +80,13 @@ class Joycon2Service : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_DISCONNECT_ALL) {
-            disconnectAll()
-            stopSelf()
-            return START_NOT_STICKY
+        when (intent?.action) {
+            ACTION_DISCONNECT_ALL -> {
+                disconnectAll()
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            ACTION_ADB_PAIR_CODE -> intent.getStringExtra(EXTRA_PAIR_CODE)?.let(access::submitPairingCode)
         }
         return START_STICKY
     }
@@ -88,6 +99,8 @@ class Joycon2Service : Service() {
     fun unassign(address: String) = assigner.unassign(address)
     fun enableGamepad() = gamepads.enable()
     fun disableGamepad() = gamepads.disable()
+    fun startAdbPairing() = access.startPairing()
+    fun disconnectAdb() = access.disconnect()
     fun enableDsu() = dsu.enable()
     fun disableDsu() = dsu.disable()
     fun setDsuLanEnabled(enabled: Boolean) = dsu.setLanEnabled(enabled)
@@ -108,7 +121,8 @@ class Joycon2Service : Service() {
 
     private fun buildCollaborators() {
         manager = Joycon2Manager(this)
-        gamepads = GamepadOutput(serviceScope, GamepadManager(serviceScope, this)) {
+        access = PrivilegedAccess(this, serviceScope)
+        gamepads = GamepadOutput(serviceScope, GamepadManager(serviceScope, this), access::acquire) {
             uiState.value.activePlayers
         }
         dsu = DsuServer(serviceScope)
@@ -148,6 +162,8 @@ class Joycon2Service : Service() {
 
     companion object {
         const val ACTION_DISCONNECT_ALL = "com.joegec.joycon2android.DISCONNECT_ALL"
+        const val ACTION_ADB_PAIR_CODE = "com.joegec.joycon2android.ADB_PAIR_CODE"
+        const val EXTRA_PAIR_CODE = "pair_code"
         private const val WAKE_LOCK_TAG = "Joycon2Android::Joycon2Service"
     }
 }

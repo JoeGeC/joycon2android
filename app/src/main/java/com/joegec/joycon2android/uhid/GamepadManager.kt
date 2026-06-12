@@ -18,11 +18,11 @@ class GamepadManager(private val scope: CoroutineScope, private val context: Con
 
     val activeCount: Int get() = devices.size
 
-    suspend fun createGamepad(player: PlayerNumber): Boolean = withContext(Dispatchers.IO) {
+    suspend fun createGamepad(player: PlayerNumber, shell: PrivilegedShell): Boolean = withContext(Dispatchers.IO) {
         if (player in devices) return@withContext true
 
         val device = UhidRelay("Joy-Con Virtual Gamepad", player.index)
-        val success = device.create(context)
+        val success = device.create(context, shell)
 
         if (success) {
             devices[player] = device
@@ -46,15 +46,18 @@ class GamepadManager(private val scope: CoroutineScope, private val context: Con
 
     fun destroyGamepad(player: PlayerNumber) {
         reportJobs.remove(player)?.cancel()
-        devices.remove(player)?.destroy()
+        // Teardown writes a shutdown packet; over ADB that's a TLS socket, so off-main
+        val device = devices.remove(player) ?: return
+        scope.launch(Dispatchers.IO) { device.destroy() }
         Log.i(TAG, "Destroyed virtual gamepad for ${player.name}")
     }
 
     fun destroyAll() {
         reportJobs.values.forEach { it.cancel() }
         reportJobs.clear()
-        devices.values.forEach { it.destroy() }
+        val toDestroy = devices.values.toList()
         devices.clear()
+        if (toDestroy.isNotEmpty()) scope.launch(Dispatchers.IO) { toDestroy.forEach { it.destroy() } }
         Log.i(TAG, "Destroyed all virtual gamepads")
     }
 

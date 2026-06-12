@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.sp
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.ui.components.AdbSetupCard
+import com.joegec.joycon2android.ui.components.AdbSetupState
 import com.joegec.joycon2android.ui.components.AssignmentPanel
 import com.joegec.joycon2android.ui.components.DsuCard
 import com.joegec.joycon2android.ui.components.DsuCardState
@@ -75,6 +77,7 @@ fun JoyconScreen(
     gamepadEnabled: Boolean,
     gamepadError: String?,
     dsuState: DsuCardState,
+    adbSetup: AdbSetupState,
     permissionDenied: Boolean,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
@@ -84,6 +87,9 @@ fun JoyconScreen(
     onGamepadToggle: (Boolean) -> Unit,
     onDsuToggle: (Boolean) -> Unit,
     onDsuLanToggle: (Boolean) -> Unit,
+    onAdbDisconnect: () -> Unit,
+    onEnableNotifications: () -> Unit,
+    onStartAdbPairing: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -140,9 +146,10 @@ fun JoyconScreen(
                     ) {
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
-                                state, gamepadEnabled, gamepadError, dsuState,
+                                state, gamepadEnabled, gamepadError, dsuState, adbSetup,
                                 onDisconnectAll, onAssign, onUnassign, onDisconnect,
                                 onGamepadToggle, onDsuToggle, onDsuLanToggle,
+                                onAdbDisconnect, onEnableNotifications, onStartAdbPairing,
                             )
                             else -> ScanningContent(state)
                         }
@@ -315,6 +322,7 @@ private fun ConnectedContent(
     gamepadEnabled: Boolean,
     gamepadError: String?,
     dsuState: DsuCardState,
+    adbSetup: AdbSetupState,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
     onUnassign: (String) -> Unit,
@@ -322,6 +330,9 @@ private fun ConnectedContent(
     onGamepadToggle: (Boolean) -> Unit,
     onDsuToggle: (Boolean) -> Unit,
     onDsuLanToggle: (Boolean) -> Unit,
+    onAdbDisconnect: () -> Unit,
+    onEnableNotifications: () -> Unit,
+    onStartAdbPairing: () -> Unit,
 ) {
     AnimatedVisibility(
         visible = state.unassignedJoycons.isNotEmpty(),
@@ -359,6 +370,14 @@ private fun ConnectedContent(
                 error = gamepadError,
                 onToggle = onGamepadToggle,
             )
+            if (adbSetup.needed) {
+                AdbSetupCard(
+                    state = adbSetup,
+                    onEnableNotifications = onEnableNotifications,
+                    onStartPairing = onStartAdbPairing,
+                    onDisconnect = onAdbDisconnect,
+                )
+            }
             DsuCard(
                 state = dsuState,
                 onToggle = onDsuToggle,

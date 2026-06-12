@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 class GamepadOutput(
     private val scope: CoroutineScope,
     private val gamepadManager: GamepadManager,
+    private val acquireShell: (onResult: (PrivilegedShell?) -> Unit) -> Unit,
     private val activePlayers: () -> List<PlayerState>,
 ) {
 
@@ -20,28 +21,27 @@ class GamepadOutput(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private var shell: PrivilegedShell? = null
+
     private val playerStateFlows = PlayerNumber.entries.associateWith {
         MutableStateFlow(PlayerState(it))
     }
 
     fun enable() {
         if (_enabled.value) return
-
-        if (!ShizukuPermissionHandler.isShizukuAvailable) {
-            _error.value = "Shizuku is not running"
-            return
-        }
-        ShizukuPermissionHandler.requestPermission { granted ->
-            if (granted) {
-                scope.launch { startOutput() }
+        acquireShell { granted ->
+            if (granted != null) {
+                shell = granted
+                scope.launch { startOutput(granted) }
             } else {
-                _error.value = "Shizuku permission denied"
+                _error.value = "No privileged access — set up Shizuku or wireless debugging"
             }
         }
     }
 
     fun disable() {
         _enabled.value = false
+        shell = null
         gamepadManager.destroyAll()
     }
 
@@ -54,8 +54,9 @@ class GamepadOutput(
 
     fun onPlayerAssigned(player: PlayerNumber) {
         if (!_enabled.value) return
+        val active = shell ?: return
         scope.launch {
-            if (gamepadManager.createGamepad(player)) {
+            if (gamepadManager.createGamepad(player, active)) {
                 gamepadManager.startReporting(player, playerStateFlows.getValue(player))
             }
         }
@@ -67,7 +68,7 @@ class GamepadOutput(
         if (gamepadManager.activeCount == 0) disable()
     }
 
-    private suspend fun startOutput() {
+    private suspend fun startOutput(shell: PrivilegedShell) {
         val active = activePlayers()
         if (active.isEmpty()) {
             _error.value = "No controllers assigned"
@@ -76,7 +77,7 @@ class GamepadOutput(
 
         var anyCreated = false
         for (playerState in active) {
-            if (gamepadManager.createGamepad(playerState.player)) {
+            if (gamepadManager.createGamepad(playerState.player, shell)) {
                 val flow = playerStateFlows.getValue(playerState.player)
                 flow.value = playerState
                 gamepadManager.startReporting(playerState.player, flow)
@@ -88,7 +89,7 @@ class GamepadOutput(
             _enabled.value = true
             _error.value = null
         } else {
-            _error.value = "Failed to create virtual gamepad — check Shizuku/root"
+            _error.value = "Failed to create virtual gamepad — check privileged access"
         }
     }
 }

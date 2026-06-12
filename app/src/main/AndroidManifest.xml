@@ -21,8 +21,10 @@
         tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- DSU (cemuhook) UDP server -->
+    <!-- DSU (cemuhook) UDP server + in-app ADB wireless debugging client -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Pairing-code prompt for the wireless-debugging path -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -48,6 +50,10 @@
             android:name=".service.Joycon2Service"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
+
+        <receiver
+            android:name=".adb.AdbPairingReceiver"
+            android:exported="false" />
 
         <provider
             android:name="rikka.shizuku.ShizukuProvider"

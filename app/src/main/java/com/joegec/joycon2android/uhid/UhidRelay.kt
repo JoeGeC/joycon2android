@@ -2,8 +2,6 @@ package com.joegec.joycon2android.uhid
 
 import android.content.Context
 import android.util.Log
-import moe.shizuku.server.IShizukuService
-import rikka.shizuku.Shizuku
 import java.io.IOException
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -11,32 +9,26 @@ import java.nio.ByteOrder
 
 class UhidRelay(private val name: String, private val playerIndex: Int) {
 
+    private var process: ShellProcess? = null
     private var outputStream: OutputStream? = null
 
     // Pre-allocated buffers for sendReport (called at ~60Hz)
     private val inputHeader = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
     private val inputEventBuf = ByteBuffer.allocate(4 + 2 + REPORT_SIZE).order(ByteOrder.LITTLE_ENDIAN)
 
-    fun create(context: Context): Boolean {
+    fun create(context: Context, shell: PrivilegedShell): Boolean {
         return try {
-            val binder = Shizuku.getBinder()
-            val service = IShizukuService.Stub.asInterface(binder)
-
-            val relayPath = deployRelay(context, service)
-            val remoteProcess = service.newProcess(
-                arrayOf(relayPath),
-                null,
-                null,
-            )
-
-            val os = android.os.ParcelFileDescriptor.AutoCloseOutputStream(
-                remoteProcess.outputStream
-            )
+            val relayPath = deployRelay(context, shell)
+            val remoteProcess = shell.newProcess(arrayOf(relayPath))
+                ?: run {
+                    Log.e(TAG, "Privileged shell returned no process")
+                    return false
+                }
+            process = remoteProcess
+            val os = remoteProcess.outputStream
 
             // Wait for "OK\n" readiness signal from relay
-            val inputStream = android.os.ParcelFileDescriptor.AutoCloseInputStream(
-                remoteProcess.inputStream
-            )
+            val inputStream = remoteProcess.inputStream
             val buf = ByteArray(3)
             var read = 0
             while (read < 3) {
@@ -100,6 +92,8 @@ class UhidRelay(private val name: String, private val playerIndex: Int) {
             }
         } catch (_: IOException) {}
         outputStream = null
+        process?.destroy()
+        process = null
         Log.i(TAG, "UHID relay stopped for $name $playerIndex")
     }
 
@@ -142,18 +136,15 @@ class UhidRelay(private val name: String, private val playerIndex: Int) {
         @Volatile
         private var relayDeployed = false
 
-        private fun deployRelay(context: Context, service: IShizukuService): String {
+        private fun deployRelay(context: Context, shell: PrivilegedShell): String {
             if (relayDeployed) return RELAY_REMOTE_PATH
 
             val localPath = context.applicationInfo.nativeLibraryDir + "/libuhid_relay.so"
 
             // Copy from app's native lib dir to /data/local/tmp/ (shell-accessible)
-            val proc = service.newProcess(
+            shell.newProcess(
                 arrayOf("sh", "-c", "cp $localPath $RELAY_REMOTE_PATH && chmod 755 $RELAY_REMOTE_PATH"),
-                null,
-                null,
-            )
-            proc.waitFor()
+            )?.waitFor()
             relayDeployed = true
             return RELAY_REMOTE_PATH
         }

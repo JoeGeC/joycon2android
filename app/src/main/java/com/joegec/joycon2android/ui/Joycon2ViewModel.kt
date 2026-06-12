@@ -14,6 +14,7 @@ import com.joegec.joycon2android.ble.BlePermissionHandler
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.service.Joycon2Service
+import com.joegec.joycon2android.uhid.AdbState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,6 +49,16 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     private val _dsuLanEnabled = MutableStateFlow(false)
     val dsuLanEnabled: StateFlow<Boolean> = _dsuLanEnabled.asStateFlow()
+
+    private val _adbState = MutableStateFlow(AdbState.DISCONNECTED)
+    val adbState: StateFlow<AdbState> = _adbState.asStateFlow()
+
+    private val _adbError = MutableStateFlow<String?>(null)
+    val adbError: StateFlow<String?> = _adbError.asStateFlow()
+
+    // Whether the in-app wireless-debugging path is needed (Shizuku absent)
+    private val _adbSetupNeeded = MutableStateFlow(false)
+    val adbSetupNeeded: StateFlow<Boolean> = _adbSetupNeeded.asStateFlow()
 
     private val _permissionDenied = MutableStateFlow(false)
     val permissionDenied: StateFlow<Boolean> = _permissionDenied.asStateFlow()
@@ -143,6 +154,14 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         service?.setDsuLanEnabled(enabled)
     }
 
+    fun startAdbPairing() {
+        service?.startAdbPairing()
+    }
+
+    fun disconnectAdb() {
+        service?.disconnectAdb()
+    }
+
     /**
      * Stops the service entirely — disconnects all devices and removes the notification.
      * Called when the user explicitly wants to shut everything down.
@@ -168,6 +187,9 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         collectInto(svc.dsuError, _dsuError)
         collectInto(svc.dsuClientCount, _dsuClientCount)
         collectInto(svc.dsuLanEnabled, _dsuLanEnabled)
+        collectInto(svc.adbState, _adbState)
+        collectInto(svc.adbError, _adbError)
+        _adbSetupNeeded.value = !svc.shizukuAvailable
     }
 
     private fun <T> collectInto(source: StateFlow<T>, target: MutableStateFlow<T>) {
