@@ -9,7 +9,7 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 - Connect multiple Joy-Con 2 controllers simultaneously
 - Assign controllers to up to 4 players (left, right, or paired)
 - **Virtual gamepad output** — appears as a standard HID gamepad to all apps
-- **DSU motion server** — streams motion + pad state to DSU/cemuhook-aware emulators (Dolphin, Cemu) over UDP
+- **DSU motion server** — gyro/accel + full pad state for emulators (Dolphin, Cemu, …) over UDP, up to 4 independent players, with automatic gyro bias calibration
 - Dual Joy-Con layout when both L+R assigned to one player
 - Sideways single Joy-Con layout with rotated inputs (stick, d-pad, face buttons)
 - Live display of buttons, sticks, IMU (accelerometer + gyroscope), and battery
@@ -51,48 +51,63 @@ Once enabled, any app that supports gamepads (games, emulators, etc.) will see t
 
 ### Step 5 (optional): DSU Motion Server for emulators
 
-The virtual gamepad cannot carry motion (HID gamepad reports have no motion channel), so for
-gyro aiming in emulators the app runs a [DSU/cemuhook](https://v1993.github.io/cemuhook-protocol/)
-server instead — plain UDP on port 26760, no Shizuku needed.
+The virtual gamepad can't carry motion (HID gamepads have no motion channel). For gyro
+aiming in emulators, enable the DSU ([cemuhook](https://v1993.github.io/cemuhook-protocol/))
+server — UDP port 26760, no Shizuku needed.
 
-Toggle **DSU Motion Server** in the app (visible once a player is assigned), then point any
-DSU/cemuhook-capable emulator (Dolphin, Cemu, Citra, suyu, …) at the address the app shows:
-`127.0.0.1:26760` for an emulator on the same phone, or — with **Allow other devices (LAN)**
-enabled — the phone's Wi-Fi IP for an emulator on a PC on the same network.
+1. Assign controllers to players. Player N streams on DSU slot N−1 (P1–P4 only).
+   A Joy-Con pair streams motion from its **right** Joy-Con.
+2. Toggle **DSU Motion Server** in the app.
+3. Point the emulator's DSU/cemuhook input source at the address the app shows:
+   `127.0.0.1:26760` for an emulator on the same phone, or the phone's Wi-Fi IP with
+   **Allow other devices (LAN)** enabled for an emulator on a PC.
+4. Rest each controller on a surface for ~2 s — the server learns the gyro's resting bias
+   and re-learns it automatically whenever the controller is still.
 
-DSU serves players 1–4 only. Pads (buttons/sticks) are streamed alongside motion, so an
-emulator can map everything from the one DSU device. When a player has two Joy-Cons, motion
-comes from the **right** one.
+DSU and the Virtual Gamepad are independent — enable either or both. With both on, an
+emulator sees the controller twice (system gamepad + DSU device); map inputs from one,
+and turn the Virtual Gamepad off while mapping so input detection doesn't grab it.
 
-DSU runs independently of the Virtual Gamepad — enable either or both. With both on, an
-emulator sees the controller twice (system gamepad + DSU device); map inputs from one.
+SL, SR and C are not streamed — DSU carries exactly the DS4 button set and every bit is
+taken. Exception: a solo sideways Joy-Con's SL/SR arrive as its shoulder buttons.
 
-#### Dolphin specifics
+#### DSU input names (DS4 conventions)
 
-- **Desktop**: Controllers → Alternate Input Sources → DSU Client → add the phone's address.
-- **Android**: there is no settings UI for the DSU client. Create `Config/DSUClient.ini` inside
-  Dolphin's user folder (`Android/data/org.dolphinemu.dolphinemu/files/`, with this as the file's 
-  entire content:
+| Joy-Con | DSU name | Joy-Con | DSU name |
+|---|---|---|---|
+| A | `Circle` | B | `Cross` |
+| X | `Triangle` | Y | `Square` |
+| L / R | `L1` / `R1` | ZL / ZR | `L2` / `R2` |
+| − / + | `Share` / `Options` | LS / RS | `L3` / `R3` |
+| Home | `PS` | Camera | `Touch` |
+| D-Pad | `Pad N/S/E/W` | Sticks | `Left X±/Y±`, `Right X±/Y±` |
 
-  ```ini
-  [Server]
-  Enabled = True
-  Entries = Joycon2:127.0.0.1:26760;
-  ```
+#### Dolphin setup
 
-- Restart Dolphin → Wii Remote 1 → Emulated → a `DSUClient/...` device appears in the device
-  dropdown.
-- **Map every input manually** (long-press a control → Advanced Mapping → pick from the input
-  list): Dolphin Android's Detect only listens to Android input devices, so it never picks up
-  DSU inputs — this looks like "buttons don't work" but is just the detection flow. Buttons use
-  DS4 names (A=`Circle`, B=`Cross`, X=`Triangle`, Y=`Square`, L/R=`L1`/`R1`,
-  ZL/ZR=`L2`/`R2`, −/+=`Share`/`Options`, sticks=`L3`/`R3`, D-Pad=`Pad N/S/E/W`,
-  Home=`PS`, Camera=`Touch`). SL, SR and C have no DSU equivalent and aren't streamed —
-  except a solo sideways Joy-Con, where SL/SR act as its shoulder buttons.
-- Under Motion Input, map all Accelerometer + Gyroscope entries name-to-name (motion inputs are
-  never auto-detectable, by design), and map a **Recenter** button for the Point group — gyro
-  pointing drifts, so pressing Recenter in-game is what summons the pointer.
-- Solo horizontal Joy-Con: enable "Sideways Wii Remote".
+**Desktop:** Controllers → Alternate Input Sources → DSU Client → add the phone's address
+(enable LAN in the app first).
+
+**Android** (no DSU settings UI — configure by file):
+
+1. Create `Config/DSUClient.ini` inside Dolphin's user folder
+   (`Android/data/org.dolphinemu.dolphinemu/files/`, containing exactly:
+
+   ```ini
+   [Server]
+   Enabled = True
+   Entries = Joycon2:127.0.0.1:26760;
+   ```
+
+2. Restart Dolphin and open Wii Remote N → Emulated. A `DSUClient/<slot>/Joycon2` device
+   appears per assigned player. Dolphin starts its DSU client lazily — open an
+   input-mapping screen or a game first.
+3. **Map every input manually** (long-press a control → Advanced Mapping → pick from the
+   input list). Dolphin Android's press-to-detect only sees Android input devices, never
+   DSU; motion inputs are not auto-detectable on any platform.
+4. Under Motion Input, map all Accelerometer and Gyroscope entries name-to-name, and map
+   **Recenter** — gyro pointing drifts, so pressing Recenter in-game while aiming at the
+   screen centre is what summons the pointer.
+5. Solo horizontal Joy-Con: enable "Sideways Wii Remote".
 
 ### Troubleshooting
 
@@ -103,6 +118,9 @@ emulator sees the controller twice (system gamepad + DSU device); map inputs fro
 | Controller not found during scan | Press SYNC again; move closer to device |
 | Gamepad not appearing in games | Check `adb shell getevent -p` for "Joy-Con Virtual Gamepad" |
 | Controller stops responding | Press SYNC to reset, then reconnect |
+| No DSUClient device in the emulator | Check the ini, restart the emulator, open a mapping screen; `adb logcat -s DsuServer` shows whether requests arrive |
+| Emulator doesn't detect DSU button presses | Map manually — detection never sees DSU devices; turn the Virtual Gamepad off while mapping |
+| Pointer drifts or starts off-screen | Rest the controller ~2 s to recalibrate, then press Recenter |
 
 ---
 
@@ -110,7 +128,8 @@ emulator sees the controller twice (system gamepad + DSU device); map inputs fro
 
 ```
 BLE layer ─→ Domain state ─→ ViewModel ─→ Compose UI
-                                    └──→ UHID relay ─→ /dev/uhid ─→ Android input system
+                                    ├──→ UHID relay ─→ /dev/uhid ─→ Android input system
+                                    └──→ DSU server ─→ UDP :26760 ─→ emulators (cemuhook)
 ```
 
 | Layer | Key files |
@@ -119,10 +138,10 @@ BLE layer ─→ Domain state ─→ ViewModel ─→ Compose UI
 | Domain | `PlayerAssignmentManager`, `Joycon2Manager` |
 | Model | `PlayerState`, `JoyconInput`, `JoyconButton`, `ConnectedJoycon`, `Side` |
 | UHID | `UhidRelay`, `GamepadManager`, `ReportMapper`, `ShizukuPermissionHandler` |
-| DSU | `DsuServer`, `DsuPacketEncoder`, `MotionConverter`, `DsuClientRegistry` |
+| DSU | `DsuServer`, `DsuPacketEncoder`, `MotionConverter`, `GyroCalibrator`, `DsuClientRegistry` |
 | Native | `uhid_relay.c` (standalone binary run via Shizuku) |
 | UI | `JoyconScreen`, `PlayerView`, `ControllerLayout` |
-| Service | `GamepadForegroundService` |
+| Service | `Joycon2Service` |
 
 Single-activity Compose app. State flows from BLE notifications through `Joycon2Manager` into `Joycon2ViewModel` and down to Compose. When gamepad output is enabled, `PlayerState` changes are also fed to `GamepadManager` which converts them to HID reports and pipes them to the UHID relay process.
 
@@ -139,6 +158,26 @@ The app creates system-wide virtual gamepads using Linux's UHID (User-space HID)
 4. **`GamepadManager.kt`** — Manages per-player relay instances and collects from `StateFlow<PlayerState>` to drive reports at input rate.
 
 The virtual device uses BUS_USB with generic vendor/product IDs (0x1234:0x5678) to ensure the kernel's `hid-generic` driver binds it (Nintendo VID/PID causes the `hid-nintendo` driver to claim and reject the device).
+
+### DSU Motion Server
+
+`DsuServer` is a cemuhook UDP server (port 26760, bound to IPv4 `127.0.0.1`, or `0.0.0.0`
+with LAN enabled). Pad batches ride a buffered channel off the BLE state path — StateFlow
+conflation would drop motion samples. Collaborators:
+
+- **`DsuPacketEncoder`** — the 100-byte pad packets (and version/port-info responses),
+  written into a reused buffer at ~120 Hz.
+- **`MotionConverter`** — raw Joy-Con IMU frame → cemuhook's DS4 frame. Axes, signs, and
+  scale factors were verified on hardware against Dolphin's Wii pointer; see the class
+  docs for the measured frames and `tools/README.md` for the calibration workflow.
+- **`GyroCalibrator`** — learns each controller's gyro bias whenever it rests and
+  subtracts it, mirroring the Switch's own runtime recalibration.
+- **`DsuClientRegistry`** — routes each slot's packets only to that slot's subscribers.
+  This matters: DSU clients (Dolphin included) overwrite their pad state with every
+  received packet without checking the slot, so server-side routing is what keeps
+  multiple players independent.
+
+Debug DSU clients for wire inspection and IMU calibration live in `tools/`.
 
 ## Requirements
 
