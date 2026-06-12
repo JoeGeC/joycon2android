@@ -14,8 +14,8 @@ val ErrorText = Color(0xFFFF6B6B)
 val TextOnAccent = Color(0xFF0E1116)
 val JoyconDefaultColor = Accent
 
-val JoyconBlue = Color(0xFF2D5BE3)
-val JoyconRed = Color(0xFFE33D2D)
+val JoyconBlue = joyconBorderColor(0x9BE1E6, JoyconDefaultColor)
+val JoyconRed = joyconBorderColor(0xFF8C5F, JoyconDefaultColor)
 
 val StickBg = Color(0xFF0E1116)
 val CrosshairColor = Color(0xFF222C36)
@@ -23,9 +23,7 @@ val CrosshairColor = Color(0xFF222C36)
 private const val ACCENT_SATURATION_BOOST = 1.4f
 
 /**
- * The controller's real shell accent color (read from SPI flash, packed as
- * 0xRRGGBB), saturated by [ACCENT_SATURATION_BOOST] to compensate for the
- * pastel values Nintendo stores. Returns [fallback] when not yet read.
+ * The controller's real shell accent color (read from SPI flash, packed as 0xRRGGBB)
  */
 fun joyconBorderColor(accentColor: Int?, fallback: Color): Color {
     if (accentColor == null) return fallback
