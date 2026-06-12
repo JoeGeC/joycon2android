@@ -133,8 +133,8 @@ class DsuServer(
             is DsuRequest.PortInfo -> request.slots
                 .filter { it in packetCounters.indices }
                 .forEach { slot -> reply(socket, encoder.portInfoResponse(slot, playerInSlot(slot)), datagram) }
-            DsuRequest.PadData -> {
-                if (registry.register(datagram.socketAddress, timestampMicros() / 1_000)) {
+            is DsuRequest.PadData -> {
+                if (registry.register(datagram.socketAddress, request, timestampMicros() / 1_000)) {
                     Log.i(TAG, "Client subscribed: ${datagram.socketAddress}")
                 }
                 _clientCount.value = registry.size
@@ -153,24 +153,25 @@ class DsuServer(
     private suspend fun sendLoop(socket: DatagramSocket) {
         var sent = 0L
         for (batch in batches) {
-            val clients = registry.live(batch.timestampMicros / 1_000)
-            _clientCount.value = clients.size
-            if (clients.isEmpty()) continue
+            val nowMillis = batch.timestampMicros / 1_000
             for (player in batch.players) {
                 val slot = player.player.index - 1
                 if (slot !in packetCounters.indices) continue // DSU has 4 slots; P5–P8 are not served
+                val recipients = registry.recipientsFor(slot, nowMillis)
+                if (recipients.isEmpty()) continue
                 val packet = encoder.padData(sendBuffer, player, ++packetCounters[slot], batch.timestampMicros)
-                for (client in clients) {
+                for (client in recipients) {
                     try {
                         socket.send(DatagramPacket(packet, packet.size, client))
                         if (++sent % LOG_EVERY_PACKETS == 0L) {
-                            Log.i(TAG, "Streaming: $sent pad packets sent, ${clients.size} client(s)")
+                            Log.i(TAG, "Streaming: $sent pad packets sent, ${registry.size} client(s)")
                         }
                     } catch (e: IOException) {
                         if (socket.isClosed) return
                     }
                 }
             }
+            _clientCount.value = registry.size
         }
     }
 

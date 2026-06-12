@@ -26,10 +26,18 @@ class DsuRequestParserTest {
     }
 
     @Test
-    fun `parses a pad data subscription`() {
-        val packet = clientPacket(0x100002, ByteArray(8))
+    fun `parses a pad data subscription with its flags and slot`() {
+        val payload = ByteArray(8).also { it[0] = 1; it[1] = 2 }
+        val packet = clientPacket(0x100002, payload)
 
-        assertEquals(DsuRequest.PadData, DsuRequestParser.parse(packet, packet.size))
+        assertEquals(DsuRequest.PadData(flags = 1, slot = 2), DsuRequestParser.parse(packet, packet.size))
+    }
+
+    @Test
+    fun `rejects a truncated pad data subscription`() {
+        val packet = clientPacket(0x100002, ByteArray(4))
+
+        assertEquals(null, DsuRequestParser.parse(packet, packet.size))
     }
 
     @Test

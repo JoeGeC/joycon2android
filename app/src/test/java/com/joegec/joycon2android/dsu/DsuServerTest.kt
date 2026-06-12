@@ -84,6 +84,20 @@ class DsuServerTest {
     }
 
     @Test
+    fun `slot-based subscribers only receive their slot`() {
+        // Subscribe to slot 1 only (flags=1, slot=1); both players get pushed
+        send(clientPacket(0x100002, ByteArray(8).also { it[0] = 1; it[1] = 1 }))
+        awaitSubscription()
+
+        repeat(4) { server.push(listOf(player(), playerTwo())) }
+
+        repeat(4) {
+            val response = receive()
+            assertEquals(1, response[20].toInt()) // slot byte — never slot 0
+        }
+    }
+
+    @Test
     fun `handles packets of different sizes back to back`() {
         // A 20-byte version request must not truncate the 28-byte requests after it
         send(clientPacket(0x100000))
@@ -148,6 +162,16 @@ class DsuServerTest {
             side = Side.RIGHT,
             deviceName = "Joy-Con (R)",
             input = JoyconInput(accelX = 4096, batteryVolts = 3.6f),
+        ),
+    )
+
+    private fun playerTwo() = PlayerState(
+        player = PlayerNumber.P2,
+        left = ConnectedJoycon(
+            address = "AA:BB:CC:DD:EE:01",
+            side = Side.LEFT,
+            deviceName = "Joy-Con (L)",
+            input = JoyconInput(accelZ = 4096, batteryVolts = 3.5f),
         ),
     )
 

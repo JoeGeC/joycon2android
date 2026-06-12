@@ -28,9 +28,17 @@ object DsuRequestParser {
         return when (packet.getInt(HEADER_SIZE)) {
             TYPE_VERSION -> DsuRequest.Version
             TYPE_PORT_INFO -> parsePortInfo(packet, length)
-            TYPE_PAD_DATA -> DsuRequest.PadData
+            TYPE_PAD_DATA -> parsePadData(packet, length)
             else -> null
         }
+    }
+
+    private fun parsePadData(packet: ByteBuffer, length: Int): DsuRequest.PadData? {
+        if (length < MIN_PACKET_SIZE + 8) return null
+        return DsuRequest.PadData(
+            flags = packet.get(MIN_PACKET_SIZE).toInt() and 0xFF,
+            slot = packet.get(MIN_PACKET_SIZE + 1).toInt() and 0xFF,
+        )
     }
 
     private fun hasClientMagic(data: ByteArray): Boolean =
