@@ -23,6 +23,10 @@ data class PlayerState(
     val leftInput: JoyconInput get() = left?.input ?: JoyconInput()
     val rightInput: JoyconInput get() = right?.input ?: JoyconInput()
 
+    // IMU source for motion consumers: the right Joy-Con of a pair (the "Wiimote hand"),
+    // otherwise whichever controller is present
+    val motionSource: ConnectedJoycon? get() = right ?: left
+
     // Gamepad-oriented state (rotated sticks + remapped buttons for HID output and consumers
     // that want standard gamepad semantics regardless of physical orientation)
     val gamepad: GamepadState get() = GamepadState.from(this)

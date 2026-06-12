@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
+import com.joegec.joycon2android.ui.components.DsuCardState
 import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.Joycon2AndroidTheme
 
@@ -48,11 +49,22 @@ class MainActivity : ComponentActivity() {
                     val state by viewModel.uiState.collectAsState()
                     val gamepadEnabled by viewModel.gamepadEnabled.collectAsState()
                     val gamepadError by viewModel.gamepadError.collectAsState()
+                    val dsuEnabled by viewModel.dsuEnabled.collectAsState()
+                    val dsuError by viewModel.dsuError.collectAsState()
+                    val dsuClientCount by viewModel.dsuClientCount.collectAsState()
+                    val dsuLanEnabled by viewModel.dsuLanEnabled.collectAsState()
                     val permissionDenied by viewModel.permissionDenied.collectAsState()
                     JoyconScreen(
                         state = state,
                         gamepadEnabled = gamepadEnabled,
                         gamepadError = gamepadError,
+                        dsuState = DsuCardState(
+                            enabled = dsuEnabled,
+                            error = dsuError,
+                            clientCount = dsuClientCount,
+                            lanEnabled = dsuLanEnabled,
+                            showSlotLimitNote = state.activePlayers.any { it.player.index > 4 },
+                        ),
                         permissionDenied = permissionDenied,
                         onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
                         onDisconnectAll = viewModel::disconnectAll,
@@ -63,6 +75,11 @@ class MainActivity : ComponentActivity() {
                             if (enabled) viewModel.enableGamepad()
                             else viewModel.disableGamepad()
                         },
+                        onDsuToggle = { enabled ->
+                            if (enabled) viewModel.enableDsu()
+                            else viewModel.disableDsu()
+                        },
+                        onDsuLanToggle = viewModel::setDsuLanEnabled,
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },
                     )
                 }

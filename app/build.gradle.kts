@@ -51,6 +51,11 @@ android {
         compose = true
     }
 
+    testOptions {
+        // android.util.Log no-ops on the JVM instead of throwing (DsuServer logs in its loops)
+        unitTests.isReturnDefaultValues = true
+    }
+
     packaging {
         jniLibs {
             useLegacyPackaging = true

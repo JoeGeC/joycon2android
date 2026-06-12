@@ -9,6 +9,7 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 - Connect multiple Joy-Con 2 controllers simultaneously
 - Assign controllers to up to 4 players (left, right, or paired)
 - **Virtual gamepad output** — appears as a standard HID gamepad to all apps
+- **DSU motion server** — streams motion + pad state to DSU/cemuhook-aware emulators (Dolphin, Cemu) over UDP
 - Dual Joy-Con layout when both L+R assigned to one player
 - Sideways single Joy-Con layout with rotated inputs (stick, d-pad, face buttons)
 - Live display of buttons, sticks, IMU (accelerometer + gyroscope), and battery
@@ -48,6 +49,51 @@ Build from source or install the APK. Grant Bluetooth permissions when prompted.
 
 Once enabled, any app that supports gamepads (games, emulators, etc.) will see the virtual controller. The app runs a foreground service to keep the connection alive in the background.
 
+### Step 5 (optional): DSU Motion Server for emulators
+
+The virtual gamepad cannot carry motion (HID gamepad reports have no motion channel), so for
+gyro aiming in emulators the app runs a [DSU/cemuhook](https://v1993.github.io/cemuhook-protocol/)
+server instead — plain UDP on port 26760, no Shizuku needed.
+
+Toggle **DSU Motion Server** in the app (visible once a player is assigned), then point any
+DSU/cemuhook-capable emulator (Dolphin, Cemu, Citra, suyu, …) at the address the app shows:
+`127.0.0.1:26760` for an emulator on the same phone, or — with **Allow other devices (LAN)**
+enabled — the phone's Wi-Fi IP for an emulator on a PC on the same network.
+
+DSU serves players 1–4 only. Pads (buttons/sticks) are streamed alongside motion, so an
+emulator can map everything from the one DSU device. When a player has two Joy-Cons, motion
+comes from the **right** one.
+
+DSU runs independently of the Virtual Gamepad — enable either or both. With both on, an
+emulator sees the controller twice (system gamepad + DSU device); map inputs from one.
+
+#### Dolphin specifics
+
+- **Desktop**: Controllers → Alternate Input Sources → DSU Client → add the phone's address.
+- **Android**: there is no settings UI for the DSU client. Create `Config/DSUClient.ini` inside
+  Dolphin's user folder (`Android/data/org.dolphinemu.dolphinemu/files/`, with this as the file's 
+  entire content:
+
+  ```ini
+  [Server]
+  Enabled = True
+  Entries = Joycon2:127.0.0.1:26760;
+  ```
+
+- Restart Dolphin → Wii Remote 1 → Emulated → a `DSUClient/...` device appears in the device
+  dropdown.
+- **Map every input manually** (long-press a control → Advanced Mapping → pick from the input
+  list): Dolphin Android's Detect only listens to Android input devices, so it never picks up
+  DSU inputs — this looks like "buttons don't work" but is just the detection flow. Buttons use
+  DS4 names (A=`Circle`, B=`Cross`, X=`Triangle`, Y=`Square`, L/R=`L1`/`R1`,
+  ZL/ZR=`L2`/`R2`, −/+=`Share`/`Options`, sticks=`L3`/`R3`, D-Pad=`Pad N/S/E/W`,
+  Home=`PS`, Camera=`Touch`). SL, SR and C have no DSU equivalent and aren't streamed —
+  except a solo sideways Joy-Con, where SL/SR act as its shoulder buttons.
+- Under Motion Input, map all Accelerometer + Gyroscope entries name-to-name (motion inputs are
+  never auto-detectable, by design), and map a **Recenter** button for the Point group — gyro
+  pointing drifts, so pressing Recenter in-game is what summons the pointer.
+- Solo horizontal Joy-Con: enable "Sideways Wii Remote".
+
 ### Troubleshooting
 
 | Issue | Fix |
@@ -73,6 +119,7 @@ BLE layer ─→ Domain state ─→ ViewModel ─→ Compose UI
 | Domain | `PlayerAssignmentManager`, `Joycon2Manager` |
 | Model | `PlayerState`, `JoyconInput`, `JoyconButton`, `ConnectedJoycon`, `Side` |
 | UHID | `UhidRelay`, `GamepadManager`, `ReportMapper`, `ShizukuPermissionHandler` |
+| DSU | `DsuServer`, `DsuPacketEncoder`, `MotionConverter`, `DsuClientRegistry` |
 | Native | `uhid_relay.c` (standalone binary run via Shizuku) |
 | UI | `JoyconScreen`, `PlayerView`, `ControllerLayout` |
 | Service | `GamepadForegroundService` |
@@ -108,6 +155,7 @@ The virtual device uses BUS_USB with generic vendor/product IDs (0x1234:0x5678) 
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 <uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.INTERNET" /> <!-- DSU UDP server -->
 ```
 
 ---

@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.IBinder
 import com.joegec.joycon2android.ble.Joycon2Manager
 import com.joegec.joycon2android.domain.ControllerAssigner
+import com.joegec.joycon2android.dsu.DsuServer
 import com.joegec.joycon2android.domain.PlayerAssignmentManager
 import com.joegec.joycon2android.domain.PlayerStateResolver
 import com.joegec.joycon2android.domain.UiStateAggregator
@@ -37,6 +38,7 @@ class Joycon2Service : Service() {
 
     private lateinit var manager: Joycon2Manager
     private lateinit var gamepads: GamepadOutput
+    private lateinit var dsu: DsuServer
     private lateinit var assigner: ControllerAssigner
     private lateinit var aggregator: UiStateAggregator
     private lateinit var wakeLock: PartialWakeLock
@@ -44,6 +46,10 @@ class Joycon2Service : Service() {
     val uiState: StateFlow<AppUiState> get() = aggregator.uiState
     val gamepadEnabled: StateFlow<Boolean> get() = gamepads.enabled
     val gamepadError: StateFlow<String?> get() = gamepads.error
+    val dsuEnabled: StateFlow<Boolean> get() = dsu.enabled
+    val dsuError: StateFlow<String?> get() = dsu.error
+    val dsuClientCount: StateFlow<Int> get() = dsu.clientCount
+    val dsuLanEnabled: StateFlow<Boolean> get() = dsu.lanEnabled
 
     override fun onCreate() {
         super.onCreate()
@@ -55,6 +61,7 @@ class Joycon2Service : Service() {
 
     override fun onDestroy() {
         gamepads.destroyAll()
+        dsu.disable()
         manager.disconnectAll()
         aggregator.stopInputCollectors()
         wakeLock.release()
@@ -81,6 +88,9 @@ class Joycon2Service : Service() {
     fun unassign(address: String) = assigner.unassign(address)
     fun enableGamepad() = gamepads.enable()
     fun disableGamepad() = gamepads.disable()
+    fun enableDsu() = dsu.enable()
+    fun disableDsu() = dsu.disable()
+    fun setDsuLanEnabled(enabled: Boolean) = dsu.setLanEnabled(enabled)
     fun emitError(message: String) = manager.emitError(message)
 
     fun disconnect(address: String) {
@@ -90,6 +100,7 @@ class Joycon2Service : Service() {
 
     fun disconnectAll() {
         gamepads.disable()
+        dsu.disable()
         assignments.unassignAll()
         aggregator.stopInputCollectors()
         manager.disconnectAll()
@@ -100,6 +111,7 @@ class Joycon2Service : Service() {
         gamepads = GamepadOutput(serviceScope, GamepadManager(serviceScope, this)) {
             uiState.value.activePlayers
         }
+        dsu = DsuServer(serviceScope)
         assigner = ControllerAssigner(
             assignments = assignments,
             connectionFor = manager::getConnection,
@@ -115,6 +127,7 @@ class Joycon2Service : Service() {
             resolver = PlayerStateResolver(evictConflicting = assignments::unassign),
         ) { state ->
             gamepads.push(state.players)
+            dsu.push(state.activePlayers)
             assigner.applyCombos(state.unassignedJoycons)
         }
         wakeLock = PartialWakeLock(this, WAKE_LOCK_TAG)

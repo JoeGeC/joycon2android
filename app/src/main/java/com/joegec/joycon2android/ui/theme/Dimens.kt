@@ -38,6 +38,7 @@ object Dimens {
     val stickRingStroke = 2f
     val stickRingStrokePressed = 3f
 
+    val guideTableRowGap = 2.dp
     val imuAxisGap = 2.dp
     val imuTitleGap = 4.dp
     val imuRowSpacing = 8.dp

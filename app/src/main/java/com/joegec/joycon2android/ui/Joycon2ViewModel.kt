@@ -37,12 +37,22 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     private val _gamepadError = MutableStateFlow<String?>(null)
     val gamepadError: StateFlow<String?> = _gamepadError.asStateFlow()
 
+    private val _dsuEnabled = MutableStateFlow(false)
+    val dsuEnabled: StateFlow<Boolean> = _dsuEnabled.asStateFlow()
+
+    private val _dsuError = MutableStateFlow<String?>(null)
+    val dsuError: StateFlow<String?> = _dsuError.asStateFlow()
+
+    private val _dsuClientCount = MutableStateFlow(0)
+    val dsuClientCount: StateFlow<Int> = _dsuClientCount.asStateFlow()
+
+    private val _dsuLanEnabled = MutableStateFlow(false)
+    val dsuLanEnabled: StateFlow<Boolean> = _dsuLanEnabled.asStateFlow()
+
     private val _permissionDenied = MutableStateFlow(false)
     val permissionDenied: StateFlow<Boolean> = _permissionDenied.asStateFlow()
 
-    private var stateJob: Job? = null
-    private var gamepadEnabledJob: Job? = null
-    private var gamepadErrorJob: Job? = null
+    private val collectionJobs = mutableListOf<Job>()
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
@@ -121,6 +131,18 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         service?.disableGamepad()
     }
 
+    fun enableDsu() {
+        service?.enableDsu()
+    }
+
+    fun disableDsu() {
+        service?.disableDsu()
+    }
+
+    fun setDsuLanEnabled(enabled: Boolean) {
+        service?.setDsuLanEnabled(enabled)
+    }
+
     /**
      * Stops the service entirely — disconnects all devices and removes the notification.
      * Called when the user explicitly wants to shut everything down.
@@ -139,21 +161,24 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun collectServiceState(svc: Joycon2Service) {
-        stateJob = viewModelScope.launch {
-            svc.uiState.collect { _uiState.value = it }
-        }
-        gamepadEnabledJob = viewModelScope.launch {
-            svc.gamepadEnabled.collect { _gamepadEnabled.value = it }
-        }
-        gamepadErrorJob = viewModelScope.launch {
-            svc.gamepadError.collect { _gamepadError.value = it }
+        collectInto(svc.uiState, _uiState)
+        collectInto(svc.gamepadEnabled, _gamepadEnabled)
+        collectInto(svc.gamepadError, _gamepadError)
+        collectInto(svc.dsuEnabled, _dsuEnabled)
+        collectInto(svc.dsuError, _dsuError)
+        collectInto(svc.dsuClientCount, _dsuClientCount)
+        collectInto(svc.dsuLanEnabled, _dsuLanEnabled)
+    }
+
+    private fun <T> collectInto(source: StateFlow<T>, target: MutableStateFlow<T>) {
+        collectionJobs += viewModelScope.launch {
+            source.collect { target.value = it }
         }
     }
 
     private fun cancelCollection() {
-        stateJob?.cancel()
-        gamepadEnabledJob?.cancel()
-        gamepadErrorJob?.cancel()
+        collectionJobs.forEach { it.cancel() }
+        collectionJobs.clear()
     }
 
 }
