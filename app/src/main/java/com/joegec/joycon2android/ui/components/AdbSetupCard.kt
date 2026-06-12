@@ -1,14 +1,11 @@
 package com.joegec.joycon2android.ui.components
 
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.R
+import com.joegec.joycon2android.adb.WirelessDebuggingSettings
 import com.joegec.joycon2android.uhid.AdbState
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
@@ -113,10 +111,7 @@ fun AdbSetupCard(
             Button(
                 onClick = {
                     onStartPairing()
-                    context.startActivity(
-                        Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    )
+                    WirelessDebuggingSettings.open(context)
                 },
                 modifier = Modifier.fillMaxWidth().height(Dimens.buttonHeight),
                 shape = RoundedCornerShape(Dimens.buttonCorner),
