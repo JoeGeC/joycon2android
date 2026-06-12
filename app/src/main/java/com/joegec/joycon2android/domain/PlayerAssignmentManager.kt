@@ -36,7 +36,6 @@ class PlayerAssignmentManager {
 
     fun getPlayer(address: String): PlayerNumber? = _assignments.value[address]
 
-    /** Lowest player number with no controllers assigned, or null when all slots are taken. */
     fun nextFreePlayer(): PlayerNumber? =
         PlayerNumber.entries.firstOrNull { player -> _assignments.value.none { it.value == player } }
 

@@ -50,4 +50,11 @@
     <string name="gamepad_title">Virtual Gamepad</string>
     <string name="gamepad_subtitle_off">Output Joy-Con input as a system gamepad</string>
     <string name="gamepad_subtitle_on">Active — input available to all apps</string>
+
+    <!-- Foreground service notification -->
+    <string name="notification_channel_name">Joy-Con Service</string>
+    <string name="notification_channel_description">Joy-Con BLE connections active</string>
+    <string name="notification_title">Joy-Con Connected</string>
+    <string name="notification_text">BLE connections are active</string>
+    <string name="notification_action_disconnect_all">Disconnect All</string>
 </resources>

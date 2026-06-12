@@ -5,14 +5,11 @@ import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.Side
 
 /**
- * Detects player-assignment button combos held on unassigned controllers,
- * mirroring the Switch "Change Grip/Order" screen:
+ * Detects the Switch "Change Grip/Order" assignment combos.
  * - L held on one Joy-Con while R is held on another pairs both onto one player
  * - SL + SR held on a single Joy-Con assigns it solo (sideways)
  * - L + R held on a Pro Controller assigns it solo
- *
- * A controller that triggers a combo is latched until it releases all combo
- * buttons, so one held combo produces exactly one assignment.
+ * A triggered controller stays latched until released so one held combo yields exactly one assignment.
  */
 class ComboAssignmentDetector {
 
