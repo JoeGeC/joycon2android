@@ -17,6 +17,7 @@ import com.joegec.joycon2android.MainActivity
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.ble.Joycon2Manager
 import com.joegec.joycon2android.ble.JoyconConnection
+import com.joegec.joycon2android.domain.ComboAssignmentDetector
 import com.joegec.joycon2android.domain.PlayerAssignmentManager
 import com.joegec.joycon2android.domain.SideInference
 import com.joegec.joycon2android.model.AppUiState
@@ -53,6 +54,7 @@ class Joycon2Service : Service() {
 
     private lateinit var manager: Joycon2Manager
     private val assignmentManager = PlayerAssignmentManager()
+    private val comboDetector = ComboAssignmentDetector()
     private lateinit var gamepadManager: GamepadManager
 
     private val connectionJobs = mutableMapOf<String, Job>()
@@ -98,14 +100,7 @@ class Joycon2Service : Service() {
             ) { connections, scanning, error, assignments ->
                 manageFlowCollectors(connections)
                 buildUiState(connections, scanning, error, assignments)
-            }.collect { state ->
-                _uiState.value = state
-                if (_gamepadEnabled.value) {
-                    for (playerState in state.players) {
-                        playerStateFlows[playerState.player]?.value = playerState
-                    }
-                }
-            }
+            }.collect { state -> publishState(state) }
         }
     }
 
@@ -247,18 +242,31 @@ class Joycon2Service : Service() {
     }
 
     private fun rebuildState() {
-        val state = buildUiState(
-            manager.connections.value,
-            manager.scanning.value,
-            manager.error.value,
-            assignmentManager.assignments.value,
+        publishState(
+            buildUiState(
+                manager.connections.value,
+                manager.scanning.value,
+                manager.error.value,
+                assignmentManager.assignments.value,
+            )
         )
-        _uiState.value = state
+    }
 
+    private fun publishState(state: AppUiState) {
+        _uiState.value = state
         if (_gamepadEnabled.value) {
             for (playerState in state.players) {
                 playerStateFlows[playerState.player]?.value = playerState
             }
+        }
+        applyComboAssignments(state.unassignedJoycons)
+    }
+
+    /** Assigns controllers holding an assignment combo (L+R / SL+SR) to the next free player. */
+    private fun applyComboAssignments(unassigned: List<ConnectedJoycon>) {
+        for (combo in comboDetector.detect(unassigned)) {
+            val player = assignmentManager.nextFreePlayer() ?: return
+            combo.addresses.forEach { address -> assignToPlayer(address, player) }
         }
     }
 
