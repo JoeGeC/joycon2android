@@ -12,8 +12,13 @@
 - Code should read like well-written prose
 - Methods should be short enough that they explain themselves
 - Methods and composables should be reusable like components
-- Self-describing code — comments only when context or "why" is non-obvious
-- This project benefits from comments explaining BLE protocol details, timing constraints, and byte-level formats since these are not self-evident from code alone
+## Comments
+- Default to **no comment**: a well-named class or method is its own documentation
+- Never write a comment that restates the code, the signature, or what the next line does — if a comment can be made redundant by renaming or extracting, do that instead
+- A genuine "why" (a constraint the code cannot express, e.g. "StateFlow conflation requires a synchronous callback") gets one or two lines, never a paragraph
+- New classes get **no KDoc by default**; earn it only with a non-obvious "why"
+- Comments describing the physical world ARE welcome and can be detailed: BLE protocol details, byte layouts, timing constraints, and hardware behavior being mirrored (e.g. Switch combo/LED conventions) — these cannot be derived from code
+- Litmus test before writing any comment: "could a reader reconstruct this from the code alone?" If yes, delete it
 
 ## SOLID Principles
 - **Single Responsibility:** each class has one reason to change — if you need "Manager" or "Handler" in the name, it's probably doing too much
