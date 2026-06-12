@@ -47,6 +47,10 @@ class GamepadOutput(
 
     fun destroyAll() = gamepadManager.destroyAll()
 
+    fun clearError() {
+        _error.value = null
+    }
+
     fun push(players: List<PlayerState>) {
         if (!_enabled.value) return
         players.forEach { playerStateFlows[it.player]?.value = it }

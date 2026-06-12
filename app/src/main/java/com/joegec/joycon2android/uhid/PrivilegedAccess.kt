@@ -39,6 +39,9 @@ class PrivilegedAccess(private val context: Context, private val scope: Coroutin
     private var connectMdns: AdbMdns? = null
     private var connectionMonitor: Job? = null
 
+    /** Fired when the ADB connection is established. */
+    var onConnected: (() -> Unit)? = null
+
     /** Fired when an established ADB connection drops (e.g. the user revokes pairing). */
     var onConnectionLost: (() -> Unit)? = null
 
@@ -156,6 +159,7 @@ class PrivilegedAccess(private val context: Context, private val scope: Coroutin
             if (connected) {
                 stopPairing()
                 startConnectionMonitor()
+                onConnected?.invoke()
             }
         }
     }
