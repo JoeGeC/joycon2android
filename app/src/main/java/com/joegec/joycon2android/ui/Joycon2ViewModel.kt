@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.ble.BlePermissionHandler
@@ -171,7 +170,8 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     private fun startAndBind() {
         val app = getApplication<Application>()
         val intent = Intent(app, Joycon2Service::class.java)
-        ContextCompat.startForegroundService(app, intent)
+        // Bind only — the service promotes itself to foreground once a Joy-Con connects,
+        // so there's no notification while idle
         app.bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 

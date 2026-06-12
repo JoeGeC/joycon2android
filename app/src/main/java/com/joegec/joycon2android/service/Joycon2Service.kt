@@ -6,6 +6,8 @@ import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
+import androidx.core.content.ContextCompat
 import com.joegec.joycon2android.ble.Joycon2Manager
 import com.joegec.joycon2android.domain.ControllerAssigner
 import com.joegec.joycon2android.dsu.DsuServer
@@ -23,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * Owns BLE connections, player assignments, and virtual gamepads so they
@@ -46,6 +49,9 @@ class Joycon2Service : Service() {
     private lateinit var aggregator: UiStateAggregator
     private lateinit var wakeLock: PartialWakeLock
 
+    @Volatile
+    private var isForeground = false
+
     val uiState: StateFlow<AppUiState> get() = aggregator.uiState
     val gamepadEnabled: StateFlow<Boolean> get() = gamepads.enabled
     val gamepadError: StateFlow<String?> get() = gamepads.error
@@ -60,10 +66,14 @@ class Joycon2Service : Service() {
     override fun onCreate() {
         super.onCreate()
         buildCollaborators()
-        startInForeground()
         wakeLock.acquire()
         aggregator.start()
         access.startAdbDiscovery()
+        // Foreground (and its notification) only while a Joy-Con is actually connected;
+        // otherwise the bound Activity keeps us alive without a notification
+        serviceScope.launch {
+            aggregator.uiState.collect { updateForeground(it.anyConnected) }
+        }
     }
 
     override fun onDestroy() {
@@ -86,6 +96,7 @@ class Joycon2Service : Service() {
                 stopSelf()
                 return START_NOT_STICKY
             }
+            ACTION_GO_FOREGROUND -> enterForeground()
             ACTION_ADB_PAIR_CODE -> intent.getStringExtra(EXTRA_PAIR_CODE)?.let(access::submitPairingCode)
         }
         return START_STICKY
@@ -148,7 +159,26 @@ class Joycon2Service : Service() {
         wakeLock = PartialWakeLock(this, WAKE_LOCK_TAG)
     }
 
-    private fun startInForeground() {
+    private fun updateForeground(connected: Boolean) {
+        if (connected && !isForeground) {
+            // startForeground must be reached via a started service; promote ourselves
+            try {
+                ContextCompat.startForegroundService(
+                    this,
+                    Intent(this, Joycon2Service::class.java).setAction(ACTION_GO_FOREGROUND),
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not enter foreground: ${e.message}")
+            }
+        } else if (!connected && isForeground) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            isForeground = false
+            stopSelf() // drop the started state; the bound Activity (if any) keeps us alive
+        }
+    }
+
+    private fun enterForeground() {
+        if (isForeground) return
         val notification = Joycon2Notification(this).apply { createChannel() }.build()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
@@ -159,12 +189,15 @@ class Joycon2Service : Service() {
         } else {
             startForeground(Joycon2Notification.ID, notification)
         }
+        isForeground = true
     }
 
     companion object {
         const val ACTION_DISCONNECT_ALL = "com.joegec.joycon2android.DISCONNECT_ALL"
+        const val ACTION_GO_FOREGROUND = "com.joegec.joycon2android.GO_FOREGROUND"
         const val ACTION_ADB_PAIR_CODE = "com.joegec.joycon2android.ADB_PAIR_CODE"
         const val EXTRA_PAIR_CODE = "pair_code"
+        private const val TAG = "Joycon2Service"
         private const val WAKE_LOCK_TAG = "Joycon2Android::Joycon2Service"
     }
 }
