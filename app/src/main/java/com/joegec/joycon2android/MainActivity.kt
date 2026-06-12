@@ -128,7 +128,6 @@ class MainActivity : ComponentActivity() {
                             else viewModel.disableDsu()
                         },
                         onDsuLanToggle = viewModel::setDsuLanEnabled,
-                        onAdbDisconnect = viewModel::disconnectAdb,
                         onEnableNotifications = enableNotifications,
                         onStartAdbPairing = viewModel::startAdbPairing,
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },

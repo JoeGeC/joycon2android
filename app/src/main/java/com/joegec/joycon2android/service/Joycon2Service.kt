@@ -100,7 +100,6 @@ class Joycon2Service : Service() {
     fun enableGamepad() = gamepads.enable()
     fun disableGamepad() = gamepads.disable()
     fun startAdbPairing() = access.startPairing()
-    fun disconnectAdb() = access.disconnect()
     fun enableDsu() = dsu.enable()
     fun disableDsu() = dsu.disable()
     fun setDsuLanEnabled(enabled: Boolean) = dsu.setLanEnabled(enabled)

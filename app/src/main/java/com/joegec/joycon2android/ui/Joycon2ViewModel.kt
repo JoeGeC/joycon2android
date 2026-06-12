@@ -158,10 +158,6 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         service?.startAdbPairing()
     }
 
-    fun disconnectAdb() {
-        service?.disconnectAdb()
-    }
-
     /**
      * Stops the service entirely — disconnects all devices and removes the notification.
      * Called when the user explicitly wants to shut everything down.

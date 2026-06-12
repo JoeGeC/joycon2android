@@ -29,13 +29,6 @@ class AdbShell(context: Context) : PrivilegedShell {
     /** Connects with our trusted key. Throws AdbPairingRequiredException if not yet paired. */
     fun connect(host: String, port: Int): Boolean = manager.connect(host, port)
 
-    fun disconnect() {
-        try {
-            manager.disconnect()
-        } catch (_: Exception) {
-        }
-    }
-
     override fun newProcess(argv: Array<String>): ShellProcess? {
         val stream = manager.openStream("exec:" + argv.joinToString(" "))
         return AdbProcess(stream)

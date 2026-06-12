@@ -21,7 +21,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +43,6 @@ fun AdbSetupCard(
     state: AdbSetupState,
     onEnableNotifications: () -> Unit,
     onStartPairing: () -> Unit,
-    onDisconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -79,11 +77,11 @@ fun AdbSetupCard(
             }
         }
 
-        if (connected) {
-            TextButton(onClick = onDisconnect) {
-                Text(stringResource(R.string.adb_disconnect), color = TextDim)
-            }
-        } else if (!state.notificationsGranted) {
+        // Once connected only the status line shows; the pairing persists in the system
+        // Wireless debugging list, so there's nothing to undo here.
+        if (connected) return@Column
+
+        if (!state.notificationsGranted) {
             // The pairing code can only be entered via a notification, so that comes first
             Spacer(Modifier.height(Dimens.elementSpacing))
             Text(

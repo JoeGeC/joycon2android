@@ -116,11 +116,6 @@ class PrivilegedAccess(private val context: Context, private val scope: Coroutin
         }
     }
 
-    fun disconnect() {
-        adb.disconnect()
-        _adbState.value = AdbState.DISCONNECTED
-    }
-
     private fun tryConnect() {
         if (_adbState.value != AdbState.DISCONNECTED) return
         launchAdb(surfaceErrors = false) { connectNow() }
