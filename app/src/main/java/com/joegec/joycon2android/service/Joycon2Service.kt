@@ -124,6 +124,8 @@ class Joycon2Service : Service() {
         gamepads = GamepadOutput(serviceScope, GamepadManager(serviceScope, this), access::acquire) {
             uiState.value.activePlayers
         }
+        // A revoked ADB connection kills the gamepad's relay socket — drop the gamepad too
+        access.onConnectionLost = { gamepads.disable() }
         dsu = DsuServer(serviceScope)
         assigner = ControllerAssigner(
             assignments = assignments,

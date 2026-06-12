@@ -8,9 +8,12 @@ import io.github.muntashirakon.adb.android.AdbMdns
 import java.net.InetAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -34,6 +37,10 @@ class PrivilegedAccess(private val context: Context, private val scope: Coroutin
 
     private var pairingMdns: AdbMdns? = null
     private var connectMdns: AdbMdns? = null
+    private var connectionMonitor: Job? = null
+
+    /** Fired when an established ADB connection drops (e.g. the user revokes pairing). */
+    var onConnectionLost: (() -> Unit)? = null
 
     @Volatile
     private var pairingHost: InetAddress? = null
@@ -95,6 +102,8 @@ class PrivilegedAccess(private val context: Context, private val scope: Coroutin
     fun stopAdbDiscovery() {
         connectMdns?.stop()
         connectMdns = null
+        connectionMonitor?.cancel()
+        connectionMonitor = null
         stopPairing()
     }
 
@@ -144,11 +153,30 @@ class PrivilegedAccess(private val context: Context, private val scope: Coroutin
             val connected = ok && adb.isReady
             _adbState.value = if (connected) AdbState.CONNECTED else AdbState.DISCONNECTED
             // Pairing is done once connected; connect-discovery stays on for auto-reconnect
-            if (connected) stopPairing()
+            if (connected) {
+                stopPairing()
+                startConnectionMonitor()
+            }
+        }
+    }
+
+    // Catches the daemon revoking us while idle — there's no I/O to fail, so poll the link
+    private fun startConnectionMonitor() {
+        connectionMonitor?.cancel()
+        connectionMonitor = scope.launch {
+            while (isActive) {
+                delay(CONNECTION_POLL_MS)
+                if (!adb.isReady) {
+                    _adbState.value = AdbState.DISCONNECTED
+                    onConnectionLost?.invoke()
+                    break
+                }
+            }
         }
     }
 
     companion object {
         private const val TAG = "PrivilegedAccess"
+        private const val CONNECTION_POLL_MS = 2_000L
     }
 }

@@ -16,9 +16,11 @@ class AdbShell(context: Context) : PrivilegedShell {
 
     private val manager = AdbConnectionManager.getInstance(context)
 
+    // isConnected() only reflects our local socket; isConnectionEstablished() flips to
+    // false when the daemon revokes us (its reader thread sees EOF and tears down)
     override val isReady: Boolean
         get() = try {
-            manager.isConnected
+            manager.adbConnection?.isConnectionEstablished == true
         } catch (_: Exception) {
             false
         }
