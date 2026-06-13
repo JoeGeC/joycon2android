@@ -1,0 +1,9 @@
+<resources>
+    <string name="error_bluetooth_off">Bluetooth is off or unavailable</string>
+    <string name="error_no_joycon">No Joy-Con found. Press SYNC on the controller and try again.</string>
+    <string name="error_scan_already_started">Scan already in progress</string>
+    <string name="error_ble_registration_failed">BLE app registration failed</string>
+    <string name="error_ble_unsupported">BLE scanning not supported</string>
+    <string name="error_ble_internal">Internal BLE error</string>
+    <string name="error_scan_failed">Scan failed (code %1$d)</string>
+</resources>

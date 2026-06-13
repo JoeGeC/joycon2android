@@ -1,0 +1,7 @@
+<resources>
+    <string name="imu_accel">Accel</string>
+    <string name="imu_gyro">Gyro</string>
+    <string name="imu_packet">Packet</string>
+    <string name="battery_percent_format">%d%%</string>
+    <string name="player_label">P%1$d</string>
+</resources>

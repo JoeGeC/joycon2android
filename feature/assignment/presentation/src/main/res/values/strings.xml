@@ -1,0 +1,9 @@
+<resources>
+    <string name="player_label">P%1$d</string>
+    <string name="side_left">Left</string>
+    <string name="side_right">Right</string>
+    <string name="side_pro">Pro</string>
+    <string name="status_connecting">CONNECTING…</string>
+    <string name="unassigned_title">Unassigned Controllers</string>
+    <string name="button_disconnect">Disconnect</string>
+</resources>

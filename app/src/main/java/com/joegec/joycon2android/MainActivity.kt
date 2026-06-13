@@ -18,6 +18,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.joegec.joycon2android.feature.dsu.presentation.DsuViewModel
+import com.joegec.joycon2android.feature.gamepad.presentation.GamepadViewModel
 import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
 import com.joegec.joycon2android.ui.components.AdbSetupState
@@ -28,6 +32,29 @@ import com.joegec.joycon2android.ui.theme.Joycon2AndroidTheme
 class MainActivity : ComponentActivity() {
 
     private val viewModel: Joycon2ViewModel by viewModels()
+    private val dsuViewModel: DsuViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val c = (application as JoyconApplication).container
+                DsuViewModel(c.observeDsuStatus, c.enableDsu, c.disableDsu, c.setDsuLan)
+            }
+        }
+    }
+    private val gamepadViewModel: GamepadViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val c = (application as JoyconApplication).container
+                GamepadViewModel(
+                    c.observeGamepadStatus,
+                    c.observeWirelessDebugStatus,
+                    c.enableGamepad,
+                    c.disableGamepad,
+                    c.startPairing,
+                    adbSetupNeeded = !c.shizukuAvailable,
+                )
+            }
+        }
+    }
     private val notificationsGranted = mutableStateOf(true)
     private var notificationAsked = false
 
@@ -86,31 +113,26 @@ class MainActivity : ComponentActivity() {
             Joycon2AndroidTheme {
                 Surface(Modifier.fillMaxSize(), color = Background) {
                     val state by viewModel.uiState.collectAsState()
-                    val gamepadEnabled by viewModel.gamepadEnabled.collectAsState()
-                    val gamepadError by viewModel.gamepadError.collectAsState()
-                    val dsuEnabled by viewModel.dsuEnabled.collectAsState()
-                    val dsuError by viewModel.dsuError.collectAsState()
-                    val dsuClientCount by viewModel.dsuClientCount.collectAsState()
-                    val dsuLanEnabled by viewModel.dsuLanEnabled.collectAsState()
-                    val adbState by viewModel.adbState.collectAsState()
-                    val adbError by viewModel.adbError.collectAsState()
-                    val adbSetupNeeded by viewModel.adbSetupNeeded.collectAsState()
+                    val gamepadStatus by gamepadViewModel.status.collectAsState()
+                    val wirelessDebug by gamepadViewModel.wirelessDebug.collectAsState()
+                    val dsuStatus by dsuViewModel.status.collectAsState()
                     val permissionDenied by viewModel.permissionDenied.collectAsState()
                     JoyconScreen(
                         state = state,
-                        gamepadEnabled = gamepadEnabled,
-                        gamepadError = gamepadError,
+                        gamepadEnabled = gamepadStatus.enabled,
+                        gamepadError = gamepadStatus.error,
                         dsuState = DsuCardState(
-                            enabled = dsuEnabled,
-                            error = dsuError,
-                            clientCount = dsuClientCount,
-                            lanEnabled = dsuLanEnabled,
+                            enabled = dsuStatus.enabled,
+                            error = dsuStatus.error,
+                            clientCount = dsuStatus.clientCount,
+                            lanEnabled = dsuStatus.lanEnabled,
+                            address = dsuStatus.address,
                             showSlotLimitNote = state.activePlayers.any { it.player.index > 4 },
                         ),
                         adbSetup = AdbSetupState(
-                            needed = adbSetupNeeded,
-                            state = adbState,
-                            error = adbError,
+                            needed = gamepadViewModel.adbSetupNeeded,
+                            state = wirelessDebug.state,
+                            error = wirelessDebug.error,
                             notificationsGranted = notificationsGranted.value,
                         ),
                         permissionDenied = permissionDenied,
@@ -120,16 +142,12 @@ class MainActivity : ComponentActivity() {
                         onUnassign = viewModel::unassign,
                         onDisconnect = viewModel::disconnect,
                         onGamepadToggle = { enabled ->
-                            if (enabled) viewModel.enableGamepad()
-                            else viewModel.disableGamepad()
+                            gamepadViewModel.toggle(enabled, state.activePlayers)
                         },
-                        onDsuToggle = { enabled ->
-                            if (enabled) viewModel.enableDsu()
-                            else viewModel.disableDsu()
-                        },
-                        onDsuLanToggle = viewModel::setDsuLanEnabled,
+                        onDsuToggle = dsuViewModel::toggle,
+                        onDsuLanToggle = dsuViewModel::setLan,
                         onEnableNotifications = enableNotifications,
-                        onStartAdbPairing = viewModel::startAdbPairing,
+                        onStartAdbPairing = gamepadViewModel::startAdbPairing,
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },
                     )
                 }

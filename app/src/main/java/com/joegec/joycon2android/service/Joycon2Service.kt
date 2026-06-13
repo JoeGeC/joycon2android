@@ -8,28 +8,19 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.content.ContextCompat
-import com.joegec.joycon2android.ble.Joycon2Manager
-import com.joegec.joycon2android.domain.ControllerAssigner
-import com.joegec.joycon2android.dsu.DsuServer
-import com.joegec.joycon2android.domain.PlayerAssignmentManager
-import com.joegec.joycon2android.domain.PlayerStateResolver
-import com.joegec.joycon2android.domain.UiStateAggregator
-import com.joegec.joycon2android.model.AppUiState
-import com.joegec.joycon2android.model.PlayerNumber
-import com.joegec.joycon2android.uhid.AdbState
-import com.joegec.joycon2android.uhid.GamepadManager
-import com.joegec.joycon2android.uhid.GamepadOutput
-import com.joegec.joycon2android.uhid.PrivilegedAccess
+import com.joegec.joycon2android.AppContainer
+import com.joegec.joycon2android.JoyconApplication
+import com.joegec.joycon2android.adb.AdbPairingNotification
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Owns BLE connections, player assignments, and virtual gamepads so they
- * survive independently of the Activity/ViewModel lifecycle.
+ * Keeps the app's BLE connections and outputs alive past the Activity: holds a wake lock
+ * and promotes to a foreground service (with notification) while a Joy-Con is connected.
+ * All app state lives in [AppContainer]; the Activity binds this only for that lifetime.
  */
 class Joycon2Service : Service() {
 
@@ -39,49 +30,38 @@ class Joycon2Service : Service() {
 
     private val binder = LocalBinder()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private val assignments = PlayerAssignmentManager()
-
-    private lateinit var manager: Joycon2Manager
-    private lateinit var access: PrivilegedAccess
-    private lateinit var gamepads: GamepadOutput
-    private lateinit var dsu: DsuServer
-    private lateinit var assigner: ControllerAssigner
-    private lateinit var aggregator: UiStateAggregator
+    private val container: AppContainer get() = (application as JoyconApplication).container
+    private val pairingNotification by lazy { AdbPairingNotification(this) }
     private lateinit var wakeLock: PartialWakeLock
 
     @Volatile
     private var isForeground = false
 
-    val uiState: StateFlow<AppUiState> get() = aggregator.uiState
-    val gamepadEnabled: StateFlow<Boolean> get() = gamepads.enabled
-    val gamepadError: StateFlow<String?> get() = gamepads.error
-    val adbState: StateFlow<AdbState> get() = access.adbState
-    val adbError: StateFlow<String?> get() = access.adbError
-    val shizukuAvailable: Boolean get() = access.shizukuAvailable
-    val dsuEnabled: StateFlow<Boolean> get() = dsu.enabled
-    val dsuError: StateFlow<String?> get() = dsu.error
-    val dsuClientCount: StateFlow<Int> get() = dsu.clientCount
-    val dsuLanEnabled: StateFlow<Boolean> get() = dsu.lanEnabled
-
     override fun onCreate() {
         super.onCreate()
-        buildCollaborators()
+        wakeLock = PartialWakeLock(this, WAKE_LOCK_TAG)
         wakeLock.acquire()
-        aggregator.start()
-        access.startAdbDiscovery()
+        container.startWirelessDiscovery()
         // Foreground (and its notification) only while a Joy-Con is actually connected;
         // otherwise the bound Activity keeps us alive without a notification
         serviceScope.launch {
-            aggregator.uiState.collect { updateForeground(it.anyConnected) }
+            container.observeSession().collect { updateForeground(it.anyConnected) }
+        }
+        // The pairing code is entered from a notification (the system dialog closes when
+        // we foreground); show it whenever a pairing service is being advertised
+        pairingNotification.createChannel()
+        serviceScope.launch {
+            container.observeWirelessDebugStatus().collect { status ->
+                if (status.pairingServiceAvailable) pairingNotification.show() else pairingNotification.cancel()
+            }
         }
     }
 
     override fun onDestroy() {
-        gamepads.destroyAll()
-        dsu.disable()
-        access.stopAdbDiscovery()
-        manager.disconnectAll()
-        aggregator.stopInputCollectors()
+        container.disableGamepad()
+        container.disableDsu()
+        container.stopWirelessDiscovery()
+        container.controllerRepository.disconnectAll()
         wakeLock.release()
         serviceScope.cancel()
         super.onDestroy()
@@ -92,73 +72,14 @@ class Joycon2Service : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_DISCONNECT_ALL -> {
-                disconnectAll()
+                container.disconnectAll()
                 stopSelf()
                 return START_NOT_STICKY
             }
             ACTION_GO_FOREGROUND -> enterForeground()
-            ACTION_ADB_PAIR_CODE -> intent.getStringExtra(EXTRA_PAIR_CODE)?.let(access::submitPairingCode)
+            ACTION_ADB_PAIR_CODE -> intent.getStringExtra(EXTRA_PAIR_CODE)?.let(container.submitPairingCode::invoke)
         }
         return START_STICKY
-    }
-
-    // --- Public API for ViewModel ---
-
-    fun startScan() = manager.startScan()
-    fun stopScan() = manager.stopScan()
-    fun assignToPlayer(address: String, player: PlayerNumber) = assigner.assign(address, player)
-    fun unassign(address: String) = assigner.unassign(address)
-    fun enableGamepad() = gamepads.enable()
-    fun disableGamepad() = gamepads.disable()
-    fun startAdbPairing() = access.startPairing()
-    fun enableDsu() = dsu.enable()
-    fun disableDsu() = dsu.disable()
-    fun setDsuLanEnabled(enabled: Boolean) = dsu.setLanEnabled(enabled)
-    fun emitError(message: String) = manager.emitError(message)
-
-    fun disconnect(address: String) {
-        assignments.unassign(address)
-        manager.disconnect(address)
-    }
-
-    fun disconnectAll() {
-        gamepads.disable()
-        dsu.disable()
-        assignments.unassignAll()
-        aggregator.stopInputCollectors()
-        manager.disconnectAll()
-    }
-
-    private fun buildCollaborators() {
-        manager = Joycon2Manager(this)
-        access = PrivilegedAccess(this, serviceScope)
-        gamepads = GamepadOutput(serviceScope, GamepadManager(serviceScope, this), access::acquire) {
-            uiState.value.activePlayers
-        }
-        // Connecting clears any "no privileged access" error left from an earlier attempt;
-        // a revoked connection kills the gamepad's relay socket, so drop the gamepad too
-        access.onConnected = { gamepads.clearError() }
-        access.onConnectionLost = { gamepads.disable() }
-        dsu = DsuServer(serviceScope)
-        assigner = ControllerAssigner(
-            assignments = assignments,
-            connectionFor = manager::getConnection,
-            onAssigned = gamepads::onPlayerAssigned,
-            onUnassigned = gamepads::onPlayerUnassigned,
-        )
-        aggregator = UiStateAggregator(
-            scope = serviceScope,
-            connections = manager.connections,
-            scanning = manager.scanning,
-            error = manager.error,
-            assignments = assignments,
-            resolver = PlayerStateResolver(evictConflicting = assignments::unassign),
-        ) { state ->
-            gamepads.push(state.players)
-            dsu.push(state.activePlayers)
-            assigner.applyCombos(state.unassignedJoycons)
-        }
-        wakeLock = PartialWakeLock(this, WAKE_LOCK_TAG)
     }
 
     private fun updateForeground(connected: Boolean) {

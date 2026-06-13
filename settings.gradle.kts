@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {
@@ -25,3 +26,19 @@ dependencyResolutionManagement {
 
 rootProject.name = "Joycon2Android"
 include(":app")
+include(":core:model")
+include(":core:designsystem")
+include(":core:session")
+include(":feature:dsu:domain")
+include(":feature:dsu:data")
+include(":feature:dsu:presentation")
+include(":feature:assignment:domain")
+include(":feature:assignment:data")
+include(":feature:assignment:presentation")
+include(":feature:gamepad:domain")
+include(":feature:gamepad:data")
+include(":feature:gamepad:presentation")
+include(":feature:connection:domain")
+include(":feature:connection:data")
+include(":feature:connection:presentation")
+include(":konsist")

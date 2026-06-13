@@ -1,0 +1,22 @@
+<resources>
+    <string name="dsu_title">DSU Motion Server</string>
+    <string name="dsu_subtitle_off">Stream motion + pads to emulators (cemuhook)</string>
+    <string name="dsu_subtitle_on">Active — port %1$d · %2$d connected</string>
+    <string name="dsu_lan_title">Allow other devices (LAN)</string>
+    <string name="dsu_lan_subtitle">For an emulator on a PC or another device on your Wi-Fi. Off: apps on this phone only.</string>
+    <string name="dsu_slot_note">DSU serves players 1–4 only — P5–P8 are not streamed.</string>
+    <string name="dsu_setup_title">Connect an emulator</string>
+    <string name="dsu_setup_body">In the emulator\'s controller settings, point its DSU (cemuhook) input source at:</string>
+    <string name="dsu_no_lan_address">No Wi-Fi address found — check this device\'s network connection</string>
+    <string name="dsu_dolphin_guide_title">Dolphin setup</string>
+    <string name="dsu_dolphin_desktop">On a PC: Controllers → Alternate Input Sources → DSU Client → add the address above (enable LAN first).</string>
+    <string name="dsu_dolphin_android_intro">On this phone: Create a file named DSUClient.ini inside Dolphin\'s user folder at Android/data/org.dolphinemu.dolphinemu/files/Config/, with exactly this content:</string>
+    <string name="dsu_dolphin_ini" translatable="false">[Server]\nEnabled = True\nEntries = Joycon2:127.0.0.1:26760;</string>
+    <string name="dsu_dolphin_android_outro">Then restart Dolphin. Under Wii Remote 1 → Emulated, a DSUClient device appears in the device dropdown.</string>
+    <string name="dsu_dolphin_mapping">Under Motion Input, map all Accelerometer and Gyroscope entries name-to-name, and map Recenter (gyro pointing drifts — press it in-game to summon the pointer).</string>
+    <string name="dsu_mapping_trouble_title">Having trouble mapping buttons?</string>
+    <string name="dsu_mapping_trouble_detect">Press-a-button detection in Android emulators only sees Android input devices, so it never detects DSU inputs. Map them manually instead — pick from the DSU device\'s input list or type them in the expression field.</string>
+    <string name="dsu_mapping_names_intro">DSU buttons use DS4 names:</string>
+    <string name="dsu_mapping_missing">SL, SR and C have no DSU equivalent and aren\'t streamed. Exception: a solo sideways Joy-Con, where SL/SR act as its shoulder buttons.</string>
+    <string name="dsu_mapping_trouble_gamepad">If the Virtual Gamepad is also on, detection grabs your press from it instead — turn it off while mapping DSU inputs.</string>
+</resources>
