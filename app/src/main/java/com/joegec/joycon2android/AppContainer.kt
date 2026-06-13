@@ -67,8 +67,8 @@ class AppContainer(context: Context) {
     val observeDsuStatus = ObserveDsuStatusUseCase(dsuRepository)
 
     // --- Assignment ---
-    // The cross-feature orchestration that reacts to assignment (LEDs, gamepad lifecycle)
-    // lands with the session coordinator in a later phase.
+    // Cross-feature orchestration that reacts to assignment (gamepad/DSU lifecycle) lives in
+    // the SessionCoordinator below.
     val assignmentRepository: AssignmentRepository = PlayerAssignmentManager()
 
     // --- Gamepad + privileged access ---

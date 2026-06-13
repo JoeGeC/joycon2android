@@ -45,6 +45,7 @@
             <option value="$PROJECT_DIR$/feature/gamepad/data" />
             <option value="$PROJECT_DIR$/feature/gamepad/domain" />
             <option value="$PROJECT_DIR$/feature/gamepad/presentation" />
+            <option value="$PROJECT_DIR$/konsist" />
           </set>
         </option>
       </GradleProjectSettings>

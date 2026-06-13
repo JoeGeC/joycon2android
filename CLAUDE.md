@@ -35,9 +35,15 @@
 - If a class exceeds ~200 lines or has multiple clusters of private fields serving different concerns, it needs splitting
 
 ## Architecture
-- Single-activity Compose app
-- State flows from BLE layer → domain state → ViewModel → Compose UI
+- Single-activity Compose app, **Gradle multi-module** split by feature × layer
+  (`domain` / `data` / `presentation`), over `:core` modules and a thin `:app` composition root
+- State flows from BLE layer → `SessionCoordinator` → `AppUiState` → per-feature ViewModel → Compose
+- Presentation reaches data **only through use cases** (`operator fun invoke`); the module graph
+  enforces it — never bypass it
 - GATT operations are queued (Android allows only one at a time)
+- **Read [`docs/architecture.md`](docs/architecture.md) before changing structure**, and follow
+  [`docs/adding-a-feature.md`](docs/adding-a-feature.md) when adding/changing a feature
+- Run `./gradlew :konsist:test` after moving classes between modules — it enforces layer placement
 - Read `README.md` for project context, BLE protocol reference, packet layout, and Android-specific gotchas
 
 ## Conventions

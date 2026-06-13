@@ -127,23 +127,25 @@ taken. Exception: a solo sideways Joy-Con's SL/SR arrive as its shoulder buttons
 ## Architecture
 
 ```
-BLE layer ─→ Domain state ─→ ViewModel ─→ Compose UI
-                                    ├──→ UHID relay ─→ /dev/uhid ─→ Android input system
-                                    └──→ DSU server ─→ UDP :26760 ─→ emulators (cemuhook)
+BLE notify ─→ Joycon2Manager ─→ SessionCoordinator ─→ AppUiState ─→ Compose UI
+                                       ├──→ UHID relay ─→ /dev/uhid ─→ Android input system
+                                       └──→ DSU server ─→ UDP :26760 ─→ emulators (cemuhook)
 ```
 
-| Layer | Key files |
-|---|---|
-| BLE | `BleScanner`, `ConnectionPool`, `JoyconConnection`, `GattOpQueue`, `PacketParser` |
-| Domain | `PlayerAssignmentManager`, `Joycon2Manager` |
-| Model | `PlayerState`, `JoyconInput`, `JoyconButton`, `ConnectedJoycon`, `Side` |
-| UHID | `UhidRelay`, `GamepadManager`, `ReportMapper`, `ShizukuPermissionHandler` |
-| DSU | `DsuServer`, `DsuPacketEncoder`, `MotionConverter`, `GyroCalibrator`, `DsuClientRegistry` |
-| Native | `uhid_relay.c` (standalone binary run via Shizuku) |
-| UI | `JoyconScreen`, `PlayerView`, `ControllerLayout` |
-| Service | `Joycon2Service` |
+Single-activity Compose app, built as a **Gradle multi-module** project split by **feature ×
+layer**. Each feature (`connection`, `assignment`, `gamepad`, `dsu`) has `domain` / `data` /
+`presentation` modules, over shared `:core` modules and a thin `:app` composition root. The
+split enforces the dependency rules at compile time — a ViewModel can't reach a repository
+implementation, because presentation and data are separate modules sharing only domain.
 
-Single-activity Compose app. State flows from BLE notifications through `Joycon2Manager` into `Joycon2ViewModel` and down to Compose. When gamepad output is enabled, `PlayerState` changes are also fed to `GamepadManager` which converts them to HID reports and pipes them to the UHID relay process.
+State flows from BLE notifications through `Joycon2Manager` into the `SessionCoordinator`, which
+combines connections and player assignments into an immutable `AppUiState` for the UI, and feeds
+the same state to the gamepad and DSU outputs on a synchronous per-packet path.
+
+**For contributors:** [`docs/architecture.md`](docs/architecture.md) is the living reference
+(module graph, layers, dependency rules, composition root). [`docs/adding-a-feature.md`](docs/adding-a-feature.md)
+is the recipe for adding or changing one. The sections below cover the hardware-level detail
+those docs link back to.
 
 ### Virtual Gamepad (UHID)
 
