@@ -20,6 +20,19 @@ val JoyconRed = joyconBorderColor(0xFF8C5F, JoyconDefaultColor)
 val StickBg = Color(0xFF0E1116)
 val CrosshairColor = Color(0xFF222C36)
 
+val BatteryHigh = Accent
+val BatteryMedium = Color(0xFFFBBF24)
+val BatteryLow = ErrorText
+
+private const val BATTERY_LOW_PERCENT = 20
+private const val BATTERY_MEDIUM_PERCENT = 50
+
+fun batteryColor(percent: Int): Color = when {
+    percent <= BATTERY_LOW_PERCENT -> BatteryLow
+    percent <= BATTERY_MEDIUM_PERCENT -> BatteryMedium
+    else -> BatteryHigh
+}
+
 private const val ACCENT_SATURATION_BOOST = 1.4f
 
 /**

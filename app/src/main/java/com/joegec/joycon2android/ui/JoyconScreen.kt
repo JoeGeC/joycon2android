@@ -1,11 +1,15 @@
 package com.joegec.joycon2android.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,6 +41,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.Modifier
@@ -55,12 +63,15 @@ import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.ui.components.AdbSetupCard
 import com.joegec.joycon2android.ui.components.AdbSetupState
 import com.joegec.joycon2android.ui.components.AssignmentPanel
+import com.joegec.joycon2android.ui.components.CompactPlayerRow
+import com.joegec.joycon2android.ui.components.ConnectionViewMode
 import com.joegec.joycon2android.ui.components.DsuCard
 import com.joegec.joycon2android.ui.components.DsuCardState
 import com.joegec.joycon2android.ui.components.ErrorBox
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
 import com.joegec.joycon2android.ui.components.PlayerView
 import com.joegec.joycon2android.ui.components.ScanningIndicator
+import com.joegec.joycon2android.ui.components.ViewModeToggle
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.CardBg
@@ -332,6 +343,8 @@ private fun ConnectedContent(
     onEnableNotifications: () -> Unit,
     onStartAdbPairing: () -> Unit,
 ) {
+    var viewMode by rememberSaveable { mutableStateOf(ConnectionViewMode.DETAILED) }
+
     AnimatedVisibility(
         visible = state.unassignedJoycons.isNotEmpty(),
         enter = fadeIn() + expandVertically(),
@@ -345,11 +358,34 @@ private fun ConnectedContent(
         )
     }
 
+    AnimatedVisibility(
+        visible = state.activePlayers.isNotEmpty(),
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
+        ViewModeToggle(mode = viewMode, onModeChange = { viewMode = it })
+    }
+
     state.activePlayers.forEach { playerState ->
-        PlayerView(
-            playerState = playerState,
-            onUnassign = onUnassign,
-        )
+        AnimatedContent(
+            targetState = viewMode,
+            transitionSpec = {
+                (fadeIn(tween(220)) togetherWith fadeOut(tween(220)))
+                    .using(SizeTransform(clip = false))
+            },
+            label = "viewMode",
+        ) { mode ->
+            when (mode) {
+                ConnectionViewMode.DETAILED -> PlayerView(
+                    playerState = playerState,
+                    onUnassign = onUnassign,
+                )
+                ConnectionViewMode.COMPACT -> CompactPlayerRow(
+                    playerState = playerState,
+                    onUnassign = onUnassign,
+                )
+            }
+        }
     }
 
     AnimatedVisibility(

@@ -48,6 +48,15 @@ object Dimens {
     val pillPaddingHorizontal = 10.dp
     val pillPaddingVertical = 4.dp
 
+    val viewTogglePadding = 4.dp
+    val viewToggleButtonSize = 36.dp
+    val viewToggleCorner = 10.dp
+    val compactRowPaddingHorizontal = 16.dp
+    val compactRowPaddingVertical = 12.dp
+    val compactControllerGap = 4.dp
+    val compactChipPaddingHorizontal = 8.dp
+    val compactChipPaddingVertical = 6.dp
+
     val batteryIconWidth = 18.dp
     val batteryIconHeight = 10.dp
     val batteryIconCapWidth = 2.dp

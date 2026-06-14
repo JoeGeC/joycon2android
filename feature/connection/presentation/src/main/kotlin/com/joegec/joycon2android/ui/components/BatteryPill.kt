@@ -20,23 +20,25 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.joegec.joycon2android.feature.connection.presentation.R
 import com.joegec.joycon2android.model.BatteryGauge
-import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AccentDim
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.ErrorText
-
-private const val LOW_BATTERY_PERCENT = 20
+import com.joegec.joycon2android.ui.theme.batteryColor
 
 @Composable
 internal fun BatteryPill(volts: Float, modifier: Modifier = Modifier) {
-    val percent = BatteryGauge.percentFromVolts(volts)
-    val color = if (percent <= LOW_BATTERY_PERCENT) ErrorText else Accent
-    Row(
-        modifier
+    BatteryReadout(
+        volts = volts,
+        modifier = modifier
             .background(AccentDim, RoundedCornerShape(Dimens.pillCorner))
             .padding(horizontal = Dimens.pillPaddingHorizontal, vertical = Dimens.pillPaddingVertical),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    )
+}
+
+@Composable
+internal fun BatteryReadout(volts: Float, modifier: Modifier = Modifier) {
+    val percent = BatteryGauge.percentFromVolts(volts)
+    val color = batteryColor(percent)
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         BatteryIcon(percent, color)
         Text(
             stringResource(R.string.battery_percent_format, percent),
@@ -47,6 +49,12 @@ internal fun BatteryPill(volts: Float, modifier: Modifier = Modifier) {
             modifier = Modifier.padding(start = Dimens.batteryIconTextGap),
         )
     }
+}
+
+@Composable
+internal fun BatteryGlyph(volts: Float, modifier: Modifier = Modifier) {
+    val percent = BatteryGauge.percentFromVolts(volts)
+    BatteryIcon(percent, batteryColor(percent), modifier)
 }
 
 @Composable
