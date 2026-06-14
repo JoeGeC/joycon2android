@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import rikka.shizuku.Shizuku
 
 /**
  * Chooses how the virtual gamepad reaches `/dev/uhid`: Shizuku when it's installed and
@@ -63,7 +64,15 @@ class PrivilegedAccess(
     private val _pairingServiceAvailable = MutableStateFlow(false)
     override val pairingServiceAvailable: StateFlow<Boolean> = _pairingServiceAvailable.asStateFlow()
 
-    override val shizukuAvailable: Boolean get() = ShizukuPermissionHandler.isShizukuAvailable
+    // Shizuku's binder can arrive or die after launch (service started/stopped, app updated),
+    // so track it live rather than sampling once. Sticky delivers the current state on register.
+    private val _shizukuAvailable = MutableStateFlow(ShizukuPermissionHandler.isShizukuAvailable)
+    override val shizukuAvailable: StateFlow<Boolean> = _shizukuAvailable.asStateFlow()
+
+    init {
+        Shizuku.addBinderReceivedListenerSticky { _shizukuAvailable.value = true }
+        Shizuku.addBinderDeadListener { _shizukuAvailable.value = false }
+    }
 
     fun acquire(onResult: (PrivilegedShell?) -> Unit) {
         when {

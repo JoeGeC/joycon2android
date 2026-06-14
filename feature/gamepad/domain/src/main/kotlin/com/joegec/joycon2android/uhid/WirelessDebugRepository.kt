@@ -11,7 +11,7 @@ interface WirelessDebugRepository {
     val adbState: StateFlow<AdbState>
     val adbError: StateFlow<String?>
     val pairingServiceAvailable: StateFlow<Boolean>
-    val shizukuAvailable: Boolean
+    val shizukuAvailable: StateFlow<Boolean>
 
     var onConnected: (() -> Unit)?
     var onConnectionLost: (() -> Unit)?

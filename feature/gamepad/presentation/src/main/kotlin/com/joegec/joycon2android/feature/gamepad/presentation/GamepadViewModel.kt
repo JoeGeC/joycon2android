@@ -21,7 +21,6 @@ class GamepadViewModel(
     private val enableGamepad: EnableGamepadUseCase,
     private val disableGamepad: DisableGamepadUseCase,
     private val startPairing: StartPairingUseCase,
-    val adbSetupNeeded: Boolean,
 ) : ViewModel() {
 
     val status: StateFlow<GamepadStatus> = observeGamepadStatus()

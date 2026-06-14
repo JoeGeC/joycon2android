@@ -50,7 +50,6 @@ class MainActivity : ComponentActivity() {
                     c.enableGamepad,
                     c.disableGamepad,
                     c.startPairing,
-                    adbSetupNeeded = !c.shizukuAvailable,
                 )
             }
         }
@@ -129,7 +128,7 @@ class MainActivity : ComponentActivity() {
                             showSlotLimitNote = state.activePlayers.any { it.player.index > 4 },
                         ),
                         adbSetup = AdbSetupState(
-                            needed = gamepadViewModel.adbSetupNeeded,
+                            needed = !wirelessDebug.shizukuAvailable,
                             state = wirelessDebug.state,
                             error = wirelessDebug.error,
                             notificationsGranted = notificationsGranted.value,

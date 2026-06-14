@@ -6,6 +6,7 @@
     <string name="status_scanning">SCANNING…</string>
     <string name="status_disconnected">DISCONNECTED</string>
     <string name="status_wireless_debug">WIRELESS DEBUG</string>
+    <string name="status_shizuku">SHIZUKU</string>
 
     <!-- Buttons -->
     <string name="button_scan_connect">Scan &amp; Connect</string>

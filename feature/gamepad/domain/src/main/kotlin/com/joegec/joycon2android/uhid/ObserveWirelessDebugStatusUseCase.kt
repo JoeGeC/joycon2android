@@ -8,7 +8,8 @@ class ObserveWirelessDebugStatusUseCase(private val repository: WirelessDebugRep
         repository.adbState,
         repository.adbError,
         repository.pairingServiceAvailable,
-    ) { state, error, pairing ->
-        WirelessDebugStatus(state, error, pairing)
+        repository.shizukuAvailable,
+    ) { state, error, pairing, shizuku ->
+        WirelessDebugStatus(state, error, pairing, shizuku)
     }
 }

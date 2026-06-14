@@ -94,7 +94,6 @@ class AppContainer(context: Context) {
     val startPairing = StartPairingUseCase(wirelessDebugRepository)
     val submitPairingCode = SubmitPairingCodeUseCase(wirelessDebugRepository)
     val observeWirelessDebugStatus = ObserveWirelessDebugStatusUseCase(wirelessDebugRepository)
-    val shizukuAvailable: Boolean get() = wirelessDebugRepository.shizukuAvailable
 
     // --- Session (cross-feature coordinator) ---
     private val sessionCoordinator = SessionCoordinator(

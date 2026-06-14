@@ -198,16 +198,22 @@ private fun AppTitle(state: AppUiState, adbSetup: AdbSetupState) {
                 letterSpacing = 2.sp,
                 fontWeight = FontWeight.Medium,
             )
-            if (adbSetup.needed) {
-                WirelessDebugStatus(adbSetup.state)
-            }
+            PrivilegedAccessStatus(adbSetup)
         }
     }
 }
 
+// Shizuku and wireless debugging are interchangeable backends for the privileged
+// /dev/uhid access the gamepad needs; Shizuku needs no in-app setup, so when it's the
+// active backend we surface it as already connected.
 @Composable
-private fun WirelessDebugStatus(adbState: AdbState) {
-    val color = if (adbState == AdbState.CONNECTED) Accent else TextDim
+private fun PrivilegedAccessStatus(adbSetup: AdbSetupState) {
+    val (labelRes, connected) = if (adbSetup.needed) {
+        R.string.status_wireless_debug to (adbSetup.state == AdbState.CONNECTED)
+    } else {
+        R.string.status_shizuku to true
+    }
+    val color = if (connected) Accent else TextDim
     Row(
         horizontalArrangement = Arrangement.spacedBy(Dimens.statusDotGap),
         verticalAlignment = Alignment.CenterVertically,
@@ -218,7 +224,7 @@ private fun WirelessDebugStatus(adbState: AdbState) {
                 .background(color, CircleShape)
         )
         Text(
-            stringResource(R.string.status_wireless_debug),
+            stringResource(labelRes),
             color = color,
             fontSize = Dimens.fontSizeStatus,
             letterSpacing = 2.sp,
