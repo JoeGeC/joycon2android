@@ -8,8 +8,9 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 
 - Connect multiple Joy-Con 2 controllers simultaneously
 - Assign controllers to up to 4 players (left, right, or paired)
-- **Virtual gamepad output** — appears as a standard HID gamepad to all apps
+- **Virtual gamepad output** — each assigned player becomes its own standard HID gamepad, so apps see one controller per player
 - **DSU motion server** — gyro/accel + full pad state for emulators (Dolphin, Cemu, …) over UDP, up to 4 independent players, with automatic gyro bias calibration
+- **One-tap Dolphin setup** — writes Dolphin's config to match the current assignment (DSU + Wii Remote mappings, or GameCube controller mappings)
 - Dual Joy-Con layout when both L+R assigned to one player
 - Sideways single Joy-Con layout with rotated inputs (stick, d-pad, face buttons)
 - Live display of buttons, sticks, IMU (accelerometer + gyroscope), and battery
@@ -19,10 +20,13 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 ### Prerequisites
 
 - Android device running API 24+ with BLE support
-- [Shizuku](https://shizuku.rikka.app/) installed and running (required for virtual gamepad)
+- A privileged path for the virtual gamepad — either [Shizuku](https://shizuku.rikka.app/) installed and running, **or** the app's built-in wireless-debugging pairing (no Shizuku; set up in-app from the Gamepad card)
 - Joy-Con 2 controller(s)
 
 ### Step 1: Install Shizuku
+
+> Optional — skip this if you'd rather use the app's built-in **wireless debugging** path (no
+> Shizuku). The Gamepad card walks you through pairing when you enable the gamepad without Shizuku.
 
 1. Install Shizuku from [Google Play](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api) or [GitHub](https://github.com/RikkaApps/Shizuku/releases)
 2. Open Shizuku and start it using one of:
@@ -44,10 +48,19 @@ Build from source or install the APK. Grant Bluetooth permissions when prompted.
 ### Step 4: Enable Virtual Gamepad
 
 1. With at least one controller assigned, toggle the **Gamepad** switch
-2. Grant Shizuku permission when prompted (first time only)
-3. The virtual gamepad will appear as a system input device
+2. Grant the privileged path access — Shizuku permission when prompted (first time only), or
+   pair via wireless debugging from the Gamepad card if you're not using Shizuku
+3. Each assigned player appears as its **own** input device named `Joy-Con Virtual Gamepad <N>`
 
-Once enabled, any app that supports gamepads (games, emulators, etc.) will see the virtual controller. The app runs a foreground service to keep the connection alive in the background.
+Every assigned player becomes a separate standard gamepad — P1, P2, … are distinct devices, so
+multiplayer "just works" and emulators can map each to a different port. Any app that supports
+gamepads (games, emulators, etc.) sees them. The app runs a foreground service to keep the
+connection alive in the background.
+
+**Dolphin shortcut:** with the gamepad on, the Gamepad card offers **Map Dolphin GameCube
+controllers**, which writes Dolphin's `GCPadNew.ini` (one section per player, with the right
+mappings for a left, right, or paired layout) and sets each player's GameCube port to a Standard
+Controller. Restart Dolphin afterward.
 
 ### Step 5 (optional): DSU Motion Server for emulators
 
@@ -83,7 +96,13 @@ taken. Exception: a solo sideways Joy-Con's SL/SR arrive as its shoulder buttons
 
 #### Dolphin setup
 
-(no DSU settings UI — configure by file):
+**Automatic:** with DSU on, the DSU card's **Set up Dolphin and Wiimote mapping** button writes
+both `DSUClient.ini` (the server entry) and `WiimoteNew.ini` (per-player Wii Remote mappings + the
+accelerometer/gyro motion input) to match the current assignment, then prompts you to restart
+Dolphin. It needs the privileged path (Shizuku / wireless debugging) connected; if the write fails
+(some OEM builds block writing into another app's `Android/data`), fall back to the manual steps.
+
+**Manual** (no DSU settings UI — configure by file):
 
 1. Create `Config/DSUClient.ini` inside Dolphin's user folder
    (`Android/data/org.dolphinemu.dolphinemu/files/`, containing exactly:
@@ -147,13 +166,22 @@ those docs link back to.
 
 The app creates system-wide virtual gamepads using Linux's UHID (User-space HID) interface:
 
-1. **`uhid_relay.c`** — A small native binary that opens `/dev/uhid` and writes UHID events using `write()`. Runs as a Shizuku shell process (`u:r:shell:s0` SELinux context, which has `/dev/uhid` access).
+1. **`uhid_relay.c`** — A small native binary that opens `/dev/uhid` and writes UHID events using `write()`. Runs as a shell-uid process (`u:r:shell:s0` SELinux context, which has `/dev/uhid` access).
 
-2. **`UhidRelay.kt`** — Launches the relay binary via `IShizukuService.newProcess()`, sends a UHID_CREATE2 event (4380-byte struct with HID report descriptor), then streams UHID_INPUT2 events through the stdin pipe.
+2. **`UhidRelay.kt`** — Launches the relay binary through a `PrivilegedShell`, sends a UHID_CREATE2 event (4380-byte struct with HID report descriptor), then streams UHID_INPUT2 events through the stdin pipe. `PrivilegedAccess` supplies that shell from whichever privileged path is available — Shizuku's `IShizukuService.newProcess()`, or the in-app wireless-debugging ADB connection's `exec:` (`AdbShell`) — so neither the relay nor the rest of the app cares which granted the privilege.
 
 3. **`ReportMapper.kt`** — Converts `PlayerState` into a 13-byte HID input report: 14 buttons + hat switch + 2x 16-bit sticks + 2x 8-bit triggers.
 
 4. **`GamepadManager.kt`** — Manages per-player relay instances and collects from `StateFlow<PlayerState>` to drive reports at input rate.
+
+One UHID device is created **per assigned player**, not one shared pad — each is its own
+`/dev/uhid` node named `Joy-Con Virtual Gamepad <N>` (N = player number), so Android exposes them
+as independent input devices and apps see a separate gamepad per player. Note that the device
+*name* carries the player number, but Android assigns each device an `InputDevice` id by
+enumeration order, not by player number — so P4 alongside P1 and P2 (no P3) is the 3rd pad,
+`Android/3/Joy-Con Virtual Gamepad 4`.
+(This is why `DolphinGcpadConfig` keys its `Device = Android/<id>/…` line on enumeration rank while
+the section/port stays on the player number.)
 
 The virtual device uses BUS_USB with generic vendor/product IDs (0x1234:0x5678) to ensure the kernel's `hid-generic` driver binds it (Nintendo VID/PID causes the `hid-nintendo` driver to claim and reject the device).
 
@@ -182,7 +210,7 @@ Debug DSU clients for wire inspection and IMU calibration live in `tools/`.
 - Android API 24+ (minSdk 24, targetSdk 36)
 - BLE-capable device
 - Joy-Con 2 controller(s) in pairing mode (press SYNC)
-- Shizuku running (for virtual gamepad feature)
+- A privileged path for the virtual gamepad — Shizuku running, or the in-app wireless-debugging pairing
 
 ### Permissions
 
