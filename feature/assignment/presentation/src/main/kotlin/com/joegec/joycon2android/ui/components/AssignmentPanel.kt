@@ -72,6 +72,13 @@ fun AssignmentPanel(
         unassigned.forEach { joycon ->
             JoyconAssignmentRow(joycon, players, onAssign, onDisconnect)
         }
+
+        Text(
+            stringResource(R.string.unassigned_combo_tip),
+            color = TextDim,
+            fontSize = Dimens.fontSizeSmall,
+            modifier = Modifier.padding(horizontal = Dimens.cardPadding),
+        )
     }
 }
 

@@ -6,4 +6,5 @@
     <string name="status_connecting">CONNECTING…</string>
     <string name="unassigned_title">Unassigned Controllers</string>
     <string name="button_disconnect">Disconnect</string>
+    <string name="unassigned_combo_tip">Tip: press L + R or SL + SR to assign players!</string>
 </resources>
