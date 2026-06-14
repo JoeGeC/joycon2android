@@ -29,11 +29,13 @@ fun CompactPlayerRow(
     onUnassign: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val controllers = listOfNotNull(playerState.left, playerState.right)
     Row(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.cardCorner))
             .background(CardBg)
+            .clickable { controllers.forEach { onUnassign(it.address) } }
             .padding(
                 horizontal = Dimens.compactRowPaddingHorizontal,
                 vertical = Dimens.compactRowPaddingVertical,
