@@ -57,6 +57,8 @@ class MainActivity : ComponentActivity() {
                     c.enableGamepad,
                     c.disableGamepad,
                     c.startPairing,
+                    dolphinInstalled = c.dolphinDsuSetup.dolphinInstalled,
+                    configureGamecube = c.dolphinDsuSetup::configureGamecube,
                 )
             }
         }
@@ -123,7 +125,10 @@ class MainActivity : ComponentActivity() {
                     val wirelessDebug by gamepadViewModel.wirelessDebug.collectAsState()
                     val dsuStatus by dsuViewModel.status.collectAsState()
                     val dolphinPhase by dsuViewModel.dolphinPhase.collectAsState()
+                    val gamepadDolphinPhase by gamepadViewModel.dolphinPhase.collectAsState()
                     val permissionDenied by viewModel.permissionDenied.collectAsState()
+                    val dolphinAutoAvailable = wirelessDebug.shizukuAvailable ||
+                        wirelessDebug.state == AdbState.CONNECTED
                     JoyconScreen(
                         state = state,
                         gamepadEnabled = gamepadStatus.enabled,
@@ -135,8 +140,7 @@ class MainActivity : ComponentActivity() {
                             address = dsuStatus.address,
                             showSlotLimitNote = state.activePlayers.any { it.player.index > 4 },
                             dolphinInstalled = dsuViewModel.dolphinInstalled,
-                            dolphinAutoConfigAvailable = wirelessDebug.shizukuAvailable ||
-                                wirelessDebug.state == AdbState.CONNECTED,
+                            dolphinAutoConfigAvailable = dolphinAutoAvailable,
                             dolphinPhase = dolphinPhase,
                         ),
                         adbSetup = AdbSetupState(
@@ -154,6 +158,10 @@ class MainActivity : ComponentActivity() {
                         onGamepadToggle = { enabled ->
                             gamepadViewModel.toggle(enabled, state.activePlayers)
                         },
+                        dolphinGcInstalled = gamepadViewModel.dolphinInstalled,
+                        dolphinGcAvailable = dolphinAutoAvailable,
+                        dolphinGcPhase = gamepadDolphinPhase,
+                        onConfigureGamecube = { gamepadViewModel.configureDolphinGamecube(state.activePlayers) },
                         onDsuToggle = dsuViewModel::toggle,
                         onConfigureDolphin = { dsuViewModel.configureDolphinDsu(state.activePlayers) },
                         onEnableNotifications = enableNotifications,

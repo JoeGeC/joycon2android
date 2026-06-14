@@ -66,6 +66,8 @@ import com.joegec.joycon2android.ui.components.AdbSetupState
 import com.joegec.joycon2android.ui.components.AssignmentPanel
 import com.joegec.joycon2android.ui.components.CompactPlayerRow
 import com.joegec.joycon2android.ui.components.ConnectionViewMode
+import com.joegec.joycon2android.ui.components.DolphinSetupButton
+import com.joegec.joycon2android.ui.components.DolphinSetupPhase
 import com.joegec.joycon2android.ui.components.DsuCard
 import com.joegec.joycon2android.ui.components.DsuCardState
 import com.joegec.joycon2android.ui.components.ErrorBox
@@ -97,6 +99,10 @@ fun JoyconScreen(
     onUnassign: (String) -> Unit,
     onDisconnect: (String) -> Unit,
     onGamepadToggle: (Boolean) -> Unit,
+    dolphinGcInstalled: Boolean,
+    dolphinGcAvailable: Boolean,
+    dolphinGcPhase: DolphinSetupPhase,
+    onConfigureGamecube: () -> Unit,
     onDsuToggle: (Boolean) -> Unit,
     onConfigureDolphin: () -> Unit,
     onEnableNotifications: () -> Unit,
@@ -167,6 +173,7 @@ fun JoyconScreen(
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
                                 state, viewMode, gamepadEnabled, gamepadError, dsuState, adbSetup,
+                                dolphinGcInstalled, dolphinGcAvailable, dolphinGcPhase, onConfigureGamecube,
                                 onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect,
                                 onGamepadToggle, onDsuToggle, onConfigureDolphin,
                                 onEnableNotifications, onStartAdbPairing,
@@ -366,6 +373,10 @@ private fun ConnectedContent(
     gamepadError: String?,
     dsuState: DsuCardState,
     adbSetup: AdbSetupState,
+    dolphinGcInstalled: Boolean,
+    dolphinGcAvailable: Boolean,
+    dolphinGcPhase: DolphinSetupPhase,
+    onConfigureGamecube: () -> Unit,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
@@ -427,7 +438,16 @@ private fun ConnectedContent(
                 checked = gamepadEnabled,
                 error = gamepadError,
                 onToggle = onGamepadToggle,
-            )
+            ) {
+                if (gamepadEnabled && dolphinGcInstalled && dolphinGcAvailable) {
+                    Spacer(Modifier.height(Dimens.elementSpacing))
+                    DolphinSetupButton(
+                        dolphinGcPhase,
+                        stringResource(R.string.gamepad_dolphin_gc_setup),
+                        onConfigureGamecube,
+                    )
+                }
+            }
             if (adbSetup.needed && adbSetup.state != AdbState.CONNECTED) {
                 AdbSetupCard(
                     state = adbSetup,

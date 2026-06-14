@@ -7,26 +7,19 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.feature.dsu.presentation.R
-import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.ErrorText
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
@@ -107,7 +100,11 @@ private fun EmulatorGuides(state: DsuCardState, onConfigureDolphin: () -> Unit) 
 private fun DolphinGuide(state: DsuCardState, onConfigureDolphin: () -> Unit) {
     Column {
         if (state.dolphinInstalled && state.dolphinAutoConfigAvailable) {
-            DolphinAutoSetup(state.dolphinPhase, onConfigureDolphin)
+            DolphinSetupButton(
+                state.dolphinPhase,
+                stringResource(R.string.dsu_dolphin_auto_setup),
+                onConfigureDolphin,
+            )
             Spacer(Modifier.height(Dimens.elementSpacing))
             GuideStep(stringResource(R.string.dsu_dolphin_manual_label))
             Spacer(Modifier.height(Dimens.elementSpacing))
@@ -119,44 +116,6 @@ private fun DolphinGuide(state: DsuCardState, onConfigureDolphin: () -> Unit) {
         GuideStep(stringResource(R.string.dsu_dolphin_android_outro))
         Spacer(Modifier.height(Dimens.elementSpacing))
         GuideStep(stringResource(R.string.dsu_dolphin_mapping))
-    }
-}
-
-@Composable
-private fun DolphinAutoSetup(phase: DolphinSetupPhase, onConfigure: () -> Unit) {
-    TextButton(
-        onClick = onConfigure,
-        enabled = phase != DolphinSetupPhase.WORKING,
-        contentPadding = PaddingValues(0.dp),
-    ) {
-        if (phase == DolphinSetupPhase.WORKING) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(Dimens.progressIndicatorSmall),
-                color = Accent,
-                strokeWidth = 2.dp,
-            )
-            Spacer(Modifier.size(Dimens.elementSpacing))
-        }
-        Text(
-            stringResource(
-                when (phase) {
-                    DolphinSetupPhase.WORKING -> R.string.dsu_dolphin_auto_working
-                    DolphinSetupPhase.SUCCESS -> R.string.dsu_dolphin_auto_done
-                    else -> R.string.dsu_dolphin_auto_setup
-                }
-            ),
-            color = Accent,
-            fontWeight = FontWeight.Bold,
-            fontSize = Dimens.fontSizeSmall,
-        )
-    }
-    if (phase == DolphinSetupPhase.FAILED) {
-        Spacer(Modifier.height(Dimens.elementSpacing))
-        Text(
-            stringResource(R.string.dsu_dolphin_auto_failed),
-            color = ErrorText,
-            fontSize = Dimens.fontSizeSmall,
-        )
     }
 }
 

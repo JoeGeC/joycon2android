@@ -7,9 +7,6 @@
     <string name="dsu_setup_body">In the emulator\'s controller settings, point its DSU (cemuhook) input source at:</string>
     <string name="dsu_dolphin_guide_title">Dolphin setup</string>
     <string name="dsu_dolphin_auto_setup">Set up Dolphin automatically</string>
-    <string name="dsu_dolphin_auto_working">Setting up…</string>
-    <string name="dsu_dolphin_auto_done">Done — restart Dolphin</string>
-    <string name="dsu_dolphin_auto_failed">Couldn\'t write it automatically — follow the manual steps below.</string>
     <string name="dsu_dolphin_manual_label">Or set it up manually:</string>
     <string name="dsu_dolphin_android_intro">Create a file named DSUClient.ini inside Dolphin\'s user folder at Android/data/org.dolphinemu.dolphinemu/files/Config/, with exactly this content:</string>
     <string name="dsu_dolphin_ini" translatable="false">[Server]\nEnabled = True\nEntries = Joycon2:127.0.0.1:26760;</string>

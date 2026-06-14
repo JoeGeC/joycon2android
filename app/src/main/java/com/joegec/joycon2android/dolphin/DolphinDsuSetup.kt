@@ -2,6 +2,7 @@ package com.joegec.joycon2android.dolphin
 
 import android.content.pm.PackageManager
 import com.joegec.joycon2android.dsu.DolphinDsuConfig
+import com.joegec.joycon2android.dsu.DolphinGcpadConfig
 import com.joegec.joycon2android.dsu.DolphinWiimoteConfig
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.model.PlayerState
@@ -40,6 +41,19 @@ class DolphinDsuSetup(
         )
 
         dsuOk && wiimoteOk
+    }
+
+    suspend fun configureGamecube(players: List<PlayerState>): Boolean = withContext(Dispatchers.IO) {
+        val shell = awaitShell() ?: return@withContext false
+
+        val mappings = DolphinGcpadConfig.merge(shell.readText(DolphinGcpadConfig.path), players)
+        val mappingsOk = shell.writeText(DolphinGcpadConfig.path, mappings)
+
+        // Ports default to "None"; set them to Standard Controller so the mappings engage
+        val core = DolphinGcpadConfig.mergeCore(shell.readText(DolphinGcpadConfig.corePath), players)
+        val coreOk = shell.writeText(DolphinGcpadConfig.corePath, core)
+
+        mappingsOk && coreOk
     }
 
     private suspend fun awaitShell(): PrivilegedShell? =

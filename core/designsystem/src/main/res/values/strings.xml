@@ -1,3 +1,6 @@
 <resources>
     <string name="copy_label">Copy</string>
+    <string name="dolphin_setup_working">Setting up…</string>
+    <string name="dolphin_setup_done">Done — restart Dolphin</string>
+    <string name="dolphin_setup_failed">Couldn\'t set it up automatically — you can still do it manually.</string>
 </resources>

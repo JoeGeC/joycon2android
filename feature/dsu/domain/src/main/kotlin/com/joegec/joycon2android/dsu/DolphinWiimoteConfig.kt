@@ -37,7 +37,7 @@ object DolphinWiimoteConfig {
     )
 
     fun merge(existing: String?, players: List<PlayerState>): String =
-        mergeSections(existing, sections(players))
+        DolphinIni.mergeSections(existing, sections(players))
 
     private fun sections(players: List<PlayerState>): Map<String, String> =
         players.mapNotNull { player ->
@@ -104,27 +104,4 @@ object DolphinWiimoteConfig {
         "Nunchuk/Stick/Left = `Left X-`",
         "Nunchuk/Stick/Right = `Left X+`",
     )
-
-    // Replace the [WiimoteN] sections we generate, preserving every other section untouched.
-    private fun mergeSections(existing: String?, sections: Map<String, String>): String {
-        val bodies = LinkedHashMap<String, String>()
-        val preamble = StringBuilder()
-        var current: String? = null
-        existing?.lines()?.forEach { line ->
-            val header = line.trim()
-            if (header.startsWith("[") && header.endsWith("]")) {
-                current = header
-                bodies.getOrPut(header) { "" }
-            } else if (current == null) {
-                if (line.isNotBlank()) preamble.append(line).append("\n")
-            } else {
-                bodies[current!!] = bodies.getValue(current!!) + line + "\n"
-            }
-        }
-        bodies.putAll(sections)
-
-        val out = StringBuilder(preamble)
-        bodies.forEach { (header, body) -> out.append(header).append("\n").append(body) }
-        return out.toString()
-    }
 }

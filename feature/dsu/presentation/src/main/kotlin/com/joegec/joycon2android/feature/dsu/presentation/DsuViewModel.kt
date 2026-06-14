@@ -7,7 +7,7 @@ import com.joegec.joycon2android.dsu.DsuStatus
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
 import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.ui.components.DolphinSetupPhase
+import com.joegec.joycon2android.ui.components.DolphinSetupPhase // shared, in :core:designsystem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
