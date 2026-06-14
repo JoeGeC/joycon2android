@@ -15,6 +15,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -58,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.uhid.AdbState
 import com.joegec.joycon2android.ui.components.AdbSetupCard
 import com.joegec.joycon2android.ui.components.AdbSetupState
 import com.joegec.joycon2android.ui.components.AssignmentPanel
@@ -108,7 +111,7 @@ fun JoyconScreen(
         containerColor = Background,
         topBar = {
             TopAppBar(
-                title = { AppTitle(state) },
+                title = { AppTitle(state, adbSetup) },
                 actions = {
                     if (state.activePlayers.isNotEmpty()) {
                         ViewModeToggle(
@@ -177,18 +180,46 @@ fun JoyconScreen(
 }
 
 @Composable
-private fun AppTitle(state: AppUiState) {
-    Column {
-        Text(
-            stringResource(R.string.app_title),
-            color = Color.White,
-            fontSize = Dimens.fontSizeTitle,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 4.sp,
+private fun AppTitle(state: AppUiState, adbSetup: AdbSetupState) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.ic_logo),
+            contentDescription = stringResource(R.string.app_title),
+            modifier = Modifier.size(Dimens.headerLogoSize),
+        )
+        Column {
+            Text(
+                statusText(state),
+                color = if (state.anyConnected) Accent else TextDim,
+                fontSize = Dimens.fontSizeStatus,
+                letterSpacing = 2.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            if (adbSetup.needed) {
+                WirelessDebugStatus(adbSetup.state)
+            }
+        }
+    }
+}
+
+@Composable
+private fun WirelessDebugStatus(adbState: AdbState) {
+    val color = if (adbState == AdbState.CONNECTED) Accent else TextDim
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Dimens.statusDotGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(Dimens.statusDotSize)
+                .background(color, CircleShape)
         )
         Text(
-            statusText(state),
-            color = if (state.anyConnected) Accent else TextDim,
+            stringResource(R.string.status_wireless_debug),
+            color = color,
             fontSize = Dimens.fontSizeStatus,
             letterSpacing = 2.sp,
             fontWeight = FontWeight.Medium,
@@ -389,7 +420,7 @@ private fun ConnectedContent(
                 error = gamepadError,
                 onToggle = onGamepadToggle,
             )
-            if (adbSetup.needed) {
+            if (adbSetup.needed && adbSetup.state != AdbState.CONNECTED) {
                 AdbSetupCard(
                     state = adbSetup,
                     onEnableNotifications = onEnableNotifications,

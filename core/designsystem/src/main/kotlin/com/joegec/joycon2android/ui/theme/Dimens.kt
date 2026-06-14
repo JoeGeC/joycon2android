@@ -64,6 +64,10 @@ object Dimens {
     val batteryIconStroke = 1.dp
     val batteryIconTextGap = 5.dp
 
+    val headerLogoSize = 44.dp
+    val statusDotSize = 7.dp
+    val statusDotGap = 6.dp
+
     val fontSizeTitle = 22.sp
     val fontSizeStatus = 11.sp
     val fontSizeButton = 14.sp
