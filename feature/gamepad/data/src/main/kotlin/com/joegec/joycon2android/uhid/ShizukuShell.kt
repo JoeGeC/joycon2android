@@ -17,6 +17,9 @@ class ShizukuShell : PrivilegedShell {
         return ShizukuProcess(process)
     }
 
+    // Shizuku execs argv directly (no shell), so wrap the script in an explicit sh -c
+    override fun shell(script: String): ShellProcess? = newProcess(arrayOf("sh", "-c", script))
+
     private class ShizukuProcess(private val process: moe.shizuku.server.IRemoteProcess) : ShellProcess {
         override val outputStream: OutputStream =
             ParcelFileDescriptor.AutoCloseOutputStream(process.outputStream)

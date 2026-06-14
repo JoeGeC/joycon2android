@@ -36,6 +36,9 @@ class AdbShell(context: Context) : PrivilegedShell {
         return AdbProcess(stream)
     }
 
+    // adbd runs the exec: argument through its own shell, so pass the script verbatim
+    override fun shell(script: String): ShellProcess? = newProcess(arrayOf(script))
+
     private class AdbProcess(private val stream: AdbStream) : ShellProcess {
         override val outputStream: OutputStream = stream.openOutputStream()
         override val inputStream: InputStream = stream.openInputStream()

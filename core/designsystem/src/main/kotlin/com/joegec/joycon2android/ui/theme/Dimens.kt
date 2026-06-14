@@ -26,6 +26,7 @@ object Dimens {
     val iconButtonSize = 36.dp
     val iconSizeSmall = 18.dp
     val iconSizeMedium = 20.dp
+    val progressIndicatorSmall = 14.dp
 
     val stickCanvasSize = 110.dp
     val sidewaysStickSize = 100.dp

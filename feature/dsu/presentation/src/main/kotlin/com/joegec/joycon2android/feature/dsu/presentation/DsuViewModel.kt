@@ -6,22 +6,40 @@ import com.joegec.joycon2android.dsu.DisableDsuUseCase
 import com.joegec.joycon2android.dsu.DsuStatus
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
+import com.joegec.joycon2android.ui.components.DolphinSetupPhase
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /** Feature-scoped state holder for the DSU card. Use cases are injected by the app. */
 class DsuViewModel(
     observeDsuStatus: ObserveDsuStatusUseCase,
     private val enableDsu: EnableDsuUseCase,
     private val disableDsu: DisableDsuUseCase,
+    val dolphinInstalled: Boolean = false,
+    private val configureDolphin: suspend () -> Boolean = { false },
 ) : ViewModel() {
 
     val status: StateFlow<DsuStatus> = observeDsuStatus()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), DsuStatus())
 
+    private val _dolphinPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
+    val dolphinPhase: StateFlow<DolphinSetupPhase> = _dolphinPhase.asStateFlow()
+
     fun toggle(enabled: Boolean) {
         if (enabled) enableDsu() else disableDsu()
+    }
+
+    fun configureDolphinDsu() {
+        if (_dolphinPhase.value == DolphinSetupPhase.WORKING) return
+        viewModelScope.launch {
+            _dolphinPhase.value = DolphinSetupPhase.WORKING
+            _dolphinPhase.value =
+                if (configureDolphin()) DolphinSetupPhase.SUCCESS else DolphinSetupPhase.FAILED
+        }
     }
 
     private companion object {

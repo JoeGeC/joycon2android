@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.joegec.joycon2android.feature.dsu.presentation.DsuViewModel
 import com.joegec.joycon2android.feature.gamepad.presentation.GamepadViewModel
+import com.joegec.joycon2android.uhid.AdbState
 import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
 import com.joegec.joycon2android.ui.components.AdbSetupState
@@ -36,7 +37,13 @@ class MainActivity : ComponentActivity() {
         viewModelFactory {
             initializer {
                 val c = (application as JoyconApplication).container
-                DsuViewModel(c.observeDsuStatus, c.enableDsu, c.disableDsu)
+                DsuViewModel(
+                    c.observeDsuStatus,
+                    c.enableDsu,
+                    c.disableDsu,
+                    dolphinInstalled = c.dolphinDsuSetup.dolphinInstalled,
+                    configureDolphin = c.dolphinDsuSetup::configure,
+                )
             }
         }
     }
@@ -115,6 +122,7 @@ class MainActivity : ComponentActivity() {
                     val gamepadStatus by gamepadViewModel.status.collectAsState()
                     val wirelessDebug by gamepadViewModel.wirelessDebug.collectAsState()
                     val dsuStatus by dsuViewModel.status.collectAsState()
+                    val dolphinPhase by dsuViewModel.dolphinPhase.collectAsState()
                     val permissionDenied by viewModel.permissionDenied.collectAsState()
                     JoyconScreen(
                         state = state,
@@ -126,6 +134,10 @@ class MainActivity : ComponentActivity() {
                             clientCount = dsuStatus.clientCount,
                             address = dsuStatus.address,
                             showSlotLimitNote = state.activePlayers.any { it.player.index > 4 },
+                            dolphinInstalled = dsuViewModel.dolphinInstalled,
+                            dolphinAutoConfigAvailable = wirelessDebug.shizukuAvailable ||
+                                wirelessDebug.state == AdbState.CONNECTED,
+                            dolphinPhase = dolphinPhase,
                         ),
                         adbSetup = AdbSetupState(
                             needed = !wirelessDebug.shizukuAvailable,
@@ -143,6 +155,7 @@ class MainActivity : ComponentActivity() {
                             gamepadViewModel.toggle(enabled, state.activePlayers)
                         },
                         onDsuToggle = dsuViewModel::toggle,
+                        onConfigureDolphin = dsuViewModel::configureDolphinDsu,
                         onEnableNotifications = enableNotifications,
                         onStartAdbPairing = gamepadViewModel::startAdbPairing,
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },

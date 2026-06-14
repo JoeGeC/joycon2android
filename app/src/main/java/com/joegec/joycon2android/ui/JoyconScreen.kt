@@ -98,6 +98,7 @@ fun JoyconScreen(
     onDisconnect: (String) -> Unit,
     onGamepadToggle: (Boolean) -> Unit,
     onDsuToggle: (Boolean) -> Unit,
+    onConfigureDolphin: () -> Unit,
     onEnableNotifications: () -> Unit,
     onStartAdbPairing: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -167,7 +168,7 @@ fun JoyconScreen(
                             ScreenState.CONNECTED -> ConnectedContent(
                                 state, viewMode, gamepadEnabled, gamepadError, dsuState, adbSetup,
                                 onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect,
-                                onGamepadToggle, onDsuToggle,
+                                onGamepadToggle, onDsuToggle, onConfigureDolphin,
                                 onEnableNotifications, onStartAdbPairing,
                             )
                             else -> ScanningContent(state)
@@ -372,6 +373,7 @@ private fun ConnectedContent(
     onDisconnect: (String) -> Unit,
     onGamepadToggle: (Boolean) -> Unit,
     onDsuToggle: (Boolean) -> Unit,
+    onConfigureDolphin: () -> Unit,
     onEnableNotifications: () -> Unit,
     onStartAdbPairing: () -> Unit,
 ) {
@@ -436,6 +438,7 @@ private fun ConnectedContent(
             DsuCard(
                 state = dsuState,
                 onToggle = onDsuToggle,
+                onConfigureDolphin = onConfigureDolphin,
             )
         }
     }

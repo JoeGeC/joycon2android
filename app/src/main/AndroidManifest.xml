@@ -26,6 +26,11 @@
     <!-- Pairing-code prompt for the wireless-debugging path -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Detect Dolphin so we can offer to write its DSUClient.ini (Android 11+ visibility) -->
+    <queries>
+        <package android:name="org.dolphinemu.dolphinemu" />
+    </queries>
+
     <application
         android:name=".JoyconApplication"
         android:allowBackup="true"

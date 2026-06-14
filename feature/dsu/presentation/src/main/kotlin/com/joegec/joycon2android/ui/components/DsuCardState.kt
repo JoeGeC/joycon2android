@@ -6,4 +6,7 @@ data class DsuCardState(
     val clientCount: Int = 0,
     val address: String? = null,
     val showSlotLimitNote: Boolean = false,
+    val dolphinInstalled: Boolean = false,
+    val dolphinAutoConfigAvailable: Boolean = false,
+    val dolphinPhase: DolphinSetupPhase = DolphinSetupPhase.IDLE,
 )

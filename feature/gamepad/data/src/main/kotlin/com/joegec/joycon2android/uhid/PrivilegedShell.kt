@@ -11,6 +11,9 @@ import java.io.OutputStream
 interface PrivilegedShell {
     val isReady: Boolean
     fun newProcess(argv: Array<String>): ShellProcess?
+
+    /** Runs [script] through the device shell, hiding the per-backend argv differences. */
+    fun shell(script: String): ShellProcess?
 }
 
 interface ShellProcess {
