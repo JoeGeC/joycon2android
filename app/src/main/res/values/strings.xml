@@ -29,7 +29,7 @@
     <string name="gamepad_title">Virtual Gamepad</string>
     <string name="gamepad_subtitle_off">Output Joy-Con input as a system gamepad</string>
     <string name="gamepad_subtitle_on">Active — input available to all apps</string>
-    <string name="gamepad_dolphin_gc_setup">Set up Dolphin GameCube controller</string>
+    <string name="gamepad_dolphin_gc_setup">Map Dolphin GameCube controllers</string>
 
     <!-- DSU motion server -->
     <!-- Wireless debugging (Shizuku-free privileged path) -->

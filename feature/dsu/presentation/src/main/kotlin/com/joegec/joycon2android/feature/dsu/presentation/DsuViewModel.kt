@@ -34,6 +34,11 @@ class DsuViewModel(
         if (enabled) enableDsu() else disableDsu()
     }
 
+    /** Clears a stale Done/Failed once the written config no longer matches the assignment. */
+    fun resetDolphinPhase() {
+        if (_dolphinPhase.value != DolphinSetupPhase.WORKING) _dolphinPhase.value = DolphinSetupPhase.IDLE
+    }
+
     fun configureDolphinDsu(players: List<PlayerState>) {
         if (_dolphinPhase.value == DolphinSetupPhase.WORKING) return
         viewModelScope.launch {

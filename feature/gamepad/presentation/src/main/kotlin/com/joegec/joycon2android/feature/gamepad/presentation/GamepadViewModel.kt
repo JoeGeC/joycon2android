@@ -44,6 +44,11 @@ class GamepadViewModel(
 
     fun startAdbPairing() = startPairing()
 
+    /** Clears a stale Done/Failed once the written config no longer matches the assignment. */
+    fun resetDolphinPhase() {
+        if (_dolphinPhase.value != DolphinSetupPhase.WORKING) _dolphinPhase.value = DolphinSetupPhase.IDLE
+    }
+
     fun configureDolphinGamecube(players: List<PlayerState>) {
         if (_dolphinPhase.value == DolphinSetupPhase.WORKING) return
         viewModelScope.launch {

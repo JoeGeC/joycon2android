@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -129,6 +130,17 @@ class MainActivity : ComponentActivity() {
                     val permissionDenied by viewModel.permissionDenied.collectAsState()
                     val dolphinAutoAvailable = wirelessDebug.shizukuAvailable ||
                         wirelessDebug.state == AdbState.CONNECTED
+
+                    // A written Dolphin config is keyed to the current assignment; once it changes,
+                    // the Done/Failed state is stale, so reset both setup buttons.
+                    val assignmentKey = state.players.map {
+                        Triple(it.player.index, it.left?.address, it.right?.address)
+                    }
+                    LaunchedEffect(assignmentKey) {
+                        dsuViewModel.resetDolphinPhase()
+                        gamepadViewModel.resetDolphinPhase()
+                    }
+
                     JoyconScreen(
                         state = state,
                         gamepadEnabled = gamepadStatus.enabled,
