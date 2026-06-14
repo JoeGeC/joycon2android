@@ -23,7 +23,7 @@ fun DolphinSetupButton(phase: DolphinSetupPhase, label: String, onClick: () -> U
     TextButton(
         onClick = onClick,
         enabled = phase != DolphinSetupPhase.WORKING,
-        contentPadding = PaddingValues(0.dp),
+        contentPadding = PaddingValues(horizontal = Dimens.buttonHorizontalPadding),
     ) {
         if (phase == DolphinSetupPhase.WORKING) {
             CircularProgressIndicator(
@@ -31,7 +31,6 @@ fun DolphinSetupButton(phase: DolphinSetupPhase, label: String, onClick: () -> U
                 color = Accent,
                 strokeWidth = 2.dp,
             )
-            Spacer(Modifier.size(Dimens.elementSpacing))
         }
         Text(
             when (phase) {
@@ -45,7 +44,6 @@ fun DolphinSetupButton(phase: DolphinSetupPhase, label: String, onClick: () -> U
         )
     }
     if (phase == DolphinSetupPhase.FAILED) {
-        Spacer(Modifier.height(Dimens.elementSpacing))
         Text(
             stringResource(R.string.dolphin_setup_failed),
             color = ErrorText,

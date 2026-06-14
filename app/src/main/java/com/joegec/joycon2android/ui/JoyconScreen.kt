@@ -440,7 +440,6 @@ private fun ConnectedContent(
                 onToggle = onGamepadToggle,
             ) {
                 if (gamepadEnabled && dolphinGcInstalled && dolphinGcAvailable) {
-                    Spacer(Modifier.height(Dimens.elementSpacing))
                     DolphinSetupButton(
                         dolphinGcPhase,
                         stringResource(R.string.gamepad_dolphin_gc_setup),

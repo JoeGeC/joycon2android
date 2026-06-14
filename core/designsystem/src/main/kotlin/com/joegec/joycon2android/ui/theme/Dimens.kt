@@ -16,6 +16,7 @@ object Dimens {
 
     val buttonCorner = 12.dp
     val buttonHeight = 44.dp
+    val buttonHorizontalPadding = 8.dp
     val buttonHeightLarge = 52.dp
     val shoulderButtonHeight = 30.dp
     val railButtonHeight = 26.dp
