@@ -155,7 +155,7 @@ class MainActivity : ComponentActivity() {
                             gamepadViewModel.toggle(enabled, state.activePlayers)
                         },
                         onDsuToggle = dsuViewModel::toggle,
-                        onConfigureDolphin = dsuViewModel::configureDolphinDsu,
+                        onConfigureDolphin = { dsuViewModel.configureDolphinDsu(state.activePlayers) },
                         onEnableNotifications = enableNotifications,
                         onStartAdbPairing = gamepadViewModel::startAdbPairing,
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },

@@ -6,6 +6,7 @@ import com.joegec.joycon2android.dsu.DisableDsuUseCase
 import com.joegec.joycon2android.dsu.DsuStatus
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
+import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +21,7 @@ class DsuViewModel(
     private val enableDsu: EnableDsuUseCase,
     private val disableDsu: DisableDsuUseCase,
     val dolphinInstalled: Boolean = false,
-    private val configureDolphin: suspend () -> Boolean = { false },
+    private val configureDolphin: suspend (List<PlayerState>) -> Boolean = { false },
 ) : ViewModel() {
 
     val status: StateFlow<DsuStatus> = observeDsuStatus()
@@ -33,12 +34,12 @@ class DsuViewModel(
         if (enabled) enableDsu() else disableDsu()
     }
 
-    fun configureDolphinDsu() {
+    fun configureDolphinDsu(players: List<PlayerState>) {
         if (_dolphinPhase.value == DolphinSetupPhase.WORKING) return
         viewModelScope.launch {
             _dolphinPhase.value = DolphinSetupPhase.WORKING
             _dolphinPhase.value =
-                if (configureDolphin()) DolphinSetupPhase.SUCCESS else DolphinSetupPhase.FAILED
+                if (configureDolphin(players)) DolphinSetupPhase.SUCCESS else DolphinSetupPhase.FAILED
         }
     }
 

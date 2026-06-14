@@ -2,7 +2,9 @@ package com.joegec.joycon2android.dolphin
 
 import android.content.pm.PackageManager
 import com.joegec.joycon2android.dsu.DolphinDsuConfig
+import com.joegec.joycon2android.dsu.DolphinWiimoteConfig
 import com.joegec.joycon2android.dsu.DsuConfig
+import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.uhid.PrivilegedShell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -22,11 +24,22 @@ class DolphinDsuSetup(
     val dolphinInstalled: Boolean
         get() = runCatching { packageManager.getPackageInfo(DolphinDsuConfig.PACKAGE, 0) }.isSuccess
 
-    suspend fun configure(): Boolean = withContext(Dispatchers.IO) {
+    suspend fun configure(players: List<PlayerState>): Boolean = withContext(Dispatchers.IO) {
         val shell = awaitShell() ?: return@withContext false
-        val merged = DolphinDsuConfig.merge(shell.readText(DolphinDsuConfig.path))
-        shell.writeText(DolphinDsuConfig.path, merged)
-        shell.readText(DolphinDsuConfig.path)?.contains("127.0.0.1:${DsuConfig.PORT}") == true
+
+        val dsuMerged = DolphinDsuConfig.merge(shell.readText(DolphinDsuConfig.path))
+        shell.writeText(DolphinDsuConfig.path, dsuMerged)
+        val dsuOk = shell.readText(DolphinDsuConfig.path)?.contains("127.0.0.1:${DsuConfig.PORT}") == true
+
+        val configurable = players.any {
+            !it.hasPro && (it.left != null || it.right != null) && it.player.index in 1..4
+        }
+        val wiimoteOk = !configurable || shell.writeText(
+            DolphinWiimoteConfig.path,
+            DolphinWiimoteConfig.merge(shell.readText(DolphinWiimoteConfig.path), players),
+        )
+
+        dsuOk && wiimoteOk
     }
 
     private suspend fun awaitShell(): PrivilegedShell? =
