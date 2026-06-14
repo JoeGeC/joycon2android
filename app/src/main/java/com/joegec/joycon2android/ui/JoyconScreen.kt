@@ -31,12 +31,10 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -103,6 +101,7 @@ fun JoyconScreen(
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    var viewMode by rememberSaveable { mutableStateOf(ConnectionViewMode.DETAILED) }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -110,7 +109,15 @@ fun JoyconScreen(
         topBar = {
             TopAppBar(
                 title = { AppTitle(state) },
-                actions = { ScanAction(state, onScan) },
+                actions = {
+                    if (state.activePlayers.isNotEmpty()) {
+                        ViewModeToggle(
+                            mode = viewMode,
+                            onModeChange = { viewMode = it },
+                            modifier = Modifier.padding(end = Dimens.elementSpacing),
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Background,
                     scrolledContainerColor = Background,
@@ -155,8 +162,8 @@ fun JoyconScreen(
                     ) {
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
-                                state, gamepadEnabled, gamepadError, dsuState, adbSetup,
-                                onDisconnectAll, onAssign, onUnassign, onDisconnect,
+                                state, viewMode, gamepadEnabled, gamepadError, dsuState, adbSetup,
+                                onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect,
                                 onGamepadToggle, onDsuToggle,
                                 onEnableNotifications, onStartAdbPairing,
                             )
@@ -185,35 +192,6 @@ private fun AppTitle(state: AppUiState) {
             fontSize = Dimens.fontSizeStatus,
             letterSpacing = 2.sp,
             fontWeight = FontWeight.Medium,
-        )
-    }
-}
-
-@Composable
-private fun ScanAction(state: AppUiState, onScan: () -> Unit) {
-    if (!state.anyConnected) return
-
-    TextButton(onClick = onScan, enabled = !state.scanning) {
-        AnimatedVisibility(
-            visible = state.scanning,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically(),
-        ) {
-            Row {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(14.dp),
-                    color = Accent,
-                    strokeWidth = 2.dp,
-                )
-                Spacer(Modifier.size(6.dp))
-            }
-        }
-        Text(
-            if (state.scanning) stringResource(R.string.status_scanning)
-            else stringResource(R.string.button_scan),
-            color = if (state.scanning) TextDim else Accent,
-            fontWeight = FontWeight.Bold,
-            fontSize = Dimens.fontSizeBody,
         )
     }
 }
@@ -274,6 +252,23 @@ private fun ScanningContent(state: AppUiState) {
 }
 
 @Composable
+private fun ScanButton(onScan: () -> Unit) {
+    Button(
+        onClick = onScan,
+        modifier = Modifier.fillMaxWidth().height(Dimens.buttonHeight),
+        shape = RoundedCornerShape(Dimens.buttonCorner),
+        colors = ButtonDefaults.buttonColors(containerColor = Accent),
+    ) {
+        Text(
+            stringResource(R.string.button_scan),
+            color = TextOnAccent,
+            fontWeight = FontWeight.Bold,
+            fontSize = Dimens.fontSizeButton,
+        )
+    }
+}
+
+@Composable
 private fun SyncButtonGraphic(modifier: Modifier = Modifier) {
     Image(
         painter = painterResource(R.drawable.sync_button_graphic),
@@ -328,10 +323,12 @@ private fun KofiBanner(modifier: Modifier = Modifier) {
 @Composable
 private fun ConnectedContent(
     state: AppUiState,
+    viewMode: ConnectionViewMode,
     gamepadEnabled: Boolean,
     gamepadError: String?,
     dsuState: DsuCardState,
     adbSetup: AdbSetupState,
+    onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
     onUnassign: (String) -> Unit,
@@ -341,8 +338,6 @@ private fun ConnectedContent(
     onEnableNotifications: () -> Unit,
     onStartAdbPairing: () -> Unit,
 ) {
-    var viewMode by rememberSaveable { mutableStateOf(ConnectionViewMode.DETAILED) }
-
     AnimatedVisibility(
         visible = state.unassignedJoycons.isNotEmpty(),
         enter = fadeIn() + expandVertically(),
@@ -354,14 +349,6 @@ private fun ConnectedContent(
             onAssign = onAssign,
             onDisconnect = onDisconnect,
         )
-    }
-
-    AnimatedVisibility(
-        visible = state.activePlayers.isNotEmpty(),
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically(),
-    ) {
-        ViewModeToggle(mode = viewMode, onModeChange = { viewMode = it })
     }
 
     state.activePlayers.forEach { playerState ->
@@ -425,6 +412,14 @@ private fun ConnectedContent(
             ScanningIndicator()
             SyncButtonGraphic()
         }
+    }
+
+    AnimatedVisibility(
+        visible = !state.scanning,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
+        ScanButton(onScan)
     }
 
     ErrorBox(text = state.error)

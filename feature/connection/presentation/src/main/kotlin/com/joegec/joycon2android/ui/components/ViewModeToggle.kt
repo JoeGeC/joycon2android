@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,27 +31,25 @@ fun ViewModeToggle(
     onModeChange: (ConnectionViewMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        Row(
-            Modifier
-                .clip(RoundedCornerShape(Dimens.buttonCorner))
-                .background(ButtonOff)
-                .padding(Dimens.viewTogglePadding),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.viewTogglePadding),
-        ) {
-            ViewModeButton(
-                icon = Icons.Filled.ViewAgenda,
-                contentDescription = stringResource(R.string.view_detailed),
-                selected = mode == ConnectionViewMode.DETAILED,
-                onClick = { onModeChange(ConnectionViewMode.DETAILED) },
-            )
-            ViewModeButton(
-                icon = Icons.AutoMirrored.Filled.ViewList,
-                contentDescription = stringResource(R.string.view_compact),
-                selected = mode == ConnectionViewMode.COMPACT,
-                onClick = { onModeChange(ConnectionViewMode.COMPACT) },
-            )
-        }
+    Row(
+        modifier
+            .clip(RoundedCornerShape(Dimens.buttonCorner))
+            .background(ButtonOff)
+            .padding(Dimens.viewTogglePadding),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.viewTogglePadding),
+    ) {
+        ViewModeButton(
+            icon = Icons.Filled.ViewAgenda,
+            contentDescription = stringResource(R.string.view_detailed),
+            selected = mode == ConnectionViewMode.DETAILED,
+            onClick = { onModeChange(ConnectionViewMode.DETAILED) },
+        )
+        ViewModeButton(
+            icon = Icons.AutoMirrored.Filled.ViewList,
+            contentDescription = stringResource(R.string.view_compact),
+            selected = mode == ConnectionViewMode.COMPACT,
+            onClick = { onModeChange(ConnectionViewMode.COMPACT) },
+        )
     }
 }
 
