@@ -8,9 +8,8 @@ class ObserveDsuStatusUseCase(private val repository: DsuRepository) {
         repository.enabled,
         repository.error,
         repository.clientCount,
-        repository.lanEnabled,
         repository.address,
-    ) { enabled, error, clientCount, lanEnabled, address ->
-        DsuStatus(enabled, error, clientCount, lanEnabled, address)
+    ) { enabled, error, clientCount, address ->
+        DsuStatus(enabled, error, clientCount, address)
     }
 }

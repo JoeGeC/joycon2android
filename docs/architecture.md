@@ -97,7 +97,7 @@ One **ViewModel per feature**, each in its own presentation module, constructed 
 off `AppContainer`. This keeps the ViewModel class dependent only on its domain — never on
 `:app`.
 
-- `DsuViewModel` — DSU status + enable/LAN toggles.
+- `DsuViewModel` — DSU status + enable toggle.
 - `GamepadViewModel` — gamepad status + wireless-debug status + pairing.
 - `Joycon2ViewModel` (in `:app`) — the app-level host: the coordinator's session `uiState`
   (genuinely cross-feature), BLE permissions, scan/assign/disconnect, and the service binding.

@@ -9,13 +9,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -23,7 +19,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.feature.dsu.presentation.R
-import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
@@ -31,7 +26,6 @@ import com.joegec.joycon2android.ui.theme.TextDim
 fun DsuCard(
     state: DsuCardState,
     onToggle: (Boolean) -> Unit,
-    onLanToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     FeatureToggleCard(
@@ -53,7 +47,6 @@ fun DsuCard(
         ) {
             Column {
                 Spacer(Modifier.height(Dimens.elementSpacing))
-                LanRow(state.lanEnabled, onLanToggle)
                 if (state.showSlotLimitNote) {
                     Spacer(Modifier.height(Dimens.elementSpacing))
                     Text(
@@ -67,36 +60,6 @@ fun DsuCard(
                 EmulatorGuides()
             }
         }
-    }
-}
-
-@Composable
-private fun LanRow(lanEnabled: Boolean, onLanToggle: (Boolean) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                stringResource(R.string.dsu_lan_title),
-                color = Color.White,
-                fontSize = Dimens.fontSizeMedium,
-            )
-            Text(
-                stringResource(R.string.dsu_lan_subtitle),
-                color = TextDim,
-                fontSize = Dimens.fontSizeSmall,
-            )
-        }
-        Switch(
-            checked = lanEnabled,
-            onCheckedChange = onLanToggle,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = Accent,
-            ),
-        )
     }
 }
 
@@ -115,13 +78,7 @@ private fun EmulatorConnection(address: String?) {
             fontSize = Dimens.fontSizeSmall,
         )
         Spacer(Modifier.height(Dimens.elementSpacing))
-        if (address == null) {
-            Text(
-                stringResource(R.string.dsu_no_lan_address),
-                color = TextDim,
-                fontSize = Dimens.fontSizeSmall,
-            )
-        } else {
+        if (address != null) {
             CopyableCode(address)
         }
     }
@@ -141,8 +98,6 @@ private fun EmulatorGuides() {
 @Composable
 private fun DolphinGuide() {
     Column {
-        GuideStep(stringResource(R.string.dsu_dolphin_desktop))
-        Spacer(Modifier.height(Dimens.elementSpacing))
         GuideStep(stringResource(R.string.dsu_dolphin_android_intro))
         Spacer(Modifier.height(Dimens.elementSpacing))
         CopyableCode(stringResource(R.string.dsu_dolphin_ini))

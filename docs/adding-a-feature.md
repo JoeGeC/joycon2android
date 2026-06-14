@@ -51,7 +51,7 @@ Adding "do X" to a feature is four edits, following the existing pattern in that
    `MainActivity`:
 
    ```kotlin
-   DsuViewModel(c.observeDsuStatus, c.enableDsu, c.disableDsu, c.setDsuLan, c.setFoo)
+   DsuViewModel(c.observeDsuStatus, c.enableDsu, c.disableDsu, c.setFoo)
    ```
 
 For new *state* to observe, the repository exposes a `StateFlow`/`Flow`, an

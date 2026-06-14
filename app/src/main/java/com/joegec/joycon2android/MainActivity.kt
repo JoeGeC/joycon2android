@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
         viewModelFactory {
             initializer {
                 val c = (application as JoyconApplication).container
-                DsuViewModel(c.observeDsuStatus, c.enableDsu, c.disableDsu, c.setDsuLan)
+                DsuViewModel(c.observeDsuStatus, c.enableDsu, c.disableDsu)
             }
         }
     }
@@ -125,7 +125,6 @@ class MainActivity : ComponentActivity() {
                             enabled = dsuStatus.enabled,
                             error = dsuStatus.error,
                             clientCount = dsuStatus.clientCount,
-                            lanEnabled = dsuStatus.lanEnabled,
                             address = dsuStatus.address,
                             showSlotLimitNote = state.activePlayers.any { it.player.index > 4 },
                         ),
@@ -145,7 +144,6 @@ class MainActivity : ComponentActivity() {
                             gamepadViewModel.toggle(enabled, state.activePlayers)
                         },
                         onDsuToggle = dsuViewModel::toggle,
-                        onDsuLanToggle = dsuViewModel::setLan,
                         onEnableNotifications = enableNotifications,
                         onStartAdbPairing = gamepadViewModel::startAdbPairing,
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },

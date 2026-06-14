@@ -20,7 +20,6 @@ import com.joegec.joycon2android.dsu.DsuServer
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
 import com.joegec.joycon2android.dsu.PushDsuPadDataUseCase
-import com.joegec.joycon2android.dsu.SetDsuLanUseCase
 import com.joegec.joycon2android.uhid.DisableGamepadUseCase
 import com.joegec.joycon2android.uhid.EnableGamepadUseCase
 import com.joegec.joycon2android.uhid.GamepadManager
@@ -62,7 +61,6 @@ class AppContainer(context: Context) {
     private val dsuRepository: DsuRepository = DsuServer(scope)
     val enableDsu = EnableDsuUseCase(dsuRepository)
     val disableDsu = DisableDsuUseCase(dsuRepository)
-    val setDsuLan = SetDsuLanUseCase(dsuRepository)
     val pushDsuPadData = PushDsuPadDataUseCase(dsuRepository)
     val observeDsuStatus = ObserveDsuStatusUseCase(dsuRepository)
 

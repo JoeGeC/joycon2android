@@ -53,9 +53,6 @@ class DsuServer(
     private val _clientCount = MutableStateFlow(0)
     override val clientCount: StateFlow<Int> = _clientCount.asStateFlow()
 
-    private val _lanEnabled = MutableStateFlow(false)
-    override val lanEnabled: StateFlow<Boolean> = _lanEnabled.asStateFlow()
-
     private val _address = MutableStateFlow<String?>(null)
     override val address: StateFlow<String?> = _address.asStateFlow()
 
@@ -91,33 +88,17 @@ class DsuServer(
         packetCounters.fill(0)
     }
 
-    // LAN streaming is an explicit opt-in — never broadcast input data silently
-    override fun setLanEnabled(lan: Boolean) {
-        if (_lanEnabled.value == lan) return
-        _lanEnabled.value = lan
-        if (_enabled.value) {
-            disable()
-            enable()
-        }
-    }
-
     override fun push(players: List<PlayerState>) {
         latestPlayers = players
         if (!_enabled.value) return
         batches.trySend(PadDataBatch(players, timestampMicros()))
     }
 
-    // Emulators dial the IPv4 addresses we advertise; getLoopbackAddress() resolves to
+    // Emulators dial the IPv4 address we advertise; getLoopbackAddress() resolves to
     // IPv6 ::1 on Android, and a socket bound there never sees 127.0.0.1 datagrams
-    private fun bindAddress(): InetAddress =
-        if (_lanEnabled.value) InetAddress.getByAddress(byteArrayOf(0, 0, 0, 0))
-        else InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))
+    private fun bindAddress(): InetAddress = InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))
 
-    // What an emulator should dial: this phone over LAN, else loopback for on-device
-    private fun currentAddress(): String? {
-        val host = if (_lanEnabled.value) LanAddress.firstIpv4() else "127.0.0.1"
-        return host?.let { "$it:$port" }
-    }
+    private fun currentAddress(): String = "127.0.0.1:$port"
 
     private fun drainStaleBatches() {
         while (batches.tryReceive().isSuccess) Unit

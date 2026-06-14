@@ -58,9 +58,8 @@ server — UDP port 26760, no Shizuku needed.
 1. Assign controllers to players. Player N streams on DSU slot N−1 (P1–P4 only).
    A Joy-Con pair streams motion from its **right** Joy-Con.
 2. Toggle **DSU Motion Server** in the app.
-3. Point the emulator's DSU/cemuhook input source at the address the app shows:
-   `127.0.0.1:26760` for an emulator on the same phone, or the phone's Wi-Fi IP with
-   **Allow other devices (LAN)** enabled for an emulator on a PC.
+3. Point the emulator's DSU/cemuhook input source at the address the app shows
+   (`127.0.0.1:26760`) — the server serves emulators running on this phone.
 4. Rest each controller on a surface for ~2 s — the server learns the gyro's resting bias
    and re-learns it automatically whenever the controller is still.
 
@@ -84,10 +83,7 @@ taken. Exception: a solo sideways Joy-Con's SL/SR arrive as its shoulder buttons
 
 #### Dolphin setup
 
-**Desktop:** Controllers → Alternate Input Sources → DSU Client → add the phone's address
-(enable LAN in the app first).
-
-**Android** (no DSU settings UI — configure by file):
+(no DSU settings UI — configure by file):
 
 1. Create `Config/DSUClient.ini` inside Dolphin's user folder
    (`Android/data/org.dolphinemu.dolphinemu/files/`, containing exactly:
@@ -163,9 +159,9 @@ The virtual device uses BUS_USB with generic vendor/product IDs (0x1234:0x5678) 
 
 ### DSU Motion Server
 
-`DsuServer` is a cemuhook UDP server (port 26760, bound to IPv4 `127.0.0.1`, or `0.0.0.0`
-with LAN enabled). Pad batches ride a buffered channel off the BLE state path — StateFlow
-conflation would drop motion samples. Collaborators:
+`DsuServer` is a cemuhook UDP server (port 26760, bound to IPv4 `127.0.0.1`). Pad batches
+ride a buffered channel off the BLE state path — StateFlow conflation would drop motion
+samples. Collaborators:
 
 - **`DsuPacketEncoder`** — the 100-byte pad packets (and version/port-info responses),
   written into a reused buffer at ~120 Hz.

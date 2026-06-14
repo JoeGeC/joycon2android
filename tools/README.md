@@ -1,20 +1,13 @@
 # Debug tools
 
-## DSU debug clients
+## DSU debug client
 
-Two equivalent clients that subscribe to the app's DSU server and print live pad
-state (buttons, sticks, accel in g, gyro in deg/s). Used to verify wire content and to
-calibrate IMU axes against known physical motions.
+`dsu_client.c` subscribes to the app's DSU server and prints live pad state (buttons,
+sticks, accel in g, gyro in deg/s). Used to verify wire content and to calibrate IMU
+axes against known physical motions.
 
-- `dsu_client.py` — run from a machine with a UDP route to the phone (LAN mode on):
-
-  ```sh
-  python3 tools/dsu_client.py <phone-ip> [seconds]
-  ```
-
-- `dsu_client.c` — for when the laptop has no UDP route to the phone (AP isolation,
-  macOS local-network privacy): compile with the NDK and run on-device against
-  localhost via adb:
+The server binds loopback, so compile with the NDK and run on-device against localhost
+via adb:
 
   ```sh
   $ANDROID_NDK/toolchains/llvm/prebuilt/*/bin/aarch64-linux-android24-clang \

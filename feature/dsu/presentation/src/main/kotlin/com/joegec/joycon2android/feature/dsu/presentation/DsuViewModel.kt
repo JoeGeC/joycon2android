@@ -6,7 +6,6 @@ import com.joegec.joycon2android.dsu.DisableDsuUseCase
 import com.joegec.joycon2android.dsu.DsuStatus
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
-import com.joegec.joycon2android.dsu.SetDsuLanUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -16,7 +15,6 @@ class DsuViewModel(
     observeDsuStatus: ObserveDsuStatusUseCase,
     private val enableDsu: EnableDsuUseCase,
     private val disableDsu: DisableDsuUseCase,
-    private val setDsuLan: SetDsuLanUseCase,
 ) : ViewModel() {
 
     val status: StateFlow<DsuStatus> = observeDsuStatus()
@@ -25,8 +23,6 @@ class DsuViewModel(
     fun toggle(enabled: Boolean) {
         if (enabled) enableDsu() else disableDsu()
     }
-
-    fun setLan(enabled: Boolean) = setDsuLan(enabled)
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
