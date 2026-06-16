@@ -19,7 +19,8 @@ live in separate modules that share only domain.
 | `:core:model` | `joycon.kotlin.jvm` | — |
 | `:core:designsystem` | `joycon.android.library.compose` | — |
 | `:core:session` | `joycon.kotlin.jvm` | `:core:model`, `:feature:connection:domain`, `:feature:assignment:domain` |
-| `:feature:<f>:domain` | `joycon.kotlin.jvm` | `:core:model` |
+| `:core:emulatorconfig` | `joycon.kotlin.jvm` | — |
+| `:feature:<f>:domain` | `joycon.kotlin.jvm` | `:core:model` ² |
 | `:feature:<f>:data` | `joycon.android.library`¹ | `:feature:<f>:domain`, `:core:model` |
 | `:feature:<f>:presentation` | `joycon.android.library.compose` | `:feature:<f>:domain`, `:core:designsystem`, `:core:model` |
 | `:app` | `com.android.application` | every feature module + all `:core` |
@@ -28,6 +29,11 @@ live in separate modules that share only domain.
 …for each feature `<f>` ∈ { `connection`, `assignment`, `gamepad`, `dsu` }.
 
 ¹ `assignment:data` is pure Kotlin (`joycon.kotlin.jvm`) — it has no Android dependencies.
+
+² `gamepad:domain` and `dsu:domain` also depend on `:core:emulatorconfig` for the one-tap
+emulator setup (shared ini editing + Dolphin paths). Each feature owns its own emulator-config
+*generators* — gamepad mapping in `gamepad:domain`, DSU/motion mapping in `dsu:domain` — over that
+shared leaf; no feature depends on another feature.
 
 The three convention plugins live in `build-logic/convention/` and dedupe all the per-module
 Gradle config (compileSdk, Java 11, Compose, test options) so each `build.gradle.kts` is a few
@@ -57,6 +63,12 @@ app-specific lives in a feature's presentation, not here.
 **`:core:session`** — the cross-feature coordinator (`SessionCoordinator`) plus its session use
 cases. It's the one place that depends on more than one feature's domain, because assembling the
 app's `AppUiState` *is* the cross-feature concern (connection + assignment → player state).
+
+**`:core:emulatorconfig`** — emulator-agnostic primitives for the one-tap setup: `IniEditor`
+(read → splice → write of ini config text, leaving the user's other keys intact) and `DolphinPaths`
+(Dolphin's package + config-file locations, shared because both the gamepad and DSU features write
+to Dolphin). Holds *mechanism*, not feature logic — the per-emulator config generators live in
+their owning feature's `domain`. Depends on nothing of ours.
 
 ## Dependency rules
 

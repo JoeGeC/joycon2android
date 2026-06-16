@@ -10,7 +10,7 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 - Assign controllers to up to 4 players (left, right, or paired)
 - **Virtual gamepad output** — each assigned player becomes its own standard HID gamepad, so apps see one controller per player
 - **DSU motion server** — gyro/accel + full pad state for emulators (Dolphin, Cemu, …) over UDP, up to 4 independent players, with automatic gyro bias calibration
-- **One-tap Dolphin setup** — writes Dolphin's config to match the current assignment (DSU + Wii Remote mappings, or GameCube controller mappings)
+- **One-tap emulator setup** — writes an emulator's controller config to match the current assignment: Eden or Dolphin GameCube bindings for the virtual gamepad, plus Dolphin's DSU + Wii Remote motion mappings
 - Dual Joy-Con layout when both L+R assigned to one player
 - Sideways single Joy-Con layout with rotated inputs (stick, d-pad, face buttons)
 - Live display of buttons, sticks, IMU (accelerometer + gyroscope), and battery
@@ -57,10 +57,15 @@ multiplayer "just works" and emulators can map each to a different port. Any app
 gamepads (games, emulators, etc.) sees them. The app runs a foreground service to keep the
 connection alive in the background.
 
-**Dolphin shortcut:** with the gamepad on, the Gamepad card offers **Map Dolphin GameCube
-controllers**, which writes Dolphin's `GCPadNew.ini` (one section per player, with the right
-mappings for a left, right, or paired layout) and sets each player's GameCube port to a Standard
-Controller. Restart Dolphin afterward.
+**Emulator controller mapping:** with the gamepad on, the Gamepad card shows a picker of the
+installed emulators it can configure (currently **Eden** and **Dolphin (GameCube)**). Pick one and
+tap **Set up controller mapping** — it writes that emulator's controller config to match the
+current assignment (Eden's `config.ini`, or Dolphin's `GCPadNew.ini` + a Standard Controller on
+each GameCube port), then prompts you to restart the emulator. A single Joy-Con is set up as a Pro
+Controller held sideways, so its buttons/stick work in every game (see
+[Emulator controller mapping](#emulator-controller-mapping) for why). It needs the privileged path
+connected; if the write fails (some OEM builds block writing into another app's `Android/data`),
+map the controller manually in the emulator instead.
 
 ### Step 5 (optional): DSU Motion Server for emulators
 
@@ -184,6 +189,52 @@ enumeration order, not by player number — so P4 alongside P1 and P2 (no P3) is
 the section/port stays on the player number.)
 
 The virtual device uses BUS_USB with generic vendor/product IDs (0x1234:0x5678) to ensure the kernel's `hid-generic` driver binds it (Nintendo VID/PID causes the `hid-nintendo` driver to claim and reject the device).
+
+### Emulator controller mapping
+
+The virtual gamepad is a generic HID pad, but each emulator still needs its controller bindings
+pointed at it. With the gamepad on, the Gamepad card's emulator picker writes the selected
+emulator's config to match the assignment. The generators live in `:feature:gamepad:domain`
+(`EdenGamepadConfig`, `DolphinGcpadConfig`) over shared primitives in `:core:emulatorconfig`
+(`IniEditor`, `DolphinPaths`). Three things make this non-obvious — all confirmed against Eden's
+source and on-device behaviour:
+
+**1. The Android keycode mapping is shifted.** The HID descriptor declares 14 *generic* buttons, so
+Android binds them in the fixed gamepad order `BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z, BTN_TL…`.
+A Joy-Con button therefore lands on a *shifted* keycode, **not** a same-named one:
+
+| Joy-Con | Keycode | Joy-Con | Keycode | Joy-Con | Keycode |
+|---|---|---|---|---|---|
+| A | 96 (`BTN_A`) | Y | **99** (`BTN_X`) | − | 104 (`BTN_TL2`) |
+| B | 97 (`BTN_B`) | L | **100** (`BTN_Y`) | + | 105 (`BTN_TR2`) |
+| X | **98** (`BTN_C`) | R | 101 (`BTN_Z`) | RS | 108 (`BTN_START`) |
+| | | ZL | 102 (`BTN_TL`) | LS | 109 (`BTN_SELECT`) |
+| | | ZR | 103 (`BTN_TR`) | Home / Camera | 110 / 106 |
+
+D-pad rides the HID hat (Android `AXIS_HAT_X` = 15, `AXIS_HAT_Y` = 16); the sticks are axes
+0/1 (left) and 11/14 (right). Eden's config uses these numeric codes; Dolphin's uses the
+equivalent control *names* (`Button C` = Switch X, `Button X` = Switch Y, …).
+
+**2. Eden does not translate a sideways single Joy-Con.** For a `JoyconLeft` / `JoyconRight` npad,
+Eden masks the raw button bits straight into shared memory and only sets an `is_horizontal` flag —
+it never rotates the D-pad into A/B/X/Y. On real hardware that rotation is done by the game's own
+statically-linked `nn::hid` library; Eden has no equivalent, so a sideways Joy-Con's directions
+reach the game as a plain D-pad. Eden also **masks an npad by type**: a `JoyconLeft` exposes only
+D-pad / L / ZL / − / StickL / SL / SR (it has *no* A/B/X/Y), and a `JoyconRight` only
+A/B/X/Y / R / ZR / + / StickR / SL / SR (no D-pad, no left stick).
+
+**3. So single Joy-Cons are configured as Pro Controllers,** with the sideways rotation done in our
+config rather than left to the emulator: the lone stick → left stick, SL/SR → L/R, and the four
+action buttons → A/B/X/Y (the left Joy-Con's D-pad rotated 90° CCW, the right Joy-Con's diamond
+90° CW). This costs the authentic single-Joy-Con icon but makes every input work in every game.
+Dolphin emulates GameCube (no sideways concept), so `DolphinGcpadConfig` applies the same
+pre-rotation, keyed on whatever the relay emits per layout.
+
+**Port disambiguation.** All pads share one GUID (0x1234:0x5678), so emulators tell them apart only
+by `port` — the device's enumeration rank among same-GUID devices (the same rank, not player
+number, used for Dolphin's `Android/<id>/…` above). Each regenerate clears that player's prior keys
+first, so a layout or port change can't leave a stale binding cross-firing onto another player's
+port.
 
 ### DSU Motion Server
 
@@ -367,3 +418,9 @@ When a single Joy-Con is assigned to a player, it's held sideways (L rotated 90 
 - **D-pad (L):** visual up = Right press, down = Left, left = Up, right = Down
 - **Face buttons (R):** Y = top, X = right, A = bottom, B = left
 - **SL/SR** become the top rail buttons (like shoulder buttons when held sideways)
+
+This is `SidewaysMapper` in `:core:model` — it rotates the **sticks, the left Joy-Con's D-pad, and
+the SL/SR rail**, but passes a right Joy-Con's A/B/X/Y through unrotated (and the left Joy-Con has
+no face buttons). The face-button rotation that turns those into a usable sideways layout is applied
+per-emulator in the controller-mapping config, not here — see
+[Emulator controller mapping](#emulator-controller-mapping).
