@@ -26,9 +26,10 @@
     <!-- Pairing-code prompt for the wireless-debugging path -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Detect Dolphin so we can offer to write its DSUClient.ini (Android 11+ visibility) -->
+    <!-- Detect emulators so we can offer to write their config (Android 11+ package visibility) -->
     <queries>
         <package android:name="org.dolphinemu.dolphinemu" />
+        <package android:name="dev.eden.eden_emulator" />
     </queries>
 
     <application

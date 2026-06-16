@@ -10,7 +10,8 @@ import com.joegec.joycon2android.domain.AssignmentRepository
 import com.joegec.joycon2android.domain.ComboAssignmentDetector
 import com.joegec.joycon2android.domain.PlayerAssignmentManager
 import com.joegec.joycon2android.domain.PlayerStateResolver
-import com.joegec.joycon2android.dolphin.DolphinDsuSetup
+import com.joegec.joycon2android.emulator.EmulatorSetup
+import com.joegec.joycon2android.emulator.virtualGamepadPorts
 import com.joegec.joycon2android.session.AssignControllerUseCase
 import com.joegec.joycon2android.session.ObserveSessionUseCase
 import com.joegec.joycon2android.session.SessionCoordinator
@@ -96,7 +97,11 @@ class AppContainer(context: Context) {
     val submitPairingCode = SubmitPairingCodeUseCase(wirelessDebugRepository)
     val observeWirelessDebugStatus = ObserveWirelessDebugStatusUseCase(wirelessDebugRepository)
 
-    val dolphinDsuSetup = DolphinDsuSetup(appContext.packageManager, privilegedAccess::acquire)
+    val emulatorSetup = EmulatorSetup(
+        appContext.packageManager,
+        privilegedAccess::acquire,
+        gamepadPorts = { virtualGamepadPorts(appContext) },
+    )
 
     // --- Session (cross-feature coordinator) ---
     private val sessionCoordinator = SessionCoordinator(

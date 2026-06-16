@@ -68,6 +68,8 @@ import com.joegec.joycon2android.ui.components.CompactPlayerRow
 import com.joegec.joycon2android.ui.components.ConnectionViewMode
 import com.joegec.joycon2android.ui.components.DolphinSetupButton
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
+import com.joegec.joycon2android.ui.components.EmulatorDropdown
+import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.DsuCard
 import com.joegec.joycon2android.ui.components.DsuCardState
 import com.joegec.joycon2android.ui.components.ErrorBox
@@ -99,10 +101,12 @@ fun JoyconScreen(
     onUnassign: (String) -> Unit,
     onDisconnect: (String) -> Unit,
     onGamepadToggle: (Boolean) -> Unit,
-    dolphinGcInstalled: Boolean,
-    dolphinGcAvailable: Boolean,
-    dolphinGcPhase: DolphinSetupPhase,
-    onConfigureGamecube: () -> Unit,
+    gamepadEmulators: List<EmulatorOption>,
+    selectedGamepadEmulator: String,
+    onSelectGamepadEmulator: (String) -> Unit,
+    gamepadSetupAvailable: Boolean,
+    gamepadSetupPhase: DolphinSetupPhase,
+    onConfigureGamepad: () -> Unit,
     onDsuToggle: (Boolean) -> Unit,
     onConfigureDolphin: () -> Unit,
     onEnableNotifications: () -> Unit,
@@ -173,7 +177,8 @@ fun JoyconScreen(
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
                                 state, viewMode, gamepadEnabled, gamepadError, dsuState, adbSetup,
-                                dolphinGcInstalled, dolphinGcAvailable, dolphinGcPhase, onConfigureGamecube,
+                                gamepadEmulators, selectedGamepadEmulator, onSelectGamepadEmulator,
+                                gamepadSetupAvailable, gamepadSetupPhase, onConfigureGamepad,
                                 onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect,
                                 onGamepadToggle, onDsuToggle, onConfigureDolphin,
                                 onEnableNotifications, onStartAdbPairing,
@@ -373,10 +378,12 @@ private fun ConnectedContent(
     gamepadError: String?,
     dsuState: DsuCardState,
     adbSetup: AdbSetupState,
-    dolphinGcInstalled: Boolean,
-    dolphinGcAvailable: Boolean,
-    dolphinGcPhase: DolphinSetupPhase,
-    onConfigureGamecube: () -> Unit,
+    gamepadEmulators: List<EmulatorOption>,
+    selectedGamepadEmulator: String,
+    onSelectGamepadEmulator: (String) -> Unit,
+    gamepadSetupAvailable: Boolean,
+    gamepadSetupPhase: DolphinSetupPhase,
+    onConfigureGamepad: () -> Unit,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
@@ -439,11 +446,28 @@ private fun ConnectedContent(
                 error = gamepadError,
                 onToggle = onGamepadToggle,
             ) {
-                if (gamepadEnabled && dolphinGcInstalled && dolphinGcAvailable) {
+                if (gamepadEnabled && gamepadEmulators.isNotEmpty() && gamepadSetupAvailable) {
+                    if (gamepadEmulators.size > 1) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
+                        ) {
+                            Text(
+                                stringResource(R.string.gamepad_emulator_label),
+                                color = TextDim,
+                                fontSize = Dimens.fontSizeSmall,
+                            )
+                            EmulatorDropdown(
+                                options = gamepadEmulators,
+                                selectedId = selectedGamepadEmulator,
+                                onSelect = onSelectGamepadEmulator,
+                            )
+                        }
+                    }
                     DolphinSetupButton(
-                        dolphinGcPhase,
-                        stringResource(R.string.gamepad_dolphin_gc_setup),
-                        onConfigureGamecube,
+                        gamepadSetupPhase,
+                        stringResource(R.string.gamepad_emulator_setup),
+                        onConfigureGamepad,
                     )
                 }
             }

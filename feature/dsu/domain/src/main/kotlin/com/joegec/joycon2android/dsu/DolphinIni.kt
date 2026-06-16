@@ -24,12 +24,39 @@ internal object DolphinIni {
         return out.toString()
     }
 
+    /** Removes keys in a `[section]` whose name matches [keyMatches], leaving other keys and sections intact. */
+    fun removeKeys(existing: String?, section: String, keyMatches: (String) -> Boolean): String {
+        if (existing == null) return ""
+        val lines = existing.lines()
+        val headerIndex = lines.indexOfFirst { it.trim() == section }
+        if (headerIndex < 0) return existing
+
+        var end = lines.size
+        for (i in headerIndex + 1 until lines.size) {
+            val trimmed = lines[i].trim()
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                end = i
+                break
+            }
+        }
+
+        val kept = lines.subList(headerIndex + 1, end).filterNot {
+            it.contains('=') && keyMatches(it.substringBefore('=').trim())
+        }
+        return (lines.subList(0, headerIndex + 1) + kept + lines.subList(end, lines.size)).joinToString("\n")
+    }
+
     /**
      * Sets `key = value` entries inside a single `[section]`, replacing matching keys and appending
      * the rest, while leaving every other key and section intact. Used for shared files like
      * Dolphin.ini where wholesale section replacement would wipe unrelated settings.
      */
-    fun setKeys(existing: String?, section: String, keys: Map<String, String>): String {
+    fun setKeys(
+        existing: String?,
+        section: String,
+        keys: Map<String, String>,
+        assign: String = " = ",
+    ): String {
         if (keys.isEmpty()) return existing ?: ""
         val lines = (existing?.lines() ?: emptyList()).toMutableList()
 
@@ -37,7 +64,7 @@ internal object DolphinIni {
         if (headerIndex < 0) {
             if (lines.isNotEmpty() && lines.last().isNotBlank()) lines.add("")
             lines.add(section)
-            keys.forEach { (key, value) -> lines.add("$key = $value") }
+            keys.forEach { (key, value) -> lines.add("$key$assign$value") }
             return lines.joinToString("\n")
         }
 
@@ -54,10 +81,10 @@ internal object DolphinIni {
         for (i in headerIndex + 1 until end) {
             if (!lines[i].contains('=')) continue
             val key = lines[i].substringBefore('=').trim()
-            remaining.remove(key)?.let { lines[i] = "$key = $it" }
+            remaining.remove(key)?.let { lines[i] = "$key$assign$it" }
         }
         if (remaining.isNotEmpty()) {
-            lines.addAll(end, remaining.map { (key, value) -> "$key = $value" })
+            lines.addAll(end, remaining.map { (key, value) -> "$key$assign$value" })
         }
         return lines.joinToString("\n")
     }

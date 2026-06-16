@@ -11,6 +11,7 @@ import com.joegec.joycon2android.uhid.ObserveWirelessDebugStatusUseCase
 import com.joegec.joycon2android.uhid.StartPairingUseCase
 import com.joegec.joycon2android.uhid.WirelessDebugStatus
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
+import com.joegec.joycon2android.ui.components.EmulatorOption
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,8 +26,8 @@ class GamepadViewModel(
     private val enableGamepad: EnableGamepadUseCase,
     private val disableGamepad: DisableGamepadUseCase,
     private val startPairing: StartPairingUseCase,
-    val dolphinInstalled: Boolean = false,
-    private val configureGamecube: suspend (List<PlayerState>) -> Boolean = { false },
+    val gamepadEmulators: List<EmulatorOption> = emptyList(),
+    private val configureGamepad: suspend (emulatorId: String, players: List<PlayerState>) -> Boolean = { _, _ -> false },
 ) : ViewModel() {
 
     val status: StateFlow<GamepadStatus> = observeGamepadStatus()
@@ -35,8 +36,11 @@ class GamepadViewModel(
     val wirelessDebug: StateFlow<WirelessDebugStatus> = observeWirelessDebugStatus()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), WirelessDebugStatus())
 
-    private val _dolphinPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
-    val dolphinPhase: StateFlow<DolphinSetupPhase> = _dolphinPhase.asStateFlow()
+    private val _selectedEmulator = MutableStateFlow(gamepadEmulators.firstOrNull()?.id ?: "")
+    val selectedEmulator: StateFlow<String> = _selectedEmulator.asStateFlow()
+
+    private val _setupPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
+    val setupPhase: StateFlow<DolphinSetupPhase> = _setupPhase.asStateFlow()
 
     fun toggle(enabled: Boolean, players: List<PlayerState>) {
         if (enabled) enableGamepad(players) else disableGamepad()
@@ -44,17 +48,23 @@ class GamepadViewModel(
 
     fun startAdbPairing() = startPairing()
 
-    /** Clears a stale Done/Failed once the written config no longer matches the assignment. */
-    fun resetDolphinPhase() {
-        if (_dolphinPhase.value != DolphinSetupPhase.WORKING) _dolphinPhase.value = DolphinSetupPhase.IDLE
+    fun selectEmulator(id: String) {
+        _selectedEmulator.value = id
+        resetSetupPhase()
     }
 
-    fun configureDolphinGamecube(players: List<PlayerState>) {
-        if (_dolphinPhase.value == DolphinSetupPhase.WORKING) return
+    /** Clears a stale Done/Failed once the written config no longer matches the assignment. */
+    fun resetSetupPhase() {
+        if (_setupPhase.value != DolphinSetupPhase.WORKING) _setupPhase.value = DolphinSetupPhase.IDLE
+    }
+
+    fun configureGamepad(players: List<PlayerState>) {
+        val emulatorId = _selectedEmulator.value
+        if (emulatorId.isEmpty() || _setupPhase.value == DolphinSetupPhase.WORKING) return
         viewModelScope.launch {
-            _dolphinPhase.value = DolphinSetupPhase.WORKING
-            _dolphinPhase.value =
-                if (configureGamecube(players)) DolphinSetupPhase.SUCCESS else DolphinSetupPhase.FAILED
+            _setupPhase.value = DolphinSetupPhase.WORKING
+            _setupPhase.value =
+                if (configureGamepad(emulatorId, players)) DolphinSetupPhase.SUCCESS else DolphinSetupPhase.FAILED
         }
     }
 

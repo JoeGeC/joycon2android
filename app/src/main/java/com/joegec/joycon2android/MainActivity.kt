@@ -42,8 +42,8 @@ class MainActivity : ComponentActivity() {
                     c.observeDsuStatus,
                     c.enableDsu,
                     c.disableDsu,
-                    dolphinInstalled = c.dolphinDsuSetup.dolphinInstalled,
-                    configureDolphin = c.dolphinDsuSetup::configure,
+                    dolphinInstalled = c.emulatorSetup.dolphinInstalled,
+                    configureDolphin = c.emulatorSetup::configureDolphinDsu,
                 )
             }
         }
@@ -58,8 +58,8 @@ class MainActivity : ComponentActivity() {
                     c.enableGamepad,
                     c.disableGamepad,
                     c.startPairing,
-                    dolphinInstalled = c.dolphinDsuSetup.dolphinInstalled,
-                    configureGamecube = c.dolphinDsuSetup::configureGamecube,
+                    gamepadEmulators = c.emulatorSetup.gamepadEmulators(),
+                    configureGamepad = c.emulatorSetup::configureGamepad,
                 )
             }
         }
@@ -126,19 +126,20 @@ class MainActivity : ComponentActivity() {
                     val wirelessDebug by gamepadViewModel.wirelessDebug.collectAsState()
                     val dsuStatus by dsuViewModel.status.collectAsState()
                     val dolphinPhase by dsuViewModel.dolphinPhase.collectAsState()
-                    val gamepadDolphinPhase by gamepadViewModel.dolphinPhase.collectAsState()
+                    val gamepadSetupPhase by gamepadViewModel.setupPhase.collectAsState()
+                    val selectedEmulator by gamepadViewModel.selectedEmulator.collectAsState()
                     val permissionDenied by viewModel.permissionDenied.collectAsState()
                     val dolphinAutoAvailable = wirelessDebug.shizukuAvailable ||
                         wirelessDebug.state == AdbState.CONNECTED
 
-                    // A written Dolphin config is keyed to the current assignment; once it changes,
+                    // A written emulator config is keyed to the current assignment; once it changes,
                     // the Done/Failed state is stale, so reset both setup buttons.
                     val assignmentKey = state.players.map {
                         Triple(it.player.index, it.left?.address, it.right?.address)
                     }
                     LaunchedEffect(assignmentKey) {
                         dsuViewModel.resetDolphinPhase()
-                        gamepadViewModel.resetDolphinPhase()
+                        gamepadViewModel.resetSetupPhase()
                     }
 
                     JoyconScreen(
@@ -170,10 +171,12 @@ class MainActivity : ComponentActivity() {
                         onGamepadToggle = { enabled ->
                             gamepadViewModel.toggle(enabled, state.activePlayers)
                         },
-                        dolphinGcInstalled = gamepadViewModel.dolphinInstalled,
-                        dolphinGcAvailable = dolphinAutoAvailable,
-                        dolphinGcPhase = gamepadDolphinPhase,
-                        onConfigureGamecube = { gamepadViewModel.configureDolphinGamecube(state.activePlayers) },
+                        gamepadEmulators = gamepadViewModel.gamepadEmulators,
+                        selectedGamepadEmulator = selectedEmulator,
+                        onSelectGamepadEmulator = gamepadViewModel::selectEmulator,
+                        gamepadSetupAvailable = dolphinAutoAvailable,
+                        gamepadSetupPhase = gamepadSetupPhase,
+                        onConfigureGamepad = { gamepadViewModel.configureGamepad(state.activePlayers) },
                         onDsuToggle = dsuViewModel::toggle,
                         onConfigureDolphin = { dsuViewModel.configureDolphinDsu(state.activePlayers) },
                         onEnableNotifications = enableNotifications,
