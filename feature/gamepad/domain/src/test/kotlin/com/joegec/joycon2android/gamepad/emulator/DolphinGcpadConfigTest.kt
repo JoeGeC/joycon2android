@@ -1,4 +1,4 @@
-package com.joegec.joycon2android.dsu
+package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber

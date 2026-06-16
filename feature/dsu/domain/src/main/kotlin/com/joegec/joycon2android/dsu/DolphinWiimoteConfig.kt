@@ -1,5 +1,7 @@
 package com.joegec.joycon2android.dsu
 
+import com.joegec.joycon2android.emulatorconfig.DolphinPaths
+import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.PlayerState
 
 /**
@@ -11,7 +13,7 @@ import com.joegec.joycon2android.model.PlayerState
  * DS4-convention names the DSU device exposes (see the in-app mapping table).
  */
 object DolphinWiimoteConfig {
-    val path = "/sdcard/Android/data/${DolphinDsuConfig.PACKAGE}/files/Config/WiimoteNew.ini"
+    val path = DolphinPaths.config("WiimoteNew.ini")
 
     private val imuLines = listOf(
         "IMUAccelerometer/Up = `Accel Up`",
@@ -37,7 +39,7 @@ object DolphinWiimoteConfig {
     )
 
     fun merge(existing: String?, players: List<PlayerState>): String =
-        DolphinIni.mergeSections(existing, sections(players))
+        IniEditor.mergeSections(existing, sections(players))
 
     private fun sections(players: List<PlayerState>): Map<String, String> =
         players.mapNotNull { player ->

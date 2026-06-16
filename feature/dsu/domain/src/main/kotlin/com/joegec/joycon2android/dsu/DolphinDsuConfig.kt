@@ -1,5 +1,7 @@
 package com.joegec.joycon2android.dsu
 
+import com.joegec.joycon2android.emulatorconfig.DolphinPaths
+
 /**
  * Dolphin's DSUClient.ini on Android. It lives in Dolphin's external data dir — writable by a
  * shell-uid process (Shizuku / wireless debugging) but not by us directly. Servers are listed
@@ -7,8 +9,7 @@ package com.joegec.joycon2android.dsu
  * disturbing any the user already configured.
  */
 object DolphinDsuConfig {
-    const val PACKAGE = "org.dolphinemu.dolphinemu"
-    val path = "/sdcard/Android/data/$PACKAGE/files/Config/DSUClient.ini"
+    val path = DolphinPaths.config("DSUClient.ini")
 
     private val entry = "Joycon2:127.0.0.1:${DsuConfig.PORT}"
 

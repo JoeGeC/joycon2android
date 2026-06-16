@@ -1,5 +1,7 @@
-package com.joegec.joycon2android.dsu
+package com.joegec.joycon2android.gamepad.emulator
 
+import com.joegec.joycon2android.emulatorconfig.DolphinPaths
+import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.PlayerState
 
 /**
@@ -10,20 +12,20 @@ import com.joegec.joycon2android.model.PlayerState
  * Control names are exactly what Dolphin reports for our pad (captured from a real mapping).
  */
 object DolphinGcpadConfig {
-    val path = "/sdcard/Android/data/${DolphinDsuConfig.PACKAGE}/files/Config/GCPadNew.ini"
-    val corePath = "/sdcard/Android/data/${DolphinDsuConfig.PACKAGE}/files/Config/Dolphin.ini"
+    val path = DolphinPaths.config("GCPadNew.ini")
+    val corePath = DolphinPaths.config("Dolphin.ini")
 
     private const val STANDARD_CONTROLLER = "6" // Dolphin SIDevice: Standard Controller
 
     fun merge(existing: String?, players: List<PlayerState>): String =
-        DolphinIni.mergeSections(existing, sections(players))
+        IniEditor.mergeSections(existing, sections(players))
 
     /** Sets each configured player's GameCube port to a Standard Controller in Dolphin.ini. */
     fun mergeCore(existing: String?, players: List<PlayerState>): String {
         val siDevices = players
             .filter { it.hasController && !it.hasPro && it.player.index in 1..4 }
             .associate { "SIDevice${it.player.index - 1}" to STANDARD_CONTROLLER }
-        return DolphinIni.setKeys(existing, "[Core]", siDevices)
+        return IniEditor.setKeys(existing, "[Core]", siDevices)
     }
 
     // Dolphin's device id is the pad's enumeration rank among active virtual gamepads (1-based),

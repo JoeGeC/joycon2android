@@ -1,5 +1,6 @@
-package com.joegec.joycon2android.dsu
+package com.joegec.joycon2android.gamepad.emulator
 
+import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.PlayerState
 
 /**
@@ -103,8 +104,8 @@ object EdenGamepadConfig {
     fun merge(existing: String?, players: List<PlayerState>, ports: Map<Int, Int>): String {
         // Drop every player's prior bindings first: a layout or port change leaves stale keys that
         // would otherwise linger and, sharing our single guid, cross-fire onto another player's port.
-        val cleared = DolphinIni.removeKeys(existing, "[Controls]") { it.matches(PLAYER_KEY) }
-        return DolphinIni.setKeys(cleared, "[Controls]", controlKeys(players, ports), assign = "=")
+        val cleared = IniEditor.removeKeys(existing, "[Controls]") { it.matches(PLAYER_KEY) }
+        return IniEditor.setKeys(cleared, "[Controls]", controlKeys(players, ports), assign = "=")
     }
 
     private fun controlKeys(players: List<PlayerState>, ports: Map<Int, Int>): Map<String, String> {

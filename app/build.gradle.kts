@@ -67,6 +67,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:session"))
+    implementation(project(":core:emulatorconfig"))
     implementation(project(":feature:dsu:domain"))
     implementation(project(":feature:dsu:data"))
     implementation(project(":feature:dsu:presentation"))

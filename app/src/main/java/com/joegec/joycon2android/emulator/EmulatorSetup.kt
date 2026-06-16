@@ -2,10 +2,11 @@ package com.joegec.joycon2android.emulator
 
 import android.content.pm.PackageManager
 import com.joegec.joycon2android.dsu.DolphinDsuConfig
-import com.joegec.joycon2android.dsu.DolphinGcpadConfig
 import com.joegec.joycon2android.dsu.DolphinWiimoteConfig
 import com.joegec.joycon2android.dsu.DsuConfig
-import com.joegec.joycon2android.dsu.EdenGamepadConfig
+import com.joegec.joycon2android.emulatorconfig.DolphinPaths
+import com.joegec.joycon2android.gamepad.emulator.DolphinGcpadConfig
+import com.joegec.joycon2android.gamepad.emulator.EdenGamepadConfig
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.uhid.PrivilegedShell
 import com.joegec.joycon2android.ui.components.EmulatorOption
@@ -26,12 +27,12 @@ class EmulatorSetup(
     private val gamepadPorts: () -> Map<Int, Int>,
 ) {
     val dolphinInstalled: Boolean
-        get() = isInstalled(DolphinDsuConfig.PACKAGE)
+        get() = isInstalled(DolphinPaths.PACKAGE)
 
     /** Installed emulators whose controller mapping the Virtual Gamepad can configure. */
     fun gamepadEmulators(): List<EmulatorOption> = buildList {
-        if (isInstalled(DolphinDsuConfig.PACKAGE)) {
-            add(EmulatorOption(DolphinDsuConfig.PACKAGE, "Dolphin (GameCube)"))
+        if (isInstalled(DolphinPaths.PACKAGE)) {
+            add(EmulatorOption(DolphinPaths.PACKAGE, "Dolphin (GameCube)"))
         }
         if (isInstalled(EdenGamepadConfig.PACKAGE)) {
             add(EmulatorOption(EdenGamepadConfig.PACKAGE, "Eden"))

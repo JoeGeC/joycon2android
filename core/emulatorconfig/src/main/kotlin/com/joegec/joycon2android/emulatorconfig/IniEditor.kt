@@ -1,7 +1,11 @@
-package com.joegec.joycon2android.dsu
+package com.joegec.joycon2android.emulatorconfig
 
-/** Replaces the given `[Section]` blocks in an existing ini, leaving every other section intact. */
-internal object DolphinIni {
+/**
+ * Edits ini-format config text (read → transform → write), used to splice our settings into an
+ * emulator's config files without disturbing the user's other keys. Emulator-agnostic: Dolphin's
+ * `GCPadNew.ini`/`Dolphin.ini`, Eden's `config.ini`, etc. all share this section/key grammar.
+ */
+object IniEditor {
     fun mergeSections(existing: String?, sections: Map<String, String>): String {
         val bodies = LinkedHashMap<String, String>()
         val preamble = StringBuilder()
