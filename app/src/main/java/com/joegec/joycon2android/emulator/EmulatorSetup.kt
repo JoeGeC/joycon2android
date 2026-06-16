@@ -1,14 +1,14 @@
 package com.joegec.joycon2android.emulator
 
 import android.content.pm.PackageManager
-import com.joegec.joycon2android.dsu.DolphinDsuConfig
-import com.joegec.joycon2android.dsu.DolphinWiimoteConfig
+import com.joegec.joycon2android.dsu.emulator.DolphinDsuConfig
+import com.joegec.joycon2android.dsu.emulator.DolphinWiimoteConfig
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.emulatorconfig.DolphinPaths
 import com.joegec.joycon2android.gamepad.emulator.DolphinGcpadConfig
 import com.joegec.joycon2android.gamepad.emulator.EdenGamepadConfig
 import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.uhid.PrivilegedShell
+import com.joegec.joycon2android.gamepad.privileged.PrivilegedShell
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine

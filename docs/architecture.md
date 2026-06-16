@@ -88,6 +88,17 @@ graph can't reach, by `:konsist` tests.
   cases live in a `domain` (or `:core:session`) module. Repository abstractions are interfaces
   in a `domain` module. — these three are asserted by `:konsist`.
 
+## Package layout
+
+Packages are **feature-rooted**, mirroring the module split: `com.joegec.joycon2android.<feature>`
+for a feature's domain + data, and `com.joegec.joycon2android.<feature>.presentation` for its
+ViewModel + composables. A crowded package is split **by concern, not layer** into sub-packages
+within the same module — e.g. `gamepad` (relay output) / `gamepad.privileged` (shell access) /
+`gamepad.wirelessdebug` (ADB pairing) / `gamepad.emulator` (emulator config), and `dsu` /
+`dsu.motion` / `dsu.dolphin`. Each module's `namespace` matches its package root so generated `R`
+lands there. `:core:designsystem` solely owns `com.joegec.joycon2android.ui.components` / `ui.theme`
+(the shared design system); no feature adds to those.
+
 ## Composition root — `AppContainer`
 
 `app/.../AppContainer.kt` is the only place the abstractions and implementations meet. It:

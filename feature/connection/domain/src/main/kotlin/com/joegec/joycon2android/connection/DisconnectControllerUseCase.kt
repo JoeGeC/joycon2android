@@ -1,0 +1,5 @@
+package com.joegec.joycon2android.connection
+
+class DisconnectControllerUseCase(private val repository: ControllerRepository) {
+    operator fun invoke(address: String) = repository.disconnect(address)
+}

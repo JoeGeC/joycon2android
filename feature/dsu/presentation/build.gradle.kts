@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.joegec.joycon2android.feature.dsu.presentation"
+    namespace = "com.joegec.joycon2android.dsu.presentation"
 }
 
 dependencies {

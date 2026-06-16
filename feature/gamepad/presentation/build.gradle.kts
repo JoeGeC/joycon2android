@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.joegec.joycon2android.feature.gamepad.presentation"
+    namespace = "com.joegec.joycon2android.gamepad.presentation"
 }
 
 dependencies {

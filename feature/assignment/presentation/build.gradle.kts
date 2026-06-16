@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.joegec.joycon2android.feature.assignment.presentation"
+    namespace = "com.joegec.joycon2android.assignment.presentation"
 }
 
 dependencies {

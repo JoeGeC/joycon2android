@@ -1,4 +1,5 @@
 package com.joegec.joycon2android.dsu
+import com.joegec.joycon2android.dsu.motion.MotionConverter
 
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.JoyconButton

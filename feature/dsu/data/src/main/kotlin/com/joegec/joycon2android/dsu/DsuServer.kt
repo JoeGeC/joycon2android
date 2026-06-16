@@ -1,4 +1,6 @@
 package com.joegec.joycon2android.dsu
+import com.joegec.joycon2android.dsu.motion.GyroCalibrator
+import com.joegec.joycon2android.dsu.motion.MotionConverter
 
 import android.os.SystemClock
 import android.util.Log

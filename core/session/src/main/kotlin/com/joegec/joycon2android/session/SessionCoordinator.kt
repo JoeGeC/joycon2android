@@ -1,9 +1,9 @@
 package com.joegec.joycon2android.session
 
-import com.joegec.joycon2android.ble.ControllerRepository
-import com.joegec.joycon2android.domain.AssignmentRepository
-import com.joegec.joycon2android.domain.ComboAssignmentDetector
-import com.joegec.joycon2android.domain.PlayerStateResolver
+import com.joegec.joycon2android.connection.ControllerRepository
+import com.joegec.joycon2android.assignment.AssignmentRepository
+import com.joegec.joycon2android.assignment.ComboAssignmentDetector
+import com.joegec.joycon2android.assignment.PlayerStateResolver
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber

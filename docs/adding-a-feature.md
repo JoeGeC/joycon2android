@@ -85,7 +85,7 @@ dependencies { api(project(":core:model")) }
 Android APIs, like `assignment:data`):
 ```kotlin
 plugins { id("joycon.android.library") }
-android { namespace = "com.joegec.joycon2android.feature.foo.data" }
+android { namespace = "com.joegec.joycon2android.foo.data" }
 dependencies {
     implementation(project(":feature:foo:domain"))
     implementation(project(":core:model"))
@@ -95,7 +95,7 @@ dependencies {
 `feature/foo/presentation/build.gradle.kts`:
 ```kotlin
 plugins { id("joycon.android.library.compose") }
-android { namespace = "com.joegec.joycon2android.feature.foo.presentation" }
+android { namespace = "com.joegec.joycon2android.foo.presentation" }
 dependencies {
     implementation(project(":feature:foo:domain"))
     implementation(project(":core:designsystem"))
@@ -149,12 +149,20 @@ Compose UI goes alongside it, built from `:core:designsystem` components.
 
 ## Conventions & gotchas
 
-- **Keep package names stable when moving classes** between modules — `com.joegec.joycon2android.<area>`.
-  Stable packages mean import churn is minimal and Konsist's package rules keep holding. (Split
-  packages across modules is fine on Android.)
+- **Packages are feature-rooted:** `com.joegec.joycon2android.<feature>` for a feature's domain +
+  data, and `com.joegec.joycon2android.<feature>.presentation` for its ViewModel + composables. A
+  module's `namespace` matches its package root (so generated `R`/`BuildConfig` land there). The
+  one exception is `:core:designsystem`, which owns `com.joegec.joycon2android.ui.components` /
+  `ui.theme` — features must not add to those packages.
+- **Split a crowded package by concern, not layer.** When one package accumulates unrelated
+  clusters, give each its own sub-package — e.g. gamepad is `gamepad` (the relay output),
+  `gamepad.privileged` (shell access), `gamepad.wirelessdebug` (ADB pairing), `gamepad.emulator`
+  (emulator config); dsu is `dsu` / `dsu.motion` / `dsu.dolphin`. Concern sub-packages live in the
+  same module, so this is free of build-graph changes.
 - **Strings & `R` are per-namespace.** A composable moved into a feature module needs its strings
-  copied into that module's `res/values/strings.xml` and its `R` import switched to the module's
-  namespace (`com.joegec.joycon2android.feature.foo.presentation.R`).
+  copied into that module's `res/values/strings.xml` and its `R` import set to the module's
+  namespace (`com.joegec.joycon2android.foo.presentation.R`). When you rename a package, update the
+  module's `namespace` to match or the `R` import will dangle.
 - **Repositories are app-scoped singletons** owned by `AppContainer` (held by `Application`), so
   they outlive the Activity and the foreground service. **ViewModels are feature-scoped** and
   depend only on their feature's use cases — never on `:app` or another feature.

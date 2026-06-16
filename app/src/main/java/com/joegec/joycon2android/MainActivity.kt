@@ -21,13 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.joegec.joycon2android.feature.dsu.presentation.DsuViewModel
-import com.joegec.joycon2android.feature.gamepad.presentation.GamepadViewModel
-import com.joegec.joycon2android.uhid.AdbState
+import com.joegec.joycon2android.dsu.presentation.DsuViewModel
+import com.joegec.joycon2android.gamepad.presentation.GamepadViewModel
+import com.joegec.joycon2android.gamepad.wirelessdebug.AdbState
 import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
-import com.joegec.joycon2android.ui.components.AdbSetupState
-import com.joegec.joycon2android.ui.components.DsuCardState
+import com.joegec.joycon2android.gamepad.presentation.AdbSetupState
+import com.joegec.joycon2android.dsu.presentation.DsuCardState
 import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.Joycon2AndroidTheme
 

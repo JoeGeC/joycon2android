@@ -1,4 +1,6 @@
 package com.joegec.joycon2android.dsu
+import com.joegec.joycon2android.dsu.motion.DsuMotion
+import com.joegec.joycon2android.dsu.motion.MotionConverter
 
 import com.joegec.joycon2android.model.BatteryGauge
 import com.joegec.joycon2android.model.GamepadState
