@@ -404,16 +404,33 @@ private fun IdleContent(
 
 @Composable
 private fun ScanningContent(state: AppUiState) {
-    ScanningIndicator()
-    SyncButtonGraphic()
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    ScanningGraphics(landscape)
     ErrorBox(text = state.error)
 }
 
+// The "Looking for Joy-Con 2" card and the sync-button illustration: side by side in landscape,
+// stacked in portrait.
 @Composable
-private fun ScanButton(onScan: () -> Unit) {
+private fun ScanningGraphics(landscape: Boolean) {
+    if (landscape) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
+            ScanningIndicator(Modifier.weight(1f))
+            SyncButtonGraphic(Modifier.weight(1f))
+        }
+    } else {
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
+            ScanningIndicator()
+            SyncButtonGraphic()
+        }
+    }
+}
+
+@Composable
+private fun ScanButton(onScan: () -> Unit, modifier: Modifier = Modifier) {
     Button(
         onClick = onScan,
-        modifier = Modifier.fillMaxWidth().height(Dimens.buttonHeight),
+        modifier = modifier.height(Dimens.buttonHeight),
         shape = RoundedCornerShape(Dimens.buttonCorner),
         colors = ButtonDefaults.buttonColors(containerColor = Accent),
     ) {
@@ -422,6 +439,17 @@ private fun ScanButton(onScan: () -> Unit) {
             color = TextOnAccent,
             style = MaterialTheme.typography.labelLarge,
         )
+    }
+}
+
+@Composable
+private fun DisconnectAllButton(onDisconnectAll: () -> Unit, modifier: Modifier = Modifier) {
+    OutlinedButton(
+        onClick = onDisconnectAll,
+        modifier = modifier.height(Dimens.buttonHeight),
+        shape = RoundedCornerShape(Dimens.buttonCorner),
+    ) {
+        Text(stringResource(R.string.button_disconnect_all), color = TextDim)
     }
 }
 
@@ -634,28 +662,31 @@ private fun ConnectedContent(
         enter = fadeIn() + expandVertically(),
         exit = fadeOut() + shrinkVertically(),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
-            ScanningIndicator()
-            SyncButtonGraphic()
-        }
-    }
-
-    AnimatedVisibility(
-        visible = !state.scanning,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically(),
-    ) {
-        ScanButton(onScan)
+        ScanningGraphics(landscape)
     }
 
     ErrorBox(text = state.error)
 
-    OutlinedButton(
-        onClick = onDisconnectAll,
-        modifier = Modifier.fillMaxWidth().height(Dimens.buttonHeight),
-        shape = RoundedCornerShape(Dimens.buttonCorner),
-    ) {
-        Text(stringResource(R.string.button_disconnect_all), color = TextDim)
+    if (landscape) {
+        // Disconnect on the left, Scan on the right; Disconnect keeps its half when a scan is in
+        // progress and the Scan button drops out.
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
+            DisconnectAllButton(onDisconnectAll, Modifier.weight(1f))
+            if (!state.scanning) {
+                ScanButton(onScan, Modifier.weight(1f))
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+        }
+    } else {
+        AnimatedVisibility(
+            visible = !state.scanning,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            ScanButton(onScan, Modifier.fillMaxWidth())
+        }
+        DisconnectAllButton(onDisconnectAll, Modifier.fillMaxWidth())
     }
 }
 
