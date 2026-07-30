@@ -19,11 +19,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -111,6 +118,9 @@ fun JoyconScreen(
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = Background,
+        // Keep the bottom inset out of the content padding so scrollable content can pass under
+        // the nav bar; each screen re-applies it where its own content must stay clear of it.
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
         topBar = {
             TopAppBar(
                 title = { AppTitle(state, shizukuAvailable) },
@@ -156,7 +166,8 @@ fun JoyconScreen(
                         state, permissionDenied, onScan, onOpenSettings,
                         Modifier
                             .fillMaxSize()
-                            .padding(horizontal = Dimens.screenPaddingHorizontal),
+                            .padding(horizontal = Dimens.screenPaddingHorizontal)
+                            .windowInsetsPadding(WindowInsets.navigationBars),
                     )
                     ScreenState.SCANNING, ScreenState.CONNECTED -> Column(
                         Modifier
@@ -175,6 +186,8 @@ fun JoyconScreen(
                             )
                             else -> ScanningContent(state)
                         }
+                        // Lets the last item scroll clear of the nav bar it now passes under
+                        Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
                     }
                 }
             }
