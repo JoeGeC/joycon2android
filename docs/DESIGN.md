@@ -112,12 +112,22 @@ controller-color border gives them identity beyond a plain card grid.
 
 ### Landscape
 
-Connected players lay out in a **two-column grid** in landscape (both the detailed and compact
-views), using the wide space; portrait keeps one full-width column. Detailed players are shrunk to
-`LandscapePlayerScale` (`0.7`) by a `scaleLayout` modifier that measures the content at `1/scale`
-space, draws it scaled down, and reports the smaller size — so the whole controller (buttons,
-labels, spacing) shrinks uniformly *and* reflows, letting a full player fit the short landscape
-height. Compact rows aren't scaled (already short). Both live in `JoyconScreen.kt`.
+Landscape lays the whole connected screen out **two-up** to use the wide, short viewport; portrait
+keeps single full-width columns. All of it lives in `JoyconScreen.kt`:
+
+- **Players** — a two-column grid (both detailed and compact views). Detailed players are shrunk to
+  `LandscapePlayerScale` (`0.7`) by a `scaleLayout` modifier that measures the content at `1/scale`
+  space, draws it scaled down, and reports the smaller size — so the whole controller (buttons,
+  labels, spacing) shrinks uniformly *and* reflows, letting a full player fit the short height.
+  Compact rows aren't scaled (already short).
+- **Feature cards** — two columns: Virtual Gamepad with its Shizuku dependency stacked beneath it on
+  the left, DSU Motion Server on the right (so the Shizuku card always sits under the gamepad).
+- **Scanning graphics** — the "Looking for Joy-Con 2" card and the sync-button illustration sit side
+  by side (`ScanningGraphics`).
+- **Action buttons** — a row with Disconnect All on the left and Scan on the right; Disconnect keeps
+  its half (weighted spacer) while a scan is running and the Scan button drops out.
+
+Odd trailing items take a half cell with a weighted `Spacer` filling the other half.
 
 ## Components
 
