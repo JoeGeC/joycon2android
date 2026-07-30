@@ -34,6 +34,18 @@ fun EmulatorDropdown(
     modifier: Modifier = Modifier,
 ) {
     val selected = options.firstOrNull { it.id == selectedId } ?: options.firstOrNull() ?: return
+
+    if (options.size == 1) {
+        Text(
+            selected.label,
+            color = Accent,
+            fontSize = Dimens.fontSizeSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = modifier.padding(vertical = Dimens.pillPaddingVertical),
+        )
+        return
+    }
+
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier) {

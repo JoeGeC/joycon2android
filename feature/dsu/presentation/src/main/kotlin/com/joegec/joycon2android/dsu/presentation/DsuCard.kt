@@ -1,8 +1,7 @@
 package com.joegec.joycon2android.dsu.presentation
 import com.joegec.joycon2android.ui.components.CopyableCode
-import com.joegec.joycon2android.ui.components.DolphinSetupButton
-import com.joegec.joycon2android.ui.components.DolphinSetupFailedText
-import com.joegec.joycon2android.ui.components.DolphinSetupPhase
+import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
+import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.ExpandableInfoSection
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
 
@@ -27,6 +26,8 @@ import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.dsu.presentation.R
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
+
+private const val DOLPHIN_EMULATOR_ID = "dolphin"
 
 @Composable
 fun DsuCard(
@@ -55,69 +56,55 @@ fun DsuCard(
             Column {
                 Spacer(Modifier.height(Dimens.elementSpacing))
                 if (state.showSlotLimitNote) {
-                    Spacer(Modifier.height(Dimens.elementSpacing))
                     Text(
                         stringResource(R.string.dsu_slot_note),
                         color = TextDim,
                         fontSize = Dimens.fontSizeSmall,
                     )
+                    Spacer(Modifier.height(Dimens.elementSpacing))
                 }
-                Spacer(Modifier.height(Dimens.elementSpacing))
-                EmulatorConnection(state.address)
-                EmulatorGuides(state, onConfigureDolphin)
+                if (state.dolphinInstalled && state.dolphinAutoConfigAvailable) {
+                    EmulatorAutoSetup(
+                        emulators = listOf(
+                            EmulatorOption(DOLPHIN_EMULATOR_ID, stringResource(R.string.dsu_dolphin_emulator_name)),
+                        ),
+                        selectedEmulator = DOLPHIN_EMULATOR_ID,
+                        onSelectEmulator = {},
+                        phase = state.dolphinPhase,
+                        setupLabel = stringResource(R.string.dsu_dolphin_auto_setup),
+                        onSetUp = onConfigureDolphin,
+                    )
+                    Spacer(Modifier.height(Dimens.elementSpacing))
+                }
+                ExpandableInfoSection(stringResource(R.string.dsu_manual_setup_title)) {
+                    ManualEmulatorSetup(state.address)
+                }
+                ExpandableInfoSection(stringResource(R.string.dsu_mapping_trouble_title)) {
+                    MappingTroubleshooting()
+                }
             }
         }
     }
 }
 
 @Composable
-private fun EmulatorConnection(address: String?) {
+private fun ManualEmulatorSetup(address: String?) {
     Column {
-        Text(
-            stringResource(R.string.dsu_setup_title),
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = Dimens.fontSizeMedium,
-        )
-        Text(
-            stringResource(R.string.dsu_setup_body),
-            color = TextDim,
-            fontSize = Dimens.fontSizeSmall,
-        )
+        GuideStep(stringResource(R.string.dsu_setup_body))
         Spacer(Modifier.height(Dimens.elementSpacing))
         if (address != null) {
             CopyableCode(address)
+            Spacer(Modifier.height(Dimens.elementSpacing))
+        }
+        ExpandableInfoSection(stringResource(R.string.dsu_dolphin_emulator_name)) {
+            DolphinManualSteps()
         }
     }
 }
 
-// Per-emulator quirks live behind expandable sections; add new emulators here
 @Composable
-private fun EmulatorGuides(state: DsuCardState, onConfigureDolphin: () -> Unit) {
-    ExpandableInfoSection(stringResource(R.string.dsu_dolphin_guide_title)) {
-        DolphinGuide(state, onConfigureDolphin)
-    }
-    ExpandableInfoSection(stringResource(R.string.dsu_mapping_trouble_title)) {
-        MappingTroubleshooting()
-    }
-}
-
-@Composable
-private fun DolphinGuide(state: DsuCardState, onConfigureDolphin: () -> Unit) {
+private fun DolphinManualSteps() {
     Column {
-        if (state.dolphinInstalled && state.dolphinAutoConfigAvailable) {
-            DolphinSetupButton(
-                state.dolphinPhase,
-                stringResource(R.string.dsu_dolphin_auto_setup),
-                onConfigureDolphin,
-            )
-            if (state.dolphinPhase == DolphinSetupPhase.FAILED) {
-                DolphinSetupFailedText()
-            }
-            Spacer(Modifier.height(Dimens.elementSpacing))
-            GuideStep(stringResource(R.string.dsu_dolphin_manual_label))
-            Spacer(Modifier.height(Dimens.elementSpacing))
-        }
         GuideStep(stringResource(R.string.dsu_dolphin_android_intro))
         Spacer(Modifier.height(Dimens.elementSpacing))
         CopyableCode(stringResource(R.string.dsu_dolphin_ini))
