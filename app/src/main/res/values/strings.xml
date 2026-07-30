@@ -30,6 +30,11 @@
     <string name="gamepad_subtitle_on">Active — input available to all apps</string>
     <string name="gamepad_emulator_setup">Set up</string>
 
+    <!-- Player removal -->
+    <string name="action_undo">Undo</string>
+    <string name="snackbar_player_removed">Player %1$d removed</string>
+    <string name="snackbar_controller_removed">Controller removed</string>
+
     <!-- Foreground service notification -->
     <string name="notification_channel_name">Joy-Con Service</string>
     <string name="notification_channel_description">Joy-Con BLE connections active</string>

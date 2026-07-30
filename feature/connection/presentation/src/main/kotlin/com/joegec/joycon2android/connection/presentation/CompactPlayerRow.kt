@@ -6,7 +6,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,26 +25,28 @@ import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.JoyconDefaultColor
+import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.joyconBorderColor
 
 @Composable
 fun CompactPlayerRow(
     playerState: PlayerState,
     onUnassign: (String) -> Unit,
+    onRemovePlayer: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val controllers = listOfNotNull(playerState.left, playerState.right)
     Row(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.cardCorner))
             .background(CardBg)
-            .clickable { controllers.forEach { onUnassign(it.address) } }
+            .clickable(onClick = onRemovePlayer)
             .padding(
                 horizontal = Dimens.compactRowPaddingHorizontal,
                 vertical = Dimens.compactRowPaddingVertical,
             ),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
     ) {
         Text(
             stringResource(R.string.player_label, playerState.player.index),
@@ -62,6 +68,12 @@ fun CompactPlayerRow(
                 }
             }
         }
+        Icon(
+            Icons.Filled.Close,
+            contentDescription = stringResource(R.string.remove_player),
+            tint = TextDim,
+            modifier = Modifier.size(Dimens.iconSizeSmall),
+        )
     }
 }
 

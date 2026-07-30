@@ -9,4 +9,5 @@
     <string name="controller_pro">Pro</string>
     <string name="view_detailed">Detailed view</string>
     <string name="view_compact">Compact view</string>
+    <string name="remove_player">Remove player</string>
 </resources>

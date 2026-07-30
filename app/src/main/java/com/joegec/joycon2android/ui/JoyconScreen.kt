@@ -44,12 +44,23 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.gamepad.presentation.ShizukuSetupCard
 import com.joegec.joycon2android.assignment.presentation.AssignmentPanel
 import com.joegec.joycon2android.connection.presentation.CompactPlayerRow
@@ -84,6 +96,7 @@ import com.joegec.joycon2android.ui.theme.JoyconBlue
 import com.joegec.joycon2android.ui.theme.JoyconRed
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,10 +127,60 @@ fun JoyconScreen(
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    // Unassigning is reachable by tapping the live display, so every removal is offered back as an
+    // undo (re-assigning the same controllers to the same player) rather than being silent.
+    fun offerUndo(message: String, restore: List<Pair<String, PlayerNumber>>) {
+        scope.launch {
+            val result = snackbarHostState.showSnackbar(
+                message = message,
+                actionLabel = context.getString(R.string.action_undo),
+                duration = SnackbarDuration.Short,
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                restore.forEach { (address, player) -> onAssign(address, player) }
+            }
+        }
+    }
+
+    val unassignController: (String) -> Unit = { address ->
+        val player = state.players.firstOrNull {
+            it.left?.address == address || it.right?.address == address
+        }?.player
+        onUnassign(address)
+        if (player != null) {
+            offerUndo(context.getString(R.string.snackbar_controller_removed), listOf(address to player))
+        }
+    }
+
+    val removePlayer: (PlayerState) -> Unit = { playerState ->
+        val restore = listOfNotNull(playerState.left, playerState.right).map { it.address to playerState.player }
+        restore.forEach { (address, _) -> onUnassign(address) }
+        offerUndo(context.getString(R.string.snackbar_player_removed, playerState.player.index), restore)
+    }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = Background,
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data ->
+                val dismissState = rememberSwipeToDismissBoxState()
+                LaunchedEffect(dismissState.currentValue) {
+                    if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                        data.dismiss()
+                    }
+                }
+                SwipeToDismissBox(
+                    state = dismissState,
+                    backgroundContent = {},
+                ) {
+                    Snackbar(data)
+                }
+            }
+        },
         // Keep the bottom inset out of the content padding so scrollable content can pass under
         // the nav bar; each screen re-applies it where its own content must stay clear of it.
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
@@ -181,7 +244,7 @@ fun JoyconScreen(
                                 state, viewMode, gamepadEnabled, gamepadError, dsuState, shizukuAvailable,
                                 gamepadEmulators, selectedGamepadEmulator, onSelectGamepadEmulator,
                                 gamepadSetupAvailable, gamepadSetupPhase, onConfigureGamepad,
-                                onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect,
+                                onScan, onDisconnectAll, onAssign, unassignController, removePlayer, onDisconnect,
                                 onGamepadToggle, onDsuToggle, onConfigureDolphin,
                             )
                             else -> ScanningContent(state)
@@ -379,6 +442,7 @@ private fun ConnectedContent(
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
     onUnassign: (String) -> Unit,
+    onRemovePlayer: (PlayerState) -> Unit,
     onDisconnect: (String) -> Unit,
     onGamepadToggle: (Boolean) -> Unit,
     onDsuToggle: (Boolean) -> Unit,
@@ -410,10 +474,12 @@ private fun ConnectedContent(
                 ConnectionViewMode.DETAILED -> PlayerView(
                     playerState = playerState,
                     onUnassign = onUnassign,
+                    onRemovePlayer = { onRemovePlayer(playerState) },
                 )
                 ConnectionViewMode.COMPACT -> CompactPlayerRow(
                     playerState = playerState,
                     onUnassign = onUnassign,
+                    onRemovePlayer = { onRemovePlayer(playerState) },
                 )
             }
         }
