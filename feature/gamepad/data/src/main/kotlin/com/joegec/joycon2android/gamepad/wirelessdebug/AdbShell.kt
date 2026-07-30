@@ -40,7 +40,21 @@ class AdbShell(context: Context) : PrivilegedShell {
     override fun shell(script: String): ShellProcess? = newProcess(arrayOf(script))
 
     private class AdbProcess(private val stream: AdbStream) : ShellProcess {
-        override val outputStream: OutputStream = stream.openOutputStream()
+        // AdbOutputStream.close() only flushes — it never closes the stream, so the remote
+        // process never sees stdin EOF. A `cat > file` write would then wait for more input
+        // forever and waitFor() would block on it. Closing the whole AdbStream sends CLSE,
+        // which adbd delivers to the process as stdin EOF, matching the fd-close semantics the
+        // Shizuku backend already provides.
+        override val outputStream: OutputStream = object : OutputStream() {
+            private val delegate = stream.openOutputStream()
+            override fun write(b: Int) = delegate.write(b)
+            override fun write(b: ByteArray, off: Int, len: Int) = delegate.write(b, off, len)
+            override fun flush() = delegate.flush()
+            override fun close() {
+                delegate.flush()
+                stream.close()
+            }
+        }
         override val inputStream: InputStream = stream.openInputStream()
 
         override fun waitFor() {

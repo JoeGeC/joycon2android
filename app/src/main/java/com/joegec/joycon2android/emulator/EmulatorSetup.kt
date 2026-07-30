@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.emulator
 
 import android.content.pm.PackageManager
+import android.util.Log
 import com.joegec.joycon2android.dsu.emulator.DolphinDsuConfig
 import com.joegec.joycon2android.dsu.emulator.DolphinWiimoteConfig
 import com.joegec.joycon2android.dsu.DsuConfig
@@ -10,9 +11,11 @@ import com.joegec.joycon2android.gamepad.emulator.EdenGamepadConfig
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.gamepad.privileged.PrivilegedShell
 import com.joegec.joycon2android.ui.components.EmulatorOption
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 
 /**
@@ -24,6 +27,7 @@ import kotlin.coroutines.resume
 class EmulatorSetup(
     private val packageManager: PackageManager,
     private val acquireShell: (onResult: (PrivilegedShell?) -> Unit) -> Unit,
+    private val scope: CoroutineScope,
     private val gamepadPorts: () -> Map<Int, Int>,
 ) {
     val dolphinInstalled: Boolean
@@ -43,8 +47,8 @@ class EmulatorSetup(
         runCatching { packageManager.getPackageInfo(pkg, 0) }.isSuccess
 
     /** Dolphin DSU + Wii Remote mappings (DSU card). */
-    suspend fun configureDolphinDsu(players: List<PlayerState>): Boolean = withContext(Dispatchers.IO) {
-        val shell = awaitShell() ?: return@withContext false
+    suspend fun configureDolphinDsu(players: List<PlayerState>): Boolean = bounded("dsu") {
+        val shell = awaitShell() ?: return@bounded false
 
         val dsuMerged = DolphinDsuConfig.merge(shell.readText(DolphinDsuConfig.path))
         shell.writeText(DolphinDsuConfig.path, dsuMerged)
@@ -63,8 +67,8 @@ class EmulatorSetup(
 
     /** Controller mapping for the selected emulator (Gamepad card). */
     suspend fun configureGamepad(emulatorId: String, players: List<PlayerState>): Boolean =
-        withContext(Dispatchers.IO) {
-            val shell = awaitShell() ?: return@withContext false
+        bounded("gamepad") {
+            val shell = awaitShell() ?: return@bounded false
             when (emulatorId) {
                 EdenGamepadConfig.PACKAGE -> shell.writeText(
                     EdenGamepadConfig.path,
@@ -81,15 +85,45 @@ class EmulatorSetup(
             }
         }
 
+    // Shell reads/writes block on native binder/socket calls that coroutine cancellation can't
+    // interrupt, so run them on a scope that outlives the wait and abandon it on timeout — that
+    // way the "Setting up…" spinner always resolves instead of pinning if a call never returns.
+    private suspend fun bounded(tag: String, block: suspend () -> Boolean): Boolean {
+        val work = scope.async(Dispatchers.IO) {
+            runCatching { block() }
+                .onFailure { Log.w(TAG, "$tag config threw", it) }
+                .getOrDefault(false)
+        }
+        val result = withTimeoutOrNull(OPERATION_TIMEOUT_MS) { work.await() }
+        if (result == null) {
+            Log.w(TAG, "$tag config timed out after ${OPERATION_TIMEOUT_MS}ms")
+            work.cancel()
+        }
+        Log.i(TAG, "$tag config -> ${result == true}")
+        return result == true
+    }
+
     private suspend fun awaitShell(): PrivilegedShell? =
-        suspendCancellableCoroutine { cont -> acquireShell { cont.resume(it) } }
+        suspendCancellableCoroutine { cont ->
+            acquireShell { shell ->
+                Log.i(TAG, "acquired shell: ${shell != null}")
+                if (cont.isActive) cont.resume(shell)
+            }
+        }
+
+    private companion object {
+        const val TAG = "EmulatorSetup"
+        const val OPERATION_TIMEOUT_MS = 20_000L
+    }
 }
 
 private fun PrivilegedShell.readText(path: String): String? {
     val proc = shell("cat '$path' 2>/dev/null") ?: return null
     return try {
         proc.inputStream.readBytes().decodeToString().also { proc.waitFor() }
-    } catch (_: Exception) {
+            .also { Log.i("EmulatorSetup", "read $path -> ${it.length} chars") }
+    } catch (e: Exception) {
+        Log.w("EmulatorSetup", "read $path failed", e)
         null
     } finally {
         proc.destroy()
@@ -102,8 +136,10 @@ private fun PrivilegedShell.writeText(path: String, content: String): Boolean {
     return try {
         proc.outputStream.use { it.write(content.encodeToByteArray()) }
         proc.waitFor()
+        Log.i("EmulatorSetup", "wrote $path (${content.length} chars)")
         true
-    } catch (_: Exception) {
+    } catch (e: Exception) {
+        Log.w("EmulatorSetup", "write $path failed", e)
         false
     } finally {
         proc.destroy()

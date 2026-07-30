@@ -80,11 +80,25 @@ class PrivilegedAccess(
 
     fun acquire(onResult: (PrivilegedShell?) -> Unit) {
         when {
-            shizuku.isReady -> onResult(shizuku)
-            ShizukuPermissionHandler.isShizukuAvailable ->
-                ShizukuPermissionHandler.requestPermission { granted -> onResult(if (granted) shizuku else null) }
-            adb.isReady -> onResult(adb)
-            else -> onResult(null)
+            shizuku.isReady -> {
+                Log.i(TAG, "acquire: shizuku ready")
+                onResult(shizuku)
+            }
+            ShizukuPermissionHandler.isShizukuAvailable -> {
+                Log.i(TAG, "acquire: requesting shizuku permission")
+                ShizukuPermissionHandler.requestPermission { granted ->
+                    Log.i(TAG, "acquire: shizuku permission granted=$granted")
+                    onResult(if (granted) shizuku else null)
+                }
+            }
+            adb.isReady -> {
+                Log.i(TAG, "acquire: adb ready")
+                onResult(adb)
+            }
+            else -> {
+                Log.i(TAG, "acquire: no privileged access")
+                onResult(null)
+            }
         }
     }
 

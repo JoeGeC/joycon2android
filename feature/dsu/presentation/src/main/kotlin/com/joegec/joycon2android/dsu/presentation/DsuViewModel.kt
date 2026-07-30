@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -43,8 +44,13 @@ class DsuViewModel(
         if (_dolphinPhase.value == DolphinSetupPhase.WORKING) return
         viewModelScope.launch {
             _dolphinPhase.value = DolphinSetupPhase.WORKING
-            _dolphinPhase.value =
+            _dolphinPhase.value = try {
                 if (configureDolphin(players)) DolphinSetupPhase.SUCCESS else DolphinSetupPhase.FAILED
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                DolphinSetupPhase.FAILED
+            }
         }
     }
 

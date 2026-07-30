@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -63,8 +64,13 @@ class GamepadViewModel(
         if (emulatorId.isEmpty() || _setupPhase.value == DolphinSetupPhase.WORKING) return
         viewModelScope.launch {
             _setupPhase.value = DolphinSetupPhase.WORKING
-            _setupPhase.value =
+            _setupPhase.value = try {
                 if (configureGamepad(emulatorId, players)) DolphinSetupPhase.SUCCESS else DolphinSetupPhase.FAILED
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                DolphinSetupPhase.FAILED
+            }
         }
     }
 

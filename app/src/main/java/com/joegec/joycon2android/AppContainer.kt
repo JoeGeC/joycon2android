@@ -100,6 +100,7 @@ class AppContainer(context: Context) {
     val emulatorSetup = EmulatorSetup(
         appContext.packageManager,
         privilegedAccess::acquire,
+        scope = scope,
         gamepadPorts = { virtualGamepadPorts(appContext) },
     )
 
