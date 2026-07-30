@@ -71,6 +71,7 @@ private fun CenterContent(state: PlayerState, modifier: Modifier = Modifier) {
 
 @Composable
 private fun TopRow(state: PlayerState) {
+    val pressed = state.pressed
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -80,8 +81,8 @@ private fun TopRow(state: PlayerState) {
             horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            SmallButton(JoyconButton.Chat.label, JoyconButton.Chat.id in state.pressed)
-            HomeButton(state.pressed)
+            SmallButton(JoyconButton.Chat.label, JoyconButton.Chat.id in pressed)
+            HomeButton(pressed)
         }
         AnimatedVisibility(
             visible = state.rightInput.batteryVolts > 0f,
@@ -90,7 +91,7 @@ private fun TopRow(state: PlayerState) {
         ) {
             BatteryPill(state.rightInput.batteryVolts)
         }
-        SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in state.pressed)
+        SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in pressed)
     }
 }
 
@@ -98,6 +99,7 @@ private fun TopRow(state: PlayerState) {
 private fun StickAndFaceButtons(state: PlayerState) {
     val rotatedX = state.rightStickY
     val rotatedY = 4096 - state.rightStickX
+    val pressed = state.pressed
 
     Row(
         Modifier.fillMaxWidth(),
@@ -105,11 +107,11 @@ private fun StickAndFaceButtons(state: PlayerState) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            StickCard(rotatedX, rotatedY, JoyconButton.RS.id in state.pressed,
+            StickCard(rotatedX, rotatedY, JoyconButton.RS.id in pressed,
                 canvasSize = Dimens.sidewaysStickSize)
         }
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            FaceButtons(state.pressed, buttonSize = Dimens.sidewaysFaceSize, sideways = true)
+            FaceButtons(pressed, buttonSize = Dimens.sidewaysFaceSize, sideways = true)
         }
     }
 }

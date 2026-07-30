@@ -20,15 +20,16 @@ internal fun ProControllerLayout(
     onUnassign: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val pressed = state.pressed
     JoyconCard(
         accentColor = state.left?.accentColor,
         onClick = { onUnassign(state.left!!.address) },
         modifier = modifier.fillMaxWidth(),
     ) {
-        ShoulderButtons(state.pressed)
-        ButtonRow(state)
-        SticksRow(state)
-        SpecialButtons(state.pressed)
+        ShoulderButtons(pressed)
+        ButtonRow(state, pressed)
+        SticksRow(state, pressed)
+        SpecialButtons(pressed)
         SidewaysImuDisplay(state.leftInput)
     }
 }
@@ -57,38 +58,38 @@ private fun ShoulderButtons(pressed: Set<String>) {
 }
 
 @Composable
-private fun ButtonRow(state: PlayerState) {
+private fun ButtonRow(state: PlayerState, pressed: Set<String>) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in state.pressed)
+        SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in pressed)
         BatteryPill(state.leftInput.batteryVolts)
-        SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in state.pressed)
+        SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in pressed)
     }
 }
 
 @Composable
-private fun SticksRow(state: PlayerState) {
+private fun SticksRow(state: PlayerState, pressed: Set<String>) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            StickCard(state.leftStickX, state.leftStickY, JoyconButton.LS.id in state.pressed,
+            StickCard(state.leftStickX, state.leftStickY, JoyconButton.LS.id in pressed,
                 canvasSize = Dimens.sidewaysStickSize)
         }
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         ) {
-            DPad(state.pressed, buttonSize = Dimens.sidewaysDpadSize)
-            FaceButtons(state.pressed, buttonSize = Dimens.sidewaysFaceSize)
+            DPad(pressed, buttonSize = Dimens.sidewaysDpadSize)
+            FaceButtons(pressed, buttonSize = Dimens.sidewaysFaceSize)
         }
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            StickCard(state.rightStickX, state.rightStickY, JoyconButton.RS.id in state.pressed,
+            StickCard(state.rightStickX, state.rightStickY, JoyconButton.RS.id in pressed,
                 canvasSize = Dimens.sidewaysStickSize)
         }
     }

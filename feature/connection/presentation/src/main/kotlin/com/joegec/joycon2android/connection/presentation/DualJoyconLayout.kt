@@ -32,21 +32,22 @@ private fun LeftJoyconVertical(
     onUnassign: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val pressed = state.pressed
     JoyconCard(
         accentColor = state.left?.accentColor,
         onClick = { onUnassign(state.left!!.address) },
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        ShoulderButton(JoyconButton.ZL.label, JoyconButton.ZL.id in state.pressed, Modifier.fillMaxWidth())
-        ShoulderButton(JoyconButton.L.label, JoyconButton.L.id in state.pressed, Modifier.fillMaxWidth())
-        MinusBatteryRow(state.leftInput, state.pressed)
-        StickCard(state.leftStickX, state.leftStickY, JoyconButton.LS.id in state.pressed)
-        DPad(state.pressed)
+        ShoulderButton(JoyconButton.ZL.label, JoyconButton.ZL.id in pressed, Modifier.fillMaxWidth())
+        ShoulderButton(JoyconButton.L.label, JoyconButton.L.id in pressed, Modifier.fillMaxWidth())
+        MinusBatteryRow(state.leftInput, pressed)
+        StickCard(state.leftStickX, state.leftStickY, JoyconButton.LS.id in pressed)
+        DPad(pressed)
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-            CaptureButton(state.pressed)
+            CaptureButton(pressed)
         }
-        LeftRailButtons(state.pressed)
+        LeftRailButtons(pressed)
         ImuDisplay(state.leftInput)
     }
 }
@@ -57,19 +58,20 @@ private fun RightJoyconVertical(
     onUnassign: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val pressed = state.pressed
     JoyconCard(
         accentColor = state.right?.accentColor,
         onClick = { onUnassign(state.right!!.address) },
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        ShoulderButton(JoyconButton.ZR.label, JoyconButton.ZR.id in state.pressed, Modifier.fillMaxWidth())
-        ShoulderButton(JoyconButton.R.label, JoyconButton.R.id in state.pressed, Modifier.fillMaxWidth())
-        PlusBatteryRow(state.rightInput, state.pressed)
-        FaceButtons(state.pressed)
-        StickCard(state.rightStickX, state.rightStickY, JoyconButton.RS.id in state.pressed)
-        HomeButtonRow(state.pressed)
-        RightRailButtons(state.pressed)
+        ShoulderButton(JoyconButton.ZR.label, JoyconButton.ZR.id in pressed, Modifier.fillMaxWidth())
+        ShoulderButton(JoyconButton.R.label, JoyconButton.R.id in pressed, Modifier.fillMaxWidth())
+        PlusBatteryRow(state.rightInput, pressed)
+        FaceButtons(pressed)
+        StickCard(state.rightStickX, state.rightStickY, JoyconButton.RS.id in pressed)
+        HomeButtonRow(pressed)
+        RightRailButtons(pressed)
         ImuDisplay(state.rightInput)
     }
 }

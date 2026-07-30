@@ -71,12 +71,13 @@ private fun CenterContent(state: PlayerState, modifier: Modifier = Modifier) {
 
 @Composable
 private fun TopRow(state: PlayerState) {
+    val pressed = state.pressed
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in state.pressed)
+        SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in pressed)
         AnimatedVisibility(
             visible = state.leftInput.batteryVolts > 0f,
             enter = fadeIn(),
@@ -84,7 +85,7 @@ private fun TopRow(state: PlayerState) {
         ) {
             BatteryPill(state.leftInput.batteryVolts)
         }
-        CaptureButton(state.pressed)
+        CaptureButton(pressed)
     }
 }
 
@@ -92,6 +93,7 @@ private fun TopRow(state: PlayerState) {
 private fun StickAndDpad(state: PlayerState) {
     val rotatedX = 4096 - state.leftStickY
     val rotatedY = state.leftStickX
+    val pressed = state.pressed
 
     Row(
         Modifier.fillMaxWidth(),
@@ -99,11 +101,11 @@ private fun StickAndDpad(state: PlayerState) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            StickCard(rotatedX, rotatedY, JoyconButton.LS.id in state.pressed,
+            StickCard(rotatedX, rotatedY, JoyconButton.LS.id in pressed,
                 canvasSize = Dimens.sidewaysStickSize)
         }
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            DPad(state.pressed, buttonSize = Dimens.sidewaysDpadSize, sideways = true)
+            DPad(pressed, buttonSize = Dimens.sidewaysDpadSize, sideways = true)
         }
     }
 }
