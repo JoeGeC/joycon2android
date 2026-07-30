@@ -12,11 +12,14 @@ import com.joegec.joycon2android.AppContainer
 import com.joegec.joycon2android.JoyconApplication
 import com.joegec.joycon2android.ble.BlePermissionHandler
 import com.joegec.joycon2android.model.AppUiState
+import com.joegec.joycon2android.model.ConnectionViewMode
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.service.Joycon2Service
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class Joycon2ViewModel(application: Application) : AndroidViewModel(application) {
@@ -33,6 +36,9 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     private val _permissionDenied = MutableStateFlow(false)
     val permissionDenied: StateFlow<Boolean> = _permissionDenied.asStateFlow()
+
+    val viewMode: StateFlow<ConnectionViewMode> = container.observeViewMode()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ConnectionViewMode.DETAILED)
 
     // Bound only to keep the service (foreground lifetime) alive; all state is read from
     // the app-scoped container, not the binder.
@@ -89,6 +95,10 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     fun onPermissionsDenied() {
         _permissionDenied.value = true
+    }
+
+    fun setViewMode(mode: ConnectionViewMode) {
+        viewModelScope.launch { container.setViewMode(mode) }
     }
 
     /**

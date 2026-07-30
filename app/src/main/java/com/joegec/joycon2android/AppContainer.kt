@@ -4,8 +4,12 @@ import android.content.Context
 import com.joegec.joycon2android.connection.ControllerRepository
 import com.joegec.joycon2android.connection.DisconnectControllerUseCase
 import com.joegec.joycon2android.connection.Joycon2Manager
+import com.joegec.joycon2android.connection.ObserveViewModeUseCase
+import com.joegec.joycon2android.connection.SetViewModeUseCase
 import com.joegec.joycon2android.connection.StartScanUseCase
 import com.joegec.joycon2android.connection.StopScanUseCase
+import com.joegec.joycon2android.connection.ViewModePreferences
+import com.joegec.joycon2android.connection.ViewModePreferencesDataStore
 import com.joegec.joycon2android.assignment.AssignmentRepository
 import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerAssignmentManager
@@ -58,6 +62,10 @@ class AppContainer(context: Context) {
     val startScan = StartScanUseCase(controllerRepository)
     val stopScan = StopScanUseCase(controllerRepository)
     val disconnectController = DisconnectControllerUseCase(controllerRepository)
+
+    private val viewModePreferences: ViewModePreferences = ViewModePreferencesDataStore(appContext)
+    val observeViewMode = ObserveViewModeUseCase(viewModePreferences)
+    val setViewMode = SetViewModeUseCase(viewModePreferences)
 
     // --- DSU ---
     private val dsuRepository: DsuRepository = DsuServer(scope)

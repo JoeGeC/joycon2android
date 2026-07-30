@@ -41,10 +41,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.Modifier
@@ -65,7 +61,7 @@ import com.joegec.joycon2android.gamepad.presentation.AdbSetupCard
 import com.joegec.joycon2android.gamepad.presentation.AdbSetupState
 import com.joegec.joycon2android.assignment.presentation.AssignmentPanel
 import com.joegec.joycon2android.connection.presentation.CompactPlayerRow
-import com.joegec.joycon2android.connection.presentation.ConnectionViewMode
+import com.joegec.joycon2android.model.ConnectionViewMode
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
 import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
 import com.joegec.joycon2android.ui.components.EmulatorOption
@@ -110,10 +106,11 @@ fun JoyconScreen(
     onEnableNotifications: () -> Unit,
     onStartAdbPairing: () -> Unit,
     onOpenSettings: () -> Unit,
+    viewMode: ConnectionViewMode,
+    onViewModeChange: (ConnectionViewMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    var viewMode by rememberSaveable { mutableStateOf(ConnectionViewMode.DETAILED) }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -125,7 +122,7 @@ fun JoyconScreen(
                     if (state.activePlayers.isNotEmpty()) {
                         ViewModeToggle(
                             mode = viewMode,
-                            onModeChange = { viewMode = it },
+                            onModeChange = onViewModeChange,
                             modifier = Modifier.padding(end = Dimens.elementSpacing),
                         )
                     }

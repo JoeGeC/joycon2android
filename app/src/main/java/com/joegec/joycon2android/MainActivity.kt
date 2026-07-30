@@ -129,6 +129,7 @@ class MainActivity : ComponentActivity() {
                     val gamepadSetupPhase by gamepadViewModel.setupPhase.collectAsState()
                     val selectedEmulator by gamepadViewModel.selectedEmulator.collectAsState()
                     val permissionDenied by viewModel.permissionDenied.collectAsState()
+                    val viewMode by viewModel.viewMode.collectAsState()
                     val dolphinAutoAvailable = wirelessDebug.shizukuAvailable ||
                         wirelessDebug.state == AdbState.CONNECTED
 
@@ -182,6 +183,8 @@ class MainActivity : ComponentActivity() {
                         onEnableNotifications = enableNotifications,
                         onStartAdbPairing = gamepadViewModel::startAdbPairing,
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },
+                        viewMode = viewMode,
+                        onViewModeChange = viewModel::setViewMode,
                     )
                 }
             }
