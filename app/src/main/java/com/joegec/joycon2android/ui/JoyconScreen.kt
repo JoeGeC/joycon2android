@@ -569,7 +569,7 @@ private fun ConnectedContent(
         enter = fadeIn() + expandVertically(),
         exit = fadeOut() + shrinkVertically(),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
+        val gamepadCard: @Composable () -> Unit = {
             FeatureToggleCard(
                 title = stringResource(R.string.gamepad_title),
                 subtitle = stringResource(
@@ -592,14 +592,40 @@ private fun ConnectedContent(
                     )
                 }
             }
-            if (!shizukuAvailable) {
-                ShizukuSetupCard()
-            }
+        }
+        val shizukuCard: @Composable () -> Unit = { if (!shizukuAvailable) ShizukuSetupCard() }
+        val dsuCard: @Composable () -> Unit = {
             DsuCard(
                 state = dsuState,
                 onToggle = onDsuToggle,
                 onConfigureDolphin = onConfigureDolphin,
             )
+        }
+
+        if (landscape) {
+            // Two columns: the virtual gamepad and its Shizuku dependency on the left, DSU on the
+            // right — so the Shizuku card always sits directly under the gamepad it belongs to.
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
+                Column(
+                    Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
+                ) {
+                    gamepadCard()
+                    shizukuCard()
+                }
+                Column(
+                    Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
+                ) {
+                    dsuCard()
+                }
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
+                gamepadCard()
+                shizukuCard()
+                dsuCard()
+            }
         }
     }
 
