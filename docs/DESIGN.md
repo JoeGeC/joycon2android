@@ -36,10 +36,17 @@ Defined in `Color.kt`. Values are the real hex in code.
 - Battery ramp (`batteryColor()`): high `Accent` · medium `#FBBF24` · low `ErrorText`
   — **color-only today; pair with icon/text for color-blind safety**
 
-**Signature: controller shell color.** `joyconBorderColor()` reads the controller's real shell
-accent from SPI flash (packed `0xRRGGBB`), converts to HSV, boosts saturation ×1.4 (capped),
-and uses it as the card border. This is the app's identity move — the UI wears the color of the
-actual hardware. `JoyconBlue`/`JoyconRed` are the fallbacks. Lean into this, don't dilute it.
+**Signature: controller shell color.** The controller's real shell accent is read from SPI flash
+(packed `0xRRGGBB`), converted to HSV, saturation-boosted ×1.4 (capped). It drives two things:
+- `joyconBorderColor()` — the card's hairline border (colour verbatim).
+- `controllerActiveColor()` — the same hue with a brightness floor (0.72) so it reads as "lit"
+  filling a control; every live input inside a `JoyconCard` glows in it (pressed d-pad / face /
+  shoulder / rail / special buttons, and the stick ring + dot). Delivered via the
+  `LocalControllerAccent` CompositionLocal, so a dual pair lights each side in its own colour.
+  `readableInkOn()` picks dark-ink-or-white by WCAG contrast for the label on that fill.
+
+This is the app's identity move — the UI, not just its border, wears the colour of the actual
+hardware. `JoyconBlue`/`JoyconRed` and the teal `Accent` are the fallbacks. Lean into this.
 
 **Color strategy:** Committed-dark — one teal accent doing most of the lifting, with the
 controller shell color as a per-item second accent. Not restrained (the hardware color is
@@ -105,8 +112,9 @@ Ease-out curves, no bounce/elastic.
 
 1. ~~**Type hierarchy** — replace scattered `fontSize*` literals with a real Material type scale.~~
    ✅ Done: full Material 3 `Typography` + `AppType` telemetry/overline roles (see Typography above).
-2. **Personality gap** — execution still reads more "restrained tool" than "playful gaming gear";
-   lean harder on controller color, motion, and celebratory connect/assign moments.
+2. **Personality gap** — partly closed: each controller's live inputs now glow in its real shell
+   colour (see the controller-color signature above). Remaining: motion, and celebratory
+   connect/assign moments.
 3. **Contrast** — verify `TextDim` (and its 0.6/0.7 alpha variants in the IMU readouts) and the
    battery colors against WCAG AA. `TextDim` on `Background` measures ~6.4:1 (passes); the reduced-
    alpha telemetry labels are the ones to check.

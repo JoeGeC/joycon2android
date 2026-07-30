@@ -11,11 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import com.joegec.joycon2android.model.JoyconButton
-import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.ButtonOff
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
-import com.joegec.joycon2android.ui.theme.TextOnAccent
 
 @Composable
 internal fun DPad(
@@ -41,13 +39,14 @@ internal fun DPad(
 
 @Composable
 private fun DPadButton(symbol: String, on: Boolean, buttonSize: Dp, modifier: Modifier = Modifier) {
+    val accent = LocalControllerAccent.current
     Box(
         modifier
             .size(buttonSize)
             .clip(CircleShape)
-            .background(if (on) Accent else ButtonOff),
+            .background(if (on) accent.color else ButtonOff),
         contentAlignment = Alignment.Center,
     ) {
-        Text(symbol, color = if (on) TextOnAccent else TextDim, fontSize = Dimens.fontSizeDpad)
+        Text(symbol, color = if (on) accent.onColor else TextDim, fontSize = Dimens.fontSizeDpad)
     }
 }

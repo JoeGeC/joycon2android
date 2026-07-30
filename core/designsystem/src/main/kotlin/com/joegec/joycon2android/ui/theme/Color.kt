@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import android.graphics.Color as AndroidColor
 
 val Accent = Color(0xFF38E0C8)
@@ -35,11 +36,12 @@ fun batteryColor(percent: Int): Color = when {
 
 private const val ACCENT_SATURATION_BOOST = 1.4f
 
-/**
- * The controller's real shell accent color (read from SPI flash, packed as 0xRRGGBB)
- */
-fun joyconBorderColor(accentColor: Int?, fallback: Color): Color {
-    if (accentColor == null) return fallback
+// A near-black shell would vanish when it fills a pressed control on the dark UI, so the active
+// variant floors brightness while the thin border keeps the colour verbatim.
+private const val ACTIVE_VALUE_FLOOR = 0.72f
+
+// accentColor is the controller's real shell accent read from SPI flash, packed as 0xRRGGBB.
+private fun boostedShellColor(accentColor: Int, valueFloor: Float): Color {
     val hsv = FloatArray(3)
     AndroidColor.RGBToHSV(
         (accentColor shr 16) and 0xFF,
@@ -47,5 +49,31 @@ fun joyconBorderColor(accentColor: Int?, fallback: Color): Color {
         accentColor and 0xFF,
         hsv,
     )
-    return Color.hsv(hsv[0], (hsv[1] * ACCENT_SATURATION_BOOST).coerceAtMost(1f), hsv[2])
+    return Color.hsv(
+        hsv[0],
+        (hsv[1] * ACCENT_SATURATION_BOOST).coerceAtMost(1f),
+        hsv[2].coerceAtLeast(valueFloor),
+    )
+}
+
+/** The controller's shell colour as a hairline border; falls back when the shell reports no colour. */
+fun joyconBorderColor(accentColor: Int?, fallback: Color): Color =
+    if (accentColor == null) fallback else boostedShellColor(accentColor, valueFloor = 0f)
+
+/** The shell colour raised to a brightness floor so it still reads as "lit" filling a pressed control. */
+fun controllerActiveColor(accentColor: Int?, fallback: Color = JoyconDefaultColor): Color =
+    if (accentColor == null) fallback else boostedShellColor(accentColor, ACTIVE_VALUE_FLOOR)
+
+/** Dark ink or white, whichever has the higher WCAG contrast against [background]. */
+fun readableInkOn(background: Color): Color =
+    if (contrastRatio(TextOnAccent, background) >= contrastRatio(Color.White, background)) {
+        TextOnAccent
+    } else {
+        Color.White
+    }
+
+private fun contrastRatio(a: Color, b: Color): Float {
+    val lighter = maxOf(a.luminance(), b.luminance())
+    val darker = minOf(a.luminance(), b.luminance())
+    return (lighter + 0.05f) / (darker + 0.05f)
 }

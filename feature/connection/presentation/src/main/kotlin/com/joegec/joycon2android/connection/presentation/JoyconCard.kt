@@ -9,13 +9,16 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.JoyconDefaultColor
+import com.joegec.joycon2android.ui.theme.controllerActiveColor
 import com.joegec.joycon2android.ui.theme.joyconBorderColor
+import com.joegec.joycon2android.ui.theme.readableInkOn
 
 @Composable
 internal fun JoyconCard(
@@ -27,16 +30,20 @@ internal fun JoyconCard(
 ) {
     val shape = RoundedCornerShape(Dimens.cardCorner)
     val borderColor = joyconBorderColor(accentColor, JoyconDefaultColor)
+    val active = controllerActiveColor(accentColor)
+    val accent = ControllerAccent(active, readableInkOn(active))
 
-    Column(
-        modifier
-            .clip(shape)
-            .clickable(onClick = onClick)
-            .background(CardBg, shape)
-            .border(Dimens.cardBorderWidth, borderColor.copy(alpha = Dimens.cardBorderAlpha), shape)
-            .padding(Dimens.cardPadding),
-        horizontalAlignment = horizontalAlignment,
-        verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
-        content = content,
-    )
+    CompositionLocalProvider(LocalControllerAccent provides accent) {
+        Column(
+            modifier
+                .clip(shape)
+                .clickable(onClick = onClick)
+                .background(CardBg, shape)
+                .border(Dimens.cardBorderWidth, borderColor.copy(alpha = Dimens.cardBorderAlpha), shape)
+                .padding(Dimens.cardPadding),
+            horizontalAlignment = horizontalAlignment,
+            verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
+            content = content,
+        )
+    }
 }

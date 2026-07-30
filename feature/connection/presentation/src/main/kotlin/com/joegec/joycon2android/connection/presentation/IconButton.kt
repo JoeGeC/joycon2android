@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.ButtonOff
 
 @Composable
@@ -16,8 +15,9 @@ internal fun ControllerIconButton(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val accent = LocalControllerAccent.current
     Box(
-        modifier.clip(CircleShape).background(if (on) Accent else ButtonOff),
+        modifier.clip(CircleShape).background(if (on) accent.color else ButtonOff),
         contentAlignment = Alignment.Center,
     ) {
         content()

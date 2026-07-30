@@ -17,8 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.joegec.joycon2android.ui.theme.Accent
-import com.joegec.joycon2android.ui.theme.AccentDim
 import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.CrosshairColor
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -35,17 +33,25 @@ internal fun StickCard(
 ) {
     val nx = (x - 2048f) / 2048f
     val ny = (y - 2048f) / 2048f
-    val ringColor = if (pressed) Accent else AccentDim
+    val accent = LocalControllerAccent.current
+    val ringColor = if (pressed) accent.color else accent.color.copy(alpha = 0.35f)
 
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        StickCanvas(nx, ny, ringColor, pressed, canvasSize)
+        StickCanvas(nx, ny, ringColor, accent.color, pressed, canvasSize)
         Spacer(Modifier.height(6.dp))
         StickValues(x, y)
     }
 }
 
 @Composable
-private fun StickCanvas(nx: Float, ny: Float, ringColor: Color, pressed: Boolean, canvasSize: Dp) {
+private fun StickCanvas(
+    nx: Float,
+    ny: Float,
+    ringColor: Color,
+    dotColor: Color,
+    pressed: Boolean,
+    canvasSize: Dp,
+) {
     Canvas(Modifier.size(canvasSize)) {
         val r = size.minDimension / 2f
         val c = Offset(size.width / 2f, size.height / 2f)
@@ -57,7 +63,7 @@ private fun StickCanvas(nx: Float, ny: Float, ringColor: Color, pressed: Boolean
         drawLine(CrosshairColor, Offset(c.x, c.y - r), Offset(c.x, c.y + r), 1f)
 
         val dot = Offset(c.x + nx * r, c.y - ny * r)
-        drawCircle(color = Accent, radius = Dimens.stickDotRadius, center = dot)
+        drawCircle(color = dotColor, radius = Dimens.stickDotRadius, center = dot)
     }
 }
 

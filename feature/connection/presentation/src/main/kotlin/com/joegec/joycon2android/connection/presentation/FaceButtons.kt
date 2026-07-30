@@ -15,10 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.model.JoyconButton
-import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.ButtonOff
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.TextOnAccent
 
 @Composable
 internal fun FaceButtons(
@@ -45,16 +43,17 @@ internal fun FaceButtons(
 
 @Composable
 private fun FaceButton(label: String, on: Boolean, buttonSize: Dp, modifier: Modifier = Modifier) {
+    val accent = LocalControllerAccent.current
     Box(
         modifier
             .size(buttonSize)
             .clip(CircleShape)
-            .background(if (on) Accent else ButtonOff),
+            .background(if (on) accent.color else ButtonOff),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             label,
-            color = if (on) TextOnAccent else Color.White,
+            color = if (on) accent.onColor else Color.White,
             fontSize = Dimens.fontSizeFace,
             fontWeight = FontWeight.Bold,
         )

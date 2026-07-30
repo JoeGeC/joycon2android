@@ -10,23 +10,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.ButtonOff
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
-import com.joegec.joycon2android.ui.theme.TextOnAccent
 
 @Composable
 internal fun RailButton(label: String, on: Boolean, modifier: Modifier = Modifier) {
+    val accent = LocalControllerAccent.current
     Box(
         modifier
             .height(Dimens.railButtonHeight)
-            .background(if (on) Accent else ButtonOff, RoundedCornerShape(6.dp)),
+            .background(if (on) accent.color else ButtonOff, RoundedCornerShape(6.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             label,
-            color = if (on) TextOnAccent else TextDim,
+            color = if (on) accent.onColor else TextDim,
             fontSize = Dimens.fontSizeSmall,
             fontWeight = FontWeight.Bold,
         )

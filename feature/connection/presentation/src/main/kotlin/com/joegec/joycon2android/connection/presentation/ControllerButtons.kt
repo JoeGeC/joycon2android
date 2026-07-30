@@ -20,7 +20,6 @@ import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
-import com.joegec.joycon2android.ui.theme.TextOnAccent
 
 @Composable
 internal fun MinusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier: Modifier = Modifier) {
@@ -61,6 +60,7 @@ internal fun PlusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier: 
 @Composable
 internal fun CaptureButton(pressed: Set<String>, modifier: Modifier = Modifier) {
     val on = JoyconButton.Camera.id in pressed
+    val accent = LocalControllerAccent.current
     ControllerIconButton(
         on = on,
         modifier = modifier.size(Dimens.iconButtonSize),
@@ -69,7 +69,7 @@ internal fun CaptureButton(pressed: Set<String>, modifier: Modifier = Modifier) 
             Icons.Outlined.Circle,
             contentDescription = null,
             modifier = Modifier.size(Dimens.iconSizeSmall),
-            tint = if (on) TextOnAccent else TextDim,
+            tint = if (on) accent.onColor else TextDim,
         )
     }
 }
@@ -77,6 +77,7 @@ internal fun CaptureButton(pressed: Set<String>, modifier: Modifier = Modifier) 
 @Composable
 internal fun HomeButton(pressed: Set<String>, modifier: Modifier = Modifier) {
     val on = JoyconButton.Home.id in pressed
+    val accent = LocalControllerAccent.current
     ControllerIconButton(
         on = on,
         modifier = modifier.size(Dimens.iconButtonSize),
@@ -85,7 +86,7 @@ internal fun HomeButton(pressed: Set<String>, modifier: Modifier = Modifier) {
             Icons.Filled.Home,
             contentDescription = null,
             modifier = Modifier.size(Dimens.iconSizeMedium),
-            tint = if (on) TextOnAccent else TextDim,
+            tint = if (on) accent.onColor else TextDim,
         )
     }
 }
