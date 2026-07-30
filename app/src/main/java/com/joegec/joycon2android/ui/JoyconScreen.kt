@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -66,7 +68,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -98,6 +101,10 @@ import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 import kotlinx.coroutines.launch
 
+// Material 3 small top-app-bar container height; the app bar overlays the content, so screens add
+// this (plus the status-bar inset) as top clearance rather than the Scaffold reserving it.
+private val AppBarHeight = 64.dp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoyconScreen(
@@ -126,7 +133,7 @@ fun JoyconScreen(
     onViewModeChange: (ConnectionViewMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -163,7 +170,7 @@ fun JoyconScreen(
     }
 
     Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier,
         containerColor = Background,
         snackbarHost = {
             SnackbarHost(snackbarHostState) { data ->
@@ -181,28 +188,10 @@ fun JoyconScreen(
                 }
             }
         },
-        // Keep the bottom inset out of the content padding so scrollable content can pass under
-        // the nav bar; each screen re-applies it where its own content must stay clear of it.
-        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
-        topBar = {
-            TopAppBar(
-                title = { AppTitle(state, shizukuAvailable) },
-                actions = {
-                    if (state.activePlayers.isNotEmpty()) {
-                        ViewModeToggle(
-                            mode = viewMode,
-                            onModeChange = onViewModeChange,
-                            modifier = Modifier.padding(end = Dimens.elementSpacing),
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Background,
-                    scrolledContainerColor = Background,
-                ),
-                scrollBehavior = scrollBehavior,
-            )
-        },
+        // Only reserve the horizontal insets: content passes under both the status bar (as the app
+        // bar collapses on scroll) and the nav bar. Each screen re-applies those where its own
+        // content must stay clear of the system bars.
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { innerPadding ->
         val screenState = when {
             !state.anyConnected && !state.scanning -> ScreenState.IDLE
@@ -212,33 +201,40 @@ fun JoyconScreen(
 
         LaunchedEffect(screenState) {
             if (screenState == ScreenState.IDLE) {
-                scrollBehavior.state.heightOffset = 0f
+                scrollState.scrollTo(0)
             }
         }
 
-        Column(
+        // The app bar overlays the content instead of reserving space, so the scroll passes behind
+        // the transparent status bar; each screen adds the bar's height back as top clearance, and
+        // the bar itself is translated up in lockstep with the scroll so it slides away without a gap.
+        val appBarSpace = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + AppBarHeight
+        val appBarSpacePx = with(LocalDensity.current) { appBarSpace.toPx() }
+
+        Box(
             Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            KofiBanner()
-
-            Crossfade(targetState = screenState, modifier = Modifier.weight(1f), label = "screen") { target ->
+            Crossfade(targetState = screenState, modifier = Modifier.fillMaxSize(), label = "screen") { target ->
                 when (target) {
                     ScreenState.IDLE -> IdleContent(
                         state, permissionDenied, onScan, onOpenSettings,
                         Modifier
                             .fillMaxSize()
                             .padding(horizontal = Dimens.screenPaddingHorizontal)
+                            .padding(top = appBarSpace)
                             .windowInsetsPadding(WindowInsets.navigationBars),
                     )
                     ScreenState.SCANNING, ScreenState.CONNECTED -> Column(
                         Modifier
                             .fillMaxSize()
                             .padding(horizontal = Dimens.screenPaddingHorizontal)
-                            .verticalScroll(rememberScrollState()),
+                            .verticalScroll(scrollState)
+                            .padding(top = appBarSpace),
                         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
                     ) {
+                        KofiBanner()
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
                                 state, viewMode, gamepadEnabled, gamepadError, dsuState, shizukuAvailable,
@@ -254,6 +250,28 @@ fun JoyconScreen(
                     }
                 }
             }
+
+            // Overlaid so content scrolls behind it and the transparent status bar; collapses on scroll.
+            TopAppBar(
+                title = { AppTitle(state, shizukuAvailable) },
+                actions = {
+                    if (state.activePlayers.isNotEmpty()) {
+                        ViewModeToggle(
+                            mode = viewMode,
+                            onModeChange = onViewModeChange,
+                            modifier = Modifier.padding(end = Dimens.elementSpacing),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Background,
+                    scrolledContainerColor = Background,
+                ),
+                modifier = Modifier.graphicsLayer {
+                    translationY = if (screenState == ScreenState.IDLE) 0f
+                    else -scrollState.value.toFloat().coerceIn(0f, appBarSpacePx)
+                },
+            )
         }
     }
 }
@@ -327,6 +345,7 @@ private fun IdleContent(
         modifier = modifier.padding(bottom = Dimens.screenPaddingVertical),
         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
     ) {
+        KofiBanner()
         ErrorBox(text = state.error)
         ErrorBox(
             text = if (permissionDenied) stringResource(R.string.error_permissions_denied) else null,
@@ -393,8 +412,6 @@ private fun KofiBanner(modifier: Modifier = Modifier) {
 
     Row(
         modifier
-            .padding(horizontal = Dimens.screenPaddingHorizontal)
-            .padding(bottom = Dimens.sectionSpacing)
             .fillMaxWidth()
             .clip(shape)
             .border(Dimens.cardBorderWidth, gradientBorder, shape)
