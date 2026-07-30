@@ -512,19 +512,28 @@ private fun ConnectedContent(
     }
 
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    if (landscape && viewMode == ConnectionViewMode.DETAILED) {
-        // Two players per row, each shrunk so a full controller is more likely to fit the height.
+    if (landscape) {
+        // Two players per row to use the wide landscape space; detailed players are shrunk so a
+        // full controller is more likely to fit the short height, compact rows fit as-is.
         state.activePlayers.chunked(2).forEach { rowPlayers ->
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
                 rowPlayers.forEach { playerState ->
-                    PlayerView(
-                        playerState = playerState,
-                        onUnassign = onUnassign,
-                        onRemovePlayer = { onRemovePlayer(playerState) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .scaleLayout(LandscapePlayerScale),
-                    )
+                    when (viewMode) {
+                        ConnectionViewMode.DETAILED -> PlayerView(
+                            playerState = playerState,
+                            onUnassign = onUnassign,
+                            onRemovePlayer = { onRemovePlayer(playerState) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .scaleLayout(LandscapePlayerScale),
+                        )
+                        ConnectionViewMode.COMPACT -> CompactPlayerRow(
+                            playerState = playerState,
+                            onUnassign = onUnassign,
+                            onRemovePlayer = { onRemovePlayer(playerState) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
                 if (rowPlayers.size == 1) Spacer(Modifier.weight(1f))
             }
