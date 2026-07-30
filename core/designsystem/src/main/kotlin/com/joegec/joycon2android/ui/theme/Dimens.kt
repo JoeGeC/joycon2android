@@ -15,6 +15,7 @@ object Dimens {
     val dualJoyconGap = 10.dp
 
     val buttonCorner = 12.dp
+    val controllerButtonCorner = 6.dp // tighter corner for the on-controller button glyphs
     val buttonHeight = 44.dp
     val buttonHorizontalPadding = 8.dp
     val buttonHeightLarge = 52.dp
@@ -40,6 +41,10 @@ object Dimens {
     val stickDotRadius = 8f
     val stickRingStroke = 2f
     val stickRingStrokePressed = 3f
+    val crosshairStroke = 1f
+    val stickIdleRingAlpha = 0.35f // idle stick ring: a dim wash of the controller colour
+    val stickValueGap = 6.dp
+    val stickAxisGap = 2.dp
 
     val legendOverhang = 8.dp
     val legendInset = 12.dp

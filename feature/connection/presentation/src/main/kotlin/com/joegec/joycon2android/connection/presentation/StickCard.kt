@@ -16,7 +16,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.CrosshairColor
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -35,11 +34,11 @@ internal fun StickCard(
     val nx = (x - 2048f) / 2048f
     val ny = (y - 2048f) / 2048f
     val accent = LocalControllerAccent.current
-    val ringColor = if (pressed) accent.color else accent.color.copy(alpha = 0.35f)
+    val ringColor = if (pressed) accent.color else accent.color.copy(alpha = Dimens.stickIdleRingAlpha)
 
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         StickCanvas(nx, ny, ringColor, accent.color, pressed, canvasSize)
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(Dimens.stickValueGap))
         StickValues(x, y)
     }
 }
@@ -60,8 +59,8 @@ private fun StickCanvas(
 
         drawCircle(color = StickBg, radius = r, center = c)
         drawCircle(color = ringColor, radius = r, center = c, style = Stroke(strokeWidth))
-        drawLine(CrosshairColor, Offset(c.x - r, c.y), Offset(c.x + r, c.y), 1f)
-        drawLine(CrosshairColor, Offset(c.x, c.y - r), Offset(c.x, c.y + r), 1f)
+        drawLine(CrosshairColor, Offset(c.x - r, c.y), Offset(c.x + r, c.y), Dimens.crosshairStroke)
+        drawLine(CrosshairColor, Offset(c.x, c.y - r), Offset(c.x, c.y + r), Dimens.crosshairStroke)
 
         val dot = Offset(c.x + nx * r, c.y - ny * r)
         drawCircle(color = dotColor, radius = Dimens.stickDotRadius, center = dot)
@@ -78,7 +77,7 @@ private fun StickValues(x: Int, y: Int) {
 
 @Composable
 private fun StickAxisValue(axis: String, value: Int) {
-    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.stickAxisGap)) {
         Text(
             axis,
             color = TextDim,

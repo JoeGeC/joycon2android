@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.ui.theme.ButtonOff
 import com.joegec.joycon2android.ui.theme.Dimens
 
@@ -20,7 +19,7 @@ internal fun RailButton(label: String, on: Boolean, modifier: Modifier = Modifie
     Box(
         modifier
             .height(Dimens.railButtonHeight)
-            .background(if (on) accent.color else ButtonOff, RoundedCornerShape(6.dp)),
+            .background(if (on) accent.color else ButtonOff, RoundedCornerShape(Dimens.controllerButtonCorner)),
         contentAlignment = Alignment.Center,
     ) {
         Text(
