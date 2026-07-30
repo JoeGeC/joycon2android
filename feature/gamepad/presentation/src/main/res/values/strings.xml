@@ -1,4 +1,6 @@
 <resources>
     <string name="shizuku_setup_title">Shizuku required</string>
     <string name="shizuku_setup_body">The virtual gamepad needs Shizuku for privileged access. Install the Shizuku app, start its service, then grant this app permission when prompted.</string>
+    <string name="shizuku_setup_link_description">Open the Shizuku GitHub page</string>
+    <string name="shizuku_url" translatable="false">https://github.com/RikkaApps/Shizuku</string>
 </resources>
