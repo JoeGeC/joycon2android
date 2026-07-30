@@ -1,10 +1,4 @@
 <resources>
-    <string name="adb_title">Wireless Debugging</string>
-    <string name="adb_subtitle_disconnected">Set up to use the gamepad without Shizuku</string>
-    <string name="adb_subtitle_working">Connecting…</string>
-    <string name="adb_subtitle_connected">Connected — virtual gamepad ready</string>
-    <string name="adb_instructions">Tap Pair device, turn on Wireless debugging, then \"Pair device with pairing code\". A notification will ask for the code — keep Settings open while you enter it. After a reboot it reconnects on its own once Wireless debugging is back on.</string>
-    <string name="adb_pair_device">Pair device</string>
-    <string name="adb_notifications_required">Pairing needs notifications — the code is entered from a notification while Settings stays open.</string>
-    <string name="adb_enable_notifications">Enable notifications</string>
+    <string name="shizuku_setup_title">Shizuku required</string>
+    <string name="shizuku_setup_body">The virtual gamepad needs Shizuku for privileged access. Install the Shizuku app, start its service, then grant this app permission when prompted.</string>
 </resources>

@@ -1,11 +1,6 @@
 package com.joegec.joycon2android
 
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,17 +11,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.joegec.joycon2android.dsu.presentation.DsuViewModel
 import com.joegec.joycon2android.gamepad.presentation.GamepadViewModel
-import com.joegec.joycon2android.gamepad.wirelessdebug.AdbState
 import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
-import com.joegec.joycon2android.gamepad.presentation.AdbSetupState
 import com.joegec.joycon2android.dsu.presentation.DsuCardState
 import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.Joycon2AndroidTheme
@@ -54,29 +45,20 @@ class MainActivity : ComponentActivity() {
                 val c = (application as JoyconApplication).container
                 GamepadViewModel(
                     c.observeGamepadStatus,
-                    c.observeWirelessDebugStatus,
+                    c.observeShizukuAvailability,
                     c.enableGamepad,
                     c.disableGamepad,
-                    c.startPairing,
                     gamepadEmulators = c.emulatorSetup.gamepadEmulators(),
                     configureGamepad = c.emulatorSetup::configureGamepad,
                 )
             }
         }
     }
-    private val notificationsGranted = mutableStateOf(true)
-    private var notificationAsked = false
 
     override fun onResume() {
         super.onResume()
         viewModel.recheckPermissions()
-        notificationsGranted.value = hasNotificationPermission()
     }
-
-    private fun hasNotificationPermission(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
-            PackageManager.PERMISSION_GRANTED
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -95,43 +77,18 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // The wireless-debugging path prompts for the pairing code via a notification
-        val notificationPermLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { granted -> notificationsGranted.value = granted }
-
-        notificationsGranted.value = hasNotificationPermission()
-
-        // Only requested when the user opts into the wireless-debugging path, never on launch
-        val enableNotifications = {
-            val perm = Manifest.permission.POST_NOTIFICATIONS
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (notificationAsked && !shouldShowRequestPermissionRationale(perm)) {
-                    startActivity(
-                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
-                    )
-                } else {
-                    notificationAsked = true
-                    notificationPermLauncher.launch(perm)
-                }
-            }
-        }
-
         setContent {
             Joycon2AndroidTheme {
                 Surface(Modifier.fillMaxSize(), color = Background) {
                     val state by viewModel.uiState.collectAsState()
                     val gamepadStatus by gamepadViewModel.status.collectAsState()
-                    val wirelessDebug by gamepadViewModel.wirelessDebug.collectAsState()
+                    val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
                     val dsuStatus by dsuViewModel.status.collectAsState()
                     val dolphinPhase by dsuViewModel.dolphinPhase.collectAsState()
                     val gamepadSetupPhase by gamepadViewModel.setupPhase.collectAsState()
                     val selectedEmulator by gamepadViewModel.selectedEmulator.collectAsState()
                     val permissionDenied by viewModel.permissionDenied.collectAsState()
                     val viewMode by viewModel.viewMode.collectAsState()
-                    val dolphinAutoAvailable = wirelessDebug.shizukuAvailable ||
-                        wirelessDebug.state == AdbState.CONNECTED
 
                     // A written emulator config is keyed to the current assignment; once it changes,
                     // the Done/Failed state is stale, so reset both setup buttons.
@@ -154,14 +111,8 @@ class MainActivity : ComponentActivity() {
                             address = dsuStatus.address,
                             showSlotLimitNote = state.activePlayers.any { it.player.index > 4 },
                             dolphinInstalled = dsuViewModel.dolphinInstalled,
-                            dolphinAutoConfigAvailable = dolphinAutoAvailable,
+                            dolphinAutoConfigAvailable = shizukuAvailable,
                             dolphinPhase = dolphinPhase,
-                        ),
-                        adbSetup = AdbSetupState(
-                            needed = !wirelessDebug.shizukuAvailable,
-                            state = wirelessDebug.state,
-                            error = wirelessDebug.error,
-                            notificationsGranted = notificationsGranted.value,
                         ),
                         permissionDenied = permissionDenied,
                         onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
@@ -175,14 +126,13 @@ class MainActivity : ComponentActivity() {
                         gamepadEmulators = gamepadViewModel.gamepadEmulators,
                         selectedGamepadEmulator = selectedEmulator,
                         onSelectGamepadEmulator = gamepadViewModel::selectEmulator,
-                        gamepadSetupAvailable = dolphinAutoAvailable,
+                        gamepadSetupAvailable = shizukuAvailable,
                         gamepadSetupPhase = gamepadSetupPhase,
                         onConfigureGamepad = { gamepadViewModel.configureGamepad(state.activePlayers) },
                         onDsuToggle = dsuViewModel::toggle,
                         onConfigureDolphin = { dsuViewModel.configureDolphinDsu(state.activePlayers) },
-                        onEnableNotifications = enableNotifications,
-                        onStartAdbPairing = gamepadViewModel::startAdbPairing,
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },
+                        shizukuAvailable = shizukuAvailable,
                         viewMode = viewMode,
                         onViewModeChange = viewModel::setViewMode,
                     )
@@ -190,5 +140,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 }

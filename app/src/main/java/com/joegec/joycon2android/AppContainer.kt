@@ -32,16 +32,11 @@ import com.joegec.joycon2android.gamepad.GamepadManager
 import com.joegec.joycon2android.gamepad.GamepadOutput
 import com.joegec.joycon2android.gamepad.GamepadRepository
 import com.joegec.joycon2android.gamepad.ObserveGamepadStatusUseCase
-import com.joegec.joycon2android.gamepad.wirelessdebug.ObserveWirelessDebugStatusUseCase
+import com.joegec.joycon2android.gamepad.ObserveShizukuAvailabilityUseCase
 import com.joegec.joycon2android.gamepad.OnPlayerAssignedUseCase
 import com.joegec.joycon2android.gamepad.OnPlayerUnassignedUseCase
 import com.joegec.joycon2android.gamepad.privileged.PrivilegedAccess
 import com.joegec.joycon2android.gamepad.PushGamepadStateUseCase
-import com.joegec.joycon2android.gamepad.wirelessdebug.StartPairingUseCase
-import com.joegec.joycon2android.gamepad.wirelessdebug.StartWirelessDiscoveryUseCase
-import com.joegec.joycon2android.gamepad.wirelessdebug.StopWirelessDiscoveryUseCase
-import com.joegec.joycon2android.gamepad.wirelessdebug.SubmitPairingCodeUseCase
-import com.joegec.joycon2android.gamepad.wirelessdebug.WirelessDebugRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -80,17 +75,9 @@ class AppContainer(context: Context) {
     val assignmentRepository: AssignmentRepository = PlayerAssignmentManager()
 
     // --- Gamepad + privileged access ---
-    private val privilegedAccess = PrivilegedAccess(appContext, scope)
+    private val privilegedAccess = PrivilegedAccess()
     private val gamepadRepository: GamepadRepository =
         GamepadOutput(scope, GamepadManager(scope, appContext), privilegedAccess::acquire)
-    private val wirelessDebugRepository: WirelessDebugRepository = privilegedAccess
-
-    init {
-        // Connecting clears a stale "no privileged access" error; a revoked link kills the
-        // relay socket, so drop the gamepad. Both are within the gamepad feature.
-        privilegedAccess.onConnected = { gamepadRepository.clearError() }
-        privilegedAccess.onConnectionLost = { gamepadRepository.disable() }
-    }
 
     val enableGamepad = EnableGamepadUseCase(gamepadRepository)
     val disableGamepad = DisableGamepadUseCase(gamepadRepository)
@@ -99,11 +86,7 @@ class AppContainer(context: Context) {
     val onPlayerUnassigned = OnPlayerUnassignedUseCase(gamepadRepository)
     val observeGamepadStatus = ObserveGamepadStatusUseCase(gamepadRepository)
 
-    val startWirelessDiscovery = StartWirelessDiscoveryUseCase(wirelessDebugRepository)
-    val stopWirelessDiscovery = StopWirelessDiscoveryUseCase(wirelessDebugRepository)
-    val startPairing = StartPairingUseCase(wirelessDebugRepository)
-    val submitPairingCode = SubmitPairingCodeUseCase(wirelessDebugRepository)
-    val observeWirelessDebugStatus = ObserveWirelessDebugStatusUseCase(wirelessDebugRepository)
+    val observeShizukuAvailability = ObserveShizukuAvailabilityUseCase(privilegedAccess)
 
     val emulatorSetup = EmulatorSetup(
         appContext.packageManager,

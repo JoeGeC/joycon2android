@@ -11,7 +11,4 @@ dependencies {
     implementation(project(":core:model"))
     api(libs.shizuku.api)
     api(libs.shizuku.provider)
-    implementation(libs.libadb.android)
-    implementation(libs.sun.security.android)
-    implementation(libs.conscrypt.android)
 }

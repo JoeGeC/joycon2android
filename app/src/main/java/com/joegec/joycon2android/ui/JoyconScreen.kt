@@ -56,9 +56,7 @@ import androidx.compose.ui.unit.sp
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.PlayerNumber
-import com.joegec.joycon2android.gamepad.wirelessdebug.AdbState
-import com.joegec.joycon2android.gamepad.presentation.AdbSetupCard
-import com.joegec.joycon2android.gamepad.presentation.AdbSetupState
+import com.joegec.joycon2android.gamepad.presentation.ShizukuSetupCard
 import com.joegec.joycon2android.assignment.presentation.AssignmentPanel
 import com.joegec.joycon2android.connection.presentation.CompactPlayerRow
 import com.joegec.joycon2android.model.ConnectionViewMode
@@ -87,7 +85,7 @@ fun JoyconScreen(
     gamepadEnabled: Boolean,
     gamepadError: String?,
     dsuState: DsuCardState,
-    adbSetup: AdbSetupState,
+    shizukuAvailable: Boolean,
     permissionDenied: Boolean,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
@@ -103,8 +101,6 @@ fun JoyconScreen(
     onConfigureGamepad: () -> Unit,
     onDsuToggle: (Boolean) -> Unit,
     onConfigureDolphin: () -> Unit,
-    onEnableNotifications: () -> Unit,
-    onStartAdbPairing: () -> Unit,
     onOpenSettings: () -> Unit,
     viewMode: ConnectionViewMode,
     onViewModeChange: (ConnectionViewMode) -> Unit,
@@ -117,7 +113,7 @@ fun JoyconScreen(
         containerColor = Background,
         topBar = {
             TopAppBar(
-                title = { AppTitle(state, adbSetup) },
+                title = { AppTitle(state, shizukuAvailable) },
                 actions = {
                     if (state.activePlayers.isNotEmpty()) {
                         ViewModeToggle(
@@ -171,12 +167,11 @@ fun JoyconScreen(
                     ) {
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
-                                state, viewMode, gamepadEnabled, gamepadError, dsuState, adbSetup,
+                                state, viewMode, gamepadEnabled, gamepadError, dsuState, shizukuAvailable,
                                 gamepadEmulators, selectedGamepadEmulator, onSelectGamepadEmulator,
                                 gamepadSetupAvailable, gamepadSetupPhase, onConfigureGamepad,
                                 onScan, onDisconnectAll, onAssign, onUnassign, onDisconnect,
                                 onGamepadToggle, onDsuToggle, onConfigureDolphin,
-                                onEnableNotifications, onStartAdbPairing,
                             )
                             else -> ScanningContent(state)
                         }
@@ -188,7 +183,7 @@ fun JoyconScreen(
 }
 
 @Composable
-private fun AppTitle(state: AppUiState, adbSetup: AdbSetupState) {
+private fun AppTitle(state: AppUiState, shizukuAvailable: Boolean) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         verticalAlignment = Alignment.CenterVertically,
@@ -206,22 +201,15 @@ private fun AppTitle(state: AppUiState, adbSetup: AdbSetupState) {
                 letterSpacing = 2.sp,
                 fontWeight = FontWeight.Medium,
             )
-            PrivilegedAccessStatus(adbSetup)
+            PrivilegedAccessStatus(shizukuAvailable)
         }
     }
 }
 
-// Shizuku and wireless debugging are interchangeable backends for the privileged
-// /dev/uhid access the gamepad needs; Shizuku needs no in-app setup, so when it's the
-// active backend we surface it as already connected.
+// Shizuku is the privileged backend for the /dev/uhid access the gamepad needs.
 @Composable
-private fun PrivilegedAccessStatus(adbSetup: AdbSetupState) {
-    val (labelRes, connected) = if (adbSetup.needed) {
-        R.string.status_wireless_debug to (adbSetup.state == AdbState.CONNECTED)
-    } else {
-        R.string.status_shizuku to true
-    }
-    val color = if (connected) Accent else TextDim
+private fun PrivilegedAccessStatus(shizukuAvailable: Boolean) {
+    val color = if (shizukuAvailable) Accent else TextDim
     Row(
         horizontalArrangement = Arrangement.spacedBy(Dimens.statusDotGap),
         verticalAlignment = Alignment.CenterVertically,
@@ -232,7 +220,7 @@ private fun PrivilegedAccessStatus(adbSetup: AdbSetupState) {
                 .background(color, CircleShape)
         )
         Text(
-            stringResource(labelRes),
+            stringResource(R.string.status_shizuku),
             color = color,
             fontSize = Dimens.fontSizeStatus,
             letterSpacing = 2.sp,
@@ -372,7 +360,7 @@ private fun ConnectedContent(
     gamepadEnabled: Boolean,
     gamepadError: String?,
     dsuState: DsuCardState,
-    adbSetup: AdbSetupState,
+    shizukuAvailable: Boolean,
     gamepadEmulators: List<EmulatorOption>,
     selectedGamepadEmulator: String,
     onSelectGamepadEmulator: (String) -> Unit,
@@ -387,8 +375,6 @@ private fun ConnectedContent(
     onGamepadToggle: (Boolean) -> Unit,
     onDsuToggle: (Boolean) -> Unit,
     onConfigureDolphin: () -> Unit,
-    onEnableNotifications: () -> Unit,
-    onStartAdbPairing: () -> Unit,
 ) {
     AnimatedVisibility(
         visible = state.unassignedJoycons.isNotEmpty(),
@@ -453,12 +439,8 @@ private fun ConnectedContent(
                     )
                 }
             }
-            if (adbSetup.needed && adbSetup.state != AdbState.CONNECTED) {
-                AdbSetupCard(
-                    state = adbSetup,
-                    onEnableNotifications = onEnableNotifications,
-                    onStartPairing = onStartAdbPairing,
-                )
+            if (!shizukuAvailable) {
+                ShizukuSetupCard()
             }
             DsuCard(
                 state = dsuState,

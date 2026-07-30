@@ -14,5 +14,4 @@ interface GamepadRepository {
     fun push(players: List<PlayerState>)
     fun onPlayerAssigned(player: PlayerNumber)
     fun onPlayerUnassigned(player: PlayerNumber)
-    fun clearError()
 }

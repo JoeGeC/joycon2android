@@ -94,7 +94,7 @@ Packages are **feature-rooted**, mirroring the module split: `com.joegec.joycon2
 for a feature's domain + data, and `com.joegec.joycon2android.<feature>.presentation` for its
 ViewModel + composables. A crowded package is split **by concern, not layer** into sub-packages
 within the same module — e.g. `gamepad` (relay output) / `gamepad.privileged` (shell access) /
-`gamepad.wirelessdebug` (ADB pairing) / `gamepad.emulator` (emulator config), and `dsu` /
+`gamepad.emulator` (emulator config), and `dsu` /
 `dsu.motion` / `dsu.dolphin`. Each module's `namespace` matches its package root so generated `R`
 lands there. `:core:designsystem` solely owns `com.joegec.joycon2android.ui.components` / `ui.theme`
 (the shared design system); no feature adds to those.
@@ -121,7 +121,7 @@ off `AppContainer`. This keeps the ViewModel class dependent only on its domain 
 `:app`.
 
 - `DsuViewModel` — DSU status + enable toggle.
-- `GamepadViewModel` — gamepad status + wireless-debug status + pairing.
+- `GamepadViewModel` — gamepad status + Shizuku availability.
 - `Joycon2ViewModel` (in `:app`) — the app-level host: the coordinator's session `uiState`
   (genuinely cross-feature), BLE permissions, scan/assign/disconnect, and the service binding.
 

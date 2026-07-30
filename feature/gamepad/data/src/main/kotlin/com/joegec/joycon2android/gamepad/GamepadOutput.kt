@@ -34,7 +34,7 @@ class GamepadOutput(
                 shell = granted
                 scope.launch { startOutput(granted, players) }
             } else {
-                _error.value = "No privileged access — set up Shizuku or wireless debugging"
+                _error.value = "No privileged access — set up Shizuku"
             }
         }
     }
@@ -46,10 +46,6 @@ class GamepadOutput(
     }
 
     fun destroyAll() = gamepadManager.destroyAll()
-
-    override fun clearError() {
-        _error.value = null
-    }
 
     override fun push(players: List<PlayerState>) {
         if (!_enabled.value) return

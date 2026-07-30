@@ -21,9 +21,9 @@
         tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- DSU (cemuhook) UDP server + in-app ADB wireless debugging client -->
+    <!-- DSU (cemuhook) UDP server -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Pairing-code prompt for the wireless-debugging path -->
+    <!-- Foreground-service notification while a Joy-Con is connected -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Detect emulators so we can offer to write their config (Android 11+ package visibility) -->
@@ -57,10 +57,6 @@
             android:name=".service.Joycon2Service"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
-
-        <receiver
-            android:name=".adb.AdbPairingReceiver"
-            android:exported="false" />
 
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
