@@ -46,9 +46,9 @@ fun EmulatorAutoSetup(
                 )
                 DolphinSetupButton(phase, setupLabel, onSetUp, modifier = Modifier.weight(1f))
             }
-            if (phase == DolphinSetupPhase.FAILED) {
+            if (phase.isFailure) {
                 Spacer(Modifier.height(Dimens.elementSpacing))
-                DolphinSetupFailedText()
+                DolphinSetupMessage(phase)
             }
         }
     }

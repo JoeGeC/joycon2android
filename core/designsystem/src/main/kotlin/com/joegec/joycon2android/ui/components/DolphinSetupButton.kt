@@ -51,10 +51,18 @@ fun DolphinSetupButton(
     }
 }
 
+val DolphinSetupPhase.isFailure: Boolean
+    get() = this == DolphinSetupPhase.FAILED || this == DolphinSetupPhase.NO_ACCESS
+
 @Composable
-fun DolphinSetupFailedText(modifier: Modifier = Modifier) {
+fun DolphinSetupMessage(phase: DolphinSetupPhase, modifier: Modifier = Modifier) {
+    val message = when (phase) {
+        DolphinSetupPhase.NO_ACCESS -> R.string.dolphin_setup_no_access
+        DolphinSetupPhase.FAILED -> R.string.dolphin_setup_failed
+        else -> return
+    }
     Text(
-        stringResource(R.string.dolphin_setup_failed),
+        stringResource(message),
         color = ErrorText,
         fontSize = Dimens.fontSizeSmall,
         modifier = modifier,

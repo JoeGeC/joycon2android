@@ -8,6 +8,7 @@ import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.emulatorconfig.DolphinPaths
 import com.joegec.joycon2android.gamepad.emulator.DolphinGcpadConfig
 import com.joegec.joycon2android.gamepad.emulator.EdenGamepadConfig
+import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.gamepad.privileged.PrivilegedShell
 import com.joegec.joycon2android.ui.components.EmulatorOption
@@ -47,8 +48,8 @@ class EmulatorSetup(
         runCatching { packageManager.getPackageInfo(pkg, 0) }.isSuccess
 
     /** Dolphin DSU + Wii Remote mappings (DSU card). */
-    suspend fun configureDolphinDsu(players: List<PlayerState>): Boolean = bounded("dsu") {
-        val shell = awaitShell() ?: return@bounded false
+    suspend fun configureDolphinDsu(players: List<PlayerState>): EmulatorSetupResult = bounded("dsu") {
+        val shell = awaitShell() ?: return@bounded EmulatorSetupResult.NO_PRIVILEGED_ACCESS
 
         val dsuMerged = DolphinDsuConfig.merge(shell.readText(DolphinDsuConfig.path))
         shell.writeText(DolphinDsuConfig.path, dsuMerged)
@@ -62,14 +63,14 @@ class EmulatorSetup(
             DolphinWiimoteConfig.merge(shell.readText(DolphinWiimoteConfig.path), players),
         )
 
-        dsuOk && wiimoteOk
+        if (dsuOk && wiimoteOk) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
     }
 
     /** Controller mapping for the selected emulator (Gamepad card). */
-    suspend fun configureGamepad(emulatorId: String, players: List<PlayerState>): Boolean =
+    suspend fun configureGamepad(emulatorId: String, players: List<PlayerState>): EmulatorSetupResult =
         bounded("gamepad") {
-            val shell = awaitShell() ?: return@bounded false
-            when (emulatorId) {
+            val shell = awaitShell() ?: return@bounded EmulatorSetupResult.NO_PRIVILEGED_ACCESS
+            val written = when (emulatorId) {
                 EdenGamepadConfig.PACKAGE -> shell.writeText(
                     EdenGamepadConfig.path,
                     EdenGamepadConfig.merge(shell.readText(EdenGamepadConfig.path), players, gamepadPorts()),
@@ -83,24 +84,26 @@ class EmulatorSetup(
                     mappingsOk && coreOk
                 }
             }
+            if (written) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
         }
 
     // Shell reads/writes block on native binder/socket calls that coroutine cancellation can't
     // interrupt, so run them on a scope that outlives the wait and abandon it on timeout — that
     // way the "Setting up…" spinner always resolves instead of pinning if a call never returns.
-    private suspend fun bounded(tag: String, block: suspend () -> Boolean): Boolean {
+    private suspend fun bounded(tag: String, block: suspend () -> EmulatorSetupResult): EmulatorSetupResult {
         val work = scope.async(Dispatchers.IO) {
             runCatching { block() }
                 .onFailure { Log.w(TAG, "$tag config threw", it) }
-                .getOrDefault(false)
+                .getOrDefault(EmulatorSetupResult.FAILED)
         }
         val result = withTimeoutOrNull(OPERATION_TIMEOUT_MS) { work.await() }
         if (result == null) {
             Log.w(TAG, "$tag config timed out after ${OPERATION_TIMEOUT_MS}ms")
             work.cancel()
         }
-        Log.i(TAG, "$tag config -> ${result == true}")
-        return result == true
+        val outcome = result ?: EmulatorSetupResult.FAILED
+        Log.i(TAG, "$tag config -> $outcome")
+        return outcome
     }
 
     private suspend fun awaitShell(): PrivilegedShell? =

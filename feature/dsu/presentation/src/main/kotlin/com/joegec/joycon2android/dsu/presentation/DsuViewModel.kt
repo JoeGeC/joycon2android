@@ -6,6 +6,7 @@ import com.joegec.joycon2android.dsu.DisableDsuUseCase
 import com.joegec.joycon2android.dsu.DsuStatus
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
+import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase // shared, in :core:designsystem
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,7 @@ class DsuViewModel(
     private val enableDsu: EnableDsuUseCase,
     private val disableDsu: DisableDsuUseCase,
     val dolphinInstalled: Boolean = false,
-    private val configureDolphin: suspend (List<PlayerState>) -> Boolean = { false },
+    private val configureDolphin: suspend (List<PlayerState>) -> EmulatorSetupResult = { EmulatorSetupResult.FAILED },
 ) : ViewModel() {
 
     val status: StateFlow<DsuStatus> = observeDsuStatus()
@@ -45,7 +46,7 @@ class DsuViewModel(
         viewModelScope.launch {
             _dolphinPhase.value = DolphinSetupPhase.WORKING
             _dolphinPhase.value = try {
-                if (configureDolphin(players)) DolphinSetupPhase.SUCCESS else DolphinSetupPhase.FAILED
+                configureDolphin(players).toPhase()
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
@@ -57,4 +58,10 @@ class DsuViewModel(
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
     }
+}
+
+private fun EmulatorSetupResult.toPhase() = when (this) {
+    EmulatorSetupResult.SUCCESS -> DolphinSetupPhase.SUCCESS
+    EmulatorSetupResult.NO_PRIVILEGED_ACCESS -> DolphinSetupPhase.NO_ACCESS
+    EmulatorSetupResult.FAILED -> DolphinSetupPhase.FAILED
 }

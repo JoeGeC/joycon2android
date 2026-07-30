@@ -2,6 +2,7 @@ package com.joegec.joycon2android.gamepad.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.gamepad.DisableGamepadUseCase
 import com.joegec.joycon2android.gamepad.EnableGamepadUseCase
@@ -25,7 +26,7 @@ class GamepadViewModel(
     private val enableGamepad: EnableGamepadUseCase,
     private val disableGamepad: DisableGamepadUseCase,
     val gamepadEmulators: List<EmulatorOption> = emptyList(),
-    private val configureGamepad: suspend (emulatorId: String, players: List<PlayerState>) -> Boolean = { _, _ -> false },
+    private val configureGamepad: suspend (emulatorId: String, players: List<PlayerState>) -> EmulatorSetupResult = { _, _ -> EmulatorSetupResult.FAILED },
 ) : ViewModel() {
 
     val status: StateFlow<GamepadStatus> = observeGamepadStatus()
@@ -60,7 +61,7 @@ class GamepadViewModel(
         viewModelScope.launch {
             _setupPhase.value = DolphinSetupPhase.WORKING
             _setupPhase.value = try {
-                if (configureGamepad(emulatorId, players)) DolphinSetupPhase.SUCCESS else DolphinSetupPhase.FAILED
+                configureGamepad(emulatorId, players).toPhase()
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
@@ -72,4 +73,10 @@ class GamepadViewModel(
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
     }
+}
+
+private fun EmulatorSetupResult.toPhase() = when (this) {
+    EmulatorSetupResult.SUCCESS -> DolphinSetupPhase.SUCCESS
+    EmulatorSetupResult.NO_PRIVILEGED_ACCESS -> DolphinSetupPhase.NO_ACCESS
+    EmulatorSetupResult.FAILED -> DolphinSetupPhase.FAILED
 }
