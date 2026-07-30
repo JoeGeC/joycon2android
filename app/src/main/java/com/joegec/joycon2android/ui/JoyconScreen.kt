@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.ui
 
+import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -68,7 +69,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -100,10 +104,39 @@ import com.joegec.joycon2android.ui.theme.JoyconRed
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 // Material 3 small top-app-bar container height; the app bar overlays the content, so screens add
 // this (plus the status-bar inset) as top clearance rather than the Scaffold reserving it.
 private val AppBarHeight = 64.dp
+
+// Landscape packs two players per row, so each detailed controller is shrunk to help a full player
+// fit the short landscape height.
+private const val LandscapePlayerScale = 0.7f
+
+/**
+ * Lays the content out as if it had 1/[scale] the space, then draws it scaled down and reports the
+ * smaller size — shrinking the whole controller (buttons, labels, spacing) uniformly while still
+ * reflowing siblings, unlike a plain graphicsLayer scale which leaves the original bounds behind.
+ */
+private fun Modifier.scaleLayout(scale: Float): Modifier = layout { measurable, constraints ->
+    fun up(value: Int) = (value / scale).roundToInt()
+    val placeable = measurable.measure(
+        constraints.copy(
+            minWidth = up(constraints.minWidth),
+            maxWidth = if (constraints.hasBoundedWidth) up(constraints.maxWidth) else constraints.maxWidth,
+            minHeight = up(constraints.minHeight),
+            maxHeight = if (constraints.hasBoundedHeight) up(constraints.maxHeight) else constraints.maxHeight,
+        )
+    )
+    layout((placeable.width * scale).roundToInt(), (placeable.height * scale).roundToInt()) {
+        placeable.placeWithLayer(0, 0) {
+            scaleX = scale
+            scaleY = scale
+            transformOrigin = TransformOrigin(0f, 0f)
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -478,26 +511,46 @@ private fun ConnectedContent(
         )
     }
 
-    state.activePlayers.forEach { playerState ->
-        AnimatedContent(
-            targetState = viewMode,
-            transitionSpec = {
-                (fadeIn(tween(220)) togetherWith fadeOut(tween(220)))
-                    .using(SizeTransform(clip = false))
-            },
-            label = "viewMode",
-        ) { mode ->
-            when (mode) {
-                ConnectionViewMode.DETAILED -> PlayerView(
-                    playerState = playerState,
-                    onUnassign = onUnassign,
-                    onRemovePlayer = { onRemovePlayer(playerState) },
-                )
-                ConnectionViewMode.COMPACT -> CompactPlayerRow(
-                    playerState = playerState,
-                    onUnassign = onUnassign,
-                    onRemovePlayer = { onRemovePlayer(playerState) },
-                )
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    if (landscape && viewMode == ConnectionViewMode.DETAILED) {
+        // Two players per row, each shrunk so a full controller is more likely to fit the height.
+        state.activePlayers.chunked(2).forEach { rowPlayers ->
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
+                rowPlayers.forEach { playerState ->
+                    PlayerView(
+                        playerState = playerState,
+                        onUnassign = onUnassign,
+                        onRemovePlayer = { onRemovePlayer(playerState) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .scaleLayout(LandscapePlayerScale),
+                    )
+                }
+                if (rowPlayers.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    } else {
+        state.activePlayers.forEach { playerState ->
+            AnimatedContent(
+                targetState = viewMode,
+                transitionSpec = {
+                    (fadeIn(tween(220)) togetherWith fadeOut(tween(220)))
+                        .using(SizeTransform(clip = false))
+                },
+                label = "viewMode",
+            ) { mode ->
+                when (mode) {
+                    ConnectionViewMode.DETAILED -> PlayerView(
+                        playerState = playerState,
+                        onUnassign = onUnassign,
+                        onRemovePlayer = { onRemovePlayer(playerState) },
+                    )
+                    ConnectionViewMode.COMPACT -> CompactPlayerRow(
+                        playerState = playerState,
+                        onUnassign = onUnassign,
+                        onRemovePlayer = { onRemovePlayer(playerState) },
+                    )
+                }
             }
         }
     }
