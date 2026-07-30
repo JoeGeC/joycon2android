@@ -16,6 +16,7 @@ import com.joegec.joycon2android.connection.presentation.R
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Dimens
+import com.joegec.joycon2android.ui.theme.TextBright
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
@@ -75,11 +76,7 @@ private fun AxisValue(axis: String, value: Int) {
 private fun ImuText(text: String, bold: Boolean = false, dimmed: Boolean = false) {
     Text(
         text,
-        color = when {
-            dimmed -> TextDim.copy(alpha = 0.6f)
-            bold -> TextDim.copy(alpha = 0.7f)
-            else -> TextDim
-        },
+        color = if (bold || dimmed) TextDim else TextBright,
         fontSize = Dimens.fontSizeLabel,
         fontWeight = if (bold) FontWeight.Bold else null,
         fontFamily = if (bold) FontFamily.Default else null,

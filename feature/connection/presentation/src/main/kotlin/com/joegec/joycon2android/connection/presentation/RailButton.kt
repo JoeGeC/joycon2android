@@ -8,11 +8,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.ui.theme.ButtonOff
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
 internal fun RailButton(label: String, on: Boolean, modifier: Modifier = Modifier) {
@@ -25,7 +25,7 @@ internal fun RailButton(label: String, on: Boolean, modifier: Modifier = Modifie
     ) {
         Text(
             label,
-            color = if (on) accent.onColor else TextDim,
+            color = if (on) accent.onColor else Color.White,
             fontSize = Dimens.fontSizeSmall,
             fontWeight = FontWeight.Bold,
         )

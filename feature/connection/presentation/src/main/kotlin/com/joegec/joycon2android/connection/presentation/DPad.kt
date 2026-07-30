@@ -9,11 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.ui.theme.ButtonOff
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
 internal fun DPad(
@@ -47,6 +47,6 @@ private fun DPadButton(symbol: String, on: Boolean, buttonSize: Dp, modifier: Mo
             .background(if (on) accent.color else ButtonOff),
         contentAlignment = Alignment.Center,
     ) {
-        Text(symbol, color = if (on) accent.onColor else TextDim, fontSize = Dimens.fontSizeDpad)
+        Text(symbol, color = if (on) accent.onColor else Color.White, fontSize = Dimens.fontSizeDpad)
     }
 }

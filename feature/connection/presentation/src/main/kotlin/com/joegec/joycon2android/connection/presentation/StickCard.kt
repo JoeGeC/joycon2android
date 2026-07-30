@@ -21,6 +21,7 @@ import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.CrosshairColor
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.StickBg
+import com.joegec.joycon2android.ui.theme.TextBright
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
@@ -80,13 +81,13 @@ private fun StickAxisValue(axis: String, value: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
             axis,
-            color = TextDim.copy(alpha = 0.6f),
+            color = TextDim,
             fontSize = Dimens.fontSizeLabel,
             style = AppType.telemetry,
         )
         Text(
             "%4d".format(value),
-            color = TextDim,
+            color = TextBright,
             fontSize = Dimens.fontSizeLabel,
             style = AppType.telemetry,
         )

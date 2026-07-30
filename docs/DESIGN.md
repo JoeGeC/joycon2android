@@ -24,7 +24,8 @@ Defined in `Color.kt`. Values are the real hex in code.
 - `CardBg` — `#161B22` (raised card surface)
 - `ButtonOff` — `#1A1F26` (inactive control fill)
 - Ink (default on-surface) — Material default near-white
-- `TextDim` — `#8B98A5` (muted gray secondary text) — **AA contrast risk; verify per use**
+- `TextBright` — `#C2CDD8` (light blue-gray; live telemetry values — the data that pops, ~10.7:1 on CardBg)
+- `TextDim` — `#8B98A5` (muted gray secondary text / telemetry labels; ~5.9:1 on CardBg — AA-safe as a solid, never at reduced alpha for text)
 - `TextOnAccent` — `#0E1116` (ink on the teal accent)
 
 **Accent**
@@ -115,8 +116,8 @@ Ease-out curves, no bounce/elastic.
 2. **Personality gap** — partly closed: each controller's live inputs now glow in its real shell
    colour (see the controller-color signature above). Remaining: motion, and celebratory
    connect/assign moments.
-3. **Contrast** — verify `TextDim` (and its 0.6/0.7 alpha variants in the IMU readouts) and the
-   battery colors against WCAG AA. `TextDim` on `Background` measures ~6.4:1 (passes); the reduced-
-   alpha telemetry labels are the ones to check.
+3. ~~**Contrast** — reduced-alpha telemetry labels + battery-low failed WCAG AA.~~ ✅ Done:
+   telemetry now uses solid `TextBright` (values) / `TextDim` (labels) with no sub-threshold alpha,
+   and `BatteryLow` was lightened to `#FF8A8A`; all clear 4.5:1 (verified numerically).
 4. **Color-only status** — pair battery/connection color with icon or text.
 5. **Motion system** — define purposeful, reduced-motion-aware transitions.

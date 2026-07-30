@@ -16,10 +16,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
 internal fun MinusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier: Modifier = Modifier) {
@@ -69,7 +69,7 @@ internal fun CaptureButton(pressed: Set<String>, modifier: Modifier = Modifier) 
             Icons.Outlined.Circle,
             contentDescription = null,
             modifier = Modifier.size(Dimens.iconSizeSmall),
-            tint = if (on) accent.onColor else TextDim,
+            tint = if (on) accent.onColor else Color.White,
         )
     }
 }
@@ -86,7 +86,7 @@ internal fun HomeButton(pressed: Set<String>, modifier: Modifier = Modifier) {
             Icons.Filled.Home,
             contentDescription = null,
             modifier = Modifier.size(Dimens.iconSizeMedium),
-            tint = if (on) accent.onColor else TextDim,
+            tint = if (on) accent.onColor else Color.White,
         )
     }
 }

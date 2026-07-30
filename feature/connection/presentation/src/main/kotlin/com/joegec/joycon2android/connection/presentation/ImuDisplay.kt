@@ -14,6 +14,7 @@ import com.joegec.joycon2android.connection.presentation.R
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Dimens
+import com.joegec.joycon2android.ui.theme.TextBright
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
@@ -45,13 +46,13 @@ private fun AxisValue(axis: String, value: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.imuAxisGap)) {
         Text(
             axis,
-            color = TextDim.copy(alpha = 0.6f),
+            color = TextDim,
             fontSize = Dimens.fontSizeLabel,
             style = imuTextStyle,
         )
         Text(
             "%+6d".format(value),
-            color = TextDim,
+            color = TextBright,
             fontSize = Dimens.fontSizeLabel,
             style = imuTextStyle,
         )
@@ -62,7 +63,7 @@ private fun AxisValue(axis: String, value: Int) {
 private fun ImuLabel(text: String) {
     Text(
         text,
-        color = TextDim.copy(alpha = 0.7f),
+        color = TextDim,
         fontSize = Dimens.fontSizeLabel,
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
@@ -75,7 +76,7 @@ private fun ImuLabel(text: String) {
 private fun ImuValue(text: String) {
     Text(
         text,
-        color = TextDim,
+        color = TextBright,
         fontSize = Dimens.fontSizeLabel,
         style = imuTextStyle,
     )
