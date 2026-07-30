@@ -9,13 +9,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import com.joegec.joycon2android.connection.presentation.R
 import com.joegec.joycon2android.model.JoyconInput
+import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
@@ -83,13 +82,14 @@ private fun ImuText(text: String, bold: Boolean = false, dimmed: Boolean = false
         },
         fontSize = Dimens.fontSizeLabel,
         fontWeight = if (bold) FontWeight.Bold else null,
-        fontFamily = if (!bold) FontFamily.Monospace else null,
+        fontFamily = if (bold) FontFamily.Default else null,
         letterSpacing = if (bold) Dimens.fontSizeLabel * 0.1f else TextUnit.Unspecified,
         style = tightTextStyle,
     )
 }
 
-private val tightTextStyle = TextStyle(
+// Telemetry (mono, tabular figures, no font padding) pulled tight so the IMU grid stays compact;
+// bold section labels override back to the default family.
+private val tightTextStyle = AppType.telemetry.copy(
     lineHeight = Dimens.fontSizeLabel * 1.1f,
-    platformStyle = PlatformTextStyle(includeFontPadding = false),
 )

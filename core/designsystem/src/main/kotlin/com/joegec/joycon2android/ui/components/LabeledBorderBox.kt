@@ -7,12 +7,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import com.joegec.joycon2android.ui.theme.Dimens
 
 /**
@@ -41,8 +41,7 @@ fun LabeledBorderBox(
         Text(
             label,
             color = borderColor,
-            fontWeight = FontWeight.Bold,
-            fontSize = Dimens.fontSizeMedium,
+            style = MaterialTheme.typography.labelLarge,
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .offset(x = Dimens.legendInset, y = -Dimens.legendOverhang)

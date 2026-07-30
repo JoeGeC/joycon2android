@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.dsu.presentation.R
+import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
@@ -59,7 +61,7 @@ fun DsuCard(
                     Text(
                         stringResource(R.string.dsu_slot_note),
                         color = TextDim,
-                        fontSize = Dimens.fontSizeSmall,
+                        style = MaterialTheme.typography.bodySmall,
                     )
                     Spacer(Modifier.height(Dimens.elementSpacing))
                 }
@@ -163,19 +165,21 @@ private fun Ds4NameCell(joycon: String, ds4: String, modifier: Modifier = Modifi
         Text(
             joycon,
             color = Color.White,
-            fontWeight = FontWeight.Bold,
+            style = AppType.telemetry,
             fontSize = Dimens.fontSizeSmall,
+            fontFamily = FontFamily.Default,
+            fontWeight = FontWeight.Bold,
         )
         Text(
             " → $ds4",
             color = TextDim,
+            style = AppType.telemetry,
             fontSize = Dimens.fontSizeSmall,
-            fontFamily = FontFamily.Monospace,
         )
     }
 }
 
 @Composable
 private fun GuideStep(text: String) {
-    Text(text, color = TextDim, fontSize = Dimens.fontSizeSmall)
+    Text(text, color = TextDim, style = MaterialTheme.typography.bodySmall)
 }

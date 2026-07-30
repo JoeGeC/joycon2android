@@ -15,11 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AccentDim
+import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.CrosshairColor
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.StickBg
@@ -76,13 +76,13 @@ private fun StickAxisValue(axis: String, value: Int) {
             axis,
             color = TextDim.copy(alpha = 0.6f),
             fontSize = Dimens.fontSizeLabel,
-            fontFamily = FontFamily.Monospace,
+            style = AppType.telemetry,
         )
         Text(
             "%4d".format(value),
             color = TextDim,
             fontSize = Dimens.fontSizeLabel,
-            fontFamily = FontFamily.Monospace,
+            style = AppType.telemetry,
         )
     }
 }

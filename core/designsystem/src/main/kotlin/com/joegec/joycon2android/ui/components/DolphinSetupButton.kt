@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,8 +46,8 @@ fun DolphinSetupButton(
                 else -> label
             },
             color = Accent,
-            fontWeight = FontWeight.Bold,
             fontSize = Dimens.fontSizeSmall,
+            fontWeight = FontWeight.Bold,
         )
     }
 }
@@ -64,7 +65,7 @@ fun DolphinSetupMessage(phase: DolphinSetupPhase, modifier: Modifier = Modifier)
     Text(
         stringResource(message),
         color = ErrorText,
-        fontSize = Dimens.fontSizeSmall,
+        style = MaterialTheme.typography.bodySmall,
         modifier = modifier,
     )
 }

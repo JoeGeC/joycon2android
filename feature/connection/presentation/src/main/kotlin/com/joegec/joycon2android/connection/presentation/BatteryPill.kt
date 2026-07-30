@@ -16,11 +16,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.joegec.joycon2android.connection.presentation.R
 import com.joegec.joycon2android.model.BatteryGauge
 import com.joegec.joycon2android.ui.theme.AccentDim
+import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.batteryColor
 
@@ -43,9 +43,9 @@ internal fun BatteryReadout(volts: Float, modifier: Modifier = Modifier) {
         Text(
             stringResource(R.string.battery_percent_format, percent),
             color = color,
+            style = AppType.telemetry,
             fontSize = Dimens.fontSizeBattery,
             fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Monospace,
             modifier = Modifier.padding(start = Dimens.batteryIconTextGap),
         )
     }

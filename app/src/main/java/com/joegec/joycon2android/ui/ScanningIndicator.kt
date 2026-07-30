@@ -13,13 +13,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.ui.theme.CardBg
@@ -45,14 +45,13 @@ internal fun ScanningIndicator(modifier: Modifier = Modifier) {
         Text(
             stringResource(R.string.scanning_title) + ".".repeat(dots.toInt() + 1),
             color = Color.White,
-            fontSize = Dimens.fontSizeBody,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.titleSmall,
         )
         Spacer(Modifier.height(4.dp))
         Text(
             stringResource(R.string.scanning_hint),
             color = TextDim,
-            fontSize = Dimens.fontSizeMedium,
+            style = MaterialTheme.typography.bodySmall,
         )
     }
 }

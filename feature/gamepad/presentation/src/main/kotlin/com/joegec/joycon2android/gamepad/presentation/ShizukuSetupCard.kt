@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,7 +22,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import com.joegec.joycon2android.gamepad.presentation.R
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
@@ -46,8 +46,7 @@ fun ShizukuSetupCard(modifier: Modifier = Modifier) {
             Text(
                 stringResource(R.string.shizuku_setup_title),
                 color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = Dimens.fontSizeBody,
+                style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.weight(1f),
             )
             Icon(
@@ -61,7 +60,7 @@ fun ShizukuSetupCard(modifier: Modifier = Modifier) {
         Text(
             stringResource(R.string.shizuku_setup_body),
             color = TextDim,
-            fontSize = Dimens.fontSizeSmall,
+            style = MaterialTheme.typography.bodySmall,
         )
     }
 }

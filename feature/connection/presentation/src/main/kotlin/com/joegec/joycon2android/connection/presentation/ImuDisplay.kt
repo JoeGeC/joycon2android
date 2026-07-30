@@ -8,12 +8,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.joegec.joycon2android.connection.presentation.R
 import com.joegec.joycon2android.model.JoyconInput
+import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
@@ -43,21 +42,18 @@ private fun SensorRow(title: String, vararg axes: Pair<String, Int>) {
 
 @Composable
 private fun AxisValue(axis: String, value: Int) {
-    val style = imuTextStyle
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.imuAxisGap)) {
         Text(
             axis,
             color = TextDim.copy(alpha = 0.6f),
             fontSize = Dimens.fontSizeLabel,
-            fontFamily = FontFamily.Monospace,
-            style = style,
+            style = imuTextStyle,
         )
         Text(
             "%+6d".format(value),
             color = TextDim,
             fontSize = Dimens.fontSizeLabel,
-            fontFamily = FontFamily.Monospace,
-            style = style,
+            style = imuTextStyle,
         )
     }
 }
@@ -68,6 +64,7 @@ private fun ImuLabel(text: String) {
         text,
         color = TextDim.copy(alpha = 0.7f),
         fontSize = Dimens.fontSizeLabel,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         letterSpacing = Dimens.fontSizeLabel * 0.1f,
         style = imuTextStyle,
@@ -80,12 +77,11 @@ private fun ImuValue(text: String) {
         text,
         color = TextDim,
         fontSize = Dimens.fontSizeLabel,
-        fontFamily = FontFamily.Monospace,
         style = imuTextStyle,
     )
 }
 
-private val imuTextStyle = TextStyle(
+// Telemetry (mono, tabular figures, no font padding) pulled tight so the IMU grid stays compact.
+private val imuTextStyle = AppType.telemetry.copy(
     lineHeight = Dimens.fontSizeLabel * 1.1f,
-    platformStyle = PlatformTextStyle(includeFontPadding = false),
 )

@@ -41,6 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -57,9 +58,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.PlayerNumber
@@ -77,6 +76,7 @@ import com.joegec.joycon2android.ui.components.FeatureToggleCard
 import com.joegec.joycon2android.connection.presentation.PlayerView
 import com.joegec.joycon2android.connection.presentation.ViewModeToggle
 import com.joegec.joycon2android.ui.theme.Accent
+import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -206,13 +206,13 @@ private fun AppTitle(state: AppUiState, shizukuAvailable: Boolean) {
             contentDescription = stringResource(R.string.app_title),
             modifier = Modifier.size(Dimens.headerLogoSize),
         )
-        Column {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)
+        ) {
             Text(
                 statusText(state),
                 color = if (state.anyConnected) Accent else TextDim,
-                fontSize = Dimens.fontSizeStatus,
-                letterSpacing = 2.sp,
-                fontWeight = FontWeight.Medium,
+                style = AppType.statusOverline,
             )
             PrivilegedAccessStatus(shizukuAvailable)
         }
@@ -235,9 +235,7 @@ private fun PrivilegedAccessStatus(shizukuAvailable: Boolean) {
         Text(
             stringResource(R.string.status_shizuku),
             color = color,
-            fontSize = Dimens.fontSizeStatus,
-            letterSpacing = 2.sp,
-            fontWeight = FontWeight.Medium,
+            style = AppType.statusOverline,
         )
     }
 }
@@ -283,8 +281,7 @@ private fun IdleContent(
             Text(
                 stringResource(R.string.button_scan_connect),
                 color = TextOnAccent,
-                fontWeight = FontWeight.Bold,
-                fontSize = Dimens.fontSizeButtonLarge,
+                style = MaterialTheme.typography.titleMedium,
             )
         }
     }
@@ -308,8 +305,7 @@ private fun ScanButton(onScan: () -> Unit) {
         Text(
             stringResource(R.string.button_scan),
             color = TextOnAccent,
-            fontWeight = FontWeight.Bold,
-            fontSize = Dimens.fontSizeButton,
+            style = MaterialTheme.typography.labelLarge,
         )
     }
 }
@@ -353,8 +349,7 @@ private fun KofiBanner(modifier: Modifier = Modifier) {
         Text(
             stringResource(R.string.kofi_banner),
             color = Color.White,
-            fontSize = Dimens.fontSizeBody,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
         )
         Icon(

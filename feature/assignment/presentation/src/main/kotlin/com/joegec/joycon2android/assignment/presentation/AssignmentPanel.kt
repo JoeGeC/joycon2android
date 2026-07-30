@@ -23,6 +23,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -64,8 +65,7 @@ fun AssignmentPanel(
         Text(
             stringResource(R.string.unassigned_title),
             color = Accent,
-            fontSize = Dimens.fontSizeButton,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.padding(horizontal = Dimens.cardPadding),
         )
 
@@ -76,7 +76,7 @@ fun AssignmentPanel(
         Text(
             stringResource(R.string.unassigned_combo_tip),
             color = TextDim,
-            fontSize = Dimens.fontSizeSmall,
+            style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(horizontal = Dimens.cardPadding),
         )
     }
@@ -110,8 +110,7 @@ private fun JoyconAssignmentRow(
                 Text(
                     sideLabel,
                     color = sideColor,
-                    fontSize = Dimens.fontSizeBody,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.titleSmall,
                 )
                 AnimatedVisibility(
                     visible = !joycon.ready,
@@ -130,7 +129,7 @@ private fun JoyconAssignmentRow(
                         Text(
                             stringResource(R.string.status_connecting),
                             color = TextDim,
-                            fontSize = Dimens.fontSizeSmall,
+                            style = MaterialTheme.typography.bodySmall,
                         )
                     }
                 }
