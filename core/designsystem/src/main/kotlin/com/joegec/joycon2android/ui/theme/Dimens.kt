@@ -18,6 +18,7 @@ object Dimens {
     val buttonHeight = 44.dp
     val buttonHorizontalPadding = 8.dp
     val buttonHeightLarge = 52.dp
+    val minTouchTarget = 48.dp // floor for a comfortable tap area, independent of the drawn size
     val shoulderButtonHeight = 30.dp
     val railButtonHeight = 26.dp
     val smallButtonHeight = 30.dp
@@ -56,7 +57,6 @@ object Dimens {
     val pillPaddingVertical = 4.dp
 
     val viewTogglePadding = 4.dp
-    val viewToggleButtonSize = 36.dp
     val viewToggleCorner = 10.dp
     val compactRowPaddingHorizontal = 16.dp
     val compactRowPaddingVertical = 12.dp

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,6 +89,7 @@ private fun ControllerChip(
         Modifier
             .clip(RoundedCornerShape(Dimens.pillCorner))
             .clickable { onUnassign(joycon.address) }
+            .minimumInteractiveComponentSize()
             .padding(
                 horizontal = Dimens.compactChipPaddingHorizontal,
                 vertical = Dimens.compactChipPaddingVertical,
