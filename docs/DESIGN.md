@@ -2,7 +2,8 @@
 
 > Compose-adapted design-system snapshot. This is a native Android (Jetpack Compose,
 > Material 3) app, so this doc captures the **theme in code** rather than web CSS tokens.
-> Source of truth: `core/designsystem/src/main/kotlin/.../ui/theme/{Color,Type,Dimens,Theme}.kt`.
+> Source of truth: `core/designsystem/.../ui/theme/{Color,Type,Dimens,Theme,AppTextStyles}.kt`,
+> plus the connection-screen chrome and landscape layout in `app/.../ui/JoyconScreen.kt`.
 > Update this doc when those change.
 
 ## Theme
@@ -34,8 +35,9 @@ Defined in `Color.kt`. Values are the real hex in code.
 
 **Status**
 - `ErrorText` — `#FF6B6B` / `ErrorBg` — `#2D1B1B`
-- Battery ramp (`batteryColor()`): high `Accent` · medium `#FBBF24` · low `ErrorText`
-  — **color-only today; pair with icon/text for color-blind safety**
+- Battery ramp (`batteryColor()`): high `Accent` · medium `#FBBF24` · low `BatteryLow #FF8A8A`
+  (a lighter red than `ErrorText` so the low % clears AA on the `AccentDim` pill). Shown with a
+  battery icon whose fill tracks the level, so it isn't colour-only.
 
 **Signature: controller shell color.** The controller's real shell accent is read from SPI flash
 (packed `0xRRGGBB`), converted to HSV, saturation-boosted ×1.4 (capped). It drives two things:
@@ -85,14 +87,37 @@ stay in `Dimens` as geometry tuned to the drawn controls — deliberately outsid
 
 From `Dimens.kt` (all dp unless noted):
 - Screen padding `16` H / `16` V · card padding `16`
-- **Card:** corner `20`, **full border `2dp`** (`cardBorderAlpha` 1f) — good, no side-stripe accents
-- Button: corner `12`, height `44` (large `52`) · Pill: corner `20`
+- **Card:** corner `20`, **full border `2dp`** (`cardBorderAlpha` 1f) — no side-stripe accents
+- Button: corner `12`, height `44` (large `52`); on-controller button corner `6`
+  (`controllerButtonCorner`) · Pill: corner `20`
 - Spacing rhythm: section `14`, element `8` (varied, not a single uniform gap)
+- **Touch targets:** `minTouchTarget` `48` — every interactive control clears it via
+  `minimumInteractiveComponentSize()` or a min-height, keeping visual size independent of tap size
 - Rich controller-visualisation dims: stick canvas `110`, d-pad/face `46`, sideways-layout
-  variants, IMU/legend/battery-icon sub-scales
+  variants, IMU/legend/battery-icon sub-scales, plus stick sub-tokens (`stickValueGap`,
+  `stickAxisGap`, `crosshairStroke`, `stickIdleRingAlpha`) — fully tokenised, no hard-coded values
 
 Card-based, but cards are the correct affordance here (each = one controller/feature). The
 controller-color border gives them identity beyond a plain card grid.
+
+### Connection-screen chrome (`app/.../ui/JoyconScreen.kt`)
+
+- **Edge-to-edge, top and bottom.** `contentWindowInsets` reserves only the horizontal insets, so
+  content passes under the transparent status bar and nav bar (`enableEdgeToEdge` in `MainActivity`).
+- **Overlaid, scroll-away app bar.** The top app bar is *not* in the Scaffold `topBar` slot (which
+  reserves space and blocks content going behind the status bar). It's overlaid on the content and
+  translated up in lockstep with the scroll offset (`graphicsLayer`), so it slides away with no gap
+  and the content — including the Ko-fi banner, now the first scroll item rather than pinned —
+  passes behind the status bar.
+
+### Landscape
+
+Connected players lay out in a **two-column grid** in landscape (both the detailed and compact
+views), using the wide space; portrait keeps one full-width column. Detailed players are shrunk to
+`LandscapePlayerScale` (`0.7`) by a `scaleLayout` modifier that measures the content at `1/scale`
+space, draws it scaled down, and reports the smaller size — so the whole controller (buttons,
+labels, spacing) shrinks uniformly *and* reflows, letting a full player fit the short landscape
+height. Compact rows aren't scaled (already short). Both live in `JoyconScreen.kt`.
 
 ## Components
 
@@ -104,10 +129,11 @@ Shared in `core/designsystem/.../ui/components/`:
 
 ## Motion
 
-Largely unspecified today. Given the "playful gaming gear" personality, motion is an
-opportunity area — controller-connect, assignment, and toggle transitions could carry
-character. Any motion must honor system reduced-motion (see PRODUCT.md accessibility).
-Ease-out curves, no bounce/elastic.
+Mostly minimal and functional today: the top app bar sliding up in lockstep with the scroll (see
+chrome above), the portrait view-mode `AnimatedContent` crossfade, and expand/fade transitions on
+error boxes and feature-card content. Given the "playful gaming gear" personality, connect /
+assign moments still have room for more character (opportunity area). Any motion must honor system
+reduced-motion (see PRODUCT.md accessibility). Ease-out curves, no bounce/elastic.
 
 ## Opportunity Areas (for future impeccable passes)
 
@@ -119,5 +145,9 @@ Ease-out curves, no bounce/elastic.
 3. ~~**Contrast** — reduced-alpha telemetry labels + battery-low failed WCAG AA.~~ ✅ Done:
    telemetry now uses solid `TextBright` (values) / `TextDim` (labels) with no sub-threshold alpha,
    and `BatteryLow` was lightened to `#FF8A8A`; all clear 4.5:1 (verified numerically).
-4. **Color-only status** — pair battery/connection color with icon or text.
-5. **Motion system** — define purposeful, reduced-motion-aware transitions.
+4. ~~**Color-only status** — pair battery/connection color with icon or text.~~ ✅ Largely addressed:
+   battery shows a level-filled icon + %, and the connection/Shizuku status pairs its dot with a
+   text label.
+5. **Motion system** — define purposeful, reduced-motion-aware transitions for connect / assign.
+6. **Responsive polish** — landscape grid + player scaling is in; a ≤320dp / 200%-font density
+   check on the dual layout is still open (needs a device).
