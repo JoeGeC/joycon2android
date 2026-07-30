@@ -29,7 +29,6 @@
     <string name="gamepad_title">Virtual Gamepad</string>
     <string name="gamepad_subtitle_off">Output Joy-Con input as a system gamepad</string>
     <string name="gamepad_subtitle_on">Active — input available to all apps</string>
-    <string name="gamepad_emulator_label">Emulator</string>
     <string name="gamepad_emulator_setup">Set up controller mapping</string>
 
     <!-- DSU motion server -->

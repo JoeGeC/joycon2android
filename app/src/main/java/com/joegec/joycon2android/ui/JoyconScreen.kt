@@ -66,9 +66,8 @@ import com.joegec.joycon2android.gamepad.presentation.AdbSetupState
 import com.joegec.joycon2android.assignment.presentation.AssignmentPanel
 import com.joegec.joycon2android.connection.presentation.CompactPlayerRow
 import com.joegec.joycon2android.connection.presentation.ConnectionViewMode
-import com.joegec.joycon2android.ui.components.DolphinSetupButton
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
-import com.joegec.joycon2android.ui.components.EmulatorDropdown
+import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.dsu.presentation.DsuCard
 import com.joegec.joycon2android.dsu.presentation.DsuCardState
@@ -446,27 +445,14 @@ private fun ConnectedContent(
                 onToggle = onGamepadToggle,
             ) {
                 if (gamepadEnabled && gamepadEmulators.isNotEmpty() && gamepadSetupAvailable) {
-                    if (gamepadEmulators.size > 1) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
-                        ) {
-                            Text(
-                                stringResource(R.string.gamepad_emulator_label),
-                                color = TextDim,
-                                fontSize = Dimens.fontSizeSmall,
-                            )
-                            EmulatorDropdown(
-                                options = gamepadEmulators,
-                                selectedId = selectedGamepadEmulator,
-                                onSelect = onSelectGamepadEmulator,
-                            )
-                        }
-                    }
-                    DolphinSetupButton(
-                        gamepadSetupPhase,
-                        stringResource(R.string.gamepad_emulator_setup),
-                        onConfigureGamepad,
+                    Spacer(Modifier.height(Dimens.elementSpacing))
+                    EmulatorAutoSetup(
+                        emulators = gamepadEmulators,
+                        selectedEmulator = selectedGamepadEmulator,
+                        onSelectEmulator = onSelectGamepadEmulator,
+                        phase = gamepadSetupPhase,
+                        setupLabel = stringResource(R.string.gamepad_emulator_setup),
+                        onSetUp = onConfigureGamepad,
                     )
                 }
             }

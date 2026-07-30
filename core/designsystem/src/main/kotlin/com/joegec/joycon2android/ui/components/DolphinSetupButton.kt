@@ -19,9 +19,15 @@ import com.joegec.joycon2android.ui.theme.ErrorText
 
 /** Compact text-button (Copy-button styling) that runs a one-shot Dolphin config write. */
 @Composable
-fun DolphinSetupButton(phase: DolphinSetupPhase, label: String, onClick: () -> Unit) {
+fun DolphinSetupButton(
+    phase: DolphinSetupPhase,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     TextButton(
         onClick = onClick,
+        modifier = modifier,
         enabled = phase != DolphinSetupPhase.WORKING,
         contentPadding = PaddingValues(horizontal = Dimens.buttonHorizontalPadding),
     ) {
@@ -43,11 +49,14 @@ fun DolphinSetupButton(phase: DolphinSetupPhase, label: String, onClick: () -> U
             fontSize = Dimens.fontSizeSmall,
         )
     }
-    if (phase == DolphinSetupPhase.FAILED) {
-        Text(
-            stringResource(R.string.dolphin_setup_failed),
-            color = ErrorText,
-            fontSize = Dimens.fontSizeSmall,
-        )
-    }
+}
+
+@Composable
+fun DolphinSetupFailedText(modifier: Modifier = Modifier) {
+    Text(
+        stringResource(R.string.dolphin_setup_failed),
+        color = ErrorText,
+        fontSize = Dimens.fontSizeSmall,
+        modifier = modifier,
+    )
 }

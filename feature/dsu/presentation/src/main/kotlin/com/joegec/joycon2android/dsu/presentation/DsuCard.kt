@@ -1,6 +1,8 @@
 package com.joegec.joycon2android.dsu.presentation
 import com.joegec.joycon2android.ui.components.CopyableCode
 import com.joegec.joycon2android.ui.components.DolphinSetupButton
+import com.joegec.joycon2android.ui.components.DolphinSetupFailedText
+import com.joegec.joycon2android.ui.components.DolphinSetupPhase
 import com.joegec.joycon2android.ui.components.ExpandableInfoSection
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
 
@@ -109,6 +111,9 @@ private fun DolphinGuide(state: DsuCardState, onConfigureDolphin: () -> Unit) {
                 stringResource(R.string.dsu_dolphin_auto_setup),
                 onConfigureDolphin,
             )
+            if (state.dolphinPhase == DolphinSetupPhase.FAILED) {
+                DolphinSetupFailedText()
+            }
             Spacer(Modifier.height(Dimens.elementSpacing))
             GuideStep(stringResource(R.string.dsu_dolphin_manual_label))
             Spacer(Modifier.height(Dimens.elementSpacing))

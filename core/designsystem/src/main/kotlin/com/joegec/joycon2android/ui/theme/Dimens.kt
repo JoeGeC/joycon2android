@@ -40,6 +40,11 @@ object Dimens {
     val stickRingStroke = 2f
     val stickRingStrokePressed = 3f
 
+    val legendOverhang = 8.dp
+    val legendInset = 12.dp
+    val legendLabelPadding = 6.dp
+    val legendContentVertical = 10.dp
+
     val guideTableRowGap = 2.dp
     val imuAxisGap = 2.dp
     val imuTitleGap = 4.dp
