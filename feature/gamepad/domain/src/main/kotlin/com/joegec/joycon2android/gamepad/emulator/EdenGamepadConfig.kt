@@ -1,25 +1,32 @@
 package com.joegec.joycon2android.gamepad.emulator
 
+import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.StickSource
+import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
+import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
+import com.joegec.joycon2android.buttonmapping.toButtonMap
+import com.joegec.joycon2android.buttonmapping.toStickMap
 import com.joegec.joycon2android.emulatorconfig.IniEditor
+import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
+import com.joegec.joycon2android.model.SidewaysMapper
 
 /**
- * Generates Eden's `config.ini` `[Controls]` bindings for the Virtual Gamepad.
+ * Generates Eden's `config.ini` `[Controls]` bindings for the Virtual Gamepad, driven by the
+ * user's customizable Joy-Con -> Pro Controller mapping.
  *
  * The relay exposes every player as one standard Android HID gamepad. Its 14 buttons land on
  * Android keycodes in the fixed HID gamepad order — BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z,
  * BTN_TL… — so a Joy-Con button maps to a *shifted* keycode: Switch X is BTN_C (98), Switch Y is
  * BTN_X (99), L is BTN_Y (100), and so on. The d-pad is the HID hat (HAT_X = axis 15, HAT_Y =
- * axis 16); the lone stick of a sideways single Joy-Con arrives on the left-stick axes (0/1),
- * already rotated upright by the relay.
+ * axis 16); [KEY_CODES]/[HAT_AXES] are that fixed, body-independent wiring.
  *
  * Eden does not translate a sideways single Joy-Con: it only sets an `is_horizontal` flag (which on
  * hardware the game's own nn::hid honours, but Eden has no equivalent), and it masks an npad by
- * type — a JoyconLeft can't even report A/B/X/Y. So a sideways Joy-Con's stick can't land on the
- * main stick and its directions/SL-SR can't become faces/L-R under a single-Joy-Con type. We
- * therefore present each single Joy-Con as a Pro Controller and apply the sideways rotation here:
- * the lone stick becomes the left stick, SL/SR become L/R, and the four action buttons become
- * A/B/X/Y (the left Joy-Con's d-pad rotated 90° CCW, the right Joy-Con's diamond rotated 90° CW).
+ * type — a JoyconLeft can't even report A/B/X/Y. So we present each single Joy-Con as a Pro
+ * Controller and apply the sideways rotation ourselves: [inputFor] runs a customized source
+ * through the same [SidewaysMapper] remap used for live HID output before resolving its keycode,
+ * so e.g. the left Joy-Con's d-pad still lands on the hat that becomes the face buttons.
  *
  * Our pads share one `guid` (VID 0x1234 / PID 0x5678); Eden distinguishes them by `port`, the
  * device's enumeration rank, supplied by the app from the live input-device list.
@@ -48,74 +55,62 @@ object EdenGamepadConfig {
     private const val HAT_X = 15
     private const val HAT_Y = 16
 
-    private val DPAD = mapOf(
-        "button_dup" to Axis(HAT_Y, '-'),
-        "button_ddown" to Axis(HAT_Y, '+'),
-        "button_dleft" to Axis(HAT_X, '-'),
-        "button_dright" to Axis(HAT_X, '+'),
+    private val KEY_CODES = mapOf(
+        JoyconButton.A to A, JoyconButton.B to B, JoyconButton.X to X, JoyconButton.Y to Y,
+        JoyconButton.L to L, JoyconButton.R to R, JoyconButton.ZL to ZL, JoyconButton.ZR to ZR,
+        JoyconButton.Minus to MINUS, JoyconButton.Plus to PLUS,
+        JoyconButton.LS to LS_CLICK, JoyconButton.RS to RS_CLICK,
+        JoyconButton.Home to HOME, JoyconButton.Camera to CAPTURE,
     )
 
-    // Pro / dual: full button set, both sticks. Matches what Eden detects for our pad.
-    private val FULL = Layout(
-        buttons = DPAD + mapOf(
-            "button_a" to Key(A), "button_b" to Key(B), "button_x" to Key(X), "button_y" to Key(Y),
-            "button_l" to Key(L), "button_r" to Key(R), "button_zl" to Key(ZL), "button_zr" to Key(ZR),
-            "button_minus" to Key(MINUS), "button_plus" to Key(PLUS),
-            "button_lstick" to Key(LS_CLICK), "button_rstick" to Key(RS_CLICK),
-            "button_home" to Key(HOME), "button_screenshot" to Key(CAPTURE),
-        ),
-        sticks = mapOf("lstick" to (0 to 1), "rstick" to (11 to 14)),
+    private val HAT_AXES = mapOf(
+        JoyconButton.Up to Axis(HAT_Y, '-'),
+        JoyconButton.Down to Axis(HAT_Y, '+'),
+        JoyconButton.Left to Axis(HAT_X, '-'),
+        JoyconButton.Right to Axis(HAT_X, '+'),
     )
 
-    // Sideways right Joy-Con, presented as a Pro Controller for the same reason as the left: Eden
-    // won't translate the sideways orientation, and games read the main (left) stick and L/R
-    // shoulders — not the Joy-Con's native right stick / SL-SR — so we do that mapping. Faces rotate
-    // 90° CW (A <- physical X, B <- physical A, X <- physical Y, Y <- physical B); the lone stick
-    // becomes the left stick; SL/SR become L/R.
-    private val RIGHT_AS_PRO = Layout(
-        buttons = mapOf(
-            "button_a" to Key(X), "button_b" to Key(A), "button_x" to Key(Y), "button_y" to Key(B),
-            "button_l" to Key(L), "button_r" to Key(ZL),     // SL, SR (relay-remapped) → L/R shoulders
-            "button_zl" to Key(R), "button_zr" to Key(ZR),   // native R / ZR
-            "button_plus" to Key(PLUS), "button_home" to Key(HOME),
-            "button_lstick" to Key(LS_CLICK),
-        ),
-        sticks = mapOf("lstick" to (0 to 1)),
+    private val EDEN_KEYS = mapOf(
+        SwitchProButton.A to "button_a", SwitchProButton.B to "button_b",
+        SwitchProButton.X to "button_x", SwitchProButton.Y to "button_y",
+        SwitchProButton.L to "button_l", SwitchProButton.R to "button_r",
+        SwitchProButton.ZL to "button_zl", SwitchProButton.ZR to "button_zr",
+        SwitchProButton.Plus to "button_plus", SwitchProButton.Minus to "button_minus",
+        SwitchProButton.Home to "button_home", SwitchProButton.Capture to "button_screenshot",
+        SwitchProButton.LStickClick to "button_lstick", SwitchProButton.RStickClick to "button_rstick",
+        SwitchProButton.DPadUp to "button_dup", SwitchProButton.DPadDown to "button_ddown",
+        SwitchProButton.DPadLeft to "button_dleft", SwitchProButton.DPadRight to "button_dright",
     )
 
-    // Sideways left Joy-Con, presented as a Pro Controller. A JoyconLeft npad has no A/B/X/Y, and
-    // Eden never rotates its d-pad into faces — it only sets is_horizontal, which on hardware the
-    // game's own nn::hid honours but Eden has no equivalent for. So we do the rotation the game
-    // would: the four directions become A/B/X/Y. A <- Down, B <- Left, X <- Right, Y <- Up (90° CCW).
-    private val LEFT_AS_PRO = Layout(
-        buttons = mapOf(
-            "button_a" to Axis(HAT_X, '+'), "button_b" to Axis(HAT_Y, '+'),
-            "button_x" to Axis(HAT_Y, '-'), "button_y" to Axis(HAT_X, '-'),
-            "button_l" to Key(R), "button_r" to Key(ZR),     // SL, SR (relay-remapped) → L/R shoulders
-            "button_zl" to Key(L), "button_zr" to Key(ZL),   // native L / ZL
-            "button_minus" to Key(MINUS),
-            "button_lstick" to Key(LS_CLICK), "button_screenshot" to Key(CAPTURE),
-        ),
-        sticks = mapOf("lstick" to (0 to 1)),
-    )
+    private val STICK_KEYS = mapOf(SwitchProStick.LStick to "lstick", SwitchProStick.RStick to "rstick")
 
     private val PLAYER_KEY = Regex("""player_\d+_.*""")
 
-    fun merge(existing: String?, players: List<PlayerState>, ports: Map<Int, Int>): String {
+    fun merge(
+        existing: String?,
+        players: List<PlayerState>,
+        ports: Map<Int, Int>,
+        mappingFor: (JoyconSide) -> Map<String, String>,
+    ): String {
         // Drop every player's prior bindings first: a layout or port change leaves stale keys that
         // would otherwise linger and, sharing our single guid, cross-fire onto another player's port.
         val cleared = IniEditor.removeKeys(existing, "[Controls]") { it.matches(PLAYER_KEY) }
-        return IniEditor.setKeys(cleared, "[Controls]", controlKeys(players, ports), assign = "=")
+        return IniEditor.setKeys(cleared, "[Controls]", controlKeys(players, ports, mappingFor), assign = "=")
     }
 
-    private fun controlKeys(players: List<PlayerState>, ports: Map<Int, Int>): Map<String, String> {
+    private fun controlKeys(
+        players: List<PlayerState>,
+        ports: Map<Int, Int>,
+        mappingFor: (JoyconSide) -> Map<String, String>,
+    ): Map<String, String> {
         val keys = LinkedHashMap<String, String>()
         players.forEach { player ->
             val index = player.player.index
             if (index !in 1..4) return@forEach
             val port = ports[index] ?: return@forEach
             val type = typeFor(player) ?: return@forEach
-            val layout = layoutFor(player) ?: return@forEach
+            val side = sideFor(player) ?: return@forEach
+            val layout = layoutFor(side, mappingFor(side))
             val p = index - 1
             val device = "engine:android,port:$port,guid:$GUID"
             val display = "Joy-Con Virtual Gamepad $index $port"
@@ -151,11 +146,39 @@ object EdenGamepadConfig {
         else -> null
     }
 
-    private fun layoutFor(player: PlayerState): Layout? = when {
-        player.hasPro || player.hasFullController -> FULL
-        player.left != null && player.right == null -> LEFT_AS_PRO
-        player.right != null && player.left == null -> RIGHT_AS_PRO
+    private fun sideFor(player: PlayerState): JoyconSide? = when {
+        player.hasPro || player.hasFullController -> JoyconSide.DUAL
+        player.left != null && player.right == null -> JoyconSide.LEFT
+        player.right != null && player.left == null -> JoyconSide.RIGHT
         else -> null
+    }
+
+    private fun layoutFor(side: JoyconSide, mapping: Map<String, String>): Layout {
+        val buttons = mapping.toButtonMap<SwitchProButton>().mapNotNull { (target, source) ->
+            inputFor(side, source)?.let { EDEN_KEYS.getValue(target) to it }
+        }.toMap()
+        val sticks = if (side == JoyconSide.DUAL) {
+            mapping.toStickMap<SwitchProStick>().entries.associate { (target, source) ->
+                STICK_KEYS.getValue(target) to axesFor(source)
+            }
+        } else {
+            mapOf("lstick" to (0 to 1)) // the lone stick isn't user-routable — there's only one
+        }
+        return Layout(buttons, sticks)
+    }
+
+    private fun axesFor(source: StickSource) = if (source == StickSource.LEFT_STICK) 0 to 1 else 11 to 14
+
+    // Applies the same physical -> virtual remap SidewaysMapper uses for live HID output, so a
+    // customized source resolves to the keycode Eden would actually see for that body.
+    private fun inputFor(side: JoyconSide, physical: JoyconButton): Input? {
+        val virtualId = when (side) {
+            JoyconSide.DUAL -> physical.id
+            JoyconSide.LEFT -> SidewaysMapper.remapButtonsLeft(setOf(physical.id)).first()
+            JoyconSide.RIGHT -> SidewaysMapper.remapButtonsRight(setOf(physical.id)).first()
+        }
+        val virtual = JoyconButton.entries.firstOrNull { it.id == virtualId } ?: return null
+        return KEY_CODES[virtual]?.let { Key(it) } ?: HAT_AXES[virtual]
     }
 
     private data class Layout(val buttons: Map<String, Input>, val sticks: Map<String, Pair<Int, Int>>)

@@ -159,8 +159,10 @@ fun JoyconScreen(
     gamepadSetupAvailable: Boolean,
     gamepadSetupPhase: DolphinSetupPhase,
     onConfigureGamepad: () -> Unit,
+    onOpenGamepadMapping: () -> Unit,
     onDsuToggle: (Boolean) -> Unit,
     onConfigureDolphin: () -> Unit,
+    onOpenDsuMapping: () -> Unit,
     onOpenSettings: () -> Unit,
     viewMode: ConnectionViewMode,
     onViewModeChange: (ConnectionViewMode) -> Unit,
@@ -272,9 +274,9 @@ fun JoyconScreen(
                             ScreenState.CONNECTED -> ConnectedContent(
                                 state, viewMode, gamepadEnabled, gamepadError, dsuState, shizukuAvailable,
                                 gamepadEmulators, selectedGamepadEmulator, onSelectGamepadEmulator,
-                                gamepadSetupAvailable, gamepadSetupPhase, onConfigureGamepad,
+                                gamepadSetupAvailable, gamepadSetupPhase, onConfigureGamepad, onOpenGamepadMapping,
                                 onScan, onDisconnectAll, onAssign, unassignController, removePlayer, onDisconnect,
-                                onGamepadToggle, onDsuToggle, onConfigureDolphin,
+                                onGamepadToggle, onDsuToggle, onConfigureDolphin, onOpenDsuMapping,
                             )
                             else -> ScanningContent(state)
                         }
@@ -516,6 +518,7 @@ private fun ConnectedContent(
     gamepadSetupAvailable: Boolean,
     gamepadSetupPhase: DolphinSetupPhase,
     onConfigureGamepad: () -> Unit,
+    onOpenGamepadMapping: () -> Unit,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
@@ -525,6 +528,7 @@ private fun ConnectedContent(
     onGamepadToggle: (Boolean) -> Unit,
     onDsuToggle: (Boolean) -> Unit,
     onConfigureDolphin: () -> Unit,
+    onOpenDsuMapping: () -> Unit,
 ) {
     AnimatedVisibility(
         visible = state.unassignedJoycons.isNotEmpty(),
@@ -617,6 +621,7 @@ private fun ConnectedContent(
                         phase = gamepadSetupPhase,
                         setupLabel = stringResource(R.string.gamepad_emulator_setup),
                         onSetUp = onConfigureGamepad,
+                        onConfigureMapping = onOpenGamepadMapping,
                     )
                 }
             }
@@ -627,6 +632,7 @@ private fun ConnectedContent(
                 state = dsuState,
                 onToggle = onDsuToggle,
                 onConfigureDolphin = onConfigureDolphin,
+                onConfigureMapping = onOpenDsuMapping,
             )
         }
 

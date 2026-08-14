@@ -10,6 +10,12 @@ import com.joegec.joycon2android.connection.StartScanUseCase
 import com.joegec.joycon2android.connection.StopScanUseCase
 import com.joegec.joycon2android.connection.ViewModePreferences
 import com.joegec.joycon2android.connection.ViewModePreferencesDataStore
+import com.joegec.joycon2android.buttonmapping.ControllerMappingDataStore
+import com.joegec.joycon2android.buttonmapping.ControllerMappingRepository
+import com.joegec.joycon2android.buttonmapping.GetEffectiveControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.ObserveControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.ResetControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
 import com.joegec.joycon2android.assignment.AssignmentRepository
 import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerAssignmentManager
@@ -62,6 +68,13 @@ class AppContainer(context: Context) {
     val observeViewMode = ObserveViewModeUseCase(viewModePreferences)
     val setViewMode = SetViewModeUseCase(viewModePreferences)
 
+    // --- Controller button mapping (shared by Gamepad and DSU) ---
+    private val controllerMappingRepository: ControllerMappingRepository = ControllerMappingDataStore(appContext)
+    val observeControllerMapping = ObserveControllerMappingUseCase(controllerMappingRepository)
+    val setControllerMapping = SetControllerMappingUseCase(controllerMappingRepository)
+    val resetControllerMapping = ResetControllerMappingUseCase(controllerMappingRepository)
+    private val getControllerMapping = GetEffectiveControllerMappingUseCase(observeControllerMapping)
+
     // --- DSU ---
     private val dsuRepository: DsuRepository = DsuServer(scope)
     val enableDsu = EnableDsuUseCase(dsuRepository)
@@ -93,6 +106,7 @@ class AppContainer(context: Context) {
         privilegedAccess::acquire,
         scope = scope,
         gamepadPorts = { virtualGamepadPorts(appContext) },
+        getControllerMapping = getControllerMapping,
     )
 
     // --- Session (cross-feature coordinator) ---

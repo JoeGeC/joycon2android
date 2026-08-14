@@ -25,27 +25,15 @@ import androidx.compose.ui.text.font.FontWeight
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Dimens
 
-/** Compact emulator picker styled like the other text actions in a feature card. */
+/** Generic id/label picker for rows that aren't a fixed [EmulatorOption] list, e.g. mapping editors. */
 @Composable
-fun EmulatorDropdown(
-    options: List<EmulatorOption>,
+fun LabeledDropdown(
+    options: List<Pair<String, String>>,
     selectedId: String,
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val selected = options.firstOrNull { it.id == selectedId } ?: options.firstOrNull() ?: return
-
-    if (options.size == 1) {
-        Text(
-            selected.label,
-            color = Accent,
-            fontSize = Dimens.fontSizeSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = modifier.padding(vertical = Dimens.pillPaddingVertical),
-        )
-        return
-    }
-
+    val selected = options.firstOrNull { it.first == selectedId } ?: options.firstOrNull() ?: return
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier) {
@@ -59,7 +47,7 @@ fun EmulatorDropdown(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                selected.label,
+                selected.second,
                 color = Accent,
                 fontSize = Dimens.fontSizeSmall,
                 fontWeight = FontWeight.Bold,
@@ -68,11 +56,11 @@ fun EmulatorDropdown(
             Icon(Icons.Filled.ArrowDropDown, contentDescription = null, tint = Accent)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { option ->
+            options.forEach { (id, label) ->
                 DropdownMenuItem(
-                    text = { Text(option.label) },
+                    text = { Text(label) },
                     onClick = {
-                        onSelect(option.id)
+                        onSelect(id)
                         expanded = false
                     },
                 )

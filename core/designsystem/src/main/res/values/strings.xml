@@ -5,4 +5,5 @@
     <string name="dolphin_setup_done">Done — restart emulator</string>
     <string name="dolphin_setup_failed">Couldn\'t set it up automatically — you can still do it manually.</string>
     <string name="dolphin_setup_no_access">No privileged access — set up Shizuku.</string>
+    <string name="emulator_auto_setup_configure_mapping">Configure button mapping</string>
 </resources>

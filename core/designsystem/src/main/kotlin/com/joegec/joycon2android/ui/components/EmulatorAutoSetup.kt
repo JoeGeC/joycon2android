@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +29,7 @@ fun EmulatorAutoSetup(
     setupLabel: String,
     onSetUp: () -> Unit,
     modifier: Modifier = Modifier,
+    onConfigureMapping: (() -> Unit)? = null,
 ) {
     LabeledBorderBox(
         label = stringResource(R.string.emulator_auto_setup_title),
@@ -45,6 +50,15 @@ fun EmulatorAutoSetup(
                     modifier = Modifier.weight(1f),
                 )
                 DolphinSetupButton(phase, setupLabel, onSetUp, modifier = Modifier.weight(1f))
+                if (onConfigureMapping != null) {
+                    IconButton(onClick = onConfigureMapping) {
+                        Icon(
+                            Icons.Filled.Tune,
+                            contentDescription = stringResource(R.string.emulator_auto_setup_configure_mapping),
+                            tint = TextDim,
+                        )
+                    }
+                }
             }
             if (phase.isFailure) {
                 Spacer(Modifier.height(Dimens.elementSpacing))

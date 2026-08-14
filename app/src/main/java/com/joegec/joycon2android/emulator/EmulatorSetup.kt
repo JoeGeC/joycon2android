@@ -2,6 +2,9 @@ package com.joegec.joycon2android.emulator
 
 import android.content.pm.PackageManager
 import android.util.Log
+import com.joegec.joycon2android.buttonmapping.Console
+import com.joegec.joycon2android.buttonmapping.GetEffectiveControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.dsu.emulator.DolphinDsuConfig
 import com.joegec.joycon2android.dsu.emulator.DolphinWiimoteConfig
 import com.joegec.joycon2android.dsu.DsuConfig
@@ -30,7 +33,13 @@ class EmulatorSetup(
     private val acquireShell: (onResult: (PrivilegedShell?) -> Unit) -> Unit,
     private val scope: CoroutineScope,
     private val gamepadPorts: () -> Map<Int, Int>,
+    private val getControllerMapping: GetEffectiveControllerMappingUseCase,
 ) {
+
+    private suspend fun mappingLookup(console: Console): (JoyconSide) -> Map<String, String> {
+        val bySide = JoyconSide.entries.associateWith { getControllerMapping(console, it) }
+        return { side -> bySide.getValue(side) }
+    }
     val dolphinInstalled: Boolean
         get() = isInstalled(DolphinPaths.PACKAGE)
 
@@ -60,7 +69,11 @@ class EmulatorSetup(
         }
         val wiimoteOk = !configurable || shell.writeText(
             DolphinWiimoteConfig.path,
-            DolphinWiimoteConfig.merge(shell.readText(DolphinWiimoteConfig.path), players),
+            DolphinWiimoteConfig.merge(
+                shell.readText(DolphinWiimoteConfig.path),
+                players,
+                mappingLookup(Console.WIIMOTE_NUNCHUK),
+            ),
         )
 
         if (dsuOk && wiimoteOk) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
@@ -73,10 +86,19 @@ class EmulatorSetup(
             val written = when (emulatorId) {
                 EdenGamepadConfig.PACKAGE -> shell.writeText(
                     EdenGamepadConfig.path,
-                    EdenGamepadConfig.merge(shell.readText(EdenGamepadConfig.path), players, gamepadPorts()),
+                    EdenGamepadConfig.merge(
+                        shell.readText(EdenGamepadConfig.path),
+                        players,
+                        gamepadPorts(),
+                        mappingLookup(Console.SWITCH_PRO),
+                    ),
                 )
                 else -> {
-                    val mappings = DolphinGcpadConfig.merge(shell.readText(DolphinGcpadConfig.path), players)
+                    val mappings = DolphinGcpadConfig.merge(
+                        shell.readText(DolphinGcpadConfig.path),
+                        players,
+                        mappingLookup(Console.GAMECUBE),
+                    )
                     val mappingsOk = shell.writeText(DolphinGcpadConfig.path, mappings)
                     // Dolphin GC ports default to "None"; set them to Standard Controller
                     val core = DolphinGcpadConfig.mergeCore(shell.readText(DolphinGcpadConfig.corePath), players)

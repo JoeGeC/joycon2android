@@ -1,5 +1,7 @@
 package com.joegec.joycon2android.dsu.emulator
 
+import com.joegec.joycon2android.buttonmapping.DefaultControllerMappings
+import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
@@ -8,13 +10,24 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+// The default mapping, expressed as the opaque string map the repository would hand back —
+// mirrors ObserveControllerMappingUseCase's defaultsFor without pulling in a DataStore dependency.
+private fun defaultWiimoteMapping(side: JoyconSide): Map<String, String> =
+    DefaultControllerMappings.wiimoteButtons(side).toNames() + DefaultControllerMappings.wiimoteSticks(side).toNames()
+
+private fun <K : Enum<K>, V : Enum<V>> Map<K, V>.toNames(): Map<String, String> =
+    entries.associate { it.key.name to it.value.name }
+
 class DolphinWiimoteConfigTest {
 
     private fun joycon(side: Side) = ConnectedJoycon(address = side.name, side = side, deviceName = "Joy-Con")
 
+    private fun merge(existing: String?, players: List<PlayerState>) =
+        DolphinWiimoteConfig.merge(existing, players, ::defaultWiimoteMapping)
+
     @Test
     fun `right-only player maps the stick to the d-pad and uses no extension`() {
-        val result = DolphinWiimoteConfig.merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
 
         assertTrue(result.contains("[Wiimote1]"))
         assertTrue(result.contains("Source = 1"))
@@ -27,7 +40,7 @@ class DolphinWiimoteConfigTest {
 
     @Test
     fun `left-only player maps face buttons to pad directions and recenters on L`() {
-        val result = DolphinWiimoteConfig.merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))))
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))))
 
         assertTrue(result.contains("Buttons/A = `Pad E`"))
         assertTrue(result.contains("Buttons/Home = `Touch`"))
@@ -38,7 +51,7 @@ class DolphinWiimoteConfigTest {
     fun `a pair uses the physical d-pad and exposes the left stick as the nunchuk`() {
         val both = PlayerState(PlayerNumber.P2, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
 
-        val result = DolphinWiimoteConfig.merge(null, listOf(both))
+        val result = merge(null, listOf(both))
 
         assertTrue(result.contains("[Wiimote2]"))
         assertTrue(result.contains("Device = DSUClient/1/Joycon2"))
@@ -50,7 +63,7 @@ class DolphinWiimoteConfigTest {
 
     @Test
     fun `pro controllers are skipped`() {
-        val result = DolphinWiimoteConfig.merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
 
         assertFalse(result.contains("[Wiimote1]"))
     }
@@ -59,7 +72,7 @@ class DolphinWiimoteConfigTest {
     fun `unrelated sections are preserved and our section is replaced`() {
         val existing = "[Wiimote1]\nButtons/A = `Old`\n[GBA1]\nFoo = Bar\n"
 
-        val result = DolphinWiimoteConfig.merge(existing, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+        val result = merge(existing, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
 
         assertTrue(result.contains("[GBA1]"))
         assertTrue(result.contains("Foo = Bar"))

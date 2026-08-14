@@ -1,5 +1,7 @@
 package com.joegec.joycon2android.gamepad.emulator
 
+import com.joegec.joycon2android.buttonmapping.DefaultControllerMappings
+import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
@@ -8,9 +10,20 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+// The default mapping, expressed as the opaque string map the repository would hand back —
+// mirrors ObserveControllerMappingUseCase's defaultsFor without pulling in a DataStore dependency.
+private fun defaultSwitchProMapping(side: JoyconSide): Map<String, String> =
+    DefaultControllerMappings.switchProButtons(side).toNames() + DefaultControllerMappings.switchProSticks(side).toNames()
+
+private fun <K : Enum<K>, V : Enum<V>> Map<K, V>.toNames(): Map<String, String> =
+    entries.associate { it.key.name to it.value.name }
+
 class EdenGamepadConfigTest {
 
     private fun joycon(side: Side) = ConnectedJoycon(address = side.name, side = side, deviceName = "Joy-Con")
+
+    private fun merge(existing: String?, players: List<PlayerState>, ports: Map<Int, Int>) =
+        EdenGamepadConfig.merge(existing, players, ports, ::defaultSwitchProMapping)
 
     @Test
     fun `type reflects the layout and bindings use the resolved port`() {
@@ -22,7 +35,7 @@ class EdenGamepadConfigTest {
         // P2/P3 enumerated out of player order, like a real device list
         val ports = mapOf(1 to 0, 2 to 2, 3 to 1)
 
-        val result = EdenGamepadConfig.merge(null, players, ports)
+        val result = merge(null, players, ports)
 
         assertTrue(result.contains("[Controls]"))
         assertTrue(result.contains("player_0_type=1")) // dual
@@ -35,7 +48,7 @@ class EdenGamepadConfigTest {
     fun `dual uses native keycodes accounting for the HID button shift`() {
         val players = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
 
-        val result = EdenGamepadConfig.merge(null, players, ports = mapOf(1 to 0))
+        val result = merge(null, players, mapOf(1 to 0))
 
         // Switch X is BTN_C (98), Switch Y is BTN_X (99) — not 99/100.
         assertTrue(result.contains("player_0_button_a=\"engine:android,port:0,guid:$GUID,button:96,display:Joy-Con Virtual Gamepad 1 0\""))
@@ -50,7 +63,7 @@ class EdenGamepadConfigTest {
     fun `sideways right Joy-Con is a Pro Controller with faces rotated 90 degrees CW`() {
         val players = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
 
-        val result = EdenGamepadConfig.merge(null, players, ports = mapOf(1 to 0))
+        val result = merge(null, players, mapOf(1 to 0))
 
         assertTrue(result.contains("player_0_type=0")) // Pro
         // A <- physical X (98), B <- physical A (96), X <- physical Y (99), Y <- physical B (97)
@@ -68,7 +81,7 @@ class EdenGamepadConfigTest {
     fun `sideways left Joy-Con is a Pro Controller with its directions mapped to faces`() {
         val players = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT)))
 
-        val result = EdenGamepadConfig.merge(null, players, ports = mapOf(1 to 0))
+        val result = merge(null, players, mapOf(1 to 0))
 
         assertTrue(result.contains("player_0_type=0")) // Pro
         // Directions become faces (90° CCW): A <- Down (hat_x+), Y <- Up (hat_x-).
@@ -91,7 +104,7 @@ class EdenGamepadConfigTest {
         """.trimIndent()
         val players = listOf(PlayerState(PlayerNumber.P2, left = joycon(Side.LEFT)))
 
-        val result = EdenGamepadConfig.merge(existing, players, ports = mapOf(2 to 2))
+        val result = merge(existing, players, mapOf(2 to 2))
 
         assertFalse(result.contains("button:96")) // stale port-1 face key gone
         assertTrue(result.contains("motion_enabled=true")) // unrelated key preserved
@@ -104,7 +117,7 @@ class EdenGamepadConfigTest {
         val existing = "[Controls]\nmotion_enabled=true\n[Cpu]\nfoo=bar\n"
         val players = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
 
-        val result = EdenGamepadConfig.merge(existing, players, ports = emptyMap())
+        val result = merge(existing, players, emptyMap())
 
         // No port → no bindings written, but unrelated keys/sections stay
         assertTrue(result.contains("motion_enabled=true"))

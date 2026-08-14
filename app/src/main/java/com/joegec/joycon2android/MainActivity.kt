@@ -13,10 +13,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.joegec.joycon2android.buttonmapping.Console
+import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.presentation.ControllerMappingScreen
+import com.joegec.joycon2android.buttonmapping.presentation.ControllerMappingViewModel
 import com.joegec.joycon2android.dsu.presentation.DsuViewModel
+import com.joegec.joycon2android.gamepad.emulator.EdenGamepadConfig
 import com.joegec.joycon2android.gamepad.presentation.GamepadViewModel
 import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
@@ -56,6 +64,14 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    private val controllerMappingViewModel: ControllerMappingViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val c = (application as JoyconApplication).container
+                ControllerMappingViewModel(c.observeControllerMapping, c.setControllerMapping, c.resetControllerMapping)
+            }
+        }
+    }
 
     override fun onResume() {
         super.onResume()
@@ -87,6 +103,28 @@ class MainActivity : ComponentActivity() {
         setContent {
             Joycon2AndroidTheme {
                 Surface(Modifier.fillMaxSize(), color = Background) {
+                    var mappingConsole by remember { mutableStateOf<Console?>(null) }
+                    val console = mappingConsole
+
+                    if (console != null) {
+                        val leftMapping by controllerMappingViewModel.mapping(console, JoyconSide.LEFT).collectAsState()
+                        val rightMapping by controllerMappingViewModel.mapping(console, JoyconSide.RIGHT).collectAsState()
+                        val dualMapping by controllerMappingViewModel.mapping(console, JoyconSide.DUAL).collectAsState()
+
+                        ControllerMappingScreen(
+                            console = console,
+                            leftMapping = leftMapping,
+                            rightMapping = rightMapping,
+                            dualMapping = dualMapping,
+                            onSetMapping = { side, targetKey, sourceId ->
+                                controllerMappingViewModel.setMapping(console, side, targetKey, sourceId)
+                            },
+                            onResetMapping = { side -> controllerMappingViewModel.resetMapping(console, side) },
+                            onBack = { mappingConsole = null },
+                        )
+                        return@Surface
+                    }
+
                     val state by viewModel.uiState.collectAsState()
                     val gamepadStatus by gamepadViewModel.status.collectAsState()
                     val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
@@ -136,8 +174,16 @@ class MainActivity : ComponentActivity() {
                         gamepadSetupAvailable = shizukuAvailable,
                         gamepadSetupPhase = gamepadSetupPhase,
                         onConfigureGamepad = { gamepadViewModel.configureGamepad(state.activePlayers) },
+                        onOpenGamepadMapping = {
+                            mappingConsole = if (selectedEmulator == EdenGamepadConfig.PACKAGE) {
+                                Console.SWITCH_PRO
+                            } else {
+                                Console.GAMECUBE
+                            }
+                        },
                         onDsuToggle = dsuViewModel::toggle,
                         onConfigureDolphin = { dsuViewModel.configureDolphinDsu(state.activePlayers) },
+                        onOpenDsuMapping = { mappingConsole = Console.WIIMOTE_NUNCHUK },
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },
                         shizukuAvailable = shizukuAvailable,
                         viewMode = viewMode,

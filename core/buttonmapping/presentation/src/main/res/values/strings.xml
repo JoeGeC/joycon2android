@@ -1,0 +1,4 @@
+<resources>
+    <string name="controller_mapping_back">Back</string>
+    <string name="controller_mapping_reset">Reset to defaults</string>
+</resources>

@@ -36,6 +36,7 @@ fun DsuCard(
     state: DsuCardState,
     onToggle: (Boolean) -> Unit,
     onConfigureDolphin: () -> Unit,
+    onConfigureMapping: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     FeatureToggleCard(
@@ -75,6 +76,7 @@ fun DsuCard(
                         phase = state.dolphinPhase,
                         setupLabel = stringResource(R.string.dsu_dolphin_auto_setup),
                         onSetUp = onConfigureDolphin,
+                        onConfigureMapping = onConfigureMapping,
                     )
                     Spacer(Modifier.height(Dimens.elementSpacing))
                 }
