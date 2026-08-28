@@ -6,4 +6,5 @@
     <string name="dolphin_setup_failed">Couldn\'t set it up automatically — you can still do it manually.</string>
     <string name="dolphin_setup_no_access">No privileged access — set up Shizuku.</string>
     <string name="emulator_auto_setup_configure_mapping">Configure button mapping</string>
+    <string name="emulator_auto_setup_info_body">Auto setup might not work on every device. If the emulator doesn\'t respond to Joy-Con input after setting up, configure the controller manually in the emulator\'s own settings instead.</string>
 </resources>
