@@ -1,16 +1,27 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-# Gradle build output for every module (root, app, core/*, feature/*, build-logic/*)
+# Gradle
+.gradle/
 build/
-/captures
-.externalNativeBuild
-.cxx
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
 local.properties
+
+# Native build output
+.cxx/
+.externalNativeBuild/
+
+# Kotlin
+.kotlin/
+
+# Release signing — never commit
+*.jks
+*.keystore
+keystore.properties
+
+# OS
+.DS_Store
+
+# Tooling artifacts
+.impeccable/
