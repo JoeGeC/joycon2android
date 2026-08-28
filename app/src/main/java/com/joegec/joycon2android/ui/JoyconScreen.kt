@@ -480,7 +480,7 @@ private fun KofiBanner(modifier: Modifier = Modifier) {
             .clip(shape)
             .border(Dimens.cardBorderWidth, gradientBorder, shape)
             .background(CardBg)
-            .clickable { uriHandler.openUri("https://ko-fi.com/joycon2android") }
+            .clickable { uriHandler.openUri("https://ko-fi.com/joestechprojects") }
             .padding(Dimens.cardPadding),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,

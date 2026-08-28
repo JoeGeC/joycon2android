@@ -455,6 +455,10 @@ This app builds on the reverse-engineering work of the community. In particular:
 
 ---
 
+## Support
+
+If you find this useful, you can support development on [Ko-fi](https://ko-fi.com/joestechprojects).
+
 ## License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
@@ -465,3 +469,6 @@ This project is not affiliated with, endorsed by, or sponsored by Nintendo. Joy-
 Switch, and GameCube are trademarks of Nintendo. The BLE protocol implemented here was
 reverse-engineered by the community from their own hardware; this project contains no Nintendo
 code.
+
+Claude (Anthropic's AI assistant) was used in building this project, directed and reviewed
+throughout by a professional software and Android engineer.
