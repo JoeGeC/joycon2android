@@ -14,6 +14,9 @@ object Dimens {
     val elementSpacing = 8.dp
     val dualJoyconGap = 10.dp
 
+    val featureCardTitleGap = 4.dp
+    val featureCardSwitchGap = 12.dp
+
     val buttonCorner = 12.dp
     val controllerButtonCorner = 6.dp // tighter corner for the on-controller button glyphs
     val buttonHeight = 44.dp
