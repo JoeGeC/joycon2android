@@ -7,7 +7,7 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 ## Features
 
 - Connect multiple Joy-Con 2 controllers simultaneously
-- Assign controllers to up to 4 players (left, right, or paired)
+- Assign controllers to up to 8 players (left, right, or paired); DSU motion and emulator auto-setup cover players 1–4
 - **Virtual gamepad output** — each assigned player becomes its own standard HID gamepad, so apps see one controller per player
 - **DSU motion server** — gyro/accel + full pad state for emulators (Dolphin, Cemu, …) over UDP, up to 4 independent players, with automatic gyro bias calibration
 - **One-tap emulator setup** — writes an emulator's controller config to match the current assignment: Eden (stable or Nightly) or Dolphin GameCube bindings for the virtual gamepad, plus Dolphin's DSU + Wii Remote motion mappings
@@ -41,7 +41,7 @@ Install the APK from the [latest release](https://github.com/JoeGeC/joycon2andro
 
 1. Put your Joy-Con 2 into pairing mode by pressing the SYNC button
 2. Tap "Scan" in the app — the controller should appear within a few seconds
-3. Once connected, assign it to a player slot (P1–P4)
+3. Once connected, assign it to a player slot (P1–P8)
 
 ### Step 4: Enable Virtual Gamepad
 
