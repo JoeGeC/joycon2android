@@ -175,7 +175,7 @@ class MainActivity : ComponentActivity() {
                         gamepadSetupPhase = gamepadSetupPhase,
                         onConfigureGamepad = { gamepadViewModel.configureGamepad(state.activePlayers) },
                         onOpenGamepadMapping = {
-                            mappingConsole = if (selectedEmulator == EdenGamepadConfig.PACKAGE) {
+                            mappingConsole = if (selectedEmulator in EdenGamepadConfig.PACKAGES) {
                                 Console.SWITCH_PRO
                             } else {
                                 Console.GAMECUBE

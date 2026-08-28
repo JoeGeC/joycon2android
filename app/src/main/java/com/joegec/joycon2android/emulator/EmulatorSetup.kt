@@ -51,6 +51,9 @@ class EmulatorSetup(
         if (isInstalled(EdenGamepadConfig.PACKAGE)) {
             add(EmulatorOption(EdenGamepadConfig.PACKAGE, "Eden"))
         }
+        if (isInstalled(EdenGamepadConfig.NIGHTLY_PACKAGE)) {
+            add(EmulatorOption(EdenGamepadConfig.NIGHTLY_PACKAGE, "Eden Nightly"))
+        }
     }
 
     private fun isInstalled(pkg: String) =
@@ -83,28 +86,28 @@ class EmulatorSetup(
     suspend fun configureGamepad(emulatorId: String, players: List<PlayerState>): EmulatorSetupResult =
         bounded("gamepad") {
             val shell = awaitShell() ?: return@bounded EmulatorSetupResult.NO_PRIVILEGED_ACCESS
-            val written = when (emulatorId) {
-                EdenGamepadConfig.PACKAGE -> shell.writeText(
-                    EdenGamepadConfig.path,
+            val written = if (emulatorId in EdenGamepadConfig.PACKAGES) {
+                val path = EdenGamepadConfig.pathFor(emulatorId)
+                shell.writeText(
+                    path,
                     EdenGamepadConfig.merge(
-                        shell.readText(EdenGamepadConfig.path),
+                        shell.readText(path),
                         players,
                         gamepadPorts(),
                         mappingLookup(Console.SWITCH_PRO),
                     ),
                 )
-                else -> {
-                    val mappings = DolphinGcpadConfig.merge(
-                        shell.readText(DolphinGcpadConfig.path),
-                        players,
-                        mappingLookup(Console.GAMECUBE),
-                    )
-                    val mappingsOk = shell.writeText(DolphinGcpadConfig.path, mappings)
-                    // Dolphin GC ports default to "None"; set them to Standard Controller
-                    val core = DolphinGcpadConfig.mergeCore(shell.readText(DolphinGcpadConfig.corePath), players)
-                    val coreOk = shell.writeText(DolphinGcpadConfig.corePath, core)
-                    mappingsOk && coreOk
-                }
+            } else {
+                val mappings = DolphinGcpadConfig.merge(
+                    shell.readText(DolphinGcpadConfig.path),
+                    players,
+                    mappingLookup(Console.GAMECUBE),
+                )
+                val mappingsOk = shell.writeText(DolphinGcpadConfig.path, mappings)
+                // Dolphin GC ports default to "None"; set them to Standard Controller
+                val core = DolphinGcpadConfig.mergeCore(shell.readText(DolphinGcpadConfig.corePath), players)
+                val coreOk = shell.writeText(DolphinGcpadConfig.corePath, core)
+                mappingsOk && coreOk
             }
             if (written) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
         }

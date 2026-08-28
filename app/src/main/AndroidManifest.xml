@@ -30,6 +30,7 @@
     <queries>
         <package android:name="org.dolphinemu.dolphinemu" />
         <package android:name="dev.eden.eden_emulator" />
+        <package android:name="dev.eden.eden_emulator.nightly" />
     </queries>
 
     <application

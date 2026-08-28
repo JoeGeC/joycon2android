@@ -33,7 +33,10 @@ import com.joegec.joycon2android.model.SidewaysMapper
  */
 object EdenGamepadConfig {
     const val PACKAGE = "dev.eden.eden_emulator"
-    val path = "/sdcard/Android/data/$PACKAGE/files/config/config.ini"
+    const val NIGHTLY_PACKAGE = "dev.eden.eden_emulator.nightly"
+    val PACKAGES = setOf(PACKAGE, NIGHTLY_PACKAGE)
+
+    fun pathFor(packageName: String) = "/sdcard/Android/data/$packageName/files/config/config.ini"
 
     private const val GUID = "00000000000056780000000000001234"
 
