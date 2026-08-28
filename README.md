@@ -10,7 +10,8 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 - Assign controllers to up to 4 players (left, right, or paired)
 - **Virtual gamepad output** — each assigned player becomes its own standard HID gamepad, so apps see one controller per player
 - **DSU motion server** — gyro/accel + full pad state for emulators (Dolphin, Cemu, …) over UDP, up to 4 independent players, with automatic gyro bias calibration
-- **One-tap emulator setup** — writes an emulator's controller config to match the current assignment: Eden or Dolphin GameCube bindings for the virtual gamepad, plus Dolphin's DSU + Wii Remote motion mappings
+- **One-tap emulator setup** — writes an emulator's controller config to match the current assignment: Eden (stable or Nightly) or Dolphin GameCube bindings for the virtual gamepad, plus Dolphin's DSU + Wii Remote motion mappings
+- **Customizable button mapping** — a per-console editor (GameCube / Joy-Cons / Wii Remote & Nunchuk) overrides the default Joy-Con → emulator bindings the setup writes
 - Dual Joy-Con layout when both L+R assigned to one player
 - Sideways single Joy-Con layout with rotated inputs (stick, d-pad, face buttons)
 - Live display of buttons, sticks, IMU (accelerometer + gyroscope), and battery
@@ -34,7 +35,7 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 
 ### Step 2: Install Joycon2Android
 
-Build from source or install the APK. Grant Bluetooth permissions when prompted.
+Install the APK from the [latest release](https://github.com/JoeGeC/joycon2android/releases) or build from source. Grant Bluetooth permissions when prompted.
 
 ### Step 3: Connect Controllers
 
@@ -54,10 +55,14 @@ gamepads (games, emulators, etc.) sees them. The app runs a foreground service t
 connection alive in the background.
 
 **Emulator controller mapping:** with the gamepad on, the Gamepad card shows a picker of the
-installed emulators it can configure (currently **Eden** and **Dolphin (GameCube)**). Pick one and
+installed emulators it can configure (currently **Eden** — stable and Nightly — and
+**Dolphin (GameCube)**). Pick one and
 tap **Set up controller mapping** — it writes that emulator's controller config to match the
 current assignment (Eden's `config.ini`, or Dolphin's `GCPadNew.ini` + a Standard Controller on
-each GameCube port), then prompts you to restart the emulator. A single Joy-Con is set up as a Pro
+each GameCube port), then prompts you to restart the emulator. The config icon next to the button
+opens a per-console editor to customize which Joy-Con button maps to which emulator button; the
+defaults are the layouts described in
+[Emulator controller mapping](#emulator-controller-mapping). A single Joy-Con is set up as a Pro
 Controller held sideways, so its buttons/stick work in every game (see
 [Emulator controller mapping](#emulator-controller-mapping) for why). It needs the privileged path
 connected; if the write fails (some OEM builds block writing into another app's `Android/data`),
@@ -192,7 +197,8 @@ The virtual gamepad is a generic HID pad, but each emulator still needs its cont
 pointed at it. With the gamepad on, the Gamepad card's emulator picker writes the selected
 emulator's config to match the assignment. The generators live in `:feature:gamepad:domain`
 (`EdenGamepadConfig`, `DolphinGcpadConfig`) over shared primitives in `:core:emulatorconfig`
-(`IniEditor`, `DolphinPaths`). Three things make this non-obvious — all confirmed against Eden's
+(`IniEditor`, `DolphinPaths`); the Joy-Con → emulator-button tables they write are user-editable
+per console via `:core:buttonmapping`, with the defaults described below. Three things make this non-obvious — all confirmed against Eden's
 source and on-device behaviour:
 
 **1. The Android keycode mapping is shifted.** The HID descriptor declares 14 *generic* buttons, so
@@ -446,3 +452,16 @@ This app builds on the reverse-engineering work of the community. In particular:
   format the motion server implements.
 - **[Shizuku](https://shizuku.rikka.app/)** by RikkaApps — the privileged-access path that makes the
   virtual gamepad and emulator auto-setup possible without root.
+
+---
+
+## License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
+
+## Disclaimer
+
+This project is not affiliated with, endorsed by, or sponsored by Nintendo. Joy-Con, Nintendo
+Switch, and GameCube are trademarks of Nintendo. The BLE protocol implemented here was
+reverse-engineered by the community from their own hardware; this project contains no Nintendo
+code.
