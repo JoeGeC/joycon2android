@@ -25,6 +25,7 @@ class BleScanner(context: Context) {
     companion object {
         private const val TAG = "Joycon2"
         private const val NINTENDO_MANUFACTURER_ID = 0x0553
+        private const val SIDE_TYPE_INDEX = 5
         private const val SCAN_TIMEOUT_MS = 15_000L
     }
 
@@ -128,18 +129,19 @@ class BleScanner(context: Context) {
     }
 
     /**
-     * Nintendo manufacturer data (0x0553) typically contains a device type byte.
-     * Known values: 0x2D = Left Joy-Con 2, 0x2E = Right Joy-Con 2.
+     * Nintendo manufacturer data (company 0x0553) carries a per-side product byte at index 5:
+     * 0x67 = Left Joy-Con 2, 0x66 = Right Joy-Con 2. Confirmed on hardware and cross-checked
+     * against each controller's SPI accent colour (cyan left, coral right). The pairing
+     * advertisement has no local name, so this byte is the only side signal available before
+     * the controller starts streaming input.
      */
     private fun sideFromManufacturerData(result: ScanResult): Side? {
         val mfgData = result.scanRecord
             ?.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) ?: return null
-        if (mfgData.isEmpty()) return null
-        Log.d(TAG, "Manufacturer data: ${mfgData.joinToString(" ") { "%02X".format(it) }}")
-        val typeByte = mfgData[0].toInt() and 0xFF
-        return when (typeByte) {
-            0x2D -> Side.LEFT
-            0x2E -> Side.RIGHT
+        if (mfgData.size <= SIDE_TYPE_INDEX) return null
+        return when (mfgData[SIDE_TYPE_INDEX].toInt() and 0xFF) {
+            0x67 -> Side.LEFT
+            0x66 -> Side.RIGHT
             else -> null
         }
     }
