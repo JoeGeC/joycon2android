@@ -63,7 +63,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -171,7 +170,9 @@ fun JoyconScreen(
     val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val undoLabel = stringResource(R.string.action_undo)
+    val controllerRemovedMessage = stringResource(R.string.snackbar_controller_removed)
+    val playerRemovedTemplate = stringResource(R.string.snackbar_player_removed)
 
     // Unassigning is reachable by tapping the live display, so every removal is offered back as an
     // undo (re-assigning the same controllers to the same player) rather than being silent.
@@ -179,7 +180,7 @@ fun JoyconScreen(
         scope.launch {
             val result = snackbarHostState.showSnackbar(
                 message = message,
-                actionLabel = context.getString(R.string.action_undo),
+                actionLabel = undoLabel,
                 duration = SnackbarDuration.Short,
             )
             if (result == SnackbarResult.ActionPerformed) {
@@ -194,14 +195,14 @@ fun JoyconScreen(
         }?.player
         onUnassign(address)
         if (player != null) {
-            offerUndo(context.getString(R.string.snackbar_controller_removed), listOf(address to player))
+            offerUndo(controllerRemovedMessage, listOf(address to player))
         }
     }
 
     val removePlayer: (PlayerState) -> Unit = { playerState ->
         val restore = listOfNotNull(playerState.left, playerState.right).map { it.address to playerState.player }
         restore.forEach { (address, _) -> onUnassign(address) }
-        offerUndo(context.getString(R.string.snackbar_player_removed, playerState.player.index), restore)
+        offerUndo(playerRemovedTemplate.format(playerState.player.index), restore)
     }
 
     Scaffold(
