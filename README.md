@@ -274,7 +274,9 @@ Debug DSU clients for wire inspection and IMU calibration live in `tools/`.
 
 ## BLE Protocol Reference
 
-All values extracted from the confirmed-working macOS implementation (`Joycon2BLEReceiver.mm`). Where this disagrees with community READMEs, trust this file.
+All values extracted from the confirmed-working macOS implementation
+([Joycon2forMac](https://github.com/seitanmen/Joycon2forMac)'s `Joycon2BLEReceiver.mm`).
+Where this disagrees with community READMEs, trust this file.
 
 ### Identifiers
 
@@ -420,3 +422,27 @@ the SL/SR rail**, but passes a right Joy-Con's A/B/X/Y through unrotated (and th
 no face buttons). The face-button rotation that turns those into a usable sideways layout is applied
 per-emulator in the controller-mapping config, not here — see
 [Emulator controller mapping](#emulator-controller-mapping).
+
+---
+
+## Credits
+
+This app builds on the reverse-engineering work of the community. In particular:
+
+- **[Joycon2forMac](https://github.com/seitanmen/Joycon2forMac)** by seitanmen — the working macOS
+  BLE implementation this project's connection sequence, init commands, and 63-byte packet layout
+  were extracted from.
+- **[JoyconDriver](https://github.com/german77/JoyconDriver)** by german77 — Nintendo Switch
+  controller protocol documentation, including the Switch 2 Wireshark dissector that documents
+  report types, command layouts, and the SPI flash map (source of the shell/accent colour
+  addresses).
+- **[ProCon 2 Enabler Tool](https://handheldlegend.github.io/procon2tool/)** by HandHeldLegend — a
+  working Web-Bluetooth implementation whose concrete SPI-read command bytes unlocked reading
+  colours from a live controller.
+- **[Nintendo_Switch_Reverse_Engineering](https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering)**
+  by dekuNukem — the original Joy-Con reverse-engineering docs; source of the battery voltage
+  thresholds used by the battery gauge.
+- **[cemuhook protocol docs](https://v1993.github.io/cemuhook-protocol/)** by v1993 — the DSU wire
+  format the motion server implements.
+- **[Shizuku](https://shizuku.rikka.app/)** by RikkaApps — the privileged-access path that makes the
+  virtual gamepad and emulator auto-setup possible without root.
