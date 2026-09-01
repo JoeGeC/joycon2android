@@ -7,7 +7,7 @@ object ReportMapper {
 
     private const val REPORT_SIZE = 13
 
-    // Button bit positions matching the HID report descriptor order (Button 1-14)
+    // Button bit positions matching the HID report descriptor order (Button 1-16)
     private val BUTTON_MAP: Map<String, Int> = mapOf(
         JoyconButton.A.id to 0,
         JoyconButton.B.id to 1,
@@ -23,6 +23,8 @@ object ReportMapper {
         JoyconButton.RS.id to 11,
         JoyconButton.Home.id to 12,
         JoyconButton.Camera.id to 13,
+        JoyconButton.GL.id to 14,
+        JoyconButton.GR.id to 15,
     )
 
     private const val HAT_CENTER = 0x0F
@@ -32,7 +34,7 @@ object ReportMapper {
         val report = ByteArray(REPORT_SIZE)
         val pressed = gamepad.pressed
 
-        // Bytes 0-1: 14 button bits + 2 padding (little-endian)
+        // Bytes 0-1: 16 button bits (little-endian)
         var buttons = 0
         for (name in pressed) {
             BUTTON_MAP[name]?.let { bit -> buttons = buttons or (1 shl bit) }

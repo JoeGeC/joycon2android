@@ -24,4 +24,6 @@ enum class JoyconButton(val id: String, val label: String) {
     X("X", "X"),
     B("B", "B"),
     A("A", "A"),
+    GL("GL", "GL"),
+    GR("GR", "GR"),
 }

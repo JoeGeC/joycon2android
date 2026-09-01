@@ -129,11 +129,13 @@ class BleScanner(context: Context) {
     }
 
     /**
-     * Nintendo manufacturer data (company 0x0553) carries a per-side product byte at index 5:
-     * 0x67 = Left Joy-Con 2, 0x66 = Right Joy-Con 2. Confirmed on hardware and cross-checked
-     * against each controller's SPI accent colour (cyan left, coral right). The pairing
-     * advertisement has no local name, so this byte is the only side signal available before
-     * the controller starts streaming input.
+     * Nintendo manufacturer data (company 0x0553) carries the little-endian USB/BLE product ID at
+     * bytes [5..6], so index 5 is its low byte: 0x67 = Left Joy-Con 2 (PID 0x2067), 0x66 = Right
+     * Joy-Con 2 (PID 0x2066), 0x69 = Switch 2 Pro Controller (PID 0x2069). Left/Right are confirmed
+     * on hardware and cross-checked against each controller's SPI accent colour (cyan left, coral
+     * right); the Pro value comes from community reverse-engineering of the same advertisement
+     * scheme. The pairing advertisement has no local name, so this byte is the only type signal
+     * available before the controller starts streaming input.
      */
     private fun sideFromManufacturerData(result: ScanResult): Side? {
         val mfgData = result.scanRecord
@@ -142,6 +144,7 @@ class BleScanner(context: Context) {
         return when (mfgData[SIDE_TYPE_INDEX].toInt() and 0xFF) {
             0x67 -> Side.LEFT
             0x66 -> Side.RIGHT
+            0x69 -> Side.PRO
             else -> null
         }
     }
