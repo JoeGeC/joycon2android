@@ -46,6 +46,7 @@ private fun ShoulderButtons(pressed: Set<String>) {
         ) {
             ShoulderButton(JoyconButton.ZL.label, JoyconButton.ZL.id in pressed, Modifier.fillMaxWidth())
             ShoulderButton(JoyconButton.L.label, JoyconButton.L.id in pressed, Modifier.fillMaxWidth())
+            ShoulderButton(JoyconButton.GL.label, JoyconButton.GL.id in pressed, Modifier.fillMaxWidth())
         }
         Column(
             Modifier.weight(1f),
@@ -53,6 +54,7 @@ private fun ShoulderButtons(pressed: Set<String>) {
         ) {
             ShoulderButton(JoyconButton.ZR.label, JoyconButton.ZR.id in pressed, Modifier.fillMaxWidth())
             ShoulderButton(JoyconButton.R.label, JoyconButton.R.id in pressed, Modifier.fillMaxWidth())
+            ShoulderButton(JoyconButton.GR.label, JoyconButton.GR.id in pressed, Modifier.fillMaxWidth())
         }
     }
 }

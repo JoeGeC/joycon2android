@@ -167,18 +167,15 @@ class UhidRelay(private val name: String, private val playerIndex: Int) {
             0x09, 0x05,               // Usage (Game Pad)
             0xA1.toByte(), 0x01,      // Collection (Application)
 
-            // Buttons (14 buttons, 2 bits padding)
+            // Buttons (16 buttons; the last two are the Pro Controller's GL/GR back paddles)
             0x05, 0x09,               //   Usage Page (Button)
             0x19, 0x01,               //   Usage Minimum (Button 1)
-            0x29, 0x0E,               //   Usage Maximum (Button 14)
+            0x29, 0x10,               //   Usage Maximum (Button 16)
             0x15, 0x00,               //   Logical Minimum (0)
             0x25, 0x01,               //   Logical Maximum (1)
             0x75, 0x01,               //   Report Size (1)
-            0x95.toByte(), 0x0E,      //   Report Count (14)
+            0x95.toByte(), 0x10,      //   Report Count (16)
             0x81.toByte(), 0x02,      //   Input (Data, Var, Abs)
-            0x75, 0x01,               //   Report Size (1)
-            0x95.toByte(), 0x02,      //   Report Count (2) - padding
-            0x81.toByte(), 0x03,      //   Input (Const, Var, Abs)
 
             // Hat Switch (D-pad)
             0x05, 0x01,               //   Usage Page (Generic Desktop)

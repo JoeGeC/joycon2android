@@ -32,3 +32,10 @@ jobs:
 
       - name: Build, test, lint, and enforce architecture rules
         run: ./gradlew build :konsist:test --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

@@ -10,7 +10,9 @@ object PacketParser {
 
     private const val MIN_PACKET_SIZE = 0x3B
 
-    // Button bitmask → enum (uint32 at packet offset 0x03, little-endian)
+    // Button bitmask → enum. Bits 0..31 come from the uint32 at packet offset 0x03; the Pro
+    // Controller's two back paddles live in the next byte (0x07), folded into bits 32..39 so the
+    // whole set decodes through one mask table. GR is bit 0 of byte 0x07, GL is bit 1.
     private val buttonMasks: List<Pair<Long, JoyconButton>> = listOf(
         0x80000000L to JoyconButton.ZL, 0x40000000L to JoyconButton.L, 0x00010000L to JoyconButton.Minus,
         0x00080000L to JoyconButton.LS, 0x01000000L to JoyconButton.Down, 0x02000000L to JoyconButton.Up,
@@ -20,13 +22,15 @@ object PacketParser {
         0x00002000L to JoyconButton.SlRight, 0x00004000L to JoyconButton.R, 0x00008000L to JoyconButton.ZR,
         0x00040000L to JoyconButton.RS, 0x00000100L to JoyconButton.Y, 0x00000200L to JoyconButton.X,
         0x00000400L to JoyconButton.B, 0x00000800L to JoyconButton.A,
+        0x0100000000L to JoyconButton.GR, 0x0200000000L to JoyconButton.GL,
     )
 
     fun parse(data: ByteArray, side: Side): JoyconInput? {
         if (data.size < MIN_PACKET_SIZE) return null
         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
 
-        val buttons = bb.getInt(0x03).toLong() and 0xFFFFFFFFL
+        val buttons = (bb.getInt(0x03).toLong() and 0xFFFFFFFFL) or
+            ((data[0x07].toInt() and 0xFF).toLong() shl 32)
         val (sx, sy) = resolveStick(data, side)
         val (rsx, rsy) = if (side == Side.PRO) decodeStick(data, 0x0D) else (2048 to 2048)
 
