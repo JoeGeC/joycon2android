@@ -6,7 +6,7 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 
 ## Features
 
-- Connect multiple Joy-Con 2 controllers simultaneously
+- Connect multiple Joy-Con 2 controllers simultaneously, plus the Switch 2 Pro Controller (including its GL/GR back paddles)
 - Assign controllers to up to 8 players (left, right, or paired); DSU motion and emulator auto-setup cover players 1–4
 - **Virtual gamepad output** — each assigned player becomes its own standard HID gamepad, so apps see one controller per player
 - **DSU motion server** — gyro/accel + full pad state for emulators (Dolphin, Cemu, …) over UDP, up to 4 independent players, with automatic gyro bias calibration
@@ -22,7 +22,7 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 
 - Android device running API 24+ with BLE support
 - [Shizuku](https://shizuku.rikka.app/) installed and running — the privileged path for the virtual gamepad and emulator config
-- Joy-Con 2 controller(s)
+- Joy-Con 2 controller(s) or a Switch 2 Pro Controller
 
 ### Step 1: Install Shizuku
 
@@ -298,7 +298,8 @@ The write characteristic is **WRITE WITHOUT RESPONSE**. Writing to the wrong cha
 
 ### Advertising
 
-Joy-Con 2 advertisements carry manufacturer data for ID `0x0553`. Bytes `[10..15]` hold the
+Joy-Con 2 advertisements carry manufacturer data for ID `0x0553`. Bytes `[5..6]` hold the
+little-endian product ID that identifies the controller type. Bytes `[10..15]` hold the
 **bonded host's MAC address**: a button press wakes a synced controller into a short-lived
 reconnect advertisement carrying that address, while holding SYNC (pairing mode) zeroes the
 field. The scanner only accepts controllers with a zeroed host field — otherwise every stray
@@ -376,9 +377,19 @@ Command 2 (IMU/extended):      0C 91 01 04 00 04 00 00 FF 00 00 00
 0x00000400 B           0x00000800 A
 ```
 
+The Pro Controller's two back paddles live in the next byte (uint8 at offset 0x07):
+
+```
+0x01 GR                0x02 GL
+```
+
 ### Per-Controller Notes
 
-Each Joy-Con is an independent BLE peripheral with its own connection and notification stream. Side detection is by peripheral name: `(L)` = Left, `(R)` = Right, `Pro Controller2` = Pro.
+Each controller is an independent BLE peripheral with its own connection and notification stream.
+Type detection reads the product ID in the pairing advertisement's manufacturer data (see
+[Advertising](#advertising)): `0x2067` = Left Joy-Con 2, `0x2066` = Right Joy-Con 2,
+`0x2069` = Switch 2 Pro Controller. The pairing advertisement carries no local name, so this is
+the only type signal available before input starts streaming.
 
 Left Joy-Con's right-stick bytes are garbage (ignored); Right Joy-Con's left-stick bytes are garbage.
 
@@ -390,8 +401,7 @@ The virtual gamepad uses a standard HID gamepad descriptor (13-byte reports):
 
 | Field | Bits | Range | Mapping |
 |---|---|---|---|
-| Buttons 1-14 | 14 | 0/1 | A, B, X, Y, L, R, ZL, ZR, -, +, LS, RS, Home, Camera |
-| Padding | 2 | - | |
+| Buttons 1-16 | 16 | 0/1 | A, B, X, Y, L, R, ZL, ZR, -, +, LS, RS, Home, Camera, GL, GR |
 | Hat switch | 4 | 0-7 or null | D-pad (0=N, 1=NE, 2=E, ..., 7=NW, 0xF=center) |
 | Padding | 4 | - | |
 | Left Stick X | 16 | -32767..32767 | |
