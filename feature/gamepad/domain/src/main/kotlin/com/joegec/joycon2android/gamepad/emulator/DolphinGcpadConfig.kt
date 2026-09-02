@@ -16,8 +16,8 @@ import com.joegec.joycon2android.model.SidewaysMapper
  * Generates Dolphin's GCPadNew.ini mappings for the Virtual Gamepad, one `[GCPadN]` section per
  * assigned player, driven by the user's customizable Joy-Con -> GameCube mapping. Each player's
  * UHID pad shows up to Dolphin as a distinct Android input device
- * (`Android/<n>/Joy-Con Virtual Gamepad <n>`); the relay remaps buttons/sticks by orientation
- * (see [SidewaysMapper]), so which physical button reaches a given Android control differs
+ * (`Android/<controllerNumber>/Joy-Con Virtual Gamepad <player>`); the relay remaps buttons/sticks
+ * by orientation (see [SidewaysMapper]), so which physical button reaches a given Android control differs
  * between a sideways single Joy-Con and a pair. [ANDROID_NAMES]/[HAT_NAMES] are the fixed,
  * body-independent Dolphin names for each Android keycode/hat direction our virtual pad emits
  * (captured from a real mapping); [specFor] applies the same physical -> virtual remap
@@ -78,8 +78,12 @@ object DolphinGcpadConfig {
         "Main Stick/Right = `Axis 0+`",
     )
 
-    fun merge(existing: String?, players: List<PlayerState>, mappingFor: (JoyconSide) -> Map<String, String>): String =
-        IniEditor.mergeSections(existing, sections(players, mappingFor))
+    fun merge(
+        existing: String?,
+        players: List<PlayerState>,
+        controllerNumbers: Map<Int, Int>,
+        mappingFor: (JoyconSide) -> Map<String, String>,
+    ): String = IniEditor.mergeSections(existing, sections(players, controllerNumbers, mappingFor))
 
     /** Sets each configured player's GameCube port to a Standard Controller in Dolphin.ini. */
     fun mergeCore(existing: String?, players: List<PlayerState>): String {
@@ -89,16 +93,22 @@ object DolphinGcpadConfig {
         return IniEditor.setKeys(existing, "[Core]", siDevices)
     }
 
-    // Dolphin's device id is the pad's enumeration rank among active virtual gamepads (1-based),
-    // which is NOT the player number when a lower slot is empty (e.g. P4 with no P3 → Android/3/…).
-    // The device *name* still carries the player number. Sections stay on the player's own GC port.
-    private fun sections(players: List<PlayerState>, mappingFor: (JoyconSide) -> Map<String, String>): Map<String, String> =
+    // Dolphin's device id comes from Android's own gamepad enumeration counter
+    // (InputDevice.getControllerNumber()), so it has to be read from the live device list rather
+    // than derived — any built-in controller already holds number 1. A player whose pad isn't
+    // enumerated yet is skipped: a guessed id binds the section to the wrong device, or to none.
+    private fun sections(
+        players: List<PlayerState>,
+        controllerNumbers: Map<Int, Int>,
+        mappingFor: (JoyconSide) -> Map<String, String>,
+    ): Map<String, String> =
         players.filter { it.hasController }
             .sortedBy { it.player.index }
-            .mapIndexedNotNull { rank, player ->
+            .mapNotNull { player ->
                 val index = player.player.index
-                if (index !in 1..4) return@mapIndexedNotNull null
-                bodyFor(player, index, deviceId = rank + 1, mappingFor)?.let { "[GCPad$index]" to it }
+                if (index !in 1..4) return@mapNotNull null
+                val deviceId = controllerNumbers[index] ?: return@mapNotNull null
+                bodyFor(player, index, deviceId, mappingFor)?.let { "[GCPad$index]" to it }
             }.toMap()
 
     private fun bodyFor(player: PlayerState, index: Int, deviceId: Int, mappingFor: (JoyconSide) -> Map<String, String>): String? {

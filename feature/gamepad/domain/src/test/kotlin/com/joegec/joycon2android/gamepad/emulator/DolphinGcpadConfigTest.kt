@@ -29,30 +29,45 @@ class DolphinGcpadConfigTest {
 
     private fun joycon(side: Side) = ConnectedJoycon(address = side.name, side = side, deviceName = "Joy-Con")
 
-    private fun merge(existing: String?, players: List<PlayerState>) =
-        DolphinGcpadConfig.merge(existing, players) { side -> defaultMapping(Console.GAMECUBE, side) }
+    private fun merge(
+        existing: String?,
+        players: List<PlayerState>,
+        controllerNumbers: Map<Int, Int> = players.associate { it.player.index to it.player.index },
+    ) = DolphinGcpadConfig.merge(existing, players, controllerNumbers) { side ->
+        defaultMapping(Console.GAMECUBE, side)
+    }
 
     @Test
     fun `device path uses the per-player virtual gamepad name`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P2, right = joycon(Side.RIGHT))))
 
         assertTrue(result.contains("[GCPad2]"))
-        assertTrue(result.contains("Device = Android/1/Joy-Con Virtual Gamepad 2"))
+        assertTrue(result.contains("Device = Android/2/Joy-Con Virtual Gamepad 2"))
     }
 
     @Test
-    fun `device id is the enumeration rank, not the player number, when a slot is skipped`() {
+    fun `device id is the reported controller number, not the player number`() {
+        val player = PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))
+
+        // A device with a built-in controller already holds controller number 1, so our first
+        // pad enumerates higher — the port and name still stay on the player number.
+        val result = merge(null, listOf(player), controllerNumbers = mapOf(1 to 3))
+
+        assertTrue(result.contains("[GCPad1]"))
+        assertTrue(result.contains("Device = Android/3/Joy-Con Virtual Gamepad 1"))
+    }
+
+    @Test
+    fun `a player whose pad is not enumerated is skipped rather than guessed`() {
         val players = listOf(
             PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)),
             PlayerState(PlayerNumber.P2, right = joycon(Side.RIGHT)),
-            PlayerState(PlayerNumber.P4, right = joycon(Side.RIGHT)),
         )
 
-        val result = merge(null, players)
+        val result = merge(null, players, controllerNumbers = mapOf(2 to 5))
 
-        // P4 is the 3rd active pad → Android/3, but its port and name stay 4
-        assertTrue(result.contains("[GCPad4]"))
-        assertTrue(result.contains("Device = Android/3/Joy-Con Virtual Gamepad 4"))
+        assertFalse(result.contains("[GCPad1]"))
+        assertTrue(result.contains("Device = Android/5/Joy-Con Virtual Gamepad 2"))
     }
 
     @Test
@@ -62,8 +77,8 @@ class DolphinGcpadConfigTest {
         val result = merge(null, listOf(both))
 
         assertTrue(result.contains("Buttons/A = `Button A`"))
-        assertTrue(result.contains("Main Stick/Up = `Axis 14-`")) // right stick
-        assertTrue(result.contains("C-Stick/Up = `Axis 1-`"))     // left stick
+        assertTrue(result.contains("Main Stick/Up = `Axis 1-`"))  // left stick
+        assertTrue(result.contains("C-Stick/Up = `Axis 14-`"))    // right stick
         assertTrue(result.contains("D-Pad/Up = `Axis 16-`"))
     }
 

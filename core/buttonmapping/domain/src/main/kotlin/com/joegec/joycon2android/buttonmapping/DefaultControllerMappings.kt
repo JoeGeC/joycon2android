@@ -78,8 +78,8 @@ object DefaultControllerMappings {
 
     fun gameCubeSticks(side: JoyconSide): Map<GameCubeStick, StickSource> = when (side) {
         JoyconSide.DUAL -> mapOf(
-            GameCubeStick.MainStick to RIGHT_STICK,
-            GameCubeStick.CStick to LEFT_STICK,
+            GameCubeStick.MainStick to LEFT_STICK,
+            GameCubeStick.CStick to RIGHT_STICK,
         )
         else -> emptyMap()
     }
