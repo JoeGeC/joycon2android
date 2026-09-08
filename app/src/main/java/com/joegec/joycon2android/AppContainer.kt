@@ -21,7 +21,8 @@ import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerAssignmentManager
 import com.joegec.joycon2android.assignment.PlayerStateResolver
 import com.joegec.joycon2android.emulator.EmulatorSetup
-import com.joegec.joycon2android.emulator.virtualGamepadPorts
+import com.joegec.joycon2android.emulator.dolphinGamepadIds
+import com.joegec.joycon2android.emulator.edenGamepadPorts
 import com.joegec.joycon2android.session.AssignControllerUseCase
 import com.joegec.joycon2android.session.ObserveSessionUseCase
 import com.joegec.joycon2android.session.SessionCoordinator
@@ -105,7 +106,8 @@ class AppContainer(context: Context) {
         appContext.packageManager,
         privilegedAccess::acquire,
         scope = scope,
-        gamepadPorts = { virtualGamepadPorts(appContext) },
+        gamepadPorts = { edenGamepadPorts(appContext) },
+        gamepadControllerNumbers = { dolphinGamepadIds(appContext) },
         getControllerMapping = getControllerMapping,
     )
 

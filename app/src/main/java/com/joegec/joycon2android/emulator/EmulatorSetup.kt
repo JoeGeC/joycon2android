@@ -33,6 +33,7 @@ class EmulatorSetup(
     private val acquireShell: (onResult: (PrivilegedShell?) -> Unit) -> Unit,
     private val scope: CoroutineScope,
     private val gamepadPorts: () -> Map<Int, Int>,
+    private val gamepadControllerNumbers: () -> Map<Int, Int>,
     private val getControllerMapping: GetEffectiveControllerMappingUseCase,
 ) {
 
@@ -101,6 +102,7 @@ class EmulatorSetup(
                 val mappings = DolphinGcpadConfig.merge(
                     shell.readText(DolphinGcpadConfig.path),
                     players,
+                    gamepadControllerNumbers(),
                     mappingLookup(Console.GAMECUBE),
                 )
                 val mappingsOk = shell.writeText(DolphinGcpadConfig.path, mappings)
