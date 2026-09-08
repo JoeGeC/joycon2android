@@ -15,21 +15,20 @@ import com.joegec.joycon2android.model.SidewaysMapper
  * Generates Eden's `config.ini` `[Controls]` bindings for the Virtual Gamepad, driven by the
  * user's customizable Joy-Con -> Pro Controller mapping.
  *
- * The relay exposes every player as one standard Android HID gamepad. Its 14 buttons land on
- * Android keycodes in the fixed HID gamepad order — BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z,
- * BTN_TL… — so a Joy-Con button maps to a *shifted* keycode: Switch X is BTN_C (98), Switch Y is
- * BTN_X (99), L is BTN_Y (100), and so on. The d-pad is the HID hat (HAT_X = axis 15, HAT_Y =
- * axis 16); [KEY_CODES]/[HAT_AXES] are that fixed, body-independent wiring.
+ * The relay exposes every player as one standard Android HID gamepad, wired so each Joy-Con button
+ * lands on the keycode of the same name (Switch A is BUTTON_A, ZL is BUTTON_L2, − is BUTTON_SELECT).
+ * The d-pad is the HID hat (HAT_X = axis 15, HAT_Y = axis 16); [KEY_CODES]/[HAT_AXES] are that
+ * fixed, body-independent wiring.
  *
  * Eden does not translate a sideways single Joy-Con: it only sets an `is_horizontal` flag (which on
  * hardware the game's own nn::hid honours, but Eden has no equivalent), and it masks an npad by
  * type — a JoyconLeft can't even report A/B/X/Y. So we present each single Joy-Con as a Pro
  * Controller and apply the sideways rotation ourselves: [inputFor] runs a customized source
  * through the same [SidewaysMapper] remap used for live HID output before resolving its keycode,
- * so e.g. the left Joy-Con's d-pad still lands on the hat that becomes the face buttons.
+ * so e.g. the left Joy-Con's d-pad resolves to the face-button keycodes it is rotated onto.
  *
- * Our pads share one `guid` (VID 0x1234 / PID 0x5678); Eden distinguishes them by `port`, the
- * device's enumeration rank, supplied by the app from the live input-device list.
+ * Each pad's [EdenGamepad] — port and guid both — comes from the app's read of the live
+ * input-device list, since neither can be derived from the player number.
  */
 object EdenGamepadConfig {
     const val PACKAGE = "dev.eden.eden_emulator"
@@ -38,23 +37,27 @@ object EdenGamepadConfig {
 
     fun pathFor(packageName: String) = "/sdcard/Android/data/$packageName/files/config/config.ini"
 
-    private const val GUID = "00000000000056780000000000001234"
-
-    // Joy-Con button -> Android keycode the relay's HID gamepad emits (note the BTN_A..BTN_Z shift).
+    // Joy-Con button -> the Android keycode the relay's HID gamepad emits for it. ReportMapper
+    // places each one so the keycode carries its own name; Camera and GL take the two gamepad slots
+    // with no Switch equivalent, and GR/Chat the trailing vendor collection's BUTTON_1/BUTTON_2.
     private const val A = 96
     private const val B = 97
-    private const val X = 98
-    private const val Y = 99
-    private const val L = 100
-    private const val R = 101
-    private const val ZL = 102
-    private const val ZR = 103
-    private const val MINUS = 104
-    private const val PLUS = 105
-    private const val CAPTURE = 106
-    private const val RS_CLICK = 108
-    private const val LS_CLICK = 109
+    private const val CAPTURE = 98
+    private const val X = 99
+    private const val Y = 100
+    private const val PADDLE_LEFT = 101
+    private const val L = 102
+    private const val R = 103
+    private const val ZL = 104
+    private const val ZR = 105
+    private const val LS_CLICK = 106
+    private const val RS_CLICK = 107
+    private const val PLUS = 108
+    private const val MINUS = 109
     private const val HOME = 110
+    private const val PADDLE_RIGHT = 188
+    private const val CHAT = 189
+
     private const val HAT_X = 15
     private const val HAT_Y = 16
 
@@ -64,6 +67,8 @@ object EdenGamepadConfig {
         JoyconButton.Minus to MINUS, JoyconButton.Plus to PLUS,
         JoyconButton.LS to LS_CLICK, JoyconButton.RS to RS_CLICK,
         JoyconButton.Home to HOME, JoyconButton.Camera to CAPTURE,
+        JoyconButton.GL to PADDLE_LEFT, JoyconButton.GR to PADDLE_RIGHT,
+        JoyconButton.Chat to CHAT,
     )
 
     private val HAT_AXES = mapOf(
@@ -92,31 +97,31 @@ object EdenGamepadConfig {
     fun merge(
         existing: String?,
         players: List<PlayerState>,
-        ports: Map<Int, Int>,
+        gamepads: Map<Int, EdenGamepad>,
         mappingFor: (JoyconSide) -> Map<String, String>,
     ): String {
         // Drop every player's prior bindings first: a layout or port change leaves stale keys that
-        // would otherwise linger and, sharing our single guid, cross-fire onto another player's port.
+        // would otherwise linger and cross-fire onto another player's port.
         val cleared = IniEditor.removeKeys(existing, "[Controls]") { it.matches(PLAYER_KEY) }
-        return IniEditor.setKeys(cleared, "[Controls]", controlKeys(players, ports, mappingFor), assign = "=")
+        return IniEditor.setKeys(cleared, "[Controls]", controlKeys(players, gamepads, mappingFor), assign = "=")
     }
 
     private fun controlKeys(
         players: List<PlayerState>,
-        ports: Map<Int, Int>,
+        gamepads: Map<Int, EdenGamepad>,
         mappingFor: (JoyconSide) -> Map<String, String>,
     ): Map<String, String> {
         val keys = LinkedHashMap<String, String>()
         players.forEach { player ->
             val index = player.player.index
             if (index !in 1..4) return@forEach
-            val port = ports[index] ?: return@forEach
+            val gamepad = gamepads[index] ?: return@forEach
             val type = typeFor(player) ?: return@forEach
             val side = sideFor(player) ?: return@forEach
             val layout = layoutFor(side, mappingFor(side))
             val p = index - 1
-            val device = "engine:android,port:$port,guid:$GUID"
-            val display = "Joy-Con Virtual Gamepad $index $port"
+            val device = "engine:android,port:${gamepad.port},guid:${gamepad.guid},pad:0"
+            val display = "Joy-Con Virtual Gamepad $index ${gamepad.port}"
 
             keys.define("player_${p}_type", type.toString())
             keys.define("player_${p}_connected", "true")

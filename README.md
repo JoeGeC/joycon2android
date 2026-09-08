@@ -176,7 +176,7 @@ The app creates system-wide virtual gamepads using Linux's UHID (User-space HID)
 
 2. **`UhidRelay.kt`** — Launches the relay binary through a `PrivilegedShell`, sends a UHID_CREATE2 event (4380-byte struct with HID report descriptor), then streams UHID_INPUT2 events through the stdin pipe. `PrivilegedAccess` supplies that shell via Shizuku's `IShizukuService.newProcess()`, so neither the relay nor the rest of the app cares how the privilege was granted.
 
-3. **`ReportMapper.kt`** — Converts `PlayerState` into a 13-byte HID input report: 14 buttons + hat switch + 2x 16-bit sticks + 2x 8-bit triggers.
+3. **`ReportMapper.kt`** — Converts `PlayerState` into a 14-byte HID input report: 15 buttons + hat switch + 2x 16-bit sticks + 2x 8-bit triggers + 2 overflow buttons.
 
 4. **`GamepadManager.kt`** — Manages per-player relay instances and collects from `StateFlow<PlayerState>` to drive reports at input rate.
 
@@ -201,21 +201,39 @@ emulator's config to match the assignment. The generators live in `:feature:game
 per console via `:core:buttonmapping`, with the defaults described below. Three things make this non-obvious — all confirmed against Eden's
 source and on-device behaviour:
 
-**1. The Android keycode mapping is shifted.** The HID descriptor declares 14 *generic* buttons, so
-Android binds them in the fixed gamepad order `BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z, BTN_TL…`.
-A Joy-Con button therefore lands on a *shifted* keycode, **not** a same-named one:
+**1. Which HID button a Joy-Con button takes is not free.** Linux maps HID `Button n` in a Game Pad
+collection to `BTN_GAMEPAD + n - 1` — `BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z, BTN_TL…` — and
+Android's key layout names that fixed sequence. `ReportMapper` therefore assigns each Joy-Con button
+the *bit* whose keycode carries its own name, so nothing downstream deals in a shift:
 
-| Joy-Con | Keycode | Joy-Con | Keycode | Joy-Con | Keycode |
+| Joy-Con | Bit | Keycode | Joy-Con | Bit | Keycode |
 |---|---|---|---|---|---|
-| A | 96 (`BTN_A`) | Y | **99** (`BTN_X`) | − | 104 (`BTN_TL2`) |
-| B | 97 (`BTN_B`) | L | **100** (`BTN_Y`) | + | 105 (`BTN_TR2`) |
-| X | **98** (`BTN_C`) | R | 101 (`BTN_Z`) | RS | 108 (`BTN_START`) |
-| | | ZL | 102 (`BTN_TL`) | LS | 109 (`BTN_SELECT`) |
-| | | ZR | 103 (`BTN_TR`) | Home / Camera | 110 / 106 |
+| A | 0 | 96 `BUTTON_A` | ZL | 8 | 104 `BUTTON_L2` |
+| B | 1 | 97 `BUTTON_B` | ZR | 9 | 105 `BUTTON_R2` |
+| Camera | 2 | 98 `BUTTON_C` | − | 10 | 109 `BUTTON_SELECT` |
+| X | 3 | 99 `BUTTON_X` | + | 11 | 108 `BUTTON_START` |
+| Y | 4 | 100 `BUTTON_Y` | Home | 12 | 110 `BUTTON_MODE` |
+| GL | 5 | 101 `BUTTON_Z` | LS | 13 | 106 `BUTTON_THUMBL` |
+| L | 6 | 102 `BUTTON_L1` | RS | 14 | 107 `BUTTON_THUMBR` |
+| R | 7 | 103 `BUTTON_R1` | | | |
+
+Camera and GL take `BUTTON_C`/`BUTTON_Z`, the two slots with no Switch equivalent. **GR and C sit
+outside the gamepad collection**: 15 buttons is all one such collection can carry — a 16th lands on
+`0x13F`, which no key layout names, so it would reach no app — and the Switch 2 controllers have 17.
+A trailing vendor-defined collection takes the overflow, because Linux falls back to
+`BTN_MISC + n - 1` for a Button usage whose application is neither pointer, joystick nor gamepad, and
+every key layout names that range `BUTTON_1..BUTTON_16`: GR is **188** and C is **189**. Firmware that
+re-publishes a pad under its own identity (see *Device identity*) forwards only the keys it knows, so
+those two can be dropped for the affected player.
+
+The **triggers are Brake (left) and Accelerator (right)**, never the reverse: Android aliases
+`AXIS_LTRIGGER` to `AXIS_BRAKE` and `AXIS_RTRIGGER` to `AXIS_GAS`, and re-publishing firmware
+synthesises its own `L2`/`R2` buttons from those axes — inverted, a ZR pull arrives as an L2 press
+and collides with whatever really owns that keycode.
 
 D-pad rides the HID hat (Android `AXIS_HAT_X` = 15, `AXIS_HAT_Y` = 16); the sticks are axes
-0/1 (left) and 11/14 (right). Eden's config uses these numeric codes; Dolphin's uses the
-equivalent control *names* (`Button C` = Switch X, `Button X` = Switch Y, …).
+0/1 (left) and 11/14 (right). Eden's config uses the numeric keycodes; Dolphin's uses the equivalent
+control *names* (`Button L2` = ZL, `Select` = −, …).
 
 **2. Eden does not translate a sideways single Joy-Con.** For a `JoyconLeft` / `JoyconRight` npad,
 Eden masks the raw button bits straight into shared memory and only sets an `is_horizontal` flag —
@@ -226,17 +244,31 @@ D-pad / L / ZL / − / StickL / SL / SR (it has *no* A/B/X/Y), and a `JoyconRigh
 A/B/X/Y / R / ZR / + / StickR / SL / SR (no D-pad, no left stick).
 
 **3. So single Joy-Cons are configured as Pro Controllers,** with the sideways rotation done in our
-config rather than left to the emulator: the lone stick → left stick, SL/SR → L/R, and the four
-action buttons → A/B/X/Y (the left Joy-Con's D-pad rotated 90° CCW, the right Joy-Con's diamond
-90° CW). This costs the authentic single-Joy-Con icon but makes every input work in every game.
-Dolphin emulates GameCube (no sideways concept), so `DolphinGcpadConfig` applies the same
-pre-rotation, keyed on whatever the relay emits per layout.
+config rather than left to the emulator: the lone stick → left stick, and the four-button cluster →
+A/B/X/Y (the left Joy-Con's D-pad rotated 90° CCW, the right Joy-Con's diamond 90° CW). This costs
+the authentic single-Joy-Con icon but makes every input work in every game. Dolphin emulates
+GameCube (no sideways concept), so `DolphinGcpadConfig` applies the same pre-rotation, keyed on
+whatever the relay emits per layout.
 
-**Port disambiguation.** All pads share one GUID (0x1234:0x5678), so emulators tell them apart only
-by `port` — the device's enumeration rank among same-GUID devices (the same rank, not player
-number, used for Dolphin's `Android/<id>/…` above). Each regenerate clears that player's prior keys
-first, so a layout or port change can't leave a stale binding cross-firing onto another player's
-port.
+`SidewaysMapper` rotates that cluster onto the relay's *real* face buttons, never onto the HID hat.
+A sideways Joy-Con has no D-pad, so a pad reporting its cluster as hat directions would have no
+A/B/X/Y at all — and anything that binds a hat axis without its sign (Eden's press-to-detect
+mapping does exactly this) cannot then tell Left from Right or Up from Down.
+
+The rail buttons are the shoulder pair in that grip, as they are on a real Switch, so SL/SR default
+to L/R. `SidewaysMapper` puts them on the shoulders the body *lacks* — a left Joy-Con's SL/SR report
+as R1/R2 because its own L/ZL already hold the left pair, and a right Joy-Con's as L1/L2 — which is
+why a single Joy-Con's `button_l` is not keycode 102 on both bodies. ZL/ZR get no default: the body's
+own shoulders point away from the player when held sideways, so there is nothing honest to put there.
+
+**Device identity.** An emulator addresses a pad by `port` — the device's enumeration rank, not the
+player number (the same rank Dolphin's `Android/<id>/…` uses above) — plus, for Eden, a `guid`
+built from the device's vendor/product ids. Both are read from the live input-device list per
+regenerate, never derived: handheld firmware may re-publish an external gamepad under the built-in
+controller's vendor/product (AYN's Odin/Thor line does), so the 0x1234:0x5678 our uhid device was
+created with is not necessarily what reaches the emulator, and a binding whose guid doesn't match
+is silently ignored. Each regenerate also clears that player's prior keys first, so a layout or
+port change can't leave a stale binding cross-firing onto another player's port.
 
 ### DSU Motion Server
 

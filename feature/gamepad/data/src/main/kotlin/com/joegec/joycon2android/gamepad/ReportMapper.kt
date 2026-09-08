@@ -5,26 +5,35 @@ import com.joegec.joycon2android.model.PlayerState
 
 object ReportMapper {
 
-    private const val REPORT_SIZE = 13
+    private const val REPORT_SIZE = 14
 
-    // Button bit positions matching the HID report descriptor order (Button 1-16)
+    // Bit n of the button bytes is the descriptor's Button n+1, which Linux maps to BTN_GAMEPAD + n
+    // and Android's key layout then names. Each Joy-Con button takes the bit whose keycode carries
+    // its own name — A on BTN_SOUTH (BUTTON_A), ZL on BTN_TL2 (BUTTON_L2), Minus on BTN_SELECT, and
+    // so on — so nothing downstream has to know about a shift, and ZL/ZR agree with the brake and
+    // accelerator axes below. Camera and GL take the two leftover slots (BUTTON_C, BUTTON_Z).
     private val BUTTON_MAP: Map<String, Int> = mapOf(
         JoyconButton.A.id to 0,
         JoyconButton.B.id to 1,
-        JoyconButton.X.id to 2,
-        JoyconButton.Y.id to 3,
-        JoyconButton.L.id to 4,
-        JoyconButton.R.id to 5,
-        JoyconButton.ZL.id to 6,
-        JoyconButton.ZR.id to 7,
-        JoyconButton.Minus.id to 8,
-        JoyconButton.Plus.id to 9,
-        JoyconButton.LS.id to 10,
-        JoyconButton.RS.id to 11,
+        JoyconButton.Camera.id to 2,
+        JoyconButton.X.id to 3,
+        JoyconButton.Y.id to 4,
+        JoyconButton.GL.id to 5,
+        JoyconButton.L.id to 6,
+        JoyconButton.R.id to 7,
+        JoyconButton.ZL.id to 8,
+        JoyconButton.ZR.id to 9,
+        JoyconButton.Minus.id to 10,
+        JoyconButton.Plus.id to 11,
         JoyconButton.Home.id to 12,
-        JoyconButton.Camera.id to 13,
-        JoyconButton.GL.id to 14,
-        JoyconButton.GR.id to 15,
+        JoyconButton.LS.id to 13,
+        JoyconButton.RS.id to 14,
+    )
+
+    // The two that overflow the gamepad collection, in its trailing vendor collection's byte.
+    private val OVERFLOW_MAP: Map<String, Int> = mapOf(
+        JoyconButton.GR.id to 0,
+        JoyconButton.Chat.id to 1,
     )
 
     private const val HAT_CENTER = 0x0F
@@ -34,11 +43,8 @@ object ReportMapper {
         val report = ByteArray(REPORT_SIZE)
         val pressed = gamepad.pressed
 
-        // Bytes 0-1: 16 button bits (little-endian)
-        var buttons = 0
-        for (name in pressed) {
-            BUTTON_MAP[name]?.let { bit -> buttons = buttons or (1 shl bit) }
-        }
+        // Bytes 0-1: 15 button bits (little-endian) then one padding bit
+        val buttons = bits(pressed, BUTTON_MAP)
         report[0] = (buttons and 0xFF).toByte()
         report[1] = ((buttons shr 8) and 0xFF).toByte()
 
@@ -54,13 +60,18 @@ object ReportMapper {
         // Bytes 9-10: right stick Y (inverted)
         putInt16LE(report, 9, mapStick(4096 - gamepad.rightStickY))
 
-        // Byte 11: left trigger (digital: 0 or 255)
+        // Byte 11: left trigger / brake (digital: 0 or 255)
         report[11] = if (JoyconButton.ZL.id in pressed) 0xFF.toByte() else 0x00
-        // Byte 12: right trigger (digital: 0 or 255)
+        // Byte 12: right trigger / accelerator (digital: 0 or 255)
         report[12] = if (JoyconButton.ZR.id in pressed) 0xFF.toByte() else 0x00
+
+        report[13] = bits(pressed, OVERFLOW_MAP).toByte()
 
         return report
     }
+
+    private fun bits(pressed: Set<String>, positions: Map<String, Int>): Int =
+        pressed.fold(0) { acc, name -> positions[name]?.let { acc or (1 shl it) } ?: acc }
 
     // Map 0-4095 (center 2048) → -32767..32767
     private fun mapStick(value: Int): Int {

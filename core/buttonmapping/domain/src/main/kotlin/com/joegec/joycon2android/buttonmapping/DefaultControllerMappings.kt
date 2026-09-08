@@ -33,9 +33,8 @@ import com.joegec.joycon2android.buttonmapping.StickSource.LEFT_STICK
 import com.joegec.joycon2android.buttonmapping.StickSource.RIGHT_STICK
 
 /**
- * The button/stick assignments this app shipped with before customization existed, transcribed
- * verbatim from each generator's previous hardcoded tables — a fresh install (or any target/body
- * the user has never touched) behaves exactly as it always did.
+ * The assignments a fresh install starts from, per target console and per Joy-Con body, for any
+ * target the user has never customized.
  */
 object DefaultControllerMappings {
 
@@ -105,6 +104,9 @@ object DefaultControllerMappings {
             SwitchProButton.DPadLeft to Left,
             SwitchProButton.DPadRight to Right,
         )
+        // Held sideways, the rail buttons are the shoulder pair, as they are on a real Switch.
+        // ZL/ZR stay unbound: the body's own shoulders point away from the player in that grip, so
+        // there is nothing honest to put there — the user can bind them if they want them.
         JoyconSide.LEFT -> mapOf(
             SwitchProButton.A to Down,
             SwitchProButton.B to Left,
@@ -112,8 +114,6 @@ object DefaultControllerMappings {
             SwitchProButton.Y to Up,
             SwitchProButton.L to SlLeft,
             SwitchProButton.R to SrLeft,
-            SwitchProButton.ZL to L,
-            SwitchProButton.ZR to ZL,
             SwitchProButton.Minus to Minus,
             SwitchProButton.LStickClick to LS,
             SwitchProButton.Capture to Camera,
@@ -125,8 +125,6 @@ object DefaultControllerMappings {
             SwitchProButton.Y to B,
             SwitchProButton.L to SlRight,
             SwitchProButton.R to SrRight,
-            SwitchProButton.ZL to R,
-            SwitchProButton.ZR to ZR,
             SwitchProButton.Plus to Plus,
             SwitchProButton.Home to Home,
             SwitchProButton.LStickClick to RS,

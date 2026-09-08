@@ -148,7 +148,7 @@ private fun stickTargetsFor(console: Console): List<Pair<String, String>> = when
 
 // The buttons a real, lone Joy-Con of that side can actually produce — matches what the physical
 // hardware has, so a mapping chosen here can always fire (see JoyconButton for the full set; SL/SR
-// are split per side, A/B/X/Y/Home only exist on the right Joy-Con, the d-pad only on the left).
+// are split per side, A/B/X/Y/Home/C only exist on the right Joy-Con, the d-pad only on the left).
 private fun physicalButtonOptions(side: JoyconSide): List<Pair<String, String>> {
     val none = NONE_ID to "None"
     val buttons = when (side) {
@@ -161,7 +161,7 @@ private fun physicalButtonOptions(side: JoyconSide): List<Pair<String, String>> 
         JoyconSide.RIGHT -> listOf(
             JoyconButton.R, JoyconButton.ZR, JoyconButton.Plus, JoyconButton.RS,
             JoyconButton.A, JoyconButton.B, JoyconButton.X, JoyconButton.Y,
-            JoyconButton.Home, JoyconButton.SrRight, JoyconButton.SlRight,
+            JoyconButton.Home, JoyconButton.Chat, JoyconButton.SrRight, JoyconButton.SlRight,
         )
     }
     return listOf(none) + buttons.map { it.name to it.id }

@@ -86,8 +86,8 @@ class DolphinGcpadConfigTest {
     fun `left-only maps the d-pad to the face buttons`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))))
 
-        assertTrue(result.contains("Buttons/A = `Axis 15+`"))
-        assertTrue(result.contains("Buttons/Start = `Button L2`"))
+        assertTrue(result.contains("Buttons/A = `Button A`")) // Down rotates onto A
+        assertTrue(result.contains("Buttons/Start = `Select`")) // Minus
     }
 
     @Test
