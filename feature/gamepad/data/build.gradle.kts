@@ -11,4 +11,5 @@ dependencies {
     implementation(project(":core:model"))
     api(libs.shizuku.api)
     api(libs.shizuku.provider)
+    testImplementation(libs.junit)
 }

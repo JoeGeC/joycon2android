@@ -45,20 +45,23 @@ object DolphinGcpadConfig {
     )
 
     // Dolphin's name for each Android keycode our virtual pad emits, fixed regardless of body.
+    // GR and Chat are absent: they land on BUTTON_1/BUTTON_2, and a GameCube pad has no target
+    // left for them anyway.
     private val ANDROID_NAMES = mapOf(
         JoyconButton.A to "Button A",
         JoyconButton.B to "Button B",
-        JoyconButton.X to "Button C",
-        JoyconButton.Y to "Button X",
-        JoyconButton.L to "Button Y",
-        JoyconButton.R to "Button Z",
-        JoyconButton.ZL to "Button L1",
-        JoyconButton.ZR to "Button R1",
-        JoyconButton.Minus to "Button L2",
-        JoyconButton.Plus to "Button R2",
-        JoyconButton.Camera to "Button L3",
-        JoyconButton.RS to "Start",
-        JoyconButton.LS to "Select",
+        JoyconButton.Camera to "Button C",
+        JoyconButton.X to "Button X",
+        JoyconButton.Y to "Button Y",
+        JoyconButton.GL to "Button Z",
+        JoyconButton.L to "Button L1",
+        JoyconButton.R to "Button R1",
+        JoyconButton.ZL to "Button L2",
+        JoyconButton.ZR to "Button R2",
+        JoyconButton.LS to "Button L3",
+        JoyconButton.RS to "Button R3",
+        JoyconButton.Plus to "Start",
+        JoyconButton.Minus to "Select",
         JoyconButton.Home to "Mode",
     )
 

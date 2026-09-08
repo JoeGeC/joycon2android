@@ -32,17 +32,17 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("[Wiimote1]"))
         assertTrue(result.contains("Source = 1"))
         assertTrue(result.contains("Device = DSUClient/0/Joycon2"))
-        assertTrue(result.contains("Buttons/A = `Circle`"))
+        assertTrue(result.contains("Buttons/A = `Cross`")) // physical A rotates onto B
         assertTrue(result.contains("D-Pad/Up = `Left Y+`"))
         assertTrue(result.contains("IMUIR/Recenter = `R1`"))
         assertTrue(result.contains("Extension = None"))
     }
 
     @Test
-    fun `left-only player maps face buttons to pad directions and recenters on L`() {
+    fun `left-only player maps its directions onto faces and recenters on L`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))))
 
-        assertTrue(result.contains("Buttons/A = `Pad E`"))
+        assertTrue(result.contains("Buttons/A = `Circle`")) // Down rotates onto A
         assertTrue(result.contains("Buttons/Home = `Touch`"))
         assertTrue(result.contains("IMUIR/Recenter = `L1`"))
     }
@@ -76,7 +76,7 @@ class DolphinWiimoteConfigTest {
 
         assertTrue(result.contains("[GBA1]"))
         assertTrue(result.contains("Foo = Bar"))
-        assertTrue(result.contains("Buttons/A = `Circle`"))
+        assertTrue(result.contains("Buttons/A = `Cross`"))
         assertFalse(result.contains("Buttons/A = `Old`"))
     }
 }

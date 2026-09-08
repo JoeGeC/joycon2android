@@ -10,6 +10,7 @@ import com.joegec.joycon2android.dsu.emulator.DolphinWiimoteConfig
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.emulatorconfig.DolphinPaths
 import com.joegec.joycon2android.gamepad.emulator.DolphinGcpadConfig
+import com.joegec.joycon2android.gamepad.emulator.EdenGamepad
 import com.joegec.joycon2android.gamepad.emulator.EdenGamepadConfig
 import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
@@ -32,7 +33,7 @@ class EmulatorSetup(
     private val packageManager: PackageManager,
     private val acquireShell: (onResult: (PrivilegedShell?) -> Unit) -> Unit,
     private val scope: CoroutineScope,
-    private val gamepadPorts: () -> Map<Int, Int>,
+    private val gamepadDevices: () -> Map<Int, EdenGamepad>,
     private val gamepadControllerNumbers: () -> Map<Int, Int>,
     private val getControllerMapping: GetEffectiveControllerMappingUseCase,
 ) {
@@ -94,7 +95,7 @@ class EmulatorSetup(
                     EdenGamepadConfig.merge(
                         shell.readText(path),
                         players,
-                        gamepadPorts(),
+                        gamepadDevices(),
                         mappingLookup(Console.SWITCH_PRO),
                     ),
                 )

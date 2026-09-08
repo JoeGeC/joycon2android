@@ -23,7 +23,12 @@ class EdenGamepadConfigTest {
     private fun joycon(side: Side) = ConnectedJoycon(address = side.name, side = side, deviceName = "Joy-Con")
 
     private fun merge(existing: String?, players: List<PlayerState>, ports: Map<Int, Int>) =
-        EdenGamepadConfig.merge(existing, players, ports, ::defaultSwitchProMapping)
+        EdenGamepadConfig.merge(
+            existing,
+            players,
+            ports.mapValues { (_, port) -> EdenGamepad.of(port, VENDOR_ID, PRODUCT_ID) },
+            ::defaultSwitchProMapping,
+        )
 
     @Test
     fun `type reflects the layout and bindings use the resolved port`() {
@@ -45,18 +50,19 @@ class EdenGamepadConfigTest {
     }
 
     @Test
-    fun `dual uses native keycodes accounting for the HID button shift`() {
+    fun `dual binds every button to the keycode of the same name`() {
         val players = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
 
         val result = merge(null, players, mapOf(1 to 0))
 
-        // Switch X is BTN_C (98), Switch Y is BTN_X (99) — not 99/100.
-        assertTrue(result.contains("player_0_button_a=\"engine:android,port:0,guid:$GUID,button:96,display:Joy-Con Virtual Gamepad 1 0\""))
-        assertTrue(result.contains("player_0_button_x=\"engine:android,port:0,guid:$GUID,button:98,display:Joy-Con Virtual Gamepad 1 0\""))
-        assertTrue(result.contains("player_0_button_y=\"engine:android,port:0,guid:$GUID,button:99,display:Joy-Con Virtual Gamepad 1 0\""))
-        assertTrue(result.contains("button:100")) // L
-        assertTrue(result.contains("player_0_lstick=\"engine:android,port:0,guid:$GUID,axis_x:0,axis_y:1"))
-        assertTrue(result.contains("player_0_rstick=\"engine:android,port:0,guid:$GUID,axis_x:11,axis_y:14"))
+        assertTrue(result.contains("player_0_button_a=\"$DEVICE,button:96,display:Joy-Con Virtual Gamepad 1 0\""))   // BUTTON_A
+        assertTrue(result.contains("player_0_button_x=\"$DEVICE,button:99,display:Joy-Con Virtual Gamepad 1 0\""))   // BUTTON_X
+        assertTrue(result.contains("player_0_button_y=\"$DEVICE,button:100,display:Joy-Con Virtual Gamepad 1 0\""))  // BUTTON_Y
+        assertTrue(result.contains("player_0_button_l=\"$DEVICE,button:102,display:Joy-Con Virtual Gamepad 1 0\""))  // BUTTON_L1
+        assertTrue(result.contains("player_0_button_zr=\"$DEVICE,button:105,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_R2
+        assertTrue(result.contains("player_0_button_minus=\"$DEVICE,button:109,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_SELECT
+        assertTrue(result.contains("player_0_lstick=\"$DEVICE,axis_x:0,axis_y:1"))
+        assertTrue(result.contains("player_0_rstick=\"$DEVICE,axis_x:11,axis_y:14"))
     }
 
     @Test
@@ -66,14 +72,16 @@ class EdenGamepadConfigTest {
         val result = merge(null, players, mapOf(1 to 0))
 
         assertTrue(result.contains("player_0_type=0")) // Pro
-        // A <- physical X (98), B <- physical A (96), X <- physical Y (99), Y <- physical B (97)
-        assertTrue(result.contains("player_0_button_a=\"engine:android,port:0,guid:$GUID,button:98,display:Joy-Con Virtual Gamepad 1 0\""))
-        assertTrue(result.contains("player_0_button_b=\"engine:android,port:0,guid:$GUID,button:96,display:Joy-Con Virtual Gamepad 1 0\""))
-        // SL/SR (relay-remapped to 100/102) become the L/R shoulders.
-        assertTrue(result.contains("player_0_button_l=\"engine:android,port:0,guid:$GUID,button:100,display:Joy-Con Virtual Gamepad 1 0\""))
-        assertTrue(result.contains("player_0_button_r=\"engine:android,port:0,guid:$GUID,button:102,display:Joy-Con Virtual Gamepad 1 0\""))
+        // The rotated cluster lands on the relay's own face buttons, so each face is a distinct key.
+        assertTrue(result.contains("player_0_button_a=\"$DEVICE,button:96,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_button_b=\"$DEVICE,button:97,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_button_x=\"$DEVICE,button:99,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_button_y=\"$DEVICE,button:100,display:Joy-Con Virtual Gamepad 1 0\""))
+        // SL/SR are the shoulders; on this body the relay reports them as L1/L2 (102/104).
+        assertTrue(result.contains("player_0_button_l=\"$DEVICE,button:102,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_button_r=\"$DEVICE,button:104,display:Joy-Con Virtual Gamepad 1 0\""))
         // The lone stick is the main (left) stick so games read it for movement/steering.
-        assertTrue(result.contains("player_0_lstick=\"engine:android,port:0,guid:$GUID,axis_x:0,axis_y:1"))
+        assertTrue(result.contains("player_0_lstick=\"$DEVICE,axis_x:0,axis_y:1"))
         assertFalse(result.contains("player_0_rstick="))
     }
 
@@ -84,13 +92,32 @@ class EdenGamepadConfigTest {
         val result = merge(null, players, mapOf(1 to 0))
 
         assertTrue(result.contains("player_0_type=0")) // Pro
-        // Directions become faces (90° CCW): A <- Down (hat_x+), Y <- Up (hat_x-).
-        assertTrue(result.contains("player_0_button_a=\"engine:android,port:0,guid:$GUID,axis:15,threshold:0.5,invert:+,display:Joy-Con Virtual Gamepad 1 0\""))
-        assertTrue(result.contains("player_0_button_y=\"engine:android,port:0,guid:$GUID,axis:15,threshold:0.5,invert:-,display:Joy-Con Virtual Gamepad 1 0\""))
-        assertTrue(result.contains("player_0_button_x=\"engine:android,port:0,guid:$GUID,axis:16,threshold:0.5,invert:-,display:Joy-Con Virtual Gamepad 1 0\""))
-        assertTrue(result.contains("player_0_lstick=\"engine:android,port:0,guid:$GUID,axis_x:0,axis_y:1"))
-        // The four directions are consumed by the faces, so no d-pad is bound.
+        // Directions become faces (90° CCW): A <- Down, B <- Left, X <- Right, Y <- Up.
+        assertTrue(result.contains("player_0_button_a=\"$DEVICE,button:96,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_button_b=\"$DEVICE,button:97,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_button_x=\"$DEVICE,button:99,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_button_y=\"$DEVICE,button:100,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_lstick=\"$DEVICE,axis_x:0,axis_y:1"))
+        // SL/SR are the shoulders; on this body the relay reports them as R1/R2 (103/105), since
+        // the left Joy-Con's own L/ZL already hold the left pair.
+        assertTrue(result.contains("player_0_button_l=\"$DEVICE,button:103,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_button_r=\"$DEVICE,button:105,display:Joy-Con Virtual Gamepad 1 0\""))
+        // A lone Joy-Con has no d-pad, and its own shoulders point away in this grip.
         assertFalse(result.contains("player_0_button_dup="))
+        assertFalse(result.contains("player_0_button_zl="))
+        assertFalse(result.contains("player_0_button_zr="))
+    }
+
+    @Test
+    fun `guid follows the ids the platform reports, not the ids the relay was created with`() {
+        val players = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
+        // A handheld that re-publishes our pad under its built-in controller's vendor/product.
+        val republished = mapOf(1 to EdenGamepad.of(port = 2, vendorId = 0x2020, productId = 0x0111))
+
+        val result = EdenGamepadConfig.merge(null, players, republished, ::defaultSwitchProMapping)
+
+        assertTrue(result.contains("guid:00000000000001110000000000002020"))
+        assertFalse(result.contains(GUID))
     }
 
     @Test
@@ -106,10 +133,10 @@ class EdenGamepadConfigTest {
 
         val result = merge(existing, players, mapOf(2 to 2))
 
-        assertFalse(result.contains("button:96")) // stale port-1 face key gone
+        assertFalse(result.contains("port:1")) // stale port-1 face key gone
         assertTrue(result.contains("motion_enabled=true")) // unrelated key preserved
-        // Rewritten cleanly: face A is now the axis-derived binding on the new port 2.
-        assertTrue(result.contains("player_1_button_a=\"engine:android,port:2,guid:$GUID,axis:15,threshold:0.5,invert:+,"))
+        // Rewritten cleanly onto the new port.
+        assertTrue(result.contains("player_1_button_a=\"engine:android,port:2,guid:$GUID,pad:0,button:96,"))
     }
 
     @Test
@@ -126,6 +153,10 @@ class EdenGamepadConfigTest {
     }
 
     private companion object {
+        // The ids UhidRelay creates our virtual gamepads with.
+        const val VENDOR_ID = 0x1234
+        const val PRODUCT_ID = 0x5678
         const val GUID = "00000000000056780000000000001234"
+        const val DEVICE = "engine:android,port:0,guid:$GUID,pad:0"
     }
 }

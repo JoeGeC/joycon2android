@@ -5,6 +5,7 @@ import android.hardware.input.InputManager
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
+import com.joegec.joycon2android.gamepad.emulator.EdenGamepad
 
 /*
  * Resolves how each emulator identifies our virtual gamepads, by reading the live input-device
@@ -24,23 +25,30 @@ import android.view.MotionEvent
  *
  * A guessed number binds a config to the wrong device or to none, and any handheld with a built-in
  * controller already occupies the low numbers — hence read, never derive.
+ *
+ * The same goes for the vendor/product ids behind Eden's `guid`: some handheld firmware re-publishes
+ * an external gamepad under the built-in controller's ids, leaving two devices with our name — so
+ * every field of a player's identity is taken from one and the same [InputDevice], the last match,
+ * which is the republished one where that happens.
  */
 
 private const val PREFIX = "Joy-Con Virtual Gamepad "
 
-/** Each assigned player number to the `port` Eden expects for its virtual gamepad. */
-fun edenGamepadPorts(context: Context): Map<Int, Int> {
-    val ports = HashMap<Int, Int>()
+/** Each assigned player number to the `port` and `guid` Eden expects for its virtual gamepad. */
+fun edenGamepads(context: Context): Map<Int, EdenGamepad> {
+    val gamepads = HashMap<Int, EdenGamepad>()
     val registered = HashSet<Int>()
     var port = 0
     inputDevices(context).forEach { device ->
         if (!isPhysicalGameController(device)) return@forEach
         if (registered.add(device.controllerNumber)) {
-            playerOf(device)?.let { player -> ports[player] = port }
+            playerOf(device)?.let { player ->
+                gamepads[player] = EdenGamepad.of(port, device.vendorId, device.productId)
+            }
         }
         port++
     }
-    return ports
+    return gamepads
 }
 
 /** Each assigned player number to the id Dolphin expects in its `Android/<id>/<name>` qualifier. */
