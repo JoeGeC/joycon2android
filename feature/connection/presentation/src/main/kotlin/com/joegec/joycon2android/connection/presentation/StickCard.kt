@@ -22,6 +22,7 @@ import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.StickBg
 import com.joegec.joycon2android.ui.theme.TextBright
 import com.joegec.joycon2android.ui.theme.TextDim
+import kotlin.math.hypot
 
 @Composable
 internal fun StickCard(
@@ -62,9 +63,17 @@ private fun StickCanvas(
         drawLine(CrosshairColor, Offset(c.x - r, c.y), Offset(c.x + r, c.y), Dimens.crosshairStroke)
         drawLine(CrosshairColor, Offset(c.x, c.y - r), Offset(c.x, c.y + r), Dimens.crosshairStroke)
 
-        val dot = Offset(c.x + nx * r, c.y - ny * r)
+        val dot = dotPosition(c, nx, ny, r - Dimens.stickDotRadius)
         drawCircle(color = dotColor, radius = Dimens.stickDotRadius, center = dot)
     }
+}
+
+// Each axis is normalised against its own travel, so a full diagonal reaches 1 on both and lands
+// outside the ring. The stick's gate is round, so it's the magnitude that clamps, not each axis.
+private fun dotPosition(centre: Offset, nx: Float, ny: Float, travel: Float): Offset {
+    val magnitude = hypot(nx, ny)
+    val scale = if (magnitude > 1f) 1f / magnitude else 1f
+    return Offset(centre.x + nx * scale * travel, centre.y - ny * scale * travel)
 }
 
 @Composable

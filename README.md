@@ -393,6 +393,27 @@ the only type signal available before input starts streaming.
 
 Left Joy-Con's right-stick bytes are garbage (ignored); Right Joy-Con's left-stick bytes are garbage.
 
+### Stick Range and Centre
+
+The raw 12-bit sticks neither span `0x000..0xFFF` nor rest at the midpoint, and both vary per
+controller and per axis. Measured on hardware:
+
+```
+travel:  full left ~900   full right ~3400   full down ~890   full up ~3360   (half-span ~1250)
+rest:    left Joy-Con  x 2080  y 2157        right Joy-Con  x 2014  y 2022
+```
+
+Rest is **not** the midpoint of travel, so it has to be sampled rather than inferred: those
+extremes midpoint to 2150/2125, which matches neither controller. Treating 2048 as both centre and
+half-span leaves full deflection at ~60% of range with a permanent 4-5% drift at rest, and skews
+each direction oppositely.
+
+`StickCalibrator` therefore learns each axis' centre from the first still window after connect —
+frozen afterwards, because a stick held at full deflection is perfectly still and would otherwise
+be adopted as centre — and scales each direction by its own span, the same centre/below/above
+triple the controller's factory calibration stores. Calibration is applied where packets are
+parsed, so the live display, HID reports, and DSU all see the same corrected values.
+
 ---
 
 ## HID Report Descriptor

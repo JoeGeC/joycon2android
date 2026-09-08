@@ -98,6 +98,7 @@ class JoyconConnection(
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private val opQueue = GattOpQueue()
+    private val stickCalibrator = StickCalibrator()
     private var gatt: BluetoothGatt? = null
     private var writeChar: BluetoothGattCharacteristic? = null
     private var notifyChar: BluetoothGattCharacteristic? = null
@@ -280,7 +281,7 @@ class JoyconConnection(
     private fun handleCharacteristicChanged(g: BluetoothGatt, uuid: UUID, data: ByteArray) {
         when (uuid) {
             NOTIFY_CHAR -> {
-                PacketParser.parse(data, side)?.let { _input.value = it }
+                PacketParser.parse(data, side)?.let { _input.value = stickCalibrator.calibrate(it) }
                 if (!ledSentAfterFirstPacket && initComplete) {
                     ledSentAfterFirstPacket = true
                     mainHandler.post { opQueue.enqueue { sendLedCommand(g) } }
