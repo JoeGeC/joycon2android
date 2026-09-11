@@ -62,6 +62,38 @@ class DolphinWiimoteConfigTest {
     }
 
     @Test
+    fun `a pair points the nunchuk accelerometer at the second hand's own slot`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        val result = merge(null, listOf(both))
+
+        assertTrue(result.contains("Nunchuk/IMUAccelerometer/Up = `DSUClient/3/Joycon2:Accel Up`"))
+        assertTrue(result.contains("Nunchuk/IMUAccelerometer/Backward = `DSUClient/3/Joycon2:Accel Backward`"))
+    }
+
+    @Test
+    fun `a solo joycon has no nunchuk to give an accelerometer`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+
+        assertFalse(result.contains("Nunchuk/IMUAccelerometer"))
+    }
+
+    @Test
+    fun `a pair with no free slot left gets no nunchuk accelerometer`() {
+        val players = listOf(
+            PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)),
+            PlayerState(PlayerNumber.P2, right = joycon(Side.RIGHT)),
+            PlayerState(PlayerNumber.P3, right = joycon(Side.RIGHT)),
+            PlayerState(PlayerNumber.P4, right = joycon(Side.RIGHT)),
+        )
+
+        val result = merge(null, players)
+
+        assertTrue(result.contains("Extension = Nunchuk"))
+        assertFalse(result.contains("Nunchuk/IMUAccelerometer"))
+    }
+
+    @Test
     fun `a pair drives the swing from the flat grip's thrust axis`() {
         val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
 

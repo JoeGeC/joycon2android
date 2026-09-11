@@ -138,7 +138,13 @@ prompts you to restart Dolphin. It needs Shizuku connected; if the write fails
    value signed; subtracting the slew-limited copy high-passes it, so a tilted grip's gravity is
    not read as a thrust held forever. The inputs arrive at 9.8 per g, so at full range the
    lightest twitch would saturate the swing.
-6. Solo horizontal Joy-Con: enable "Sideways Wii Remote".
+6. A pair only: under Nunchuk → Motion Input, map the accelerometer to the second hand's
+   own slot — ``Nunchuk/IMUAccelerometer/Up = `DSUClient/<slot>/Joycon2:Accel Up` `` and so
+   on. The slot is the highest one no player occupies (3 with a single player). Dolphin
+   splits a control on its last colon, so `<device>:<input>` reads another pad; without it
+   the Nunchuk reports a hand that never moves, and two-handed games (Wii Sports boxing)
+   see nothing from the left Joy-Con. A real Nunchuk has no gyroscope, so there is none to map.
+7. Solo horizontal Joy-Con: enable "Sideways Wii Remote".
 
 ### Troubleshooting
 
@@ -294,6 +300,10 @@ samples. Collaborators:
   docs for the measured frames and `tools/README.md` for the calibration workflow.
 - **`GyroCalibrator`** — learns each controller's gyro bias whenever it rests and
   subtracts it, mirroring the Switch's own runtime recalibration.
+- **`DsuSlots`** — maps players onto the four slots. A pad packet carries one IMU, so a
+  player holding two Joy-Cons streams the second hand on a slot of its own, which is how
+  Dolphin's Nunchuk accelerometer gets data; players always win the slot their number
+  gives them, and pairs take what is left.
 - **`DsuClientRegistry`** — routes each slot's packets only to that slot's subscribers.
   This matters: DSU clients (Dolphin included) overwrite their pad state with every
   received packet without checking the slot, so server-side routing is what keeps

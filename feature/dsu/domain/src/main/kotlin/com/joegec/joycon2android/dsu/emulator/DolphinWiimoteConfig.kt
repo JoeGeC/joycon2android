@@ -6,6 +6,7 @@ import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.buttonmapping.toButtonMap
 import com.joegec.joycon2android.buttonmapping.toStickMap
+import com.joegec.joycon2android.dsu.DsuSlots
 import com.joegec.joycon2android.emulatorconfig.DolphinPaths
 import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.JoyconButton
@@ -73,6 +74,8 @@ object DolphinWiimoteConfig {
         JoyconButton.Right to "Pad E",
     )
 
+    private val ACCEL_DIRECTIONS = listOf("Up", "Down", "Left", "Right", "Forward", "Backward")
+
     private val imuLines = listOf(
         "IMUAccelerometer/Up = `Accel Up`",
         "IMUAccelerometer/Down = `Accel Down`",
@@ -113,6 +116,12 @@ object DolphinWiimoteConfig {
         )
     }
 
+    // A pad packet carries one IMU, so the Nunchuk hand streams on a slot of its own and the
+    // extension reads it across devices: Dolphin splits a control on its last colon, so
+    // `<device>:<input>` reaches another pad. A real Nunchuk has no gyroscope, only this accel.
+    private fun nunchukImuLines(slot: Int): List<String> =
+        ACCEL_DIRECTIONS.map { "Nunchuk/IMUAccelerometer/$it = `DSUClient/$slot/Joycon2:Accel $it`" }
+
     // A sideways single Joy-Con's own stick isn't user-routable — there's only one.
     private val nativeStickDPad = listOf(
         "D-Pad/Up = `Left Y+`",
@@ -124,14 +133,22 @@ object DolphinWiimoteConfig {
     fun merge(existing: String?, players: List<PlayerState>, mappingFor: (JoyconSide) -> Map<String, String>): String =
         IniEditor.mergeSections(existing, sections(players, mappingFor))
 
-    private fun sections(players: List<PlayerState>, mappingFor: (JoyconSide) -> Map<String, String>): Map<String, String> =
-        players.mapNotNull { player ->
+    private fun sections(players: List<PlayerState>, mappingFor: (JoyconSide) -> Map<String, String>): Map<String, String> {
+        val secondHands = DsuSlots.secondHands(players).associate { it.state.player to it.slot }
+        return players.mapNotNull { player ->
             val slot = player.player.index - 1
             if (slot !in 0..3) return@mapNotNull null
-            bodyFor(player, slot, mappingFor)?.let { "[Wiimote${player.player.index}]" to it }
+            bodyFor(player, slot, secondHands[player.player], mappingFor)
+                ?.let { "[Wiimote${player.player.index}]" to it }
         }.toMap()
+    }
 
-    private fun bodyFor(player: PlayerState, slot: Int, mappingFor: (JoyconSide) -> Map<String, String>): String? {
+    private fun bodyFor(
+        player: PlayerState,
+        slot: Int,
+        secondHandSlot: Int?,
+        mappingFor: (JoyconSide) -> Map<String, String>,
+    ): String? {
         val side = when {
             player.hasPro -> return null
             player.hasFullController -> JoyconSide.DUAL
@@ -141,7 +158,12 @@ object DolphinWiimoteConfig {
         }
         // Source = 1 forces this Wii Remote slot to Emulated, so the mappings actually apply
         val header = listOf("Source = 1", "Device = DSUClient/$slot/Joycon2")
-        return (header + lines(side, mappingFor(side)) + imuLines + swingLines(side))
+        val nunchukImu = if (side == JoyconSide.DUAL && secondHandSlot != null) {
+            nunchukImuLines(secondHandSlot)
+        } else {
+            emptyList()
+        }
+        return (header + lines(side, mappingFor(side)) + imuLines + swingLines(side) + nunchukImu)
             .joinToString("\n", postfix = "\n")
     }
 

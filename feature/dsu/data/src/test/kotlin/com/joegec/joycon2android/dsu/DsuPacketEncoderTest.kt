@@ -51,7 +51,7 @@ class DsuPacketEncoderTest {
 
     @Test
     fun `pad data is 100 bytes with payload length 84`() {
-        val packet = encoder.padData(buffer(), pairedPlayer(), packetNumber = 1, motionTimestampMicros = 0)
+        val packet = encoder.padData(buffer(), stream(pairedPlayer()), packetNumber = 1, motionTimestampMicros = 0)
 
         assertEquals(100, packet.size)
         assertEquals(84, littleEndian(packet).getShort(6).toInt())
@@ -61,7 +61,7 @@ class DsuPacketEncoderTest {
 
     @Test
     fun `controller header carries slot, connected state, and the right joycon MAC`() {
-        val packet = encoder.padData(buffer(), pairedPlayer(), 1, 0)
+        val packet = encoder.padData(buffer(), stream(pairedPlayer()), 1, 0)
 
         assertEquals(0, packet[20].toInt())  // P1 → slot 0
         assertEquals(2, packet[21].toInt())  // connected
@@ -75,7 +75,7 @@ class DsuPacketEncoderTest {
 
     @Test
     fun `buttons map to the DS4 bitmasks and analog bytes`() {
-        val packet = encoder.padData(buffer(), pairedPlayer(), 1, 0)
+        val packet = encoder.padData(buffer(), stream(pairedPlayer()), 1, 0)
 
         // left joycon holds Up + Minus → 0x10 | 0x01; right holds A + ZR → 0x20 | 0x02
         assertEquals(0x11, packet[36].toInt())
@@ -87,7 +87,7 @@ class DsuPacketEncoderTest {
 
     @Test
     fun `sticks scale 0-4095 to 0-255 without inverting Y`() {
-        val packet = encoder.padData(buffer(), pairedPlayer(), 1, 0)
+        val packet = encoder.padData(buffer(), stream(pairedPlayer()), 1, 0)
 
         assertEquals(255, packet[40].toInt() and 0xFF) // left X full right
         assertEquals(128, packet[41].toInt() and 0xFF) // left Y centered
@@ -98,7 +98,7 @@ class DsuPacketEncoderTest {
     @Test
     fun `motion block carries the timestamp and converted IMU values`() {
         val state = pairedPlayer()
-        val packet = encoder.padData(buffer(), state, 1, motionTimestampMicros = 123_456_789L)
+        val packet = encoder.padData(buffer(), stream(state), 1, motionTimestampMicros = 123_456_789L)
 
         val body = littleEndian(packet)
         assertEquals(123_456_789L, body.getLong(68))
@@ -113,12 +113,14 @@ class DsuPacketEncoderTest {
 
     @Test
     fun `packet number is written little-endian`() {
-        val packet = encoder.padData(buffer(), pairedPlayer(), packetNumber = 0x01020304L, motionTimestampMicros = 0)
+        val packet = encoder.padData(buffer(), stream(pairedPlayer()), packetNumber = 0x01020304L, motionTimestampMicros = 0)
 
         assertEquals(0x01020304, littleEndian(packet).getInt(32))
     }
 
     private fun buffer() = ByteArray(DsuPacketEncoder.PAD_DATA_PACKET_SIZE)
+
+    private fun stream(state: PlayerState) = DsuStream(state.player.index - 1, state)
 
     private fun littleEndian(packet: ByteArray): ByteBuffer =
         ByteBuffer.wrap(packet).order(ByteOrder.LITTLE_ENDIAN)

@@ -36,11 +36,12 @@ class DsuPacketEncoder(
     }
 
     /** Fills [buffer] (size [PAD_DATA_PACKET_SIZE]) so the 120 Hz path allocates nothing. */
-    fun padData(buffer: ByteArray, state: PlayerState, packetNumber: Long, motionTimestampMicros: Long): ByteArray {
+    fun padData(buffer: ByteArray, stream: DsuStream, packetNumber: Long, motionTimestampMicros: Long): ByteArray {
+        val state = stream.state
         buffer.fill(0)
         val packet = ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN)
         putHeader(packet, PAD_DATA_PACKET_SIZE, TYPE_PAD_DATA)
-        putControllerHeader(packet, state.player.index - 1, state)
+        putControllerHeader(packet, stream.slot, state)
         packet.put(1)
         packet.putInt(packetNumber.toInt())
         putButtons(packet, state.gamepad)

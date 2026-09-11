@@ -142,18 +142,16 @@ class DsuServer(
     }
 
     private fun playerInSlot(slot: Int): PlayerState? =
-        latestPlayers.firstOrNull { it.player.index - 1 == slot }
+        DsuSlots.streams(latestPlayers).firstOrNull { it.slot == slot }?.state
 
     private suspend fun sendLoop(socket: DatagramSocket) {
         var sent = 0L
         for (batch in batches) {
             val nowMillis = batch.timestampMicros / 1_000
-            for (player in batch.players) {
-                val slot = player.player.index - 1
-                if (slot !in packetCounters.indices) continue // DSU has 4 slots; P5–P8 are not served
-                val recipients = registry.recipientsFor(slot, nowMillis)
+            for (stream in DsuSlots.streams(batch.players)) {
+                val recipients = registry.recipientsFor(stream.slot, nowMillis)
                 if (recipients.isEmpty()) continue
-                val packet = encoder.padData(sendBuffer, player, ++packetCounters[slot], batch.timestampMicros)
+                val packet = encoder.padData(sendBuffer, stream, ++packetCounters[stream.slot], batch.timestampMicros)
                 for (client in recipients) {
                     try {
                         socket.send(DatagramPacket(packet, packet.size, client))
