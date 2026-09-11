@@ -103,9 +103,9 @@ taken. Exception: a solo sideways Joy-Con's SL/SR arrive as its shoulder buttons
 #### Dolphin setup
 
 **Automatic:** with DSU on, the DSU card's **Set up Dolphin and Wiimote mapping** button writes
-both `DSUClient.ini` (the server entry) and `WiimoteNew.ini` (per-player Wii Remote mappings + the
-accelerometer/gyro motion input) to match the current assignment, then prompts you to restart
-Dolphin. It needs Shizuku connected; if the write fails
+both `DSUClient.ini` (the server entry) and `WiimoteNew.ini` (per-player Wii Remote mappings, the
+accelerometer/gyro motion input, and the Swing translation) to match the current assignment, then
+prompts you to restart Dolphin. It needs Shizuku connected; if the write fails
 (some OEM builds block writing into another app's `Android/data`), fall back to the manual steps.
 
 **Manual** (no DSU settings UI — configure by file):
@@ -128,7 +128,14 @@ Dolphin. It needs Shizuku connected; if the write fails
 4. Under Motion Input, map all Accelerometer and Gyroscope entries name-to-name, and map
    **Recenter** — gyro pointing drifts, so pressing Recenter in-game while aiming at the
    screen centre is what summons the pointer.
-5. Solo horizontal Joy-Con: enable "Sideways Wii Remote".
+5. Under Swing, map **Forward**/**Backward** to `Accel Forward`/`Accel Backward` (a pair, with
+   the right Joy-Con held like a Wii Remote) or to `Accel Up`/`Accel Down` (a solo sideways
+   Joy-Con, which thrusts out through its button face), and set each one's **Range** to 7%.
+   Dolphin only moves the emulated remote through Swing, and a game that reads a thrust as
+   distance to the sensor bar — Wii Play Billiards charges cue strength that way — sees nothing
+   from accelerometer and gyro alone. The accel inputs arrive at 9.8 per g, so at full range the
+   lightest twitch saturates the swing.
+6. Solo horizontal Joy-Con: enable "Sideways Wii Remote".
 
 ### Troubleshooting
 

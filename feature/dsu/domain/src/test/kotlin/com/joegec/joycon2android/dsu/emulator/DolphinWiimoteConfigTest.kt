@@ -62,6 +62,26 @@ class DolphinWiimoteConfigTest {
     }
 
     @Test
+    fun `a pair drives the swing from the flat grip's thrust axis`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        val result = merge(null, listOf(both))
+
+        assertTrue(result.contains("Swing/Forward = `Accel Forward`"))
+        assertTrue(result.contains("Swing/Backward = `Accel Backward`"))
+        assertTrue(result.contains("Swing/Forward/Range = 7"))
+        assertTrue(result.contains("Swing/Dead Zone = 20"))
+    }
+
+    @Test
+    fun `a sideways Joy-Con thrusts out through its button face`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+
+        assertTrue(result.contains("Swing/Forward = `Accel Up`"))
+        assertTrue(result.contains("Swing/Backward = `Accel Down`"))
+    }
+
+    @Test
     fun `pro controllers are skipped`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
 

@@ -26,6 +26,10 @@ import com.joegec.joycon2android.model.SidewaysMapper
 object DolphinWiimoteConfig {
     val path = DolphinPaths.config("WiimoteNew.ini")
 
+    // Keeps a tilted grip's gravity leak from nudging the virtual remote off its neutral position.
+    private const val SWING_DEAD_ZONE_PERCENT = 20
+    private const val SWING_RANGE_PERCENT = 7
+
     private val DOLPHIN_KEYS = mapOf(
         WiimoteButton.A to "Buttons/A",
         WiimoteButton.B to "Buttons/B",
@@ -84,6 +88,26 @@ object DolphinWiimoteConfig {
         "IMUIR/Enabled = True",
     )
 
+    // Dolphin's emulated remote only ever translates through the Swing group — the IMU path feeds
+    // rotation alone — so the virtual remote stays pinned in space and the IR dots never change
+    // separation. Games that read a thrust as distance to the sensor bar (Wii Play Billiards charges
+    // cue strength that way) see nothing from accel and gyro alone. A push toward the screen lands
+    // on `Accel Forward` for a pair held like a Wii Remote, and on `Accel Up` for a solo sideways
+    // Joy-Con (out through the button face); both axes rest near zero in their own grip, with
+    // gravity elsewhere. Range trims the accel inputs, which arrive at 9.8 per g, to a
+    // full-distance lunge at roughly a 1.5 g thrust — unscaled the lightest twitch saturates.
+    private fun swingLines(side: JoyconSide): List<String> {
+        val thrust = if (side == JoyconSide.DUAL) "Accel Forward" else "Accel Up"
+        val pull = if (side == JoyconSide.DUAL) "Accel Backward" else "Accel Down"
+        return listOf(
+            "Swing/Forward = `$thrust`",
+            "Swing/Forward/Range = $SWING_RANGE_PERCENT",
+            "Swing/Backward = `$pull`",
+            "Swing/Backward/Range = $SWING_RANGE_PERCENT",
+            "Swing/Dead Zone = $SWING_DEAD_ZONE_PERCENT",
+        )
+    }
+
     // A sideways single Joy-Con's own stick isn't user-routable — there's only one.
     private val nativeStickDPad = listOf(
         "D-Pad/Up = `Left Y+`",
@@ -112,7 +136,8 @@ object DolphinWiimoteConfig {
         }
         // Source = 1 forces this Wii Remote slot to Emulated, so the mappings actually apply
         val header = listOf("Source = 1", "Device = DSUClient/$slot/Joycon2")
-        return (header + lines(side, mappingFor(side)) + imuLines).joinToString("\n", postfix = "\n")
+        return (header + lines(side, mappingFor(side)) + imuLines + swingLines(side))
+            .joinToString("\n", postfix = "\n")
     }
 
     private fun lines(side: JoyconSide, mapping: Map<String, String>): List<String> {
