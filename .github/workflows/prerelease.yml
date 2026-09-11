@@ -5,6 +5,10 @@ name: Prerelease
 on:
   workflow_dispatch:
     inputs:
+      version:
+        description: "Version this build is heading for, e.g. 1.0.3 (default: versionName in build.gradle.kts)"
+        required: false
+        type: string
       notes:
         description: What to try in this build (shown in the release body)
         required: false
@@ -50,10 +54,20 @@ jobs:
       - name: Build, test, lint, and enforce architecture rules
         run: ./gradlew build :konsist:test --stacktrace
 
+      # versionName only catches up on a release branch, so between releases it names the
+      # version already out, not the one this build is heading for.
       - name: Name the APK after what it is
         id: apk
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          version=$(grep -m1 'versionName = ' app/build.gradle.kts | cut -d'"' -f2)
+          version="$VERSION"
+          if [ -z "$version" ]; then
+            version=$(grep -m1 'versionName = ' app/build.gradle.kts | cut -d'"' -f2)
+          elif ! echo "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::version must look like 1.0.3, got '$version'"
+            exit 1
+          fi
           name="joycon2android-${version}-debug-${GITHUB_SHA::7}.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "$name"
           echo "name=$name" >> "$GITHUB_OUTPUT"
@@ -67,11 +81,7 @@ jobs:
         run: |
           {
             echo "Debug build of \`${GITHUB_REF_NAME}\` at ${GITHUB_SHA::7}."
-            echo
-            if [ -n "$NOTES" ]; then echo "$NOTES"; echo; fi
-            echo "Debuggable and unminified, and signed with the debug key rather than the"
-            echo "release one — so it installs alongside neither a Play build nor a locally"
-            echo "built release, and is not a release candidate."
+            if [ -n "$NOTES" ]; then echo; echo "$NOTES"; fi
           } > notes.md
           gh release create "${{ steps.apk.outputs.tag }}" "${{ steps.apk.outputs.name }}" \
             --prerelease \
