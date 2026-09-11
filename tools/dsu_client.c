@@ -63,7 +63,8 @@ int main(int argc, char **argv) {
     build_subscribe(subscribe);
 
     double deadline = monotonic() + duration;
-    double next_subscribe = 0, next_motion = 0;
+    double next_subscribe = 0;
+    double next_motion[4] = {0, 0, 0, 0};
     uint8_t last_buttons[8] = {0xFF};
     long packets = 0;
 
@@ -92,10 +93,10 @@ int main(int argc, char **argv) {
             for (int i = 44; i < 56; i++) printf("%02x", data[i]);
             printf("\n");
         }
-        if (now >= next_motion) {
-            next_motion = now + motion_interval;
-            printf("[%8.3f] accel=(%+7.3f,%+7.3f,%+7.3f)g gyro(pitch,yaw,roll)=(%+8.1f,%+8.1f,%+8.1f)dps\n",
-                   now, read_float(data + 76), read_float(data + 80), read_float(data + 84),
+        if (data[20] < 4 && now >= next_motion[data[20]]) {
+            next_motion[data[20]] = now + motion_interval;
+            printf("[%8.3f] slot=%d accel=(%+7.3f,%+7.3f,%+7.3f)g gyro(pitch,yaw,roll)=(%+8.1f,%+8.1f,%+8.1f)dps\n",
+                   now, data[20], read_float(data + 76), read_float(data + 80), read_float(data + 84),
                    read_float(data + 88), read_float(data + 92), read_float(data + 96));
         }
         fflush(stdout);
