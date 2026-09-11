@@ -67,8 +67,12 @@ class DolphinWiimoteConfigTest {
 
         val result = merge(null, listOf(both))
 
-        assertTrue(result.contains("Swing/Forward = `Accel Forward`"))
-        assertTrue(result.contains("Swing/Backward = `Accel Backward`"))
+        assertTrue(
+            result.contains(
+                "Swing/Forward = (`Accel Forward` - `Accel Backward`) - " +
+                    "smooth((`Accel Forward` - `Accel Backward`), 0.03)",
+            ),
+        )
         assertTrue(result.contains("Swing/Forward/Range = 7"))
         assertTrue(result.contains("Swing/Dead Zone = 20"))
     }
@@ -77,8 +81,7 @@ class DolphinWiimoteConfigTest {
     fun `a sideways Joy-Con thrusts out through its button face`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
 
-        assertTrue(result.contains("Swing/Forward = `Accel Up`"))
-        assertTrue(result.contains("Swing/Backward = `Accel Down`"))
+        assertTrue(result.contains("Swing/Forward = (`Accel Up` - `Accel Down`) - smooth("))
     }
 
     @Test

@@ -128,13 +128,16 @@ prompts you to restart Dolphin. It needs Shizuku connected; if the write fails
 4. Under Motion Input, map all Accelerometer and Gyroscope entries name-to-name, and map
    **Recenter** — gyro pointing drifts, so pressing Recenter in-game while aiming at the
    screen centre is what summons the pointer.
-5. Under Swing, map **Forward**/**Backward** to `Accel Forward`/`Accel Backward` (a pair, with
-   the right Joy-Con held like a Wii Remote) or to `Accel Up`/`Accel Down` (a solo sideways
-   Joy-Con, which thrusts out through its button face), and set each one's **Range** to 7%.
-   Dolphin only moves the emulated remote through Swing, and a game that reads a thrust as
-   distance to the sensor bar — Wii Play Billiards charges cue strength that way — sees nothing
-   from accelerometer and gyro alone. The accel inputs arrive at 9.8 per g, so at full range the
-   lightest twitch saturates the swing.
+5. Under Swing, map **Forward** to
+   ``(`Accel Forward` - `Accel Backward`) - smooth((`Accel Forward` - `Accel Backward`), 0.03)``
+   and set its **Range** to 7%. That is for a pair, with the right Joy-Con held like a Wii
+   Remote; a solo sideways Joy-Con thrusts out through its button face, so swap in `Accel Up`
+   and `Accel Down`. Dolphin only moves the emulated remote through Swing, and a game that reads
+   a thrust as distance to the sensor bar — Wii Play Billiards charges cue strength that way —
+   sees nothing from accelerometer and gyro alone. Pairing each input with its opposite makes the
+   value signed; subtracting the slew-limited copy high-passes it, so a tilted grip's gravity is
+   not read as a thrust held forever. The inputs arrive at 9.8 per g, so at full range the
+   lightest twitch would saturate the swing.
 6. Solo horizontal Joy-Con: enable "Sideways Wii Remote".
 
 ### Troubleshooting

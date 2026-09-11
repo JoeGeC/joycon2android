@@ -29,6 +29,7 @@ object DolphinWiimoteConfig {
     // Keeps a tilted grip's gravity leak from nudging the virtual remote off its neutral position.
     private const val SWING_DEAD_ZONE_PERCENT = 20
     private const val SWING_RANGE_PERCENT = 7
+    private const val SWING_SETTLE_SECONDS = 0.03
 
     private val DOLPHIN_KEYS = mapOf(
         WiimoteButton.A to "Buttons/A",
@@ -93,17 +94,21 @@ object DolphinWiimoteConfig {
     // separation. Games that read a thrust as distance to the sensor bar (Wii Play Billiards charges
     // cue strength that way) see nothing from accel and gyro alone. A push toward the screen lands
     // on `Accel Forward` for a pair held like a Wii Remote, and on `Accel Up` for a solo sideways
-    // Joy-Con (out through the button face); both axes rest near zero in their own grip, with
-    // gravity elsewhere. Range trims the accel inputs, which arrive at 9.8 per g, to a
-    // full-distance lunge at roughly a 1.5 g thrust — unscaled the lightest twitch saturates.
+    // Joy-Con (out through the button face); pairing each with its opposite input makes the value
+    // signed, since Dolphin clamps a single input at zero.
+    //
+    // An accelerometer cannot tell gravity from sustained acceleration, so a tilted grip parks up to
+    // 1 g on that axis and Swing reads it as a thrust held forever. smooth() is a slew limiter, so
+    // subtracting it high-passes the axis: the tracker catches a static tilt within a third of a
+    // second and cancels it, while a thrust's ~80 ms transient outruns it. Range then trims the
+    // inputs, which arrive at 9.8 per g, to a full-distance lunge at roughly a 1.5 g thrust.
     private fun swingLines(side: JoyconSide): List<String> {
         val thrust = if (side == JoyconSide.DUAL) "Accel Forward" else "Accel Up"
         val pull = if (side == JoyconSide.DUAL) "Accel Backward" else "Accel Down"
+        val signed = "(`$thrust` - `$pull`)"
         return listOf(
-            "Swing/Forward = `$thrust`",
+            "Swing/Forward = $signed - smooth($signed, $SWING_SETTLE_SECONDS)",
             "Swing/Forward/Range = $SWING_RANGE_PERCENT",
-            "Swing/Backward = `$pull`",
-            "Swing/Backward/Range = $SWING_RANGE_PERCENT",
             "Swing/Dead Zone = $SWING_DEAD_ZONE_PERCENT",
         )
     }
