@@ -5,7 +5,10 @@
  *
  * Build: <ndk>/toolchains/llvm/prebuilt/<host>/bin/aarch64-linux-android24-clang -O2 -lz \
  *        -o dsu_client tools/dsu_client.c
- * Usage: dsu_client <host> [seconds]
+ * Usage: dsu_client <host> [seconds] [motion_interval_seconds]
+ *
+ * The default motion interval is readable at a glance; pass 0 to print every packet,
+ * which is what the axis-consistency fit in tools/README.md needs.
  */
 #include <arpa/inet.h>
 #include <stdint.h>
@@ -45,6 +48,7 @@ static float read_float(const uint8_t *p) {
 int main(int argc, char **argv) {
     if (argc < 2) { fprintf(stderr, "usage: %s <host> [seconds]\n", argv[0]); return 1; }
     double duration = argc > 2 ? atof(argv[2]) : 60.0;
+    double motion_interval = argc > 3 ? atof(argv[3]) : 0.25;
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     struct timeval timeout = {0, 500000};
@@ -89,8 +93,8 @@ int main(int argc, char **argv) {
             printf("\n");
         }
         if (now >= next_motion) {
-            next_motion = now + 0.25;
-            printf("[%8.2f] accel=(%+6.2f,%+6.2f,%+6.2f)g gyro(pitch,yaw,roll)=(%+8.1f,%+8.1f,%+8.1f)dps\n",
+            next_motion = now + motion_interval;
+            printf("[%8.3f] accel=(%+7.3f,%+7.3f,%+7.3f)g gyro(pitch,yaw,roll)=(%+8.1f,%+8.1f,%+8.1f)dps\n",
                    now, read_float(data + 76), read_float(data + 80), read_float(data + 84),
                    read_float(data + 88), read_float(data + 92), read_float(data + 96));
         }
