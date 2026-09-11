@@ -25,10 +25,10 @@ class MotionConverterTest {
     }
 
     @Test
-    fun `left-side gravity maps straight onto accel X`() {
+    fun `right-side gravity reads minus one g on the wire's left axis`() {
         val motion = MotionConverter.convert(JoyconInput(accelX = 4096))
 
-        assertEquals(1f, motion.accelX, tolerance)
+        assertEquals(-1f, motion.accelX, tolerance)
     }
 
     @Test
@@ -38,7 +38,7 @@ class MotionConverterTest {
         val dps = 1000 * 0.06103515625f
         assertEquals(dps, motion.gyroPitch, tolerance)
         assertEquals(-dps, motion.gyroYaw, tolerance)
-        assertEquals(-dps, motion.gyroRoll, tolerance)
+        assertEquals(dps, motion.gyroRoll, tolerance)
     }
 
     @Test
