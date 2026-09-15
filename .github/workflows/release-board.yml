@@ -1,0 +1,58 @@
+name: Release board
+
+# Clears the roadmap's release column once a version actually ships. A prerelease is a test build
+# for a handful of people, so it deliberately leaves the board alone: the "released" event fires
+# only for full releases, and for a prerelease promoted to one.
+on:
+  release:
+    types: [released]
+
+# Nothing in the repo is touched — the project write comes from PROJECT_TOKEN below.
+permissions: {}
+
+jobs:
+  move-shipped-items:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.release.prerelease }}
+    steps:
+      - name: Move "Ready for Release" items to "Done"
+        env:
+          # GITHUB_TOKEN cannot reach a user-owned project, so this needs a PAT whose scope
+          # includes projects. Without it every run fails on the first gh call.
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          OWNER: JoeGeC
+          PROJECT: "2"
+          FROM_STATUS: Ready for Release
+          TO_STATUS: Done
+        run: |
+          set -euo pipefail
+
+          # Resolved by name every run, so renaming the board's ids can't silently strand items.
+          status_field=$(gh project field-list "$PROJECT" --owner "$OWNER" --format json \
+            | jq -r '.fields[] | select(.name == "Status")')
+          field_id=$(jq -r '.id // empty' <<<"$status_field")
+          done_id=$(jq -r --arg name "$TO_STATUS" \
+            '.options[]? | select(.name == $name) | .id' <<<"$status_field")
+          project_id=$(gh project view "$PROJECT" --owner "$OWNER" --format json | jq -r '.id')
+
+          if [ -z "$field_id" ] || [ -z "$done_id" ]; then
+            echo "::error::No Status field with a \"$TO_STATUS\" option on project $PROJECT."
+            exit 1
+          fi
+
+          items=$(gh project item-list "$PROJECT" --owner "$OWNER" --format json --limit 500 \
+            | jq -r --arg name "$FROM_STATUS" '.items[] | select(.status == $name) | .id')
+
+          if [ -z "$items" ]; then
+            echo "Nothing in \"$FROM_STATUS\" — board already clear."
+            exit 0
+          fi
+
+          count=0
+          while read -r item; do
+            gh project item-edit --id "$item" --project-id "$project_id" \
+              --field-id "$field_id" --single-select-option-id "$done_id"
+            count=$((count + 1))
+          done <<<"$items"
+
+          echo "Moved $count item(s) from \"$FROM_STATUS\" to \"$TO_STATUS\" for ${{ github.event.release.tag_name }}."
