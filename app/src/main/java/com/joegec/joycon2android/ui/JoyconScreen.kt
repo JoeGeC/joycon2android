@@ -155,12 +155,12 @@ fun JoyconScreen(
     gamepadEmulators: List<EmulatorOption>,
     selectedGamepadEmulator: String,
     onSelectGamepadEmulator: (String) -> Unit,
-    gamepadSetupAvailable: Boolean,
     gamepadSetupPhase: DolphinSetupPhase,
     onConfigureGamepad: () -> Unit,
     onOpenGamepadMapping: () -> Unit,
     onDsuToggle: (Boolean) -> Unit,
-    onConfigureDolphin: () -> Unit,
+    onSelectDsuEmulator: (String) -> Unit,
+    onConfigureDsu: () -> Unit,
     onOpenDsuMapping: () -> Unit,
     onOpenSettings: () -> Unit,
     viewMode: ConnectionViewMode,
@@ -275,9 +275,9 @@ fun JoyconScreen(
                             ScreenState.CONNECTED -> ConnectedContent(
                                 state, viewMode, gamepadEnabled, gamepadError, dsuState, shizukuAvailable,
                                 gamepadEmulators, selectedGamepadEmulator, onSelectGamepadEmulator,
-                                gamepadSetupAvailable, gamepadSetupPhase, onConfigureGamepad, onOpenGamepadMapping,
+                                gamepadSetupPhase, onConfigureGamepad, onOpenGamepadMapping,
                                 onScan, onDisconnectAll, onAssign, unassignController, removePlayer, onDisconnect,
-                                onGamepadToggle, onDsuToggle, onConfigureDolphin, onOpenDsuMapping,
+                                onGamepadToggle, onDsuToggle, onSelectDsuEmulator, onConfigureDsu, onOpenDsuMapping,
                             )
                             else -> ScanningContent(state)
                         }
@@ -516,7 +516,6 @@ private fun ConnectedContent(
     gamepadEmulators: List<EmulatorOption>,
     selectedGamepadEmulator: String,
     onSelectGamepadEmulator: (String) -> Unit,
-    gamepadSetupAvailable: Boolean,
     gamepadSetupPhase: DolphinSetupPhase,
     onConfigureGamepad: () -> Unit,
     onOpenGamepadMapping: () -> Unit,
@@ -528,7 +527,8 @@ private fun ConnectedContent(
     onDisconnect: (String) -> Unit,
     onGamepadToggle: (Boolean) -> Unit,
     onDsuToggle: (Boolean) -> Unit,
-    onConfigureDolphin: () -> Unit,
+    onSelectDsuEmulator: (String) -> Unit,
+    onConfigureDsu: () -> Unit,
     onOpenDsuMapping: () -> Unit,
 ) {
     AnimatedVisibility(
@@ -613,7 +613,7 @@ private fun ConnectedContent(
                 error = gamepadError,
                 onToggle = onGamepadToggle,
             ) {
-                if (gamepadEnabled && gamepadEmulators.isNotEmpty() && gamepadSetupAvailable) {
+                if (gamepadEnabled && gamepadEmulators.isNotEmpty()) {
                     Spacer(Modifier.height(Dimens.elementSpacing))
                     EmulatorAutoSetup(
                         emulators = gamepadEmulators,
@@ -632,7 +632,8 @@ private fun ConnectedContent(
             DsuCard(
                 state = dsuState,
                 onToggle = onDsuToggle,
-                onConfigureDolphin = onConfigureDolphin,
+                onSelectEmulator = onSelectDsuEmulator,
+                onSetUp = onConfigureDsu,
                 onConfigureMapping = onOpenDsuMapping,
             )
         }

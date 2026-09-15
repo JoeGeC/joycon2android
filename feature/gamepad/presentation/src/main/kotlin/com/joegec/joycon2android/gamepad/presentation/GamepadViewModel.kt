@@ -26,7 +26,8 @@ class GamepadViewModel(
     private val enableGamepad: EnableGamepadUseCase,
     private val disableGamepad: DisableGamepadUseCase,
     val gamepadEmulators: List<EmulatorOption> = emptyList(),
-    private val configureGamepad: suspend (emulatorId: String, players: List<PlayerState>) -> EmulatorSetupResult = { _, _ -> EmulatorSetupResult.FAILED },
+    private val configureGamepad: suspend (emulatorId: String, players: List<PlayerState>, closeEmulator: Boolean) -> EmulatorSetupResult =
+        { _, _, _ -> EmulatorSetupResult.FAILED },
 ) : ViewModel() {
 
     val status: StateFlow<GamepadStatus> = observeGamepadStatus()
@@ -41,12 +42,17 @@ class GamepadViewModel(
     private val _setupPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
     val setupPhase: StateFlow<DolphinSetupPhase> = _setupPhase.asStateFlow()
 
+    /** The emulator that has to be closed before its config can be written, once the user agrees. */
+    private val _emulatorToClose = MutableStateFlow<EmulatorOption?>(null)
+    val emulatorToClose: StateFlow<EmulatorOption?> = _emulatorToClose.asStateFlow()
+
     fun toggle(enabled: Boolean, players: List<PlayerState>) {
         if (enabled) enableGamepad(players) else disableGamepad()
     }
 
     fun selectEmulator(id: String) {
         _selectedEmulator.value = id
+        _emulatorToClose.value = null
         resetSetupPhase()
     }
 
@@ -55,17 +61,36 @@ class GamepadViewModel(
         if (_setupPhase.value != DolphinSetupPhase.WORKING) _setupPhase.value = DolphinSetupPhase.IDLE
     }
 
-    fun configureGamepad(players: List<PlayerState>) {
+    fun configureGamepad(players: List<PlayerState>) = write(players, closeEmulator = false)
+
+    /** The user accepted losing unsaved progress, so stop the emulator and write. */
+    fun closeEmulatorAndConfigure(players: List<PlayerState>) {
+        _emulatorToClose.value = null
+        write(players, closeEmulator = true)
+    }
+
+    fun cancelClose() {
+        _emulatorToClose.value = null
+        resetSetupPhase()
+    }
+
+    private fun write(players: List<PlayerState>, closeEmulator: Boolean) {
         val emulatorId = _selectedEmulator.value
         if (emulatorId.isEmpty() || _setupPhase.value == DolphinSetupPhase.WORKING) return
         viewModelScope.launch {
             _setupPhase.value = DolphinSetupPhase.WORKING
-            _setupPhase.value = try {
-                configureGamepad(emulatorId, players).toPhase()
+            val result = try {
+                configureGamepad(emulatorId, players, closeEmulator)
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
-                DolphinSetupPhase.FAILED
+                EmulatorSetupResult.FAILED
+            }
+            if (result == EmulatorSetupResult.EMULATOR_RUNNING) {
+                _emulatorToClose.value = gamepadEmulators.firstOrNull { it.id == emulatorId }
+                _setupPhase.value = DolphinSetupPhase.IDLE
+            } else {
+                _setupPhase.value = result.toPhase()
             }
         }
     }
@@ -75,8 +100,9 @@ class GamepadViewModel(
     }
 }
 
+// EMULATOR_RUNNING never reaches here — it raises the close-emulator prompt instead.
 private fun EmulatorSetupResult.toPhase() = when (this) {
     EmulatorSetupResult.SUCCESS -> DolphinSetupPhase.SUCCESS
     EmulatorSetupResult.NO_PRIVILEGED_ACCESS -> DolphinSetupPhase.NO_ACCESS
-    EmulatorSetupResult.FAILED -> DolphinSetupPhase.FAILED
+    else -> DolphinSetupPhase.FAILED
 }

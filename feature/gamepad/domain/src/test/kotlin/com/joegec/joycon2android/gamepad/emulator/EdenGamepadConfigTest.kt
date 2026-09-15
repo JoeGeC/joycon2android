@@ -140,6 +140,24 @@ class EdenGamepadConfigTest {
     }
 
     @Test
+    fun `the DSU card's motion bindings are left alone`() {
+        val existing = """
+            [Controls]
+            player_0_motionright="engine:cemuhookudp,pad:0,motion:0"
+            player_0_motionright\default=false
+            player_1_motionleft="engine:cemuhookudp,pad:3,motion:0"
+        """.trimIndent()
+        val players = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
+
+        val result = merge(existing, players, mapOf(1 to 0))
+
+        assertTrue(result.contains("player_0_motionright=\"engine:cemuhookudp,pad:0,motion:0\""))
+        assertTrue(result.contains("player_0_motionright\\default=false"))
+        // Even a player this pass no longer writes keeps its motion binding — not ours to clear.
+        assertTrue(result.contains("player_1_motionleft=\"engine:cemuhookudp,pad:3,motion:0\""))
+    }
+
+    @Test
     fun `players without a resolved port are skipped, others preserved`() {
         val existing = "[Controls]\nmotion_enabled=true\n[Cpu]\nfoo=bar\n"
         val players = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))

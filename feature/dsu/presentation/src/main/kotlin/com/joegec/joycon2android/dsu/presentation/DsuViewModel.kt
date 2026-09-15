@@ -9,6 +9,7 @@ import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
 import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase // shared, in :core:designsystem
+import com.joegec.joycon2android.ui.components.EmulatorOption
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,35 +23,69 @@ class DsuViewModel(
     observeDsuStatus: ObserveDsuStatusUseCase,
     private val enableDsu: EnableDsuUseCase,
     private val disableDsu: DisableDsuUseCase,
-    val dolphinInstalled: Boolean = false,
-    private val configureDolphin: suspend (List<PlayerState>) -> EmulatorSetupResult = { EmulatorSetupResult.FAILED },
+    val dsuEmulators: List<EmulatorOption> = emptyList(),
+    private val configureDsu: suspend (emulatorId: String, players: List<PlayerState>, closeEmulator: Boolean) -> EmulatorSetupResult =
+        { _, _, _ -> EmulatorSetupResult.FAILED },
 ) : ViewModel() {
 
     val status: StateFlow<DsuStatus> = observeDsuStatus()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), DsuStatus())
 
-    private val _dolphinPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
-    val dolphinPhase: StateFlow<DolphinSetupPhase> = _dolphinPhase.asStateFlow()
+    private val _selectedEmulator = MutableStateFlow(dsuEmulators.firstOrNull()?.id ?: "")
+    val selectedEmulator: StateFlow<String> = _selectedEmulator.asStateFlow()
+
+    private val _setupPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
+    val setupPhase: StateFlow<DolphinSetupPhase> = _setupPhase.asStateFlow()
+
+    /** The emulator that has to be closed before its config can be written, once the user agrees. */
+    private val _emulatorToClose = MutableStateFlow<EmulatorOption?>(null)
+    val emulatorToClose: StateFlow<EmulatorOption?> = _emulatorToClose.asStateFlow()
 
     fun toggle(enabled: Boolean) {
         if (enabled) enableDsu() else disableDsu()
     }
 
-    /** Clears a stale Done/Failed once the written config no longer matches the assignment. */
-    fun resetDolphinPhase() {
-        if (_dolphinPhase.value != DolphinSetupPhase.WORKING) _dolphinPhase.value = DolphinSetupPhase.IDLE
+    fun selectEmulator(id: String) {
+        _selectedEmulator.value = id
+        _emulatorToClose.value = null
+        resetSetupPhase()
     }
 
-    fun configureDolphinDsu(players: List<PlayerState>) {
-        if (_dolphinPhase.value == DolphinSetupPhase.WORKING) return
+    /** Clears a stale Done/Failed once the written config no longer matches the assignment. */
+    fun resetSetupPhase() {
+        if (_setupPhase.value != DolphinSetupPhase.WORKING) _setupPhase.value = DolphinSetupPhase.IDLE
+    }
+
+    fun configureDsu(players: List<PlayerState>) = write(players, closeEmulator = false)
+
+    /** The user accepted losing unsaved progress, so stop the emulator and write. */
+    fun closeEmulatorAndConfigure(players: List<PlayerState>) {
+        _emulatorToClose.value = null
+        write(players, closeEmulator = true)
+    }
+
+    fun cancelClose() {
+        _emulatorToClose.value = null
+        resetSetupPhase()
+    }
+
+    private fun write(players: List<PlayerState>, closeEmulator: Boolean) {
+        val emulatorId = _selectedEmulator.value
+        if (emulatorId.isEmpty() || _setupPhase.value == DolphinSetupPhase.WORKING) return
         viewModelScope.launch {
-            _dolphinPhase.value = DolphinSetupPhase.WORKING
-            _dolphinPhase.value = try {
-                configureDolphin(players).toPhase()
+            _setupPhase.value = DolphinSetupPhase.WORKING
+            val result = try {
+                configureDsu(emulatorId, players, closeEmulator)
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
-                DolphinSetupPhase.FAILED
+                EmulatorSetupResult.FAILED
+            }
+            if (result == EmulatorSetupResult.EMULATOR_RUNNING) {
+                _emulatorToClose.value = dsuEmulators.firstOrNull { it.id == emulatorId }
+                _setupPhase.value = DolphinSetupPhase.IDLE
+            } else {
+                _setupPhase.value = result.toPhase()
             }
         }
     }
@@ -60,8 +95,9 @@ class DsuViewModel(
     }
 }
 
+// EMULATOR_RUNNING never reaches here — it raises the close-emulator prompt instead.
 private fun EmulatorSetupResult.toPhase() = when (this) {
     EmulatorSetupResult.SUCCESS -> DolphinSetupPhase.SUCCESS
     EmulatorSetupResult.NO_PRIVILEGED_ACCESS -> DolphinSetupPhase.NO_ACCESS
-    EmulatorSetupResult.FAILED -> DolphinSetupPhase.FAILED
+    else -> DolphinSetupPhase.FAILED
 }

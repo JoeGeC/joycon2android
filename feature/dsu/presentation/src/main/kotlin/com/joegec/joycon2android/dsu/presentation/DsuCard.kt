@@ -33,13 +33,12 @@ import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
-private const val DOLPHIN_EMULATOR_ID = "dolphin"
-
 @Composable
 fun DsuCard(
     state: DsuCardState,
     onToggle: (Boolean) -> Unit,
-    onConfigureDolphin: () -> Unit,
+    onSelectEmulator: (String) -> Unit,
+    onSetUp: () -> Unit,
     onConfigureMapping: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -58,16 +57,14 @@ fun DsuCard(
         ) {
             Column {
                 Spacer(Modifier.height(Dimens.elementSpacing))
-                if (state.dolphinInstalled && state.dolphinAutoConfigAvailable) {
+                if (state.emulators.isNotEmpty()) {
                     EmulatorAutoSetup(
-                        emulators = listOf(
-                            EmulatorOption(DOLPHIN_EMULATOR_ID, stringResource(R.string.dsu_dolphin_emulator_name)),
-                        ),
-                        selectedEmulator = DOLPHIN_EMULATOR_ID,
-                        onSelectEmulator = {},
-                        phase = state.dolphinPhase,
-                        setupLabel = stringResource(R.string.dsu_dolphin_auto_setup),
-                        onSetUp = onConfigureDolphin,
+                        emulators = state.emulators,
+                        selectedEmulator = state.selectedEmulator,
+                        onSelectEmulator = onSelectEmulator,
+                        phase = state.setupPhase,
+                        setupLabel = stringResource(R.string.dsu_auto_setup),
+                        onSetUp = onSetUp,
                         onConfigureMapping = onConfigureMapping,
                     )
                     Spacer(Modifier.height(Dimens.elementSpacing))
@@ -130,6 +127,18 @@ private fun ManualEmulatorSetup(address: String?) {
         ExpandableInfoSection(stringResource(R.string.dsu_dolphin_emulator_name)) {
             DolphinManualSteps()
         }
+        ExpandableInfoSection(stringResource(R.string.dsu_eden_emulator_name)) {
+            EdenManualSteps()
+        }
+    }
+}
+
+@Composable
+private fun EdenManualSteps() {
+    Column {
+        GuideStep(stringResource(R.string.dsu_eden_servers))
+        Spacer(Modifier.height(Dimens.elementSpacing))
+        GuideStep(stringResource(R.string.dsu_eden_motion))
     }
 }
 
