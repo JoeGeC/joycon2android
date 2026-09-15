@@ -1,8 +1,15 @@
 <resources>
     <string name="dsu_title">DSU Motion Server</string>
     <string name="dsu_subtitle_off">Stream motion + pads to emulators (cemuhook)</string>
-    <string name="dsu_subtitle_on">Active — port %1$d · %2$d connected</string>
-    <string name="dsu_slot_note">DSU serves players 1–4 only — P5–P8 are not streamed.</string>
+    <plurals name="dsu_subtitle_on">
+        <item quantity="one">Active — port %1$d · %2$d emulator connected</item>
+        <item quantity="other">Active — port %1$d · %2$d emulators connected</item>
+    </plurals>
+    <string name="dsu_subtitle_waiting">Active — port %1$d · waiting for an emulator</string>
+    <string name="player_label">P%1$d</string>
+    <string name="dsu_slot_limit_lead">DSU has only 4 slots.</string>
+    <string name="dsu_slot_limit_players">No slot for %1$s.</string>
+    <string name="dsu_slot_limit_second_hands">No second slot for %1$s — left Joy-Con motion is dropped.</string>
     <string name="dsu_manual_setup_title">Manual emulator setup</string>
     <string name="dsu_dolphin_emulator_name">Dolphin (Wii)</string>
     <string name="dsu_setup_body">In the emulator\'s controller settings, point its DSU (cemuhook) input source at:</string>
@@ -15,5 +22,6 @@
     <string name="dsu_mapping_trouble_detect">Press-a-button detection in Android emulators only sees Android input devices, so it never detects DSU inputs. Map them manually instead — pick from the DSU device\'s input list or type them in the expression field.</string>
     <string name="dsu_mapping_names_intro">DSU buttons use DS4 names:</string>
     <string name="dsu_mapping_missing">SL, SR and C have no DSU equivalent and aren\'t streamed.</string>
+    <string name="dsu_mapping_second_hand">A player holding two Joy-Cons streams both sets of buttons, but each hand needs a slot of its own to stream motion.</string>
     <string name="dsu_mapping_trouble_gamepad">If the Virtual Gamepad is also on, detection grabs your press from it instead — turn it off while mapping DSU inputs.</string>
 </resources>

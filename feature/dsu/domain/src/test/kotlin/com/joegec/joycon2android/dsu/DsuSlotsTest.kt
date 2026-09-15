@@ -59,4 +59,56 @@ class DsuSlotsTest {
 
         assertEquals(listOf(0), streams.map { it.slot })
     }
+
+    @Test
+    fun `a pair beyond the four slots gets no slot for either hand`() {
+        assertEquals(emptyList<DsuStream>(), DsuSlots.streams(listOf(pair(PlayerNumber.P5))))
+    }
+
+    @Test
+    fun `coverage is clear when every hand fits`() {
+        val coverage = DsuSlots.coverage(listOf(pair(PlayerNumber.P1), solo(PlayerNumber.P2)))
+
+        assertEquals(true, coverage.allStreamed)
+    }
+
+    @Test
+    fun `coverage reports players the four slots cannot reach`() {
+        val coverage = DsuSlots.coverage(listOf(solo(PlayerNumber.P1), solo(PlayerNumber.P5), solo(PlayerNumber.P6)))
+
+        assertEquals(listOf(PlayerNumber.P5, PlayerNumber.P6), coverage.unservedPlayers)
+        assertEquals(emptyList<PlayerNumber>(), coverage.unservedSecondHands)
+    }
+
+    @Test
+    fun `coverage reports every player past the fourth when eight hold one joycon each`() {
+        val coverage = DsuSlots.coverage(PlayerNumber.entries.map { solo(it) })
+
+        assertEquals(
+            listOf(PlayerNumber.P5, PlayerNumber.P6, PlayerNumber.P7, PlayerNumber.P8),
+            coverage.unservedPlayers,
+        )
+        assertEquals(emptyList<PlayerNumber>(), coverage.unservedSecondHands)
+    }
+
+    @Test
+    fun `four pairs fill every slot, so no pair gets a second hand`() {
+        val coverage = DsuSlots.coverage(listOf(PlayerNumber.P1, PlayerNumber.P2, PlayerNumber.P3, PlayerNumber.P4).map { pair(it) })
+
+        assertEquals(emptyList<PlayerNumber>(), coverage.unservedPlayers)
+        assertEquals(
+            listOf(PlayerNumber.P1, PlayerNumber.P2, PlayerNumber.P3, PlayerNumber.P4),
+            coverage.unservedSecondHands,
+        )
+    }
+
+    @Test
+    fun `coverage reports pairs that ran out of a second slot`() {
+        val players = listOf(pair(PlayerNumber.P1), pair(PlayerNumber.P2), pair(PlayerNumber.P3))
+
+        val coverage = DsuSlots.coverage(players)
+
+        assertEquals(emptyList<PlayerNumber>(), coverage.unservedPlayers)
+        assertEquals(listOf(PlayerNumber.P2, PlayerNumber.P3), coverage.unservedSecondHands)
+    }
 }

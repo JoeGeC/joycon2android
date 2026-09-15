@@ -4,6 +4,7 @@ import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.ExpandableInfoSection
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
+import com.joegec.joycon2android.ui.components.WarningBox
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -20,11 +21,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.joegec.joycon2android.dsu.DsuConfig
+import com.joegec.joycon2android.dsu.DsuCoverage
 import com.joegec.joycon2android.dsu.presentation.R
+import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
@@ -41,11 +45,7 @@ fun DsuCard(
 ) {
     FeatureToggleCard(
         title = stringResource(R.string.dsu_title),
-        subtitle = if (state.enabled) {
-            stringResource(R.string.dsu_subtitle_on, DsuConfig.PORT, state.clientCount)
-        } else {
-            stringResource(R.string.dsu_subtitle_off)
-        },
+        subtitle = subtitleFor(state),
         checked = state.enabled,
         error = state.error,
         onToggle = onToggle,
@@ -58,14 +58,6 @@ fun DsuCard(
         ) {
             Column {
                 Spacer(Modifier.height(Dimens.elementSpacing))
-                if (state.showSlotLimitNote) {
-                    Text(
-                        stringResource(R.string.dsu_slot_note),
-                        color = TextDim,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Spacer(Modifier.height(Dimens.elementSpacing))
-                }
                 if (state.dolphinInstalled && state.dolphinAutoConfigAvailable) {
                     EmulatorAutoSetup(
                         emulators = listOf(
@@ -80,6 +72,10 @@ fun DsuCard(
                     )
                     Spacer(Modifier.height(Dimens.elementSpacing))
                 }
+                slotLimitText(state.coverage)?.let { warning ->
+                    WarningBox(warning)
+                    Spacer(Modifier.height(Dimens.elementSpacing))
+                }
                 ExpandableInfoSection(stringResource(R.string.dsu_manual_setup_title)) {
                     ManualEmulatorSetup(state.address)
                 }
@@ -89,6 +85,37 @@ fun DsuCard(
             }
         }
     }
+}
+
+@Composable
+private fun subtitleFor(state: DsuCardState): String = when {
+    !state.enabled -> stringResource(R.string.dsu_subtitle_off)
+    state.clientCount == 0 -> stringResource(R.string.dsu_subtitle_waiting, DsuConfig.PORT)
+    else -> pluralStringResource(
+        R.plurals.dsu_subtitle_on,
+        state.clientCount,
+        DsuConfig.PORT,
+        state.clientCount,
+    )
+}
+
+@Composable
+private fun slotLimitText(coverage: DsuCoverage): String? {
+    if (coverage.allStreamed) return null
+    val lines = mutableListOf(stringResource(R.string.dsu_slot_limit_lead))
+    if (coverage.unservedPlayers.isNotEmpty()) {
+        lines += stringResource(R.string.dsu_slot_limit_players, playerLabels(coverage.unservedPlayers))
+    }
+    if (coverage.unservedSecondHands.isNotEmpty()) {
+        lines += stringResource(R.string.dsu_slot_limit_second_hands, playerLabels(coverage.unservedSecondHands))
+    }
+    return lines.joinToString("\n")
+}
+
+@Composable
+private fun playerLabels(players: List<PlayerNumber>): String {
+    val template = stringResource(R.string.player_label)
+    return players.joinToString { template.format(it.index) }
 }
 
 @Composable
@@ -129,6 +156,8 @@ private fun MappingTroubleshooting() {
         Ds4NameTable()
         Spacer(Modifier.height(Dimens.elementSpacing))
         GuideStep(stringResource(R.string.dsu_mapping_missing))
+        Spacer(Modifier.height(Dimens.elementSpacing))
+        GuideStep(stringResource(R.string.dsu_mapping_second_hand))
         Spacer(Modifier.height(Dimens.elementSpacing))
         GuideStep(stringResource(R.string.dsu_mapping_trouble_gamepad))
     }

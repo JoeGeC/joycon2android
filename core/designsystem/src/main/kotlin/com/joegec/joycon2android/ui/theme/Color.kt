@@ -13,6 +13,8 @@ val TextBright = Color(0xFFC2CDD8)
 val ButtonOff = Color(0xFF1A1F26)
 val ErrorBg = Color(0xFF2D1B1B)
 val ErrorText = Color(0xFFFF6B6B)
+val WarningBg = Color(0xFF2D2113)
+val WarningText = Color(0xFFFFB454)
 val TextOnAccent = Color(0xFF0E1116)
 val JoyconDefaultColor = Accent
 

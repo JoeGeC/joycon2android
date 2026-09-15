@@ -9,8 +9,8 @@ import com.joegec.joycon2android.model.PlayerState
  * A pad packet carries exactly one accelerometer and gyroscope, so a player holding two Joy-Cons
  * cannot report both hands on one slot: the second hand needs a slot of its own for an emulator
  * to read it (Dolphin's Nunchuk accelerometer, say). Players themselves always win the slot their
- * number gives them; pairs then take whatever is left, highest first, in player order. Four
- * players therefore leave nothing over and no pair gets a second hand.
+ * number gives them; slotted pairs then take whatever is left, highest first, in player order.
+ * Four players therefore leave nothing over and no pair gets a second hand.
  */
 object DsuSlots {
     const val COUNT = 4
@@ -18,9 +18,20 @@ object DsuSlots {
     fun streams(players: List<PlayerState>): List<DsuStream> = held(players) + secondHands(players)
 
     fun secondHands(players: List<PlayerState>): List<DsuStream> {
-        val free = ((COUNT - 1) downTo 0) - held(players).map { it.slot }.toSet()
-        return players.filter { it.hasFullController }
+        val slotted = held(players)
+        val free = ((COUNT - 1) downTo 0) - slotted.map { it.slot }.toSet()
+        return slotted.map { it.state }
+            .filter { it.hasFullController }
             .zip(free) { player, slot -> DsuStream(slot, PlayerState(player.player, left = player.left)) }
+    }
+
+    fun coverage(players: List<PlayerState>): DsuCoverage {
+        val slotted = held(players).map { it.state }
+        val secondHanded = secondHands(players).map { it.state.player }.toSet()
+        return DsuCoverage(
+            unservedPlayers = players.filter { it.hasController }.map { it.player } - slotted.map { it.player }.toSet(),
+            unservedSecondHands = slotted.filter { it.hasFullController }.map { it.player } - secondHanded,
+        )
     }
 
     private fun held(players: List<PlayerState>): List<DsuStream> =
