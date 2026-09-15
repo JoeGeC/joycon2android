@@ -24,11 +24,12 @@ import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.presentation.ControllerMappingScreen
 import com.joegec.joycon2android.buttonmapping.presentation.ControllerMappingViewModel
 import com.joegec.joycon2android.dsu.presentation.DsuViewModel
-import com.joegec.joycon2android.gamepad.emulator.EdenGamepadConfig
 import com.joegec.joycon2android.gamepad.presentation.GamepadViewModel
 import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
 import com.joegec.joycon2android.dsu.DsuSlots
+import com.joegec.joycon2android.emulatorconfig.EdenPaths
+import com.joegec.joycon2android.ui.components.CloseEmulatorDialog
 import com.joegec.joycon2android.dsu.presentation.DsuCardState
 import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.Joycon2AndroidTheme
@@ -44,8 +45,8 @@ class MainActivity : ComponentActivity() {
                     c.observeDsuStatus,
                     c.enableDsu,
                     c.disableDsu,
-                    dolphinInstalled = c.emulatorSetup.dolphinInstalled,
-                    configureDolphin = c.emulatorSetup::configureDolphinDsu,
+                    dsuEmulators = c.emulatorSetup.dsuEmulators(),
+                    configureDsu = c.emulatorSetup::configureDsu,
                 )
             }
         }
@@ -130,7 +131,10 @@ class MainActivity : ComponentActivity() {
                     val gamepadStatus by gamepadViewModel.status.collectAsState()
                     val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
                     val dsuStatus by dsuViewModel.status.collectAsState()
-                    val dolphinPhase by dsuViewModel.dolphinPhase.collectAsState()
+                    val dsuSetupPhase by dsuViewModel.setupPhase.collectAsState()
+                    val selectedDsuEmulator by dsuViewModel.selectedEmulator.collectAsState()
+                    val dsuEmulatorToClose by dsuViewModel.emulatorToClose.collectAsState()
+                    val gamepadEmulatorToClose by gamepadViewModel.emulatorToClose.collectAsState()
                     val gamepadSetupPhase by gamepadViewModel.setupPhase.collectAsState()
                     val selectedEmulator by gamepadViewModel.selectedEmulator.collectAsState()
                     val permissionDenied by viewModel.permissionDenied.collectAsState()
@@ -142,8 +146,23 @@ class MainActivity : ComponentActivity() {
                         Triple(it.player.index, it.left?.address, it.right?.address)
                     }
                     LaunchedEffect(assignmentKey) {
-                        dsuViewModel.resetDolphinPhase()
+                        dsuViewModel.resetSetupPhase()
                         gamepadViewModel.resetSetupPhase()
+                    }
+
+                    dsuEmulatorToClose?.let { emulator ->
+                        CloseEmulatorDialog(
+                            emulatorName = emulator.label,
+                            onConfirm = { dsuViewModel.closeEmulatorAndConfigure(state.activePlayers) },
+                            onDismiss = dsuViewModel::cancelClose,
+                        )
+                    }
+                    gamepadEmulatorToClose?.let { emulator ->
+                        CloseEmulatorDialog(
+                            emulatorName = emulator.label,
+                            onConfirm = { gamepadViewModel.closeEmulatorAndConfigure(state.activePlayers) },
+                            onDismiss = gamepadViewModel::cancelClose,
+                        )
                     }
 
                     JoyconScreen(
@@ -156,9 +175,9 @@ class MainActivity : ComponentActivity() {
                             clientCount = dsuStatus.clientCount,
                             address = dsuStatus.address,
                             coverage = DsuSlots.coverage(state.activePlayers),
-                            dolphinInstalled = dsuViewModel.dolphinInstalled,
-                            dolphinAutoConfigAvailable = shizukuAvailable,
-                            dolphinPhase = dolphinPhase,
+                            emulators = dsuViewModel.dsuEmulators,
+                            selectedEmulator = selectedDsuEmulator,
+                            setupPhase = dsuSetupPhase,
                         ),
                         permissionDenied = permissionDenied,
                         onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
@@ -172,19 +191,25 @@ class MainActivity : ComponentActivity() {
                         gamepadEmulators = gamepadViewModel.gamepadEmulators,
                         selectedGamepadEmulator = selectedEmulator,
                         onSelectGamepadEmulator = gamepadViewModel::selectEmulator,
-                        gamepadSetupAvailable = shizukuAvailable,
                         gamepadSetupPhase = gamepadSetupPhase,
                         onConfigureGamepad = { gamepadViewModel.configureGamepad(state.activePlayers) },
                         onOpenGamepadMapping = {
-                            mappingConsole = if (selectedEmulator in EdenGamepadConfig.PACKAGES) {
+                            mappingConsole = if (selectedEmulator in EdenPaths.PACKAGES) {
                                 Console.SWITCH_PRO
                             } else {
                                 Console.GAMECUBE
                             }
                         },
                         onDsuToggle = dsuViewModel::toggle,
-                        onConfigureDolphin = { dsuViewModel.configureDolphinDsu(state.activePlayers) },
-                        onOpenDsuMapping = { mappingConsole = Console.WIIMOTE_NUNCHUK },
+                        onSelectDsuEmulator = dsuViewModel::selectEmulator,
+                        onConfigureDsu = { dsuViewModel.configureDsu(state.activePlayers) },
+                        onOpenDsuMapping = {
+                            mappingConsole = if (selectedDsuEmulator in EdenPaths.PACKAGES) {
+                                Console.SWITCH_PRO
+                            } else {
+                                Console.WIIMOTE_NUNCHUK
+                            }
+                        },
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },
                         shizukuAvailable = shizukuAvailable,
                         viewMode = viewMode,

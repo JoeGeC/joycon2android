@@ -7,8 +7,10 @@ import com.joegec.joycon2android.buttonmapping.GetEffectiveControllerMappingUseC
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.dsu.emulator.DolphinDsuConfig
 import com.joegec.joycon2android.dsu.emulator.DolphinWiimoteConfig
+import com.joegec.joycon2android.dsu.emulator.EdenDsuConfig
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.emulatorconfig.DolphinPaths
+import com.joegec.joycon2android.emulatorconfig.EdenPaths
 import com.joegec.joycon2android.gamepad.emulator.DolphinGcpadConfig
 import com.joegec.joycon2android.gamepad.emulator.EdenGamepad
 import com.joegec.joycon2android.gamepad.emulator.EdenGamepadConfig
@@ -42,28 +44,67 @@ class EmulatorSetup(
         val bySide = JoyconSide.entries.associateWith { getControllerMapping(console, it) }
         return { side -> bySide.getValue(side) }
     }
-    val dolphinInstalled: Boolean
-        get() = isInstalled(DolphinPaths.PACKAGE)
-
     /** Installed emulators whose controller mapping the Virtual Gamepad can configure. */
     fun gamepadEmulators(): List<EmulatorOption> = buildList {
         if (isInstalled(DolphinPaths.PACKAGE)) {
             add(EmulatorOption(DolphinPaths.PACKAGE, "Dolphin (GameCube)"))
         }
-        if (isInstalled(EdenGamepadConfig.PACKAGE)) {
-            add(EmulatorOption(EdenGamepadConfig.PACKAGE, "Eden"))
+        addAll(edenOptions())
+    }
+
+    /** Installed emulators whose motion input the DSU server can configure. */
+    fun dsuEmulators(): List<EmulatorOption> = buildList {
+        if (isInstalled(DolphinPaths.PACKAGE)) {
+            add(EmulatorOption(DolphinPaths.PACKAGE, "Dolphin (Wii)"))
         }
-        if (isInstalled(EdenGamepadConfig.NIGHTLY_PACKAGE)) {
-            add(EmulatorOption(EdenGamepadConfig.NIGHTLY_PACKAGE, "Eden Nightly"))
+        addAll(edenOptions())
+    }
+
+    private fun edenOptions(): List<EmulatorOption> = buildList {
+        if (isInstalled(EdenPaths.PACKAGE)) {
+            add(EmulatorOption(EdenPaths.PACKAGE, "Eden"))
+        }
+        if (isInstalled(EdenPaths.NIGHTLY_PACKAGE)) {
+            add(EmulatorOption(EdenPaths.NIGHTLY_PACKAGE, "Eden Nightly"))
         }
     }
 
     private fun isInstalled(pkg: String) =
         runCatching { packageManager.getPackageInfo(pkg, 0) }.isSuccess
 
-    /** Dolphin DSU + Wii Remote mappings (DSU card). */
-    suspend fun configureDolphinDsu(players: List<PlayerState>): EmulatorSetupResult = bounded("dsu") {
+    /** Motion input for the selected emulator (DSU card). */
+    suspend fun configureDsu(
+        emulatorId: String,
+        players: List<PlayerState>,
+        closeEmulator: Boolean = false,
+    ): EmulatorSetupResult = if (emulatorId in EdenPaths.PACKAGES) {
+        configureEdenDsu(emulatorId, players, closeEmulator)
+    } else {
+        configureDolphinDsu(players, closeEmulator)
+    }
+
+    private suspend fun configureEdenDsu(
+        emulatorId: String,
+        players: List<PlayerState>,
+        closeEmulator: Boolean,
+    ): EmulatorSetupResult =
+        bounded("eden-dsu") {
+            val shell = awaitShell() ?: return@bounded EmulatorSetupResult.NO_PRIVILEGED_ACCESS
+            shell.settle(emulatorId, closeEmulator)?.let { return@bounded it }
+            val path = EdenDsuConfig.path(emulatorId)
+            val written = shell.writeText(
+                path,
+                EdenDsuConfig.merge(shell.readText(path), players, mappingLookup(Console.SWITCH_PRO)),
+            )
+            if (written) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
+        }
+
+    private suspend fun configureDolphinDsu(
+        players: List<PlayerState>,
+        closeEmulator: Boolean,
+    ): EmulatorSetupResult = bounded("dsu") {
         val shell = awaitShell() ?: return@bounded EmulatorSetupResult.NO_PRIVILEGED_ACCESS
+        shell.settle(DolphinPaths.PACKAGE, closeEmulator)?.let { return@bounded it }
 
         val dsuMerged = DolphinDsuConfig.merge(shell.readText(DolphinDsuConfig.path))
         shell.writeText(DolphinDsuConfig.path, dsuMerged)
@@ -85,11 +126,17 @@ class EmulatorSetup(
     }
 
     /** Controller mapping for the selected emulator (Gamepad card). */
-    suspend fun configureGamepad(emulatorId: String, players: List<PlayerState>): EmulatorSetupResult =
+    suspend fun configureGamepad(
+        emulatorId: String,
+        players: List<PlayerState>,
+        closeEmulator: Boolean = false,
+    ): EmulatorSetupResult =
         bounded("gamepad") {
             val shell = awaitShell() ?: return@bounded EmulatorSetupResult.NO_PRIVILEGED_ACCESS
-            val written = if (emulatorId in EdenGamepadConfig.PACKAGES) {
-                val path = EdenGamepadConfig.pathFor(emulatorId)
+            val target = if (emulatorId in EdenPaths.PACKAGES) emulatorId else DolphinPaths.PACKAGE
+            shell.settle(target, closeEmulator)?.let { return@bounded it }
+            val written = if (emulatorId in EdenPaths.PACKAGES) {
+                val path = EdenPaths.config(emulatorId)
                 shell.writeText(
                     path,
                     EdenGamepadConfig.merge(
@@ -145,6 +192,46 @@ class EmulatorSetup(
     private companion object {
         const val TAG = "EmulatorSetup"
         const val OPERATION_TIMEOUT_MS = 20_000L
+    }
+}
+
+/**
+ * Clears the way for a write, or reports that the caller must ask first. An emulator flushes its
+ * in-memory config over ours when it exits, so a write while one is loaded is lost with no error to
+ * report — the only reliable fix is to stop it first, which costs unsaved progress and therefore
+ * needs consent. Returns null once the way is clear.
+ *
+ * Android keeps a process cached long after the user leaves the app, and `pidof` cannot tell cached
+ * from running, so this asks whenever a process exists at all. Stopping a cached one costs nothing,
+ * and the confirmation covers the case where it is live.
+ */
+private fun PrivilegedShell.settle(packageName: String, closeIt: Boolean): EmulatorSetupResult? {
+    if (!hasProcess(packageName)) return null
+    if (!closeIt) return EmulatorSetupResult.EMULATOR_RUNNING
+    forceStop(packageName)
+    return null
+}
+
+// pidof needs the shell uid — an app can only ever see its own process.
+private fun PrivilegedShell.hasProcess(packageName: String): Boolean {
+    val proc = shell("pidof '$packageName'") ?: return false
+    return try {
+        proc.inputStream.readBytes().decodeToString().also { proc.waitFor() }.isNotBlank()
+    } catch (e: Exception) {
+        Log.w("EmulatorSetup", "pidof $packageName failed", e)
+        false
+    } finally {
+        proc.destroy()
+    }
+}
+
+private fun PrivilegedShell.forceStop(packageName: String) {
+    val proc = shell("am force-stop '$packageName'") ?: return
+    try {
+        proc.waitFor()
+        Log.i("EmulatorSetup", "force-stopped $packageName")
+    } finally {
+        proc.destroy()
     }
 }
 

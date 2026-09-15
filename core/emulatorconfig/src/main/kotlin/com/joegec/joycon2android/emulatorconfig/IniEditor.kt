@@ -28,6 +28,20 @@ object IniEditor {
         return out.toString()
     }
 
+    /** The value of `key` in a `[section]`, or null when either is absent. */
+    fun valueOf(existing: String?, section: String, key: String): String? {
+        val lines = existing?.lines() ?: return null
+        val headerIndex = lines.indexOfFirst { it.trim() == section }
+        if (headerIndex < 0) return null
+        for (i in headerIndex + 1 until lines.size) {
+            val trimmed = lines[i].trim()
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) return null
+            if (!trimmed.contains('=')) continue
+            if (trimmed.substringBefore('=').trim() == key) return trimmed.substringAfter('=').trim()
+        }
+        return null
+    }
+
     /** Removes keys in a `[section]` whose name matches [keyMatches], leaving other keys and sections intact. */
     fun removeKeys(existing: String?, section: String, keyMatches: (String) -> Boolean): String {
         if (existing == null) return ""

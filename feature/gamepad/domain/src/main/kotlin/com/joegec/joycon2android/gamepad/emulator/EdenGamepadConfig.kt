@@ -6,7 +6,9 @@ import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
 import com.joegec.joycon2android.buttonmapping.toButtonMap
 import com.joegec.joycon2android.buttonmapping.toStickMap
+import com.joegec.joycon2android.emulatorconfig.EdenControls
 import com.joegec.joycon2android.emulatorconfig.IniEditor
+import com.joegec.joycon2android.emulatorconfig.defineEdenKey
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.SidewaysMapper
@@ -31,12 +33,6 @@ import com.joegec.joycon2android.model.SidewaysMapper
  * input-device list, since neither can be derived from the player number.
  */
 object EdenGamepadConfig {
-    const val PACKAGE = "dev.eden.eden_emulator"
-    const val NIGHTLY_PACKAGE = "dev.eden.eden_emulator.nightly"
-    val PACKAGES = setOf(PACKAGE, NIGHTLY_PACKAGE)
-
-    fun pathFor(packageName: String) = "/sdcard/Android/data/$packageName/files/config/config.ini"
-
     // Joy-Con button -> the Android keycode the relay's HID gamepad emits for it. ReportMapper
     // places each one so the keycode carries its own name; Camera and GL take the two gamepad slots
     // with no Switch equivalent, and GR/Chat the trailing vendor collection's BUTTON_1/BUTTON_2.
@@ -78,21 +74,7 @@ object EdenGamepadConfig {
         JoyconButton.Right to Axis(HAT_X, '+'),
     )
 
-    private val EDEN_KEYS = mapOf(
-        SwitchProButton.A to "button_a", SwitchProButton.B to "button_b",
-        SwitchProButton.X to "button_x", SwitchProButton.Y to "button_y",
-        SwitchProButton.L to "button_l", SwitchProButton.R to "button_r",
-        SwitchProButton.ZL to "button_zl", SwitchProButton.ZR to "button_zr",
-        SwitchProButton.Plus to "button_plus", SwitchProButton.Minus to "button_minus",
-        SwitchProButton.Home to "button_home", SwitchProButton.Capture to "button_screenshot",
-        SwitchProButton.LStickClick to "button_lstick", SwitchProButton.RStickClick to "button_rstick",
-        SwitchProButton.DPadUp to "button_dup", SwitchProButton.DPadDown to "button_ddown",
-        SwitchProButton.DPadLeft to "button_dleft", SwitchProButton.DPadRight to "button_dright",
-    )
-
-    private val STICK_KEYS = mapOf(SwitchProStick.LStick to "lstick", SwitchProStick.RStick to "rstick")
-
-    private val PLAYER_KEY = Regex("""player_\d+_.*""")
+    private val PLAYER_KEY = Regex("""player_\d+_(?!motion).*""")
 
     fun merge(
         existing: String?,
@@ -102,8 +84,8 @@ object EdenGamepadConfig {
     ): String {
         // Drop every player's prior bindings first: a layout or port change leaves stale keys that
         // would otherwise linger and cross-fire onto another player's port.
-        val cleared = IniEditor.removeKeys(existing, "[Controls]") { it.matches(PLAYER_KEY) }
-        return IniEditor.setKeys(cleared, "[Controls]", controlKeys(players, gamepads, mappingFor), assign = "=")
+        val cleared = IniEditor.removeKeys(existing, EdenControls.SECTION) { it.matches(PLAYER_KEY) }
+        return IniEditor.setKeys(cleared, EdenControls.SECTION, controlKeys(players, gamepads, mappingFor), assign = "=")
     }
 
     private fun controlKeys(
@@ -116,42 +98,24 @@ object EdenGamepadConfig {
             val index = player.player.index
             if (index !in 1..4) return@forEach
             val gamepad = gamepads[index] ?: return@forEach
-            val type = typeFor(player) ?: return@forEach
+            val type = EdenControls.npadType(player) ?: return@forEach
             val side = sideFor(player) ?: return@forEach
             val layout = layoutFor(side, mappingFor(side))
             val p = index - 1
             val device = "engine:android,port:${gamepad.port},guid:${gamepad.guid},pad:0"
             val display = "Joy-Con Virtual Gamepad $index ${gamepad.port}"
 
-            keys.define("player_${p}_type", type.toString())
-            keys.define("player_${p}_connected", "true")
+            keys.defineEdenKey("player_${p}_type", type.toString())
+            keys.defineEdenKey("player_${p}_connected", "true")
             layout.buttons.forEach { (key, input) ->
-                keys.define("player_${p}_$key", quote("$device,${input.spec()},display:$display"))
+                keys.defineEdenKey("player_${p}_$key", EdenControls.quote("$device,${input.spec()},display:$display"))
             }
             layout.sticks.forEach { (key, axes) ->
                 val stick = "axis_x:${axes.first},axis_y:${axes.second},offset_x:0,offset_y:0,invert_x:+,invert_y:-"
-                keys.define("player_${p}_$key", quote("$device,$stick,display:$display"))
+                keys.defineEdenKey("player_${p}_$key", EdenControls.quote("$device,$stick,display:$display"))
             }
         }
         return keys
-    }
-
-    // Eden falls back to the engine default when a binding's `\default` flag is true, so pin both.
-    private fun MutableMap<String, String>.define(key: String, value: String) {
-        this[key] = value
-        this["$key\\default"] = "false"
-    }
-
-    private fun quote(value: String) = "\"$value\""
-
-    private fun typeFor(player: PlayerState): Int? = when {
-        player.hasPro -> 0                                          // Pro Controller
-        player.hasFullController -> 1                               // Dual Joy-Con
-        // Both single Joy-Cons report as Pro: Eden doesn't translate a sideways Joy-Con's stick or
-        // shoulders, so we present a normalised full controller and do the rotation ourselves.
-        player.left != null && player.right == null -> 0
-        player.right != null && player.left == null -> 0
-        else -> null
     }
 
     private fun sideFor(player: PlayerState): JoyconSide? = when {
@@ -163,11 +127,11 @@ object EdenGamepadConfig {
 
     private fun layoutFor(side: JoyconSide, mapping: Map<String, String>): Layout {
         val buttons = mapping.toButtonMap<SwitchProButton>().mapNotNull { (target, source) ->
-            inputFor(side, source)?.let { EDEN_KEYS.getValue(target) to it }
+            inputFor(side, source)?.let { EdenControls.BUTTON_KEYS.getValue(target) to it }
         }.toMap()
         val sticks = if (side == JoyconSide.DUAL) {
             mapping.toStickMap<SwitchProStick>().entries.associate { (target, source) ->
-                STICK_KEYS.getValue(target) to axesFor(source)
+                EdenControls.STICK_KEYS.getValue(target) to axesFor(source)
             }
         } else {
             mapOf("lstick" to (0 to 1)) // the lone stick isn't user-routable — there's only one
