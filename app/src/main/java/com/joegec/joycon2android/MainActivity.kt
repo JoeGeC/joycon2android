@@ -28,6 +28,7 @@ import com.joegec.joycon2android.gamepad.emulator.EdenGamepadConfig
 import com.joegec.joycon2android.gamepad.presentation.GamepadViewModel
 import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
+import com.joegec.joycon2android.dsu.DsuSlots
 import com.joegec.joycon2android.dsu.presentation.DsuCardState
 import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.Joycon2AndroidTheme
@@ -154,7 +155,7 @@ class MainActivity : ComponentActivity() {
                             error = dsuStatus.error,
                             clientCount = dsuStatus.clientCount,
                             address = dsuStatus.address,
-                            showSlotLimitNote = state.activePlayers.any { it.player.index > 4 },
+                            coverage = DsuSlots.coverage(state.activePlayers),
                             dolphinInstalled = dsuViewModel.dolphinInstalled,
                             dolphinAutoConfigAvailable = shizukuAvailable,
                             dolphinPhase = dolphinPhase,
