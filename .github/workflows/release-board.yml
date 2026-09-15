@@ -6,6 +6,8 @@ name: Release board
 on:
   release:
     types: [released]
+  # So the sweep can be run by hand if a release ever slips past it.
+  workflow_dispatch:
 
 # Nothing in the repo is touched — the project write comes from PROJECT_TOKEN below.
 permissions: {}
@@ -13,35 +15,63 @@ permissions: {}
 jobs:
   move-shipped-items:
     runs-on: ubuntu-latest
-    if: ${{ !github.event.release.prerelease }}
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.release.prerelease }}
     steps:
       - name: Move "Ready for Release" items to "Done"
         env:
           # GITHUB_TOKEN cannot reach a user-owned project, so this needs a PAT whose scope
-          # includes projects. Without it every run fails on the first gh call.
+          # includes projects. Without it every run fails on the first call.
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
-          OWNER: JoeGeC
           PROJECT: "2"
           FROM_STATUS: Ready for Release
           TO_STATUS: Done
         run: |
           set -euo pipefail
 
-          # Resolved by name every run, so renaming the board's ids can't silently strand items.
-          status_field=$(gh project field-list "$PROJECT" --owner "$OWNER" --format json \
-            | jq -r '.fields[] | select(.name == "Status")')
-          field_id=$(jq -r '.id // empty' <<<"$status_field")
-          done_id=$(jq -r --arg name "$TO_STATUS" \
-            '.options[]? | select(.name == $name) | .id' <<<"$status_field")
-          project_id=$(gh project view "$PROJECT" --owner "$OWNER" --format json | jq -r '.id')
+          # Addressed through viewer rather than by owner login: resolving a login to a user or an
+          # org needs a scope beyond projects, and without it `gh project --owner` dies on
+          # "unknown owner type". viewer is whoever the token belongs to, so no lookup happens.
+          board=$(gh api graphql -f query='
+            query($number: Int!) {
+              viewer {
+                projectV2(number: $number) {
+                  id
+                  field(name: "Status") {
+                    ... on ProjectV2SingleSelectField { id options { id name } }
+                  }
+                }
+              }
+            }' -F number="$PROJECT")
 
-          if [ -z "$field_id" ] || [ -z "$done_id" ]; then
-            echo "::error::No Status field with a \"$TO_STATUS\" option on project $PROJECT."
+          project_id=$(jq -r '.data.viewer.projectV2.id // empty' <<<"$board")
+          field_id=$(jq -r '.data.viewer.projectV2.field.id // empty' <<<"$board")
+          # Resolved by name every run, so renaming the board cannot silently strand items.
+          done_id=$(jq -r --arg name "$TO_STATUS" \
+            '.data.viewer.projectV2.field.options[]? | select(.name == $name) | .id' <<<"$board")
+
+          if [ -z "$project_id" ] || [ -z "$field_id" ] || [ -z "$done_id" ]; then
+            echo "::error::Project $PROJECT needs a Status field with a \"$TO_STATUS\" option."
             exit 1
           fi
 
-          items=$(gh project item-list "$PROJECT" --owner "$OWNER" --format json --limit 500 \
-            | jq -r --arg name "$FROM_STATUS" '.items[] | select(.status == $name) | .id')
+          items=$(gh api graphql --paginate -f query='
+            query($number: Int!, $endCursor: String) {
+              viewer {
+                projectV2(number: $number) {
+                  items(first: 100, after: $endCursor) {
+                    pageInfo { hasNextPage endCursor }
+                    nodes {
+                      id
+                      fieldValueByName(name: "Status") {
+                        ... on ProjectV2ItemFieldSingleSelectValue { name }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -F number="$PROJECT" \
+            | jq -r --arg name "$FROM_STATUS" \
+                '.data.viewer.projectV2.items.nodes[] | select(.fieldValueByName.name == $name) | .id')
 
           if [ -z "$items" ]; then
             echo "Nothing in \"$FROM_STATUS\" — board already clear."
@@ -50,9 +80,16 @@ jobs:
 
           count=0
           while read -r item; do
-            gh project item-edit --id "$item" --project-id "$project_id" \
-              --field-id "$field_id" --single-select-option-id "$done_id"
+            # Ids stay -f, never -F: an all-digit option id would be coerced to an Int and rejected.
+            gh api graphql -f query='
+              mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $project, itemId: $item, fieldId: $field,
+                  value: { singleSelectOptionId: $option }
+                }) { projectV2Item { id } }
+              }' -f project="$project_id" -f item="$item" -f field="$field_id" -f option="$done_id" >/dev/null
+            echo "moved $item"
             count=$((count + 1))
           done <<<"$items"
 
-          echo "Moved $count item(s) from \"$FROM_STATUS\" to \"$TO_STATUS\" for ${{ github.event.release.tag_name }}."
+          echo "Moved $count item(s) from \"$FROM_STATUS\" to \"$TO_STATUS\"."
