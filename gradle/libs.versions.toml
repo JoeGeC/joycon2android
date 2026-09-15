@@ -13,6 +13,7 @@ coroutines = "1.10.2"
 konsist = "0.17.3"
 datastore = "1.1.1"
 json = "20240303"
+hiddenapibypass = "6.1"
 
 [libraries]
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuku" }
@@ -24,6 +25,7 @@ compose-gradlePlugin = { group = "org.jetbrains.kotlin", name = "compose-compile
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenapibypass" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 # Real org.json for unit tests; the android.jar stub returns defaults instead of parsing
 json = { group = "org.json", name = "json", version.ref = "json" }

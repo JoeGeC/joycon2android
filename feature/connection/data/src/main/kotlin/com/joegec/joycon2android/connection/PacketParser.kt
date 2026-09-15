@@ -85,6 +85,6 @@ object PacketParser {
             ((data[offset + 1].toInt() and 0xFF) shl 8) or
             ((data[offset + 2].toInt() and 0xFF) shl 16)
 
-    private fun decodeButtons(buttons: Long): Set<String> =
+    internal fun decodeButtons(buttons: Long): Set<String> =
         buttonMasks.filter { (mask, _) -> buttons and mask != 0L }.map { it.second.id }.toSet()
 }
