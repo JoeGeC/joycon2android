@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest something the app should do
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: Describe the goal, not the solution — it often has a simpler answer.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you have in mind
+      description: Optional. How you imagine it working.
+
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware or emulator this involves
+      placeholder: Switch 2 Pro Controller / Cemu / Wii Remote mappings

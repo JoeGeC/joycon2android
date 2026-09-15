@@ -16,6 +16,16 @@ Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-
 - Sideways single Joy-Con layout with rotated inputs (stick, d-pad, face buttons)
 - Live display of buttons, sticks, IMU (accelerometer + gyroscope), and battery
 
+## Roadmap
+
+Planned, in progress, and completed work lives on the [**project board**](https://github.com/users/JoeGeC/projects/2).
+
+Every card is a [GitHub issue](https://github.com/JoeGeC/joycon2android/issues), so you can subscribe
+to anything you care about and get notified when it moves or ships. Filter the board by `area:` label
+to see just the parts you use — BLE, DSU motion, emulator setup, button mapping, and so on.
+
+Found a bug or want something added? [Open an issue](https://github.com/JoeGeC/joycon2android/issues/new/choose).
+
 ## Setup Guide
 
 ### Prerequisites

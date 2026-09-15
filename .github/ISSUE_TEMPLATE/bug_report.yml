@@ -1,0 +1,83 @@
+name: Bug report
+description: Something doesn't work the way it should
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Connect a single right Joy-Con
+        2. Assign it to player 1
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: Shown on the app's settings screen, or the release you installed.
+      placeholder: v0.5.2
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Android device
+      placeholder: AYN Thor / Pixel 8 / Retroid Pocket 5
+    validations:
+      required: true
+
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      placeholder: Android 14 (API 34)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: controllers
+    attributes:
+      label: Controllers involved
+      options:
+        - label: Left Joy-Con 2
+        - label: Right Joy-Con 2
+        - label: Switch 2 Pro Controller
+        - label: More than one controller at once
+
+  - type: dropdown
+    id: shizuku
+    attributes:
+      label: Shizuku status
+      options:
+        - Running
+        - Not running
+        - Not installed
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: emulator
+    attributes:
+      label: Emulator and version
+      description: Only if the problem involves DSU motion or emulator setup.
+      placeholder: Eden Nightly 2026-09-01 / Dolphin 2503
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logcat output
+      description: If you can, `adb logcat` filtered to the app. Paste as-is; it will be formatted.
+      render: text

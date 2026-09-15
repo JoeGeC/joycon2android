@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Setup help
+    url: https://github.com/JoeGeC/joycon2android#setup-guide
+    about: Connection and Shizuku steps are covered in the README first.
+  - name: Roadmap
+    url: https://github.com/users/JoeGeC/projects/2
+    about: See what is planned and in progress before filing a feature request.
