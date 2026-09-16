@@ -35,10 +35,13 @@ import com.joegec.joycon2android.dsu.DsuServer
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
 import com.joegec.joycon2android.dsu.PushDsuPadDataUseCase
-import com.joegec.joycon2android.dsu.FastMotionPreferencesDataStore
-import com.joegec.joycon2android.dsu.motion.FastMotionPreferences
-import com.joegec.joycon2android.dsu.motion.ObserveFastMotionUseCase
+import com.joegec.joycon2android.dsu.DsuMotionSettingsDataStore
+import com.joegec.joycon2android.dsu.motion.DsuMotionSettingsRepository
+import com.joegec.joycon2android.dsu.motion.ObserveDsuMotionSettingsUseCase
+import com.joegec.joycon2android.dsu.motion.SetBlockDeviceMotionUseCase
+import com.joegec.joycon2android.dsu.motion.SetDeviceMotionBlockedUseCase
 import com.joegec.joycon2android.dsu.motion.SetFastMotionUseCase
+import com.joegec.joycon2android.emulator.EdenDeviceMotionBlocker
 import com.joegec.joycon2android.gamepad.DisableGamepadUseCase
 import com.joegec.joycon2android.gamepad.EnableGamepadUseCase
 import com.joegec.joycon2android.gamepad.GamepadManager
@@ -53,10 +56,7 @@ import com.joegec.joycon2android.gamepad.PushGamepadStateUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 
 /**
  * Composition root: owns app-scoped repositories (data) and binds them to use cases
@@ -96,9 +96,10 @@ class AppContainer(context: Context) {
     val pushDsuPadData = PushDsuPadDataUseCase(dsuRepository)
     val observeDsuStatus = ObserveDsuStatusUseCase(dsuRepository)
 
-    private val fastMotionPreferences: FastMotionPreferences = FastMotionPreferencesDataStore(appContext)
-    val observeFastMotion = ObserveFastMotionUseCase(fastMotionPreferences)
-    val setFastMotion = SetFastMotionUseCase(fastMotionPreferences)
+    private val dsuMotionSettings: DsuMotionSettingsRepository = DsuMotionSettingsDataStore(appContext)
+    val observeDsuMotionSettings = ObserveDsuMotionSettingsUseCase(dsuMotionSettings)
+    val setFastMotion = SetFastMotionUseCase(dsuMotionSettings)
+    val setBlockDeviceMotion = SetBlockDeviceMotionUseCase(dsuMotionSettings)
 
     // --- Assignment ---
     // Cross-feature orchestration that reacts to assignment (gamepad/DSU lifecycle) lives in
@@ -143,14 +144,14 @@ class AppContainer(context: Context) {
         onPlayerUnassigned = { onPlayerUnassigned(it) },
     ).also { it.start() }
 
-    // Fast motion is a DSU setting served by the BLE link, so it only costs battery while DSU runs.
-    init {
-        scope.launch {
-            combine(observeDsuStatus().map { it.enabled }, observeFastMotion()) { dsuOn, fast -> dsuOn && fast }
-                .distinctUntilChanged()
-                .collect { setHighConnectionPriority(it) }
-        }
-    }
+    private val dsuMotionPolicy = DsuMotionPolicy(
+        scope = scope,
+        dsuEnabled = observeDsuStatus().map { it.enabled },
+        settings = observeDsuMotionSettings(),
+        privilegedShellAvailable = observeShizukuAvailability(),
+        setHighConnectionPriority = setHighConnectionPriority,
+        setDeviceMotionBlocked = SetDeviceMotionBlockedUseCase(EdenDeviceMotionBlocker(privilegedAccess::readyShell)),
+    ).also { it.start() }
 
     val observeSession = ObserveSessionUseCase(sessionCoordinator)
     val assignController = AssignControllerUseCase(sessionCoordinator)

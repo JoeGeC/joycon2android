@@ -18,15 +18,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.WarningText
+import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
 fun SettingSwitch(
     title: String,
-    warning: String,
+    description: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    descriptionColor: Color = TextDim,
 ) {
     Row(
         modifier
@@ -37,7 +38,7 @@ fun SettingSwitch(
         Column(Modifier.weight(1f)) {
             Text(title, color = Color.White, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(Dimens.featureCardTitleGap))
-            Text(warning, color = WarningText, style = MaterialTheme.typography.bodySmall)
+            Text(description, color = descriptionColor, style = MaterialTheme.typography.bodySmall)
         }
         Spacer(Modifier.width(Dimens.featureCardSwitchGap))
         Switch(

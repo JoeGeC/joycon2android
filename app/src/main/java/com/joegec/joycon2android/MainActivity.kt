@@ -45,8 +45,9 @@ class MainActivity : ComponentActivity() {
                     c.observeDsuStatus,
                     c.enableDsu,
                     c.disableDsu,
-                    c.observeFastMotion,
+                    c.observeDsuMotionSettings,
                     c.setFastMotion,
+                    c.setBlockDeviceMotion,
                     dsuEmulators = c.emulatorSetup.dsuEmulators(),
                     configureDsu = c.emulatorSetup::configureDsu,
                 )
@@ -135,7 +136,7 @@ class MainActivity : ComponentActivity() {
                     val dsuStatus by dsuViewModel.status.collectAsState()
                     val dsuSetupPhase by dsuViewModel.setupPhase.collectAsState()
                     val selectedDsuEmulator by dsuViewModel.selectedEmulator.collectAsState()
-                    val fastMotion by dsuViewModel.fastMotion.collectAsState()
+                    val dsuMotionSettings by dsuViewModel.motionSettings.collectAsState()
                     val dsuEmulatorToClose by dsuViewModel.emulatorToClose.collectAsState()
                     val gamepadEmulatorToClose by gamepadViewModel.emulatorToClose.collectAsState()
                     val gamepadSetupPhase by gamepadViewModel.setupPhase.collectAsState()
@@ -181,7 +182,8 @@ class MainActivity : ComponentActivity() {
                             emulators = dsuViewModel.dsuEmulators,
                             selectedEmulator = selectedDsuEmulator,
                             setupPhase = dsuSetupPhase,
-                            fastMotion = fastMotion,
+                            motionSettings = dsuMotionSettings,
+                            deviceMotionBlockAvailable = shizukuAvailable,
                         ),
                         permissionDenied = permissionDenied,
                         onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
@@ -215,6 +217,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onFastMotionToggle = dsuViewModel::toggleFastMotion,
+                        onBlockDeviceMotionToggle = dsuViewModel::toggleBlockDeviceMotion,
                         onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },
                         shizukuAvailable = shizukuAvailable,
                         viewMode = viewMode,

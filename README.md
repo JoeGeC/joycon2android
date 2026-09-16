@@ -167,7 +167,8 @@ prompts you to restart Dolphin. It needs Shizuku connected; if the write fails
 | Controller stops responding | Press SYNC to reset, then reconnect |
 | No DSUClient device in the emulator | Check the ini, restart the emulator, open a mapping screen; `adb logcat -s DsuServer` shows whether requests arrive |
 | Emulator doesn't detect DSU button presses | Map manually — detection never sees DSU devices; turn the Virtual Gamepad off while mapping |
-| Motion aiming stutters while the stick is smooth | Turn on **Faster motion updates** in the DSU card |
+| Motion aiming stutters while the stick is smooth | DSU card → Motion settings: keep **Ignore this device's motion in Eden** on (needs Shizuku), and try **Faster motion updates** |
+| Tilting the phone/handheld moves the aim in Eden | Eden is reading the device's own gyro — turn on **Ignore this device's motion in Eden** |
 | Pointer drifts or starts off-screen | Rest the controller ~2 s to recalibrate, then press Recenter |
 | MotionPlus game replays its tutorial video every boot | Nothing to do with the DSU mapping — MotionPlus is attached by default. The game records "video seen" as `MPLS.MOVIE` in Dolphin's `Wii/shared2/sys/SYSCONF`, but `SysConf::~SysConf` writes back the entry list Dolphin loaded at launch, dropping anything the game appended. Set the flag with Dolphin **closed** so the next launch loads it |
 
@@ -307,9 +308,16 @@ samples. Collaborators:
 - **`DsuPacketEncoder`** — the 100-byte pad packets (and version/port-info responses),
   written into a reused buffer once per Joy-Con report. The report rate is the BLE connection
   interval: Android's default balanced priority can settle on 30 ms (~33 Hz, measured on an AYN
-  Thor), which reads as stuttery motion at 60 fps. The DSU card's **Faster motion updates**
-  requests `CONNECTION_PRIORITY_HIGH` while DSU runs — 15 ms (~67 Hz) on the same Thor — at the
-  cost of battery on both ends.
+  Thor), which reads as stuttery motion at 60 fps. **Faster motion updates** (DSU card → Motion
+  settings, off by default) requests `CONNECTION_PRIORITY_HIGH` while DSU runs — 15 ms (~67 Hz)
+  on the same Thor — at the cost of battery on both ends.
+- **`DsuMotionPolicy`** (`:app`) — applies the motion settings only while DSU runs. Eden's
+  Android build feeds the device's own gyro and accelerometer into Player 1 on top of any mapped
+  motion, and games that open the controller applet (Splatoon 2) put Player 1 back, so moving the
+  pad to another player does not escape it. **Ignore this device's motion in Eden** (on by
+  default) marks Eden's uid idle with `cmd sensorservice set-uid-state` through Shizuku, which
+  withholds continuous sensors from it. The override lives in system_server until reset or
+  reboot, so it is lifted when DSU stops and again at launch, in case the process was killed.
 - **`MotionConverter`** — raw Joy-Con IMU frame → cemuhook's DS4 frame. Axes, signs, and
   scale factors were verified on hardware against Dolphin's Wii pointer; see the class
   docs for the measured frames and `tools/README.md` for the calibration workflow.

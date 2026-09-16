@@ -6,7 +6,9 @@ import com.joegec.joycon2android.dsu.DisableDsuUseCase
 import com.joegec.joycon2android.dsu.DsuStatus
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
-import com.joegec.joycon2android.dsu.motion.ObserveFastMotionUseCase
+import com.joegec.joycon2android.dsu.motion.DsuMotionSettings
+import com.joegec.joycon2android.dsu.motion.ObserveDsuMotionSettingsUseCase
+import com.joegec.joycon2android.dsu.motion.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.dsu.motion.SetFastMotionUseCase
 import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
@@ -25,8 +27,9 @@ class DsuViewModel(
     observeDsuStatus: ObserveDsuStatusUseCase,
     private val enableDsu: EnableDsuUseCase,
     private val disableDsu: DisableDsuUseCase,
-    observeFastMotion: ObserveFastMotionUseCase,
+    observeMotionSettings: ObserveDsuMotionSettingsUseCase,
     private val setFastMotion: SetFastMotionUseCase,
+    private val setBlockDeviceMotion: SetBlockDeviceMotionUseCase,
     val dsuEmulators: List<EmulatorOption> = emptyList(),
     private val configureDsu: suspend (emulatorId: String, players: List<PlayerState>, closeEmulator: Boolean) -> EmulatorSetupResult =
         { _, _, _ -> EmulatorSetupResult.FAILED },
@@ -35,8 +38,8 @@ class DsuViewModel(
     val status: StateFlow<DsuStatus> = observeDsuStatus()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), DsuStatus())
 
-    val fastMotion: StateFlow<Boolean> = observeFastMotion()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
+    val motionSettings: StateFlow<DsuMotionSettings> = observeMotionSettings()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), DsuMotionSettings())
 
     private val _selectedEmulator = MutableStateFlow(dsuEmulators.firstOrNull()?.id ?: "")
     val selectedEmulator: StateFlow<String> = _selectedEmulator.asStateFlow()
@@ -54,6 +57,10 @@ class DsuViewModel(
 
     fun toggleFastMotion(enabled: Boolean) {
         viewModelScope.launch { setFastMotion(enabled) }
+    }
+
+    fun toggleBlockDeviceMotion(enabled: Boolean) {
+        viewModelScope.launch { setBlockDeviceMotion(enabled) }
     }
 
     fun selectEmulator(id: String) {
