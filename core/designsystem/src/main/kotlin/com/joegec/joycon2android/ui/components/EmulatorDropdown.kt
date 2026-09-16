@@ -41,7 +41,7 @@ fun EmulatorDropdown(
             color = Accent,
             fontSize = Dimens.fontSizeSmall,
             fontWeight = FontWeight.Bold,
-            modifier = modifier.padding(vertical = Dimens.pillPaddingVertical),
+            modifier = modifier.padding(Dimens.emulatorPickerPadding),
         )
         return
     }
@@ -54,7 +54,7 @@ fun EmulatorDropdown(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(Dimens.buttonCorner))
                 .clickable { expanded = true }
-                .padding(horizontal = Dimens.pillPaddingHorizontal, vertical = Dimens.pillPaddingVertical),
+                .padding(Dimens.emulatorPickerPadding),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {

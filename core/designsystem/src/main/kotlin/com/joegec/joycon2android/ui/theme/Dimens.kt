@@ -64,6 +64,9 @@ object Dimens {
     val pillPaddingHorizontal = 10.dp
     val pillPaddingVertical = 4.dp
 
+    val emulatorPickerPadding = 12.dp
+    val emulatorSetupRowGap = 4.dp
+
     val viewTogglePadding = 4.dp
     val viewToggleCorner = 10.dp
     val compactRowPaddingHorizontal = 16.dp

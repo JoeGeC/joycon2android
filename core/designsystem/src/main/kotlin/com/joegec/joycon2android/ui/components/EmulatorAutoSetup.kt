@@ -52,17 +52,18 @@ fun EmulatorAutoSetup(
         onInfoClick = { showInfo = true },
     ) {
         Column {
+            EmulatorDropdown(
+                options = emulators,
+                selectedId = selectedEmulator,
+                onSelect = onSelectEmulator,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(Dimens.emulatorSetupRowGap))
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                EmulatorDropdown(
-                    options = emulators,
-                    selectedId = selectedEmulator,
-                    onSelect = onSelectEmulator,
-                    modifier = Modifier.weight(1f),
-                )
                 DolphinSetupButton(phase, setupLabel, onSetUp, modifier = Modifier.weight(1f))
                 if (onConfigureMapping != null) {
                     IconButton(onClick = onConfigureMapping) {
