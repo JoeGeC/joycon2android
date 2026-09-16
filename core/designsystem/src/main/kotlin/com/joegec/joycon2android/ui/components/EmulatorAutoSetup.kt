@@ -2,19 +2,22 @@ package com.joegec.joycon2android.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.core.designsystem.R
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -66,13 +70,7 @@ fun EmulatorAutoSetup(
             ) {
                 DolphinSetupButton(phase, setupLabel, onSetUp, modifier = Modifier.weight(1f))
                 if (onConfigureMapping != null) {
-                    IconButton(onClick = onConfigureMapping) {
-                        Icon(
-                            Icons.Filled.Tune,
-                            contentDescription = stringResource(R.string.emulator_auto_setup_configure_mapping),
-                            tint = TextDim,
-                        )
-                    }
+                    MappingButton(onConfigureMapping)
                 }
             }
             if (phase.isFailure) {
@@ -84,6 +82,22 @@ fun EmulatorAutoSetup(
 
     if (showInfo) {
         AutoSetupInfoSheet(onDismiss = { showInfo = false })
+    }
+}
+
+@Composable
+private fun MappingButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.size(Dimens.buttonHeight),
+        shape = RoundedCornerShape(Dimens.buttonCorner),
+        contentPadding = PaddingValues(0.dp),
+    ) {
+        Icon(
+            Icons.Filled.SportsEsports,
+            contentDescription = stringResource(R.string.emulator_auto_setup_configure_mapping),
+            tint = TextDim,
+        )
     }
 }
 
