@@ -1,8 +1,8 @@
 package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
-import com.joegec.joycon2android.buttonmapping.DefaultControllerMappings
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.defaultMappingEntries
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
@@ -10,20 +10,6 @@ import com.joegec.joycon2android.model.Side
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-
-// The default mapping, expressed as the opaque string map the repository would hand back —
-// mirrors ObserveControllerMappingUseCase's defaultsFor without pulling in a DataStore dependency.
-private fun defaultMapping(console: Console, side: JoyconSide): Map<String, String> = when (console) {
-    Console.GAMECUBE -> DefaultControllerMappings.gameCubeButtons(side).toNames() +
-        DefaultControllerMappings.gameCubeSticks(side).toNames()
-    Console.WIIMOTE_NUNCHUK -> DefaultControllerMappings.wiimoteButtons(side).toNames() +
-        DefaultControllerMappings.wiimoteSticks(side).toNames()
-    Console.SWITCH_PRO -> DefaultControllerMappings.switchProButtons(side).toNames() +
-        DefaultControllerMappings.switchProSticks(side).toNames()
-}
-
-private fun <K : Enum<K>, V : Enum<V>> Map<K, V>.toNames(): Map<String, String> =
-    entries.associate { it.key.name to it.value.name }
 
 class DolphinGcpadConfigTest {
 
@@ -34,7 +20,7 @@ class DolphinGcpadConfigTest {
         players: List<PlayerState>,
         controllerNumbers: Map<Int, Int> = players.associate { it.player.index to it.player.index },
     ) = DolphinGcpadConfig.merge(existing, players, controllerNumbers) { side ->
-        defaultMapping(Console.GAMECUBE, side)
+        defaultMappingEntries(Console.GAMECUBE, side)
     }
 
     @Test
@@ -88,6 +74,29 @@ class DolphinGcpadConfigTest {
 
         assertTrue(result.contains("Buttons/A = `Button A`")) // Down rotates onto A
         assertTrue(result.contains("Buttons/Start = `Select`")) // Minus
+    }
+
+    @Test
+    fun `a lone Joy-Con's main stick follows its own stick`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+
+        assertTrue(result.contains("Main Stick/Up = `Axis 1-`"))
+        assertTrue(result.contains("Main Stick/Right = `Axis 0+`"))
+        assertFalse(result.contains("C-Stick/"))
+    }
+
+    @Test
+    fun `a stick direction can be driven by a button, and a button by a stick direction`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+        val mapping = defaultMappingEntries(Console.GAMECUBE, JoyconSide.DUAL) +
+            mapOf("MainStick_UP" to "X", "A" to "RIGHT_STICK_DOWN", "CStick_LEFT" to "")
+
+        val result = DolphinGcpadConfig.merge(null, listOf(both), mapOf(1 to 1)) { mapping }
+
+        assertTrue(result.contains("Main Stick/Up = `Button X`"))
+        assertTrue(result.contains("Main Stick/Down = `Axis 1+`")) // the other directions stay analog
+        assertTrue(result.contains("Buttons/A = `Axis 14+`"))
+        assertFalse(result.contains("C-Stick/Left")) // None leaves it unbound
     }
 
     @Test

@@ -1,7 +1,8 @@
 package com.joegec.joycon2android.dsu.emulator
 
-import com.joegec.joycon2android.buttonmapping.DefaultControllerMappings
+import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.defaultMappingEntries
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
@@ -10,13 +11,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// The default mapping, expressed as the opaque string map the repository would hand back —
-// mirrors ObserveControllerMappingUseCase's defaultsFor without pulling in a DataStore dependency.
-private fun defaultWiimoteMapping(side: JoyconSide): Map<String, String> =
-    DefaultControllerMappings.wiimoteButtons(side).toNames() + DefaultControllerMappings.wiimoteSticks(side).toNames()
-
-private fun <K : Enum<K>, V : Enum<V>> Map<K, V>.toNames(): Map<String, String> =
-    entries.associate { it.key.name to it.value.name }
+private fun defaultWiimoteMapping(side: JoyconSide) = defaultMappingEntries(Console.WIIMOTE_NUNCHUK, side)
 
 class DolphinWiimoteConfigTest {
 
@@ -59,6 +54,29 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("Extension = Nunchuk"))
         assertTrue(result.contains("Nunchuk/Buttons/C = `L1`"))
         assertTrue(result.contains("Nunchuk/Stick/Up = `Left Y+`"))
+    }
+
+    @Test
+    fun `the nunchuk stick can take its directions from buttons`() {
+        val pair = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+        val mapping = defaultWiimoteMapping(JoyconSide.DUAL) + mapOf("NunchukStick_UP" to "Up")
+
+        val result = DolphinWiimoteConfig.merge(null, listOf(pair)) { mapping }
+
+        assertTrue(result.contains("Nunchuk/Stick/Up = `Pad N`"))
+        assertTrue(result.contains("Nunchuk/Stick/Down = `Left Y-`"))
+    }
+
+    @Test
+    fun `a lone Joy-Con plugs in a nunchuk once its stick is mapped`() {
+        val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("NunchukStick_UP" to "X", "NunchukStick_DOWN" to "B")
+
+        val result = DolphinWiimoteConfig.merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))) { mapping }
+
+        assertTrue(result.contains("Extension = Nunchuk"))
+        assertTrue(result.contains("Nunchuk/Stick/Up = `Circle`")) // physical X rotates onto A
+        assertTrue(result.contains("D-Pad/Up = `Left Y+`")) // its own stick still steers the d-pad
+        assertFalse(result.contains("Nunchuk/IMUAccelerometer")) // no second hand to stream one
     }
 
     @Test

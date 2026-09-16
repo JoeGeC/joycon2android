@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.emulatorconfig
 
+import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
 import com.joegec.joycon2android.model.PlayerState
@@ -43,6 +44,19 @@ object EdenControls {
     }
 
     fun quote(value: String) = "\"$value\""
+
+    /**
+     * A stick assembled from up to four digital inputs, each a whole binding of its own. Eden parses
+     * the nested bindings out of one value, so their `:`, `,` and `$` are escaped as `$0`, `$1` and
+     * `$2`, exactly as its ParamPackage serializes them.
+     */
+    fun stickFromButtons(directions: Map<StickDirection, String>): String =
+        (listOf("engine:analog_from_button") + directions.map { (direction, binding) ->
+            "${direction.name.lowercase()}:${escapeNested(binding)}"
+        }).joinToString(",")
+
+    private fun escapeNested(binding: String) =
+        binding.replace("$", "$2").replace(":", "$0").replace(",", "$1")
 
     private const val PRO = 0
     private const val DUAL_JOYCON = 1

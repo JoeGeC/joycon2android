@@ -80,7 +80,8 @@ object DefaultControllerMappings {
             GameCubeStick.MainStick to LEFT_STICK,
             GameCubeStick.CStick to RIGHT_STICK,
         )
-        else -> emptyMap()
+        JoyconSide.LEFT -> mapOf(GameCubeStick.MainStick to LEFT_STICK)
+        JoyconSide.RIGHT -> mapOf(GameCubeStick.MainStick to RIGHT_STICK)
     }
 
     fun switchProButtons(side: JoyconSide): Map<SwitchProButton, JoyconButton> = when (side) {
@@ -136,7 +137,8 @@ object DefaultControllerMappings {
             SwitchProStick.LStick to LEFT_STICK,
             SwitchProStick.RStick to RIGHT_STICK,
         )
-        else -> emptyMap()
+        JoyconSide.LEFT -> mapOf(SwitchProStick.LStick to LEFT_STICK)
+        JoyconSide.RIGHT -> mapOf(SwitchProStick.LStick to RIGHT_STICK)
     }
 
     fun wiimoteButtons(side: JoyconSide): Map<WiimoteButton, JoyconButton> = when (side) {
@@ -178,5 +180,21 @@ object DefaultControllerMappings {
     fun wiimoteSticks(side: JoyconSide): Map<WiimoteStick, StickSource> = when (side) {
         JoyconSide.DUAL -> mapOf(WiimoteStick.NunchukStick to LEFT_STICK)
         else -> emptyMap()
+    }
+
+    // A sideways Joy-Con has no d-pad left once its cluster becomes the face buttons, so its stick
+    // steers the Wii Remote's d-pad instead.
+    fun wiimoteDPadSticks(side: JoyconSide): Map<WiimoteButton, MappingSource> {
+        val stick = when (side) {
+            JoyconSide.DUAL -> return emptyMap()
+            JoyconSide.LEFT -> LEFT_STICK
+            JoyconSide.RIGHT -> RIGHT_STICK
+        }
+        return mapOf(
+            WiimoteButton.DPadUp to MappingSource.Stick(stick, StickDirection.UP),
+            WiimoteButton.DPadDown to MappingSource.Stick(stick, StickDirection.DOWN),
+            WiimoteButton.DPadLeft to MappingSource.Stick(stick, StickDirection.LEFT),
+            WiimoteButton.DPadRight to MappingSource.Stick(stick, StickDirection.RIGHT),
+        )
     }
 }

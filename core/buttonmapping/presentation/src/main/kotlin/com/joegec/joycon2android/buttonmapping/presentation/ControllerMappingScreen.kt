@@ -28,21 +28,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
-import com.joegec.joycon2android.buttonmapping.StickSource
-import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
-import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
-import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
-import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
-import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
-import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
-import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.ui.components.ExpandableInfoSection
 import com.joegec.joycon2android.ui.components.LabeledDropdown
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
-
-private const val NONE_ID = ""
 
 @Composable
 fun ControllerMappingScreen(
@@ -98,15 +88,9 @@ private fun MappingSection(
     onResetMapping: (side: JoyconSide) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
-        val buttonOptions = physicalButtonOptions(side)
-        buttonTargetsFor(console).forEach { (key, label) ->
-            MappingRow(label, mapping[key] ?: NONE_ID, buttonOptions) { onSetMapping(side, key, it) }
-        }
-        if (side == JoyconSide.DUAL) {
-            val stickOptions = StickSource.entries.map { it.name to it.displayName }
-            stickTargetsFor(console).forEach { (key, label) ->
-                MappingRow(label, mapping[key] ?: stickOptions.first().first, stickOptions) { onSetMapping(side, key, it) }
-            }
+        val sourceOptions = MappingOptions.sources(side)
+        (MappingOptions.buttonTargets(console) + MappingOptions.stickDirectionTargets(console)).forEach { (key, label) ->
+            MappingRow(label, mapping[key] ?: MappingOptions.NONE_ID, sourceOptions) { onSetMapping(side, key, it) }
         }
         TextButton(onClick = { onResetMapping(side) }) {
             Text(stringResource(R.string.controller_mapping_reset))
@@ -134,37 +118,4 @@ private fun MappingRow(
             modifier = Modifier.weight(1f),
         )
     }
-}
-
-private fun buttonTargetsFor(console: Console): List<Pair<String, String>> = when (console) {
-    Console.GAMECUBE -> GameCubeButton.entries.map { it.name to it.displayName }
-    Console.WIIMOTE_NUNCHUK -> WiimoteButton.entries.map { it.name to it.displayName }
-    Console.SWITCH_PRO -> SwitchProButton.entries.map { it.name to it.displayName }
-}
-
-private fun stickTargetsFor(console: Console): List<Pair<String, String>> = when (console) {
-    Console.GAMECUBE -> GameCubeStick.entries.map { it.name to it.displayName }
-    Console.WIIMOTE_NUNCHUK -> WiimoteStick.entries.map { it.name to it.displayName }
-    Console.SWITCH_PRO -> SwitchProStick.entries.map { it.name to it.displayName }
-}
-
-// The buttons a real, lone Joy-Con of that side can actually produce — matches what the physical
-// hardware has, so a mapping chosen here can always fire (see JoyconButton for the full set; SL/SR
-// are split per side, A/B/X/Y/Home/C only exist on the right Joy-Con, the d-pad only on the left).
-private fun physicalButtonOptions(side: JoyconSide): List<Pair<String, String>> {
-    val none = NONE_ID to "None"
-    val buttons = when (side) {
-        JoyconSide.DUAL -> JoyconButton.entries
-        JoyconSide.LEFT -> listOf(
-            JoyconButton.L, JoyconButton.ZL, JoyconButton.Minus, JoyconButton.LS,
-            JoyconButton.Up, JoyconButton.Down, JoyconButton.Left, JoyconButton.Right,
-            JoyconButton.Camera, JoyconButton.SlLeft, JoyconButton.SrLeft,
-        )
-        JoyconSide.RIGHT -> listOf(
-            JoyconButton.R, JoyconButton.ZR, JoyconButton.Plus, JoyconButton.RS,
-            JoyconButton.A, JoyconButton.B, JoyconButton.X, JoyconButton.Y,
-            JoyconButton.Home, JoyconButton.Chat, JoyconButton.SrRight, JoyconButton.SlRight,
-        )
-    }
-    return listOf(none) + buttons.map { it.name to it.id }
 }

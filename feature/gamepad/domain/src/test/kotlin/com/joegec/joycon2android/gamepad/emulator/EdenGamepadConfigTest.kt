@@ -1,7 +1,8 @@
 package com.joegec.joycon2android.gamepad.emulator
 
-import com.joegec.joycon2android.buttonmapping.DefaultControllerMappings
+import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.defaultMappingEntries
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
@@ -10,13 +11,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// The default mapping, expressed as the opaque string map the repository would hand back —
-// mirrors ObserveControllerMappingUseCase's defaultsFor without pulling in a DataStore dependency.
-private fun defaultSwitchProMapping(side: JoyconSide): Map<String, String> =
-    DefaultControllerMappings.switchProButtons(side).toNames() + DefaultControllerMappings.switchProSticks(side).toNames()
-
-private fun <K : Enum<K>, V : Enum<V>> Map<K, V>.toNames(): Map<String, String> =
-    entries.associate { it.key.name to it.value.name }
+private fun defaultSwitchProMapping(side: JoyconSide) = defaultMappingEntries(Console.SWITCH_PRO, side)
 
 class EdenGamepadConfigTest {
 
@@ -107,6 +102,25 @@ class EdenGamepadConfigTest {
         assertFalse(result.contains("player_0_button_zl="))
         assertFalse(result.contains("player_0_button_zr="))
     }
+
+    @Test
+    fun `a rearranged stick is built from its directions with each binding escaped`() {
+        val players = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
+        val mapping = defaultSwitchProMapping(JoyconSide.DUAL) + mapOf("LStick_UP" to "Up", "LStick_DOWN" to "")
+
+        val result = EdenGamepadConfig.merge(
+            null, players, mapOf(1 to EdenGamepad.of(0, VENDOR_ID, PRODUCT_ID)),
+        ) { mapping }
+
+        val display = ",display:Joy-Con Virtual Gamepad 1 0"
+        val up = escaped("$DEVICE,axis:16,threshold:0.5,invert:-$display")
+        val left = escaped("$DEVICE,axis:0,threshold:0.5,invert:-$display")
+        val right = escaped("$DEVICE,axis:0,threshold:0.5,invert:+$display")
+        assertTrue(result.contains("player_0_lstick=\"engine:analog_from_button,up:$up,left:$left,right:$right\""))
+        assertTrue(result.contains("player_0_rstick=\"$DEVICE,axis_x:11,axis_y:14")) // untouched stick stays analog
+    }
+
+    private fun escaped(binding: String) = binding.replace(":", "$0").replace(",", "$1")
 
     @Test
     fun `guid follows the ids the platform reports, not the ids the relay was created with`() {

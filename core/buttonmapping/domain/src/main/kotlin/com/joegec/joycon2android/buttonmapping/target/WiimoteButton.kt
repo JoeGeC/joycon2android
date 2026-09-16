@@ -1,9 +1,6 @@
 package com.joegec.joycon2android.buttonmapping.target
 
-/**
- * A Wii Remote's own buttons plus its Nunchuk's two buttons. The Nunchuk entries only apply when
- * a full body (Wii Remote + Nunchuk) is connected — a lone Joy-Con has no extension.
- */
+/** A Wii Remote's own buttons plus its Nunchuk's two buttons. */
 enum class WiimoteButton(val displayName: String) {
     A("A"),
     B("B"),

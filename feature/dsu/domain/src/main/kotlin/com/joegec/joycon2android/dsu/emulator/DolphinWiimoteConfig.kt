@@ -1,28 +1,30 @@
 package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
+import com.joegec.joycon2android.buttonmapping.emittedFor
+import com.joegec.joycon2android.buttonmapping.emittedStick
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
-import com.joegec.joycon2android.buttonmapping.toButtonMap
-import com.joegec.joycon2android.buttonmapping.toStickMap
+import com.joegec.joycon2android.buttonmapping.toSourceMap
+import com.joegec.joycon2android.buttonmapping.toStickDirectionMap
 import com.joegec.joycon2android.dsu.DsuSlots
 import com.joegec.joycon2android.emulatorconfig.DolphinPaths
 import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.model.SidewaysMapper
 
 /**
  * Generates Dolphin's WiimoteNew.ini button mappings for the DSU device, one `[WiimoteN]`
  * section per assigned player (player N streams on DSU slot N-1 → `DSUClient/<slot>/Joycon2`,
  * the name matching our [DolphinDsuConfig] entry), driven by the user's customizable Joy-Con ->
- * Wiimote/Nunchuk mapping. A single sideways Joy-Con drives the D-pad target from its own analog
- * stick (there's only one, so it isn't user-routable); a pair drives the D-pad target from the
- * physical D-pad and exposes a routable stick as the Nunchuk. [DS4_NAMES]/[PAD_NAMES] are the
- * fixed, body-independent DS4-convention names the DSU device exposes for each Android
- * input (see the in-app mapping table); [specFor] applies the same physical -> virtual remap
- * [SidewaysMapper] uses for live input to find the right one for a customized source.
+ * Wiimote/Nunchuk mapping. By default a single sideways Joy-Con drives the D-pad target from its
+ * own analog stick with no extension, and a pair drives it from the physical D-pad and exposes its
+ * left stick as the Nunchuk; a single Joy-Con gains a Nunchuk once the user binds one of its controls. [DS4_NAMES]/[PAD_NAMES] are the fixed, body-independent DS4-convention names the DSU
+ * device exposes for each Android input (see the in-app mapping table); [specFor] resolves a
+ * customized source to the one its body actually emits.
  */
 object DolphinWiimoteConfig {
     val path = DolphinPaths.config("WiimoteNew.ini")
@@ -122,14 +124,6 @@ object DolphinWiimoteConfig {
     private fun nunchukImuLines(slot: Int): List<String> =
         ACCEL_DIRECTIONS.map { "Nunchuk/IMUAccelerometer/$it = `DSUClient/$slot/Joycon2:Accel $it`" }
 
-    // A sideways single Joy-Con's own stick isn't user-routable — there's only one.
-    private val nativeStickDPad = listOf(
-        "D-Pad/Up = `Left Y+`",
-        "D-Pad/Down = `Left Y-`",
-        "D-Pad/Left = `Left X-`",
-        "D-Pad/Right = `Left X+`",
-    )
-
     fun merge(existing: String?, players: List<PlayerState>, mappingFor: (JoyconSide) -> Map<String, String>): String =
         IniEditor.mergeSections(existing, sections(players, mappingFor))
 
@@ -168,37 +162,39 @@ object DolphinWiimoteConfig {
     }
 
     private fun lines(side: JoyconSide, mapping: Map<String, String>): List<String> {
-        val buttonLines = mapping.toButtonMap<WiimoteButton>().mapNotNull { (target, source) ->
+        val buttonLines = mapping.toSourceMap<WiimoteButton>().mapNotNull { (target, source) ->
             specFor(side, source)?.let { spec -> "${DOLPHIN_KEYS.getValue(target)} = `$spec`" }
         }
+        val stickLines = nunchukStickLines(side, mapping)
         val recenterSpec = if (side == JoyconSide.LEFT) "L1" else "R1"
-        return if (side == JoyconSide.DUAL) {
-            val stickLines = mapping.toStickMap<WiimoteStick>().flatMap { (_, source) -> nunchukStickLines(source) }
-            buttonLines + listOf("IMUIR/Recenter = `$recenterSpec`", "Extension = Nunchuk") + stickLines
-        } else {
-            buttonLines + listOf("IMUIR/Recenter = `$recenterSpec`", "Extension = None") + nativeStickDPad
-        }
+        val extension = if (usesNunchuk(side, buttonLines + stickLines)) "Nunchuk" else "None"
+        return buttonLines + listOf("IMUIR/Recenter = `$recenterSpec`", "Extension = $extension") + stickLines
     }
 
-    private fun nunchukStickLines(source: StickSource): List<String> {
-        val prefix = if (source == StickSource.LEFT_STICK) "Left" else "Right"
-        return listOf(
-            "Nunchuk/Stick/Up = `$prefix Y+`",
-            "Nunchuk/Stick/Down = `$prefix Y-`",
-            "Nunchuk/Stick/Left = `$prefix X-`",
-            "Nunchuk/Stick/Right = `$prefix X+`",
-        )
+    // A pair always plugs one in for its second hand; a lone Joy-Con only once a Nunchuk control is bound.
+    private fun usesNunchuk(side: JoyconSide, mappedLines: List<String>) =
+        side == JoyconSide.DUAL || mappedLines.any { it.startsWith("Nunchuk/") }
+
+    private fun nunchukStickLines(side: JoyconSide, mapping: Map<String, String>): List<String> =
+        mapping.toStickDirectionMap<WiimoteStick>().values.flatMap { directions ->
+            directions.mapNotNull { (direction, source) ->
+                specFor(side, source)?.let { spec -> "Nunchuk/Stick/${direction.displayName} = `$spec`" }
+            }
+        }
+
+    private fun specFor(side: JoyconSide, source: MappingSource): String? = when (source) {
+        is MappingSource.Button -> source.button.emittedFor(side)?.let { DS4_NAMES[it] ?: PAD_NAMES[it] }
+        is MappingSource.Stick -> tiltSpec(source.emittedStick(side), source.direction)
     }
 
-    // Applies the same physical -> virtual remap SidewaysMapper uses for live HID output, so a
-    // customized source resolves to the control name the DSU device would actually see for that body.
-    private fun specFor(side: JoyconSide, physical: JoyconButton): String? {
-        val virtualId = when (side) {
-            JoyconSide.DUAL -> physical.id
-            JoyconSide.LEFT -> SidewaysMapper.remapButtonsLeft(setOf(physical.id)).first()
-            JoyconSide.RIGHT -> SidewaysMapper.remapButtonsRight(setOf(physical.id)).first()
+    // DSU sticks report up as a positive Y, unlike Android's axes.
+    private fun tiltSpec(stick: StickSource, direction: StickDirection): String {
+        val prefix = if (stick == StickSource.LEFT_STICK) "Left" else "Right"
+        return when (direction) {
+            StickDirection.UP -> "$prefix Y+"
+            StickDirection.DOWN -> "$prefix Y-"
+            StickDirection.LEFT -> "$prefix X-"
+            StickDirection.RIGHT -> "$prefix X+"
         }
-        val virtual = JoyconButton.entries.firstOrNull { it.id == virtualId } ?: return null
-        return DS4_NAMES[virtual] ?: PAD_NAMES[virtual]
     }
 }

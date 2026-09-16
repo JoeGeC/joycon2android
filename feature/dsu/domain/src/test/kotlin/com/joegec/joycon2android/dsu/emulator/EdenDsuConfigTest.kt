@@ -1,7 +1,8 @@
 package com.joegec.joycon2android.dsu.emulator
 
-import com.joegec.joycon2android.buttonmapping.DefaultControllerMappings
+import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.defaultMappingEntries
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
@@ -12,13 +13,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// The default mapping, expressed as the opaque string map the repository would hand back.
-private fun defaultSwitchProMapping(side: JoyconSide): Map<String, String> =
-    DefaultControllerMappings.switchProButtons(side).toNames() +
-        DefaultControllerMappings.switchProSticks(side).toNames()
-
-private fun <K : Enum<K>, V : Enum<V>> Map<K, V>.toNames(): Map<String, String> =
-    entries.associate { it.key.name to it.value.name }
+private fun defaultSwitchProMapping(side: JoyconSide) = defaultMappingEntries(Console.SWITCH_PRO, side)
 
 class EdenDsuConfigTest {
 
@@ -160,6 +155,21 @@ class EdenDsuConfigTest {
         assertTrue(result.contains("player_0_button_a="))
         assertEquals("\"${device(0)},axis_x:0,axis_y:1\"", valueOf(result, "player_0_lstick"))
         assertFalse(result.contains("player_0_rstick="))
+    }
+
+    @Test
+    fun `a stick direction driven by a button turns the stick digital, and a button can read a tilt`() {
+        val mapping = defaultSwitchProMapping(JoyconSide.DUAL) + mapOf("RStick_UP" to "X", "A" to "LEFT_STICK_UP")
+
+        val result = EdenDsuConfig.merge(null, listOf(pair(PlayerNumber.P1))) { mapping }
+
+        fun nested(input: String) = "${device(0)},$input".replace(":", "$0").replace(",", "$1")
+        val expected = "engine:analog_from_button,up:${nested("button:4096")}," +
+            "down:${nested("axis:3,threshold:0.5,invert:-")}," +
+            "left:${nested("axis:2,threshold:0.5,invert:-")}," +
+            "right:${nested("axis:2,threshold:0.5,invert:+")}"
+        assertEquals("\"$expected\"", valueOf(result, "player_0_rstick"))
+        assertEquals("\"${device(0)},axis:1,threshold:0.5,invert:+\"", valueOf(result, "player_0_button_a"))
     }
 
     @Test

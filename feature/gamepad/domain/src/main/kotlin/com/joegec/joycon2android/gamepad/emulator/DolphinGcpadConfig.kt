@@ -1,16 +1,19 @@
 package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
+import com.joegec.joycon2android.buttonmapping.emittedFor
+import com.joegec.joycon2android.buttonmapping.emittedStick
 import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
 import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
-import com.joegec.joycon2android.buttonmapping.toButtonMap
-import com.joegec.joycon2android.buttonmapping.toStickMap
+import com.joegec.joycon2android.buttonmapping.toSourceMap
+import com.joegec.joycon2android.buttonmapping.toStickDirectionMap
 import com.joegec.joycon2android.emulatorconfig.DolphinPaths
 import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.model.SidewaysMapper
 
 /**
  * Generates Dolphin's GCPadNew.ini mappings for the Virtual Gamepad, one `[GCPadN]` section per
@@ -20,8 +23,9 @@ import com.joegec.joycon2android.model.SidewaysMapper
  * by orientation (see [SidewaysMapper]), so which physical button reaches a given Android control differs
  * between a sideways single Joy-Con and a pair. [ANDROID_NAMES]/[HAT_NAMES] are the fixed,
  * body-independent Dolphin names for each Android keycode/hat direction our virtual pad emits
- * (captured from a real mapping); [specFor] applies the same physical -> virtual remap
- * [SidewaysMapper] uses for live input to find the right one for a customized source.
+ * (captured from a real mapping); [specFor] resolves a customized source to the one its body
+ * actually emits. Every stick direction is its own Dolphin input, so a stick target can mix
+ * stick tilts and buttons freely without losing analog range on the tilts.
  */
 object DolphinGcpadConfig {
     val path = DolphinPaths.config("GCPadNew.ini")
@@ -73,13 +77,7 @@ object DolphinGcpadConfig {
         JoyconButton.Right to "Axis 15+",
     )
 
-    // A sideways single Joy-Con's own stick isn't user-routable — there's only one.
-    private val NATIVE_MAIN_STICK_LINES = listOf(
-        "Main Stick/Up = `Axis 1-`",
-        "Main Stick/Down = `Axis 1+`",
-        "Main Stick/Left = `Axis 0-`",
-        "Main Stick/Right = `Axis 0+`",
-    )
+    private val STICK_PREFIXES = mapOf(GameCubeStick.MainStick to "Main Stick", GameCubeStick.CStick to "C-Stick")
 
     fun merge(
         existing: String?,
@@ -127,39 +125,31 @@ object DolphinGcpadConfig {
     }
 
     private fun lines(side: JoyconSide, mapping: Map<String, String>): List<String> {
-        val buttonLines = mapping.toButtonMap<GameCubeButton>().mapNotNull { (target, source) ->
+        val buttonLines = mapping.toSourceMap<GameCubeButton>().mapNotNull { (target, source) ->
             specFor(side, source)?.let { spec -> "${DOLPHIN_KEYS.getValue(target)} = `$spec`" }
         }
-        val stickLines = if (side == JoyconSide.DUAL) {
-            mapping.toStickMap<GameCubeStick>().flatMap { (target, source) -> stickLines(target, source) }
-        } else {
-            NATIVE_MAIN_STICK_LINES
+        val stickLines = mapping.toStickDirectionMap<GameCubeStick>().flatMap { (target, directions) ->
+            directions.mapNotNull { (direction, source) ->
+                specFor(side, source)?.let { spec -> "${STICK_PREFIXES.getValue(target)}/${direction.displayName} = `$spec`" }
+            }
         }
         return buttonLines + stickLines
     }
 
-    // Physical left stick lands on Android axes 0/1, physical right stick on axes 11/14 (see
-    // ReportMapper) — fixed regardless of which target stick a source is routed to.
-    private fun stickLines(target: GameCubeStick, source: StickSource): List<String> {
-        val prefix = if (target == GameCubeStick.MainStick) "Main Stick" else "C-Stick"
-        val (upDown, leftRight) = if (source == StickSource.LEFT_STICK) "1" to "0" else "14" to "11"
-        return listOf(
-            "$prefix/Up = `Axis $upDown-`",
-            "$prefix/Down = `Axis $upDown+`",
-            "$prefix/Left = `Axis $leftRight-`",
-            "$prefix/Right = `Axis $leftRight+`",
-        )
+    private fun specFor(side: JoyconSide, source: MappingSource): String? = when (source) {
+        is MappingSource.Button -> source.button.emittedFor(side)?.let { ANDROID_NAMES[it] ?: HAT_NAMES[it] }
+        is MappingSource.Stick -> tiltSpec(source.emittedStick(side), source.direction)
     }
 
-    // Applies the same physical -> virtual remap SidewaysMapper uses for live HID output, so a
-    // customized source resolves to the control name Dolphin would actually see for that body.
-    private fun specFor(side: JoyconSide, physical: JoyconButton): String? {
-        val virtualId = when (side) {
-            JoyconSide.DUAL -> physical.id
-            JoyconSide.LEFT -> SidewaysMapper.remapButtonsLeft(setOf(physical.id)).first()
-            JoyconSide.RIGHT -> SidewaysMapper.remapButtonsRight(setOf(physical.id)).first()
+    // Physical left stick lands on Android axes 0/1, physical right stick on axes 11/14 (see
+    // ReportMapper); Android's Y axis grows downward.
+    private fun tiltSpec(stick: StickSource, direction: StickDirection): String {
+        val (x, y) = if (stick == StickSource.LEFT_STICK) 0 to 1 else 11 to 14
+        return when (direction) {
+            StickDirection.UP -> "Axis $y-"
+            StickDirection.DOWN -> "Axis $y+"
+            StickDirection.LEFT -> "Axis $x-"
+            StickDirection.RIGHT -> "Axis $x+"
         }
-        val virtual = JoyconButton.entries.firstOrNull { it.id == virtualId } ?: return null
-        return ANDROID_NAMES[virtual] ?: HAT_NAMES[virtual]
     }
 }

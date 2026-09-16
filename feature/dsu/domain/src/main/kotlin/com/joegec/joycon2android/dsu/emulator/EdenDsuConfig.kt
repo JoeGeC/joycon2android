@@ -1,11 +1,16 @@
 package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
+import com.joegec.joycon2android.buttonmapping.emittedFor
+import com.joegec.joycon2android.buttonmapping.emittedStick
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
-import com.joegec.joycon2android.buttonmapping.toButtonMap
-import com.joegec.joycon2android.buttonmapping.toStickMap
+import com.joegec.joycon2android.buttonmapping.toSourceMap
+import com.joegec.joycon2android.buttonmapping.toStickDirectionMap
+import com.joegec.joycon2android.buttonmapping.wholeEmittedStick
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.dsu.DsuSlots
 import com.joegec.joycon2android.emulatorconfig.EdenControls
@@ -14,7 +19,6 @@ import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.emulatorconfig.defineEdenKey
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.model.SidewaysMapper
 
 /**
  * Binds Eden to our DSU server in `config.ini`'s `[Controls]`: the three server switches, then a
@@ -115,14 +119,11 @@ object EdenDsuConfig {
 
             keys.defineEdenKey("player_${slot}_type", type.toString())
             keys.defineEdenKey("player_${slot}_connected", "true")
-            buttonBindings(side, mapping).forEach { (key, bit) ->
-                keys.defineEdenKey("player_${slot}_$key", EdenControls.quote("$device,button:$bit"))
+            buttonBindings(side, mapping).forEach { (key, input) ->
+                keys.defineEdenKey("player_${slot}_$key", EdenControls.quote("$device,$input"))
             }
-            stickBindings(side, mapping).forEach { (key, axes) ->
-                keys.defineEdenKey(
-                    "player_${slot}_$key",
-                    EdenControls.quote("$device,axis_x:${axes.first},axis_y:${axes.second}"),
-                )
+            stickBindings(side, mapping, device).forEach { (key, binding) ->
+                keys.defineEdenKey("player_${slot}_$key", EdenControls.quote(binding))
             }
             keys.defineEdenKey("player_${slot}_motionright", motion(slot))
             keys.defineEdenKey("player_${slot}_motionleft", motion(secondHands[player.player] ?: slot))
@@ -134,41 +135,51 @@ object EdenDsuConfig {
 
     private fun motion(pad: Int) = EdenControls.quote("${device(pad)},motion:0")
 
-    private fun buttonBindings(side: JoyconSide, mapping: Map<String, String>): Map<String, Int> =
-        mapping.toButtonMap<SwitchProButton>().mapNotNull { (target, source) ->
-            bitFor(side, source)?.let { EdenControls.BUTTON_KEYS.getValue(target) to it }
+    private fun buttonBindings(side: JoyconSide, mapping: Map<String, String>): Map<String, String> =
+        mapping.toSourceMap<SwitchProButton>().mapNotNull { (target, source) ->
+            inputFor(side, source)?.let { EdenControls.BUTTON_KEYS.getValue(target) to it }
         }.toMap()
 
-    private fun stickBindings(side: JoyconSide, mapping: Map<String, String>): Map<String, Pair<Int, Int>> =
-        if (side == JoyconSide.DUAL) {
-            mapping.toStickMap<SwitchProStick>().entries.associate { (target, source) ->
-                EdenControls.STICK_KEYS.getValue(target) to axesFor(source)
-            }
-        } else {
-            // A sideways Joy-Con's lone stick isn't user-routable, and SidewaysMapper has already
-            // rotated it onto the left-stick axes by the time it reaches the wire.
-            mapOf("lstick" to LEFT_STICK_AXES)
-        }
+    private fun stickBindings(side: JoyconSide, mapping: Map<String, String>, device: String): Map<String, String> =
+        mapping.toStickDirectionMap<SwitchProStick>().mapNotNull { (target, directions) ->
+            stickFor(side, directions, device)?.let { EdenControls.STICK_KEYS.getValue(target) to it }
+        }.toMap()
 
-    private fun axesFor(source: StickSource) =
-        if (source == StickSource.LEFT_STICK) LEFT_STICK_AXES else RIGHT_STICK_AXES
+    private fun stickFor(side: JoyconSide, directions: Map<StickDirection, MappingSource>, device: String): String? {
+        directions.wholeEmittedStick(side)?.let { stick ->
+            val (x, y) = axesOf(stick)
+            return "$device,axis_x:$x,axis_y:$y"
+        }
+        val inputs = directions.mapNotNull { (direction, source) ->
+            inputFor(side, source)?.let { direction to "$device,$it" }
+        }
+        return inputs.takeIf { it.isNotEmpty() }?.let { EdenControls.stickFromButtons(it.toMap()) }
+    }
+
+    private fun axesOf(stick: StickSource) =
+        if (stick == StickSource.LEFT_STICK) LEFT_STICK_AXES else RIGHT_STICK_AXES
+
+    private fun inputFor(side: JoyconSide, source: MappingSource): String? = when (source) {
+        is MappingSource.Button -> source.button.emittedFor(side)?.let(DS4_BITS::get)?.let { "button:$it" }
+        is MappingSource.Stick -> tiltOf(source.emittedStick(side), source.direction)
+    }
+
+    // Eden reads a cemuhook stick byte as (v - 127) / 127, so up and right are the positive ends.
+    private fun tiltOf(stick: StickSource, direction: StickDirection): String {
+        val (x, y) = axesOf(stick)
+        val (axis, invert) = when (direction) {
+            StickDirection.UP -> y to '+'
+            StickDirection.DOWN -> y to '-'
+            StickDirection.LEFT -> x to '-'
+            StickDirection.RIGHT -> x to '+'
+        }
+        return "axis:$axis,threshold:0.5,invert:$invert"
+    }
 
     private fun sideFor(player: PlayerState): JoyconSide? = when {
         player.hasPro || player.hasFullController -> JoyconSide.DUAL
         player.left != null -> JoyconSide.LEFT
         player.right != null -> JoyconSide.RIGHT
         else -> null
-    }
-
-    // Applies the same physical -> virtual remap SidewaysMapper uses for live output, so a
-    // customized source resolves to the bit the DSU pad would actually set for that body.
-    private fun bitFor(side: JoyconSide, physical: JoyconButton): Int? {
-        val virtualId = when (side) {
-            JoyconSide.DUAL -> physical.id
-            JoyconSide.LEFT -> SidewaysMapper.remapButtonsLeft(setOf(physical.id)).first()
-            JoyconSide.RIGHT -> SidewaysMapper.remapButtonsRight(setOf(physical.id)).first()
-        }
-        val virtual = JoyconButton.entries.firstOrNull { it.id == virtualId } ?: return null
-        return DS4_BITS[virtual]
     }
 }

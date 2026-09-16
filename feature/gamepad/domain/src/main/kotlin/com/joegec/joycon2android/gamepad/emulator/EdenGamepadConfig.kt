@@ -1,17 +1,21 @@
 package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
+import com.joegec.joycon2android.buttonmapping.emittedFor
+import com.joegec.joycon2android.buttonmapping.emittedStick
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
-import com.joegec.joycon2android.buttonmapping.toButtonMap
-import com.joegec.joycon2android.buttonmapping.toStickMap
+import com.joegec.joycon2android.buttonmapping.toSourceMap
+import com.joegec.joycon2android.buttonmapping.toStickDirectionMap
+import com.joegec.joycon2android.buttonmapping.wholeEmittedStick
 import com.joegec.joycon2android.emulatorconfig.EdenControls
 import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.emulatorconfig.defineEdenKey
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.model.SidewaysMapper
 
 /**
  * Generates Eden's `config.ini` `[Controls]` bindings for the Virtual Gamepad, driven by the
@@ -25,9 +29,12 @@ import com.joegec.joycon2android.model.SidewaysMapper
  * Eden does not translate a sideways single Joy-Con: it only sets an `is_horizontal` flag (which on
  * hardware the game's own nn::hid honours, but Eden has no equivalent), and it masks an npad by
  * type — a JoyconLeft can't even report A/B/X/Y. So we present each single Joy-Con as a Pro
- * Controller and apply the sideways rotation ourselves: [inputFor] runs a customized source
- * through the same [SidewaysMapper] remap used for live HID output before resolving its keycode,
- * so e.g. the left Joy-Con's d-pad resolves to the face-button keycodes it is rotated onto.
+ * Controller and apply the sideways rotation ourselves: [inputFor] resolves a customized source to
+ * what its body actually emits, so e.g. the left Joy-Con's d-pad resolves to the face-button
+ * keycodes it is rotated onto.
+ *
+ * A target stick whose directions still follow one real stick binds its axes, keeping the analog
+ * range; any other arrangement is assembled from its directions with [EdenControls.stickFromButtons].
  *
  * Each pad's [EdenGamepad] — port and guid both — comes from the app's read of the live
  * input-device list, since neither can be derived from the player number.
@@ -110,9 +117,15 @@ object EdenGamepadConfig {
             layout.buttons.forEach { (key, input) ->
                 keys.defineEdenKey("player_${p}_$key", EdenControls.quote("$device,${input.spec()},display:$display"))
             }
-            layout.sticks.forEach { (key, axes) ->
-                val stick = "axis_x:${axes.first},axis_y:${axes.second},offset_x:0,offset_y:0,invert_x:+,invert_y:-"
-                keys.defineEdenKey("player_${p}_$key", EdenControls.quote("$device,$stick,display:$display"))
+            layout.sticks.forEach { (key, stick) ->
+                val binding = when (stick) {
+                    is AnalogStick -> "$device,axis_x:${stick.axes.first},axis_y:${stick.axes.second}," +
+                        "offset_x:0,offset_y:0,invert_x:+,invert_y:-,display:$display"
+                    is DigitalStick -> EdenControls.stickFromButtons(
+                        stick.directions.mapValues { (_, input) -> "$device,${input.spec()},display:$display" },
+                    )
+                }
+                keys.defineEdenKey("player_${p}_$key", EdenControls.quote(binding))
             }
         }
         return keys
@@ -126,34 +139,41 @@ object EdenGamepadConfig {
     }
 
     private fun layoutFor(side: JoyconSide, mapping: Map<String, String>): Layout {
-        val buttons = mapping.toButtonMap<SwitchProButton>().mapNotNull { (target, source) ->
+        val buttons = mapping.toSourceMap<SwitchProButton>().mapNotNull { (target, source) ->
             inputFor(side, source)?.let { EdenControls.BUTTON_KEYS.getValue(target) to it }
         }.toMap()
-        val sticks = if (side == JoyconSide.DUAL) {
-            mapping.toStickMap<SwitchProStick>().entries.associate { (target, source) ->
-                EdenControls.STICK_KEYS.getValue(target) to axesFor(source)
-            }
-        } else {
-            mapOf("lstick" to (0 to 1)) // the lone stick isn't user-routable — there's only one
-        }
+        val sticks = mapping.toStickDirectionMap<SwitchProStick>().mapNotNull { (target, directions) ->
+            stickFor(side, directions)?.let { EdenControls.STICK_KEYS.getValue(target) to it }
+        }.toMap()
         return Layout(buttons, sticks)
     }
 
-    private fun axesFor(source: StickSource) = if (source == StickSource.LEFT_STICK) 0 to 1 else 11 to 14
-
-    // Applies the same physical -> virtual remap SidewaysMapper uses for live HID output, so a
-    // customized source resolves to the keycode Eden would actually see for that body.
-    private fun inputFor(side: JoyconSide, physical: JoyconButton): Input? {
-        val virtualId = when (side) {
-            JoyconSide.DUAL -> physical.id
-            JoyconSide.LEFT -> SidewaysMapper.remapButtonsLeft(setOf(physical.id)).first()
-            JoyconSide.RIGHT -> SidewaysMapper.remapButtonsRight(setOf(physical.id)).first()
-        }
-        val virtual = JoyconButton.entries.firstOrNull { it.id == virtualId } ?: return null
-        return KEY_CODES[virtual]?.let { Key(it) } ?: HAT_AXES[virtual]
+    private fun stickFor(side: JoyconSide, directions: Map<StickDirection, MappingSource>): Stick? {
+        directions.wholeEmittedStick(side)?.let { return AnalogStick(axesOf(it)) }
+        val inputs = directions.mapNotNull { (direction, source) -> inputFor(side, source)?.let { direction to it } }
+        return inputs.takeIf { it.isNotEmpty() }?.let { DigitalStick(it.toMap()) }
     }
 
-    private data class Layout(val buttons: Map<String, Input>, val sticks: Map<String, Pair<Int, Int>>)
+    private fun inputFor(side: JoyconSide, source: MappingSource): Input? = when (source) {
+        is MappingSource.Button -> source.button.emittedFor(side)?.let { KEY_CODES[it]?.let(::Key) ?: HAT_AXES[it] }
+        is MappingSource.Stick -> tiltOf(source.emittedStick(side), source.direction)
+    }
+
+    // Physical left stick lands on Android axes 0/1, physical right stick on axes 11/14 (see
+    // ReportMapper); Android's Y axis grows downward.
+    private fun axesOf(stick: StickSource) = if (stick == StickSource.LEFT_STICK) 0 to 1 else 11 to 14
+
+    private fun tiltOf(stick: StickSource, direction: StickDirection): Axis {
+        val (x, y) = axesOf(stick)
+        return when (direction) {
+            StickDirection.UP -> Axis(y, '-')
+            StickDirection.DOWN -> Axis(y, '+')
+            StickDirection.LEFT -> Axis(x, '-')
+            StickDirection.RIGHT -> Axis(x, '+')
+        }
+    }
+
+    private data class Layout(val buttons: Map<String, Input>, val sticks: Map<String, Stick>)
 
     private sealed interface Input {
         fun spec(): String
@@ -166,4 +186,10 @@ object EdenGamepadConfig {
     private data class Axis(val axis: Int, val invert: Char) : Input {
         override fun spec() = "axis:$axis,threshold:0.5,invert:$invert"
     }
+
+    private sealed interface Stick
+
+    private data class AnalogStick(val axes: Pair<Int, Int>) : Stick
+
+    private data class DigitalStick(val directions: Map<StickDirection, Input>) : Stick
 }
