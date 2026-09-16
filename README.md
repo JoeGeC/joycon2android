@@ -167,6 +167,7 @@ prompts you to restart Dolphin. It needs Shizuku connected; if the write fails
 | Controller stops responding | Press SYNC to reset, then reconnect |
 | No DSUClient device in the emulator | Check the ini, restart the emulator, open a mapping screen; `adb logcat -s DsuServer` shows whether requests arrive |
 | Emulator doesn't detect DSU button presses | Map manually — detection never sees DSU devices; turn the Virtual Gamepad off while mapping |
+| Motion aiming stutters while the stick is smooth | Turn on **Faster motion updates** in the DSU card |
 | Pointer drifts or starts off-screen | Rest the controller ~2 s to recalibrate, then press Recenter |
 | MotionPlus game replays its tutorial video every boot | Nothing to do with the DSU mapping — MotionPlus is attached by default. The game records "video seen" as `MPLS.MOVIE` in Dolphin's `Wii/shared2/sys/SYSCONF`, but `SysConf::~SysConf` writes back the entry list Dolphin loaded at launch, dropping anything the game appended. Set the flag with Dolphin **closed** so the next launch loads it |
 
@@ -304,7 +305,11 @@ ride a buffered channel off the BLE state path — StateFlow conflation would dr
 samples. Collaborators:
 
 - **`DsuPacketEncoder`** — the 100-byte pad packets (and version/port-info responses),
-  written into a reused buffer at ~120 Hz.
+  written into a reused buffer once per Joy-Con report. The report rate is the BLE connection
+  interval: Android's default balanced priority can settle on 30 ms (~33 Hz, measured on an AYN
+  Thor), which reads as stuttery motion at 60 fps. The DSU card's **Faster motion updates**
+  requests `CONNECTION_PRIORITY_HIGH` while DSU runs — 15 ms (~67 Hz) on the same Thor — at the
+  cost of battery on both ends.
 - **`MotionConverter`** — raw Joy-Con IMU frame → cemuhook's DS4 frame. Axes, signs, and
   scale factors were verified on hardware against Dolphin's Wii pointer; see the class
   docs for the measured frames and `tools/README.md` for the calibration workflow.

@@ -28,18 +28,23 @@ class ConnectionPool(private val context: Context) {
      * Atomically creates and starts a connection for [result].
      * Returns null if this address is already in the pool (duplicate scan result).
      */
-    fun connect(result: ScanResult, side: Side, name: String): JoyconConnection? {
+    fun connect(result: ScanResult, side: Side, name: String, highPriority: Boolean): JoyconConnection? {
         val address = result.device.address
         val connection = JoyconConnection(context, side, name) {
             connections.remove(address)
             onPoolChanged?.invoke()
         }
+        connection.setHighPriority(highPriority)
         if (connections.putIfAbsent(address, connection) != null) return null
         connection.connect(result.device)
         return connection
     }
 
     fun get(address: String): JoyconConnection? = connections[address]
+
+    fun setHighPriority(enabled: Boolean) {
+        connections.values.forEach { it.setHighPriority(enabled) }
+    }
 
     fun disconnect(address: String) {
         connections.remove(address)?.disconnect()

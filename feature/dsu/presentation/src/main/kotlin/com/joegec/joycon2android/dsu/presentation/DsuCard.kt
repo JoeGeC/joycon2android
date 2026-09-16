@@ -4,6 +4,7 @@ import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.ExpandableInfoSection
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
+import com.joegec.joycon2android.ui.components.SettingSwitch
 import com.joegec.joycon2android.ui.components.WarningBox
 
 import androidx.compose.animation.AnimatedVisibility
@@ -40,6 +41,7 @@ fun DsuCard(
     onSelectEmulator: (String) -> Unit,
     onSetUp: () -> Unit,
     onConfigureMapping: () -> Unit,
+    onFastMotionToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     FeatureToggleCard(
@@ -69,6 +71,13 @@ fun DsuCard(
                     )
                     Spacer(Modifier.height(Dimens.elementSpacing))
                 }
+                SettingSwitch(
+                    title = stringResource(R.string.dsu_fast_motion_title),
+                    warning = stringResource(R.string.dsu_fast_motion_warning),
+                    checked = state.fastMotion,
+                    onCheckedChange = onFastMotionToggle,
+                )
+                Spacer(Modifier.height(Dimens.elementSpacing))
                 slotLimitText(state.coverage)?.let { warning ->
                     WarningBox(warning)
                     Spacer(Modifier.height(Dimens.elementSpacing))

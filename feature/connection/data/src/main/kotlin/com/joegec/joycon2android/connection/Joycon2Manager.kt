@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 class Joycon2Manager(
     private val context: Context,
     private val scope: CoroutineScope,
-) : ControllerRepository {
+) : ControllerRepository, ConnectionPriorityRepository {
 
     companion object {
         private const val MAX_CONNECTIONS = 8
@@ -32,6 +32,9 @@ class Joycon2Manager(
     private val scanner = BleScanner(context)
     private val pool = ConnectionPool(context)
     private val connectionJobs = mutableMapOf<String, Job>()
+
+    @Volatile
+    private var highPriority = false
 
     private val _controllers = MutableStateFlow<List<ConnectedJoycon>>(emptyList())
     override val controllers: StateFlow<List<ConnectedJoycon>> = _controllers.asStateFlow()
@@ -88,6 +91,11 @@ class Joycon2Manager(
         if (player != null) connection.setPlayerLed(player) else connection.clearPlayerLed()
     }
 
+    override fun setHighPriority(enabled: Boolean) {
+        highPriority = enabled
+        pool.setHighPriority(enabled)
+    }
+
     override fun emitError(message: String) {
         _error.value = message
     }
@@ -129,7 +137,7 @@ class Joycon2Manager(
             return
         }
 
-        pool.connect(result, side, name) ?: return
+        pool.connect(result, side, name, highPriority) ?: return
         onPoolChanged()
     }
 

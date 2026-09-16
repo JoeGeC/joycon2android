@@ -162,6 +162,7 @@ fun JoyconScreen(
     onSelectDsuEmulator: (String) -> Unit,
     onConfigureDsu: () -> Unit,
     onOpenDsuMapping: () -> Unit,
+    onFastMotionToggle: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
     viewMode: ConnectionViewMode,
     onViewModeChange: (ConnectionViewMode) -> Unit,
@@ -278,6 +279,7 @@ fun JoyconScreen(
                                 gamepadSetupPhase, onConfigureGamepad, onOpenGamepadMapping,
                                 onScan, onDisconnectAll, onAssign, unassignController, removePlayer, onDisconnect,
                                 onGamepadToggle, onDsuToggle, onSelectDsuEmulator, onConfigureDsu, onOpenDsuMapping,
+                                onFastMotionToggle,
                             )
                             else -> ScanningContent(state)
                         }
@@ -530,6 +532,7 @@ private fun ConnectedContent(
     onSelectDsuEmulator: (String) -> Unit,
     onConfigureDsu: () -> Unit,
     onOpenDsuMapping: () -> Unit,
+    onFastMotionToggle: (Boolean) -> Unit,
 ) {
     AnimatedVisibility(
         visible = state.unassignedJoycons.isNotEmpty(),
@@ -635,6 +638,7 @@ private fun ConnectedContent(
                 onSelectEmulator = onSelectDsuEmulator,
                 onSetUp = onConfigureDsu,
                 onConfigureMapping = onOpenDsuMapping,
+                onFastMotionToggle = onFastMotionToggle,
             )
         }
 

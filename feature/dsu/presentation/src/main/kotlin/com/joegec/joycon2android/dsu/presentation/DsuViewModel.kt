@@ -6,6 +6,8 @@ import com.joegec.joycon2android.dsu.DisableDsuUseCase
 import com.joegec.joycon2android.dsu.DsuStatus
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
+import com.joegec.joycon2android.dsu.motion.ObserveFastMotionUseCase
+import com.joegec.joycon2android.dsu.motion.SetFastMotionUseCase
 import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase // shared, in :core:designsystem
@@ -23,6 +25,8 @@ class DsuViewModel(
     observeDsuStatus: ObserveDsuStatusUseCase,
     private val enableDsu: EnableDsuUseCase,
     private val disableDsu: DisableDsuUseCase,
+    observeFastMotion: ObserveFastMotionUseCase,
+    private val setFastMotion: SetFastMotionUseCase,
     val dsuEmulators: List<EmulatorOption> = emptyList(),
     private val configureDsu: suspend (emulatorId: String, players: List<PlayerState>, closeEmulator: Boolean) -> EmulatorSetupResult =
         { _, _, _ -> EmulatorSetupResult.FAILED },
@@ -30,6 +34,9 @@ class DsuViewModel(
 
     val status: StateFlow<DsuStatus> = observeDsuStatus()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), DsuStatus())
+
+    val fastMotion: StateFlow<Boolean> = observeFastMotion()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
 
     private val _selectedEmulator = MutableStateFlow(dsuEmulators.firstOrNull()?.id ?: "")
     val selectedEmulator: StateFlow<String> = _selectedEmulator.asStateFlow()
@@ -43,6 +50,10 @@ class DsuViewModel(
 
     fun toggle(enabled: Boolean) {
         if (enabled) enableDsu() else disableDsu()
+    }
+
+    fun toggleFastMotion(enabled: Boolean) {
+        viewModelScope.launch { setFastMotion(enabled) }
     }
 
     fun selectEmulator(id: String) {

@@ -12,4 +12,5 @@ data class DsuCardState(
     val emulators: List<EmulatorOption> = emptyList(),
     val selectedEmulator: String = "",
     val setupPhase: DolphinSetupPhase = DolphinSetupPhase.IDLE,
+    val fastMotion: Boolean = false,
 )
