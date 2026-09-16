@@ -8,8 +8,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,6 +31,7 @@ import com.joegec.joycon2android.dsu.presentation.DsuViewModel
 import com.joegec.joycon2android.gamepad.presentation.GamepadViewModel
 import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
+import com.joegec.joycon2android.ui.pushTransition
 import com.joegec.joycon2android.dsu.DsuSlots
 import com.joegec.joycon2android.emulatorconfig.EdenPaths
 import com.joegec.joycon2android.ui.components.CloseEmulatorDialog
@@ -109,122 +114,133 @@ class MainActivity : ComponentActivity() {
             Joycon2AndroidTheme {
                 Surface(Modifier.fillMaxSize(), color = Background) {
                     var mappingConsole by rememberSaveable { mutableStateOf<Console?>(null) }
-                    val console = mappingConsole
 
-                    if (console != null) {
-                        val leftMapping by controllerMappingViewModel.mapping(console, JoyconSide.LEFT).collectAsState()
-                        val rightMapping by controllerMappingViewModel.mapping(console, JoyconSide.RIGHT).collectAsState()
-                        val dualMapping by controllerMappingViewModel.mapping(console, JoyconSide.DUAL).collectAsState()
-
-                        ControllerMappingScreen(
-                            console = console,
-                            leftMapping = leftMapping,
-                            rightMapping = rightMapping,
-                            dualMapping = dualMapping,
-                            onSetMapping = { side, targetKey, sourceId ->
-                                controllerMappingViewModel.setMapping(console, side, targetKey, sourceId)
-                            },
-                            onResetMapping = { side -> controllerMappingViewModel.resetMapping(console, side) },
-                            onBack = { mappingConsole = null },
-                        )
-                        return@Surface
-                    }
-
-                    val state by viewModel.uiState.collectAsState()
-                    val gamepadStatus by gamepadViewModel.status.collectAsState()
-                    val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
-                    val dsuStatus by dsuViewModel.status.collectAsState()
-                    val dsuSetupPhase by dsuViewModel.setupPhase.collectAsState()
-                    val selectedDsuEmulator by dsuViewModel.selectedEmulator.collectAsState()
-                    val dsuMotionSettings by dsuViewModel.motionSettings.collectAsState()
-                    val dsuEmulatorToClose by dsuViewModel.emulatorToClose.collectAsState()
-                    val gamepadEmulatorToClose by gamepadViewModel.emulatorToClose.collectAsState()
-                    val gamepadSetupPhase by gamepadViewModel.setupPhase.collectAsState()
-                    val selectedEmulator by gamepadViewModel.selectedEmulator.collectAsState()
-                    val permissionDenied by viewModel.permissionDenied.collectAsState()
-                    val viewMode by viewModel.viewMode.collectAsState()
-
-                    // A written emulator config is keyed to the current assignment; once it changes,
-                    // the Done/Failed state is stale, so reset both setup buttons.
-                    val assignmentKey = state.players.map {
-                        Triple(it.player.index, it.left?.address, it.right?.address)
-                    }
-                    LaunchedEffect(assignmentKey) {
-                        dsuViewModel.resetSetupPhase()
-                        gamepadViewModel.resetSetupPhase()
-                    }
-
-                    dsuEmulatorToClose?.let { emulator ->
-                        CloseEmulatorDialog(
-                            emulatorName = emulator.label,
-                            onConfirm = { dsuViewModel.closeEmulatorAndConfigure(state.activePlayers) },
-                            onDismiss = dsuViewModel::cancelClose,
-                        )
-                    }
-                    gamepadEmulatorToClose?.let { emulator ->
-                        CloseEmulatorDialog(
-                            emulatorName = emulator.label,
-                            onConfirm = { gamepadViewModel.closeEmulatorAndConfigure(state.activePlayers) },
-                            onDismiss = gamepadViewModel::cancelClose,
-                        )
-                    }
-
-                    JoyconScreen(
-                        state = state,
-                        gamepadEnabled = gamepadStatus.enabled,
-                        gamepadError = gamepadStatus.error,
-                        dsuState = DsuCardState(
-                            enabled = dsuStatus.enabled,
-                            error = dsuStatus.error,
-                            clientCount = dsuStatus.clientCount,
-                            address = dsuStatus.address,
-                            coverage = DsuSlots.coverage(state.activePlayers),
-                            emulators = dsuViewModel.dsuEmulators,
-                            selectedEmulator = selectedDsuEmulator,
-                            setupPhase = dsuSetupPhase,
-                            motionSettings = dsuMotionSettings,
-                            deviceMotionBlockAvailable = shizukuAvailable,
-                        ),
-                        permissionDenied = permissionDenied,
-                        onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
-                        onDisconnectAll = viewModel::disconnectAll,
-                        onAssign = viewModel::assignToPlayer,
-                        onUnassign = viewModel::unassign,
-                        onDisconnect = viewModel::disconnect,
-                        onGamepadToggle = { enabled ->
-                            gamepadViewModel.toggle(enabled, state.activePlayers)
-                        },
-                        gamepadEmulators = gamepadViewModel.gamepadEmulators,
-                        selectedGamepadEmulator = selectedEmulator,
-                        onSelectGamepadEmulator = gamepadViewModel::selectEmulator,
-                        gamepadSetupPhase = gamepadSetupPhase,
-                        onConfigureGamepad = { gamepadViewModel.configureGamepad(state.activePlayers) },
-                        onOpenGamepadMapping = {
-                            mappingConsole = if (selectedEmulator in EdenPaths.PACKAGES) {
-                                Console.SWITCH_PRO
+                    AnimatedContent(
+                        targetState = mappingConsole,
+                        transitionSpec = { pushTransition(forward = targetState != null) },
+                        label = "mappingScreen",
+                    ) { console ->
+                        Box(Modifier.fillMaxSize().background(Background)) {
+                            if (console != null) {
+                                ControllerMappingRoute(console, onBack = { mappingConsole = null })
                             } else {
-                                Console.GAMECUBE
+                                MainRoute(
+                                    onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
+                                    onOpenMapping = { mappingConsole = it },
+                                )
                             }
-                        },
-                        onDsuToggle = dsuViewModel::toggle,
-                        onSelectDsuEmulator = dsuViewModel::selectEmulator,
-                        onConfigureDsu = { dsuViewModel.configureDsu(state.activePlayers) },
-                        onOpenDsuMapping = {
-                            mappingConsole = if (selectedDsuEmulator in EdenPaths.PACKAGES) {
-                                Console.SWITCH_PRO
-                            } else {
-                                Console.WIIMOTE_NUNCHUK
-                            }
-                        },
-                        onFastMotionToggle = dsuViewModel::toggleFastMotion,
-                        onBlockDeviceMotionToggle = dsuViewModel::toggleBlockDeviceMotion,
-                        onOpenSettings = { startActivity(permissionHandler.buildSettingsIntent()) },
-                        shizukuAvailable = shizukuAvailable,
-                        viewMode = viewMode,
-                        onViewModeChange = viewModel::setViewMode,
-                    )
+                        }
+                    }
                 }
             }
         }
+    }
+
+    @Composable
+    private fun ControllerMappingRoute(console: Console, onBack: () -> Unit) {
+        val leftMapping by controllerMappingViewModel.mapping(console, JoyconSide.LEFT).collectAsState()
+        val rightMapping by controllerMappingViewModel.mapping(console, JoyconSide.RIGHT).collectAsState()
+        val dualMapping by controllerMappingViewModel.mapping(console, JoyconSide.DUAL).collectAsState()
+
+        ControllerMappingScreen(
+            console = console,
+            leftMapping = leftMapping,
+            rightMapping = rightMapping,
+            dualMapping = dualMapping,
+            onSetMapping = { side, targetKey, sourceId ->
+                controllerMappingViewModel.setMapping(console, side, targetKey, sourceId)
+            },
+            onResetMapping = { side -> controllerMappingViewModel.resetMapping(console, side) },
+            onBack = onBack,
+        )
+    }
+
+    @Composable
+    private fun MainRoute(onScan: () -> Unit, onOpenMapping: (Console) -> Unit) {
+        val state by viewModel.uiState.collectAsState()
+        val gamepadStatus by gamepadViewModel.status.collectAsState()
+        val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
+        val dsuStatus by dsuViewModel.status.collectAsState()
+        val dsuSetupPhase by dsuViewModel.setupPhase.collectAsState()
+        val selectedDsuEmulator by dsuViewModel.selectedEmulator.collectAsState()
+        val dsuMotionSettings by dsuViewModel.motionSettings.collectAsState()
+        val dsuEmulatorToClose by dsuViewModel.emulatorToClose.collectAsState()
+        val gamepadEmulatorToClose by gamepadViewModel.emulatorToClose.collectAsState()
+        val gamepadSetupPhase by gamepadViewModel.setupPhase.collectAsState()
+        val selectedEmulator by gamepadViewModel.selectedEmulator.collectAsState()
+        val permissionDenied by viewModel.permissionDenied.collectAsState()
+        val viewMode by viewModel.viewMode.collectAsState()
+
+        // A written emulator config is keyed to the current assignment; once it changes,
+        // the Done/Failed state is stale, so reset both setup buttons.
+        val assignmentKey = state.players.map {
+            Triple(it.player.index, it.left?.address, it.right?.address)
+        }
+        LaunchedEffect(assignmentKey) {
+            dsuViewModel.resetSetupPhase()
+            gamepadViewModel.resetSetupPhase()
+        }
+
+        dsuEmulatorToClose?.let { emulator ->
+            CloseEmulatorDialog(
+                emulatorName = emulator.label,
+                onConfirm = { dsuViewModel.closeEmulatorAndConfigure(state.activePlayers) },
+                onDismiss = dsuViewModel::cancelClose,
+            )
+        }
+        gamepadEmulatorToClose?.let { emulator ->
+            CloseEmulatorDialog(
+                emulatorName = emulator.label,
+                onConfirm = { gamepadViewModel.closeEmulatorAndConfigure(state.activePlayers) },
+                onDismiss = gamepadViewModel::cancelClose,
+            )
+        }
+
+        JoyconScreen(
+            state = state,
+            gamepadEnabled = gamepadStatus.enabled,
+            gamepadError = gamepadStatus.error,
+            dsuState = DsuCardState(
+                enabled = dsuStatus.enabled,
+                error = dsuStatus.error,
+                clientCount = dsuStatus.clientCount,
+                address = dsuStatus.address,
+                coverage = DsuSlots.coverage(state.activePlayers),
+                emulators = dsuViewModel.dsuEmulators,
+                selectedEmulator = selectedDsuEmulator,
+                setupPhase = dsuSetupPhase,
+                motionSettings = dsuMotionSettings,
+                deviceMotionBlockAvailable = shizukuAvailable,
+            ),
+            permissionDenied = permissionDenied,
+            onScan = onScan,
+            onDisconnectAll = viewModel::disconnectAll,
+            onAssign = viewModel::assignToPlayer,
+            onUnassign = viewModel::unassign,
+            onDisconnect = viewModel::disconnect,
+            onGamepadToggle = { enabled ->
+                gamepadViewModel.toggle(enabled, state.activePlayers)
+            },
+            gamepadEmulators = gamepadViewModel.gamepadEmulators,
+            selectedGamepadEmulator = selectedEmulator,
+            onSelectGamepadEmulator = gamepadViewModel::selectEmulator,
+            gamepadSetupPhase = gamepadSetupPhase,
+            onConfigureGamepad = { gamepadViewModel.configureGamepad(state.activePlayers) },
+            onOpenGamepadMapping = {
+                onOpenMapping(if (selectedEmulator in EdenPaths.PACKAGES) Console.SWITCH_PRO else Console.GAMECUBE)
+            },
+            onDsuToggle = dsuViewModel::toggle,
+            onSelectDsuEmulator = dsuViewModel::selectEmulator,
+            onConfigureDsu = { dsuViewModel.configureDsu(state.activePlayers) },
+            onOpenDsuMapping = {
+                onOpenMapping(if (selectedDsuEmulator in EdenPaths.PACKAGES) Console.SWITCH_PRO else Console.WIIMOTE_NUNCHUK)
+            },
+            onFastMotionToggle = dsuViewModel::toggleFastMotion,
+            onBlockDeviceMotionToggle = dsuViewModel::toggleBlockDeviceMotion,
+            onOpenSettings = { startActivity(viewModel.permissionHandler.buildSettingsIntent()) },
+            shizukuAvailable = shizukuAvailable,
+            viewMode = viewMode,
+            onViewModeChange = viewModel::setViewMode,
+        )
     }
 }
