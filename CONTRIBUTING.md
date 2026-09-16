@@ -47,8 +47,8 @@ the convention plugins; don't hand-roll `android {}` blocks in a module.
   ```
 
 Testing the virtual gamepad on-device also needs [Shizuku](https://shizuku.rikka.app/) running; the
-DSU motion server and BLE features work without it. See the [README](README.md) for the full setup
-guide and the BLE protocol reference.
+DSU motion server and BLE features work without it. See the [README](README.md) for the setup guide,
+and [docs/protocol.md](docs/protocol.md) for the BLE protocol.
 
 ## Before you open a PR
 

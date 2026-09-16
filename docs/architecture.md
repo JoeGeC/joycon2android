@@ -19,7 +19,10 @@ live in separate modules that share only domain.
 | `:core:model` | `joycon.kotlin.jvm` | — |
 | `:core:designsystem` | `joycon.android.library.compose` | — |
 | `:core:session` | `joycon.kotlin.jvm` | `:core:model`, `:feature:connection:domain`, `:feature:assignment:domain` |
-| `:core:emulatorconfig` | `joycon.kotlin.jvm` | — |
+| `:core:emulatorconfig` | `joycon.kotlin.jvm` | `:core:buttonmapping:domain` |
+| `:core:buttonmapping:domain` | `joycon.kotlin.jvm` | `:core:model` |
+| `:core:buttonmapping:data` | `joycon.android.library` | `:core:buttonmapping:domain`, `:core:model` |
+| `:core:buttonmapping:presentation` | `joycon.android.library.compose` | `:core:buttonmapping:domain`, `:core:designsystem`, `:core:model` |
 | `:feature:<f>:domain` | `joycon.kotlin.jvm` | `:core:model` ² |
 | `:feature:<f>:data` | `joycon.android.library`¹ | `:feature:<f>:domain`, `:core:model` |
 | `:feature:<f>:presentation` | `joycon.android.library.compose` | `:feature:<f>:domain`, `:core:designsystem`, `:core:model` |
@@ -30,8 +33,9 @@ live in separate modules that share only domain.
 
 ¹ `assignment:data` is pure Kotlin (`joycon.kotlin.jvm`) — it has no Android dependencies.
 
-² `gamepad:domain` and `dsu:domain` also depend on `:core:emulatorconfig` for the one-tap
-emulator setup (shared ini editing + Dolphin paths). Each feature owns its own emulator-config
+² `gamepad:domain` and `dsu:domain` also depend on `:core:emulatorconfig` and
+`:core:buttonmapping:domain` for the one-tap emulator setup (shared ini editing, emulator paths, and
+the user's button mapping). Each feature owns its own emulator-config
 *generators* — gamepad mapping in `gamepad:domain`, DSU/motion mapping in `dsu:domain` — over that
 shared leaf; no feature depends on another feature.
 
@@ -64,11 +68,15 @@ app-specific lives in a feature's presentation, not here.
 cases. It's the one place that depends on more than one feature's domain, because assembling the
 app's `AppUiState` *is* the cross-feature concern (connection + assignment → player state).
 
-**`:core:emulatorconfig`** — emulator-agnostic primitives for the one-tap setup: `IniEditor`
-(read → splice → write of ini config text, leaving the user's other keys intact) and `DolphinPaths`
-(Dolphin's package + config-file locations, shared because both the gamepad and DSU features write
-to Dolphin). Holds *mechanism*, not feature logic — the per-emulator config generators live in
-their owning feature's `domain`. Depends on nothing of ours.
+**`:core:emulatorconfig`** — shared primitives for the one-tap setup: `IniEditor` (splices keys
+into ini text, leaving the user's others intact), `DolphinPaths` / `EdenPaths` (package and config
+locations), and `EdenControls` (the `[Controls]` vocabulary both features write). Shared because the
+gamepad and DSU features both write to Dolphin and Eden. Holds *mechanism*, not feature logic — the
+per-emulator config generators live in their owning feature's `domain`.
+
+**`:core:buttonmapping`** — the user-editable Joy-Con → emulator button mapping: the per-console
+defaults and mapping model (`domain`), their persistence (`data`), and the mapping editor
+(`presentation`). Both the gamepad and DSU config generators read it.
 
 ## Dependency rules
 
@@ -95,7 +103,7 @@ for a feature's domain + data, and `com.joegec.joycon2android.<feature>.presenta
 ViewModel + composables. A crowded package is split **by concern, not layer** into sub-packages
 within the same module — e.g. `gamepad` (relay output) / `gamepad.privileged` (shell access) /
 `gamepad.emulator` (emulator config), and `dsu` /
-`dsu.motion` / `dsu.dolphin`. Each module's `namespace` matches its package root so generated `R`
+`dsu.motion` / `dsu.emulator`. Each module's `namespace` matches its package root so generated `R`
 lands there. `:core:designsystem` solely owns `com.joegec.joycon2android.ui.components` / `ui.theme`
 (the shared design system); no feature adds to those.
 
@@ -120,8 +128,9 @@ One **ViewModel per feature**, each in its own presentation module, constructed 
 off `AppContainer`. This keeps the ViewModel class dependent only on its domain — never on
 `:app`.
 
-- `DsuViewModel` — DSU status + enable toggle.
-- `GamepadViewModel` — gamepad status + Shizuku availability.
+- `DsuViewModel` — DSU status, enable toggle, motion settings and emulator auto setup.
+- `GamepadViewModel` — gamepad status, Shizuku availability and emulator auto setup.
+- `ControllerMappingViewModel` (in `:core:buttonmapping:presentation`) — the button-mapping editor.
 - `Joycon2ViewModel` (in `:app`) — the app-level host: the coordinator's session `uiState`
   (genuinely cross-feature), BLE permissions, scan/assign/disconnect, and the service binding.
 
@@ -142,8 +151,8 @@ BLE notify ─→ Joycon2Manager (connection/data, ControllerRepository)
 ```
 
 The gamepad and DSU outputs ride a **synchronous per-packet path** off the coordinator's
-`onState` callback, not a conflated `StateFlow` — conflation would drop motion samples. See the
-DSU and UHID sections of the [README](../README.md#architecture) for the hardware-level detail.
+`onState` callback, not a conflated `StateFlow` — conflation would drop motion samples. The
+hardware-level detail is in [virtual-gamepad.md](virtual-gamepad.md) and [dsu-motion.md](dsu-motion.md).
 
 ## Build & test
 

@@ -157,7 +157,7 @@ Compose UI goes alongside it, built from `:core:designsystem` components.
 - **Split a crowded package by concern, not layer.** When one package accumulates unrelated
   clusters, give each its own sub-package — e.g. gamepad is `gamepad` (the relay output),
   `gamepad.privileged` (shell access), `gamepad.emulator`
-  (emulator config); dsu is `dsu` / `dsu.motion` / `dsu.dolphin`. Concern sub-packages live in the
+  (emulator config); dsu is `dsu` / `dsu.motion` / `dsu.emulator`. Concern sub-packages live in the
   same module, so this is free of build-graph changes.
 - **Strings & `R` are per-namespace.** A composable moved into a feature module needs its strings
   copied into that module's `res/values/strings.xml` and its `R` import set to the module's

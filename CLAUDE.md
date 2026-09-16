@@ -44,7 +44,8 @@
 - **Read [`docs/architecture.md`](docs/architecture.md) before changing structure**, and follow
   [`docs/adding-a-feature.md`](docs/adding-a-feature.md) when adding/changing a feature
 - Run `./gradlew :konsist:test` after moving classes between modules — it enforces layer placement
-- Read `README.md` for project context, BLE protocol reference, packet layout, and Android-specific gotchas
+- Read `README.md` for project context, and [`docs/`](docs/README.md) for the BLE protocol (`protocol.md`),
+  the virtual gamepad (`virtual-gamepad.md`) and DSU motion (`dsu-motion.md`)
 
 ## Conventions
 - Use `enableEdgeToEdge()` with `WindowInsets.systemBars` for edge-to-edge inset handling

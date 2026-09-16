@@ -1,127 +1,136 @@
 # Joycon2Android
 
-Use Nintendo Switch 2 **Joy-Con 2** controllers as system-wide gamepads on Android over BLE.
+[![Latest release](https://img.shields.io/github/v/release/JoeGeC/joycon2android)](../../releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/JoeGeC/joycon2android/total)](../../releases)
+[![Android 7.0+](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](#what-you-need)
+[![License: GPL-3.0](https://img.shields.io/github/license/JoeGeC/joycon2android)](LICENSE)
+[![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/joestechprojects)
 
-Joy-Con 2 controllers use BLE with a custom GATT service (not standard HID-over-GATT), so Android can't pair them through normal Bluetooth settings. This app connects over GATT, sends vendor init commands, parses raw notification packets, and creates virtual gamepad devices via UHID so any Android app can use them.
+Use Nintendo Switch 2 **Joy-Con 2** and **Pro Controllers** on Android — as gamepads in any app, and
+with motion in emulators.
+
+Android can't pair these controllers from its Bluetooth settings, because they use their own BLE
+protocol rather than standard HID. Joycon2Android connects to them itself and presents each player
+as an ordinary gamepad.
 
 ## Features
 
-- Connect multiple Joy-Con 2 controllers simultaneously, plus the Switch 2 Pro Controller (including its GL/GR back paddles)
-- Assign controllers to up to 8 players (left, right, or paired); DSU motion and emulator auto-setup cover players 1–4
-- **Virtual gamepad output** — each assigned player becomes its own standard HID gamepad, so apps see one controller per player
-- **DSU motion server** — gyro/accel + full pad state for emulators (Dolphin, Cemu, …) over UDP, up to 4 independent players, with automatic gyro bias calibration
-- **One-tap emulator setup** — writes an emulator's controller config to match the current assignment: Eden (stable or Nightly) or Dolphin GameCube bindings for the virtual gamepad, plus Dolphin's DSU + Wii Remote motion mappings
-- **Customizable button mapping** — a per-console editor (GameCube / Joy-Cons / Wii Remote & Nunchuk) overrides the default Joy-Con → emulator bindings the setup writes
-- Dual Joy-Con layout when both L+R assigned to one player
-- Sideways single Joy-Con layout with rotated inputs (stick, d-pad, face buttons)
-- Live display of buttons, sticks, IMU (accelerometer + gyroscope), and battery
+- **Joy-Con 2 and Switch 2 Pro Controller** — connect several at once, GL/GR paddles included.
+- **Up to 8 players** — each with a sideways Joy-Con, a pair, or a Pro Controller.
+- **A gamepad per player** — every app sees one standard controller per player, so multiplayer just
+  works.
+- **Motion for emulators** — a DSU (cemuhook) server streams gyro, accelerometer, buttons and sticks
+  for players 1–4.
+- **One-tap emulator setup** — writes controller and motion bindings for Eden and Dolphin.
+- **Custom button mapping** — choose which button drives which emulator button, per console.
+- **Live readout** of buttons, sticks, motion and battery, with each card in the controller's real
+  shell colour.
 
-## Roadmap
+## Setup guide
 
-Planned, in progress, and completed work lives on the [**project board**](https://github.com/users/JoeGeC/projects/2).
+### What you need
 
-Every card is a [GitHub issue](https://github.com/JoeGeC/joycon2android/issues), so you can subscribe
-to anything you care about and get notified when it moves or ships. Filter the board by `area:` label
-to see just the parts you use — BLE, DSU motion, emulator setup, button mapping, and so on.
+- Android 7.0 (API 24) or newer, with Bluetooth LE
+- Joy-Con 2 or a Switch 2 Pro Controller
+- [Shizuku](https://shizuku.rikka.app/), for the virtual gamepad and emulator auto setup — DSU motion
+  works without it
 
-Found a bug or want something added? [Open an issue](https://github.com/JoeGeC/joycon2android/issues/new/choose).
+> [!IMPORTANT]
+> Press **SYNC** every time you connect. Only a Switch 2 can wake a controller back up from a button
+> press ([why](docs/protocol.md#why-sync-is-needed-every-time)).
 
-## Setup Guide
+### 1. Install
 
-### Prerequisites
+1. Download the APK from the [latest release](../../releases/latest) and install it. Allow
+   **Nearby devices** when asked.
+2. Install Shizuku from [Google Play](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api)
+   or [GitHub](https://github.com/RikkaApps/Shizuku/releases), and start it:
+   - **Wireless debugging** (no root, recommended): Developer options → Wireless debugging, then
+     pair from Shizuku's notification.
+   - **ADB:** `adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh`
+   - **Root:** tap Start.
 
-- Android device running API 24+ with BLE support
-- [Shizuku](https://shizuku.rikka.app/) installed and running — the privileged path for the virtual gamepad and emulator config
-- Joy-Con 2 controller(s) or a Switch 2 Pro Controller
+### 2. Connect
 
-### Step 1: Install Shizuku
+1. Hold **SYNC** on the controller and tap **Scan**.
+2. Assign each controller to a player — from the app, or with the Switch combos: **L** on one Joy-Con
+   and **R** on another for a pair, **SL + SR** for a sideways Joy-Con, **L + R** on a Pro Controller.
 
-1. Install Shizuku from [Google Play](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api) or [GitHub](https://github.com/RikkaApps/Shizuku/releases)
-2. Open Shizuku and start it using one of:
-   - **Wireless debugging (recommended, no root):** Enable Developer Options → Wireless Debugging → pair Shizuku via the notification shade pairing method
-   - **ADB:** Run `adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh` from a computer
-   - **Root:** Tap "Start" in Shizuku (if rooted)
-3. Verify Shizuku shows "Running" with a green status
+### 3. Turn on the virtual gamepad
 
-### Step 2: Install Joycon2Android
+Turn on **Virtual Gamepad** and grant Shizuku permission the first time. Each player appears to every
+app as its own controller, `Joy-Con Virtual Gamepad <N>`. The app stays connected in the background
+while its notification is showing.
 
-Install the APK from the [latest release](https://github.com/JoeGeC/joycon2android/releases) or build from source. Grant Bluetooth permissions when prompted.
+### 4. Motion for emulators (optional)
 
-### Step 3: Connect Controllers
+A gamepad has no motion channel, so for gyro aiming turn on **DSU Motion Server**. Emulators on the
+same device connect to `127.0.0.1:26760`.
 
-1. Put your Joy-Con 2 into pairing mode by pressing the SYNC button
-2. Tap "Scan" in the app — the controller should appear within a few seconds
-3. Once connected, assign it to a player slot (P1–P8)
+- Players 1–4 get motion. A pair streams from its right Joy-Con, and its left one too when a slot is
+  free.
+- Rest each controller for ~2 s at the start; the gyro recalibrates whenever it's still.
+- **Motion settings** on the DSU card has two options: **Ignore this device's motion in Eden** (on by
+  default, needs Shizuku), and **Faster motion updates** for smoother aiming at a battery cost.
 
-### Step 4: Enable Virtual Gamepad
+> [!TIP]
+> DSU and the virtual gamepad are independent. With both on, an emulator sees each controller twice —
+> map from one, and turn the gamepad off while mapping DSU inputs so detection doesn't grab it.
 
-1. With at least one controller assigned, toggle the **Gamepad** switch
-2. Grant Shizuku permission when prompted (first time only)
-3. Each assigned player appears as its **own** input device named `Joy-Con Virtual Gamepad <N>`
+### 5. Set up your emulator
 
-Every assigned player becomes a separate standard gamepad — P1, P2, … are distinct devices, so
-multiplayer "just works" and emulators can map each to a different port. Any app that supports
-gamepads (games, emulators, etc.) sees them. The app runs a foreground service to keep the
-connection alive in the background.
+Both cards have **Emulator auto setup**: pick an emulator, tap **Set up**, and restart the emulator.
 
-**Emulator controller mapping:** with the gamepad on, the Gamepad card shows a picker of the
-installed emulators it can configure (currently **Eden** — stable and Nightly — and
-**Dolphin (GameCube)**). Pick one and
-tap **Set up controller mapping** — it writes that emulator's controller config to match the
-current assignment (Eden's `config.ini`, or Dolphin's `GCPadNew.ini` + a Standard Controller on
-each GameCube port), then prompts you to restart the emulator. The config icon next to the button
-opens a per-console editor to customize which Joy-Con button maps to which emulator button; the
-defaults are the layouts described in
-[Emulator controller mapping](#emulator-controller-mapping). A single Joy-Con is set up as a Pro
-Controller held sideways, so its buttons/stick work in every game (see
-[Emulator controller mapping](#emulator-controller-mapping) for why). It needs the privileged path
-connected; if the write fails (some OEM builds block writing into another app's `Android/data`),
-map the controller manually in the emulator instead.
+| Card | Emulators | What it writes |
+|---|---|---|
+| Virtual Gamepad | Eden, Eden Nightly, Dolphin (GameCube) | buttons and sticks |
+| DSU Motion Server | Eden, Eden Nightly, Dolphin (Wii) | buttons, sticks and motion |
 
-### Step 5 (optional): DSU Motion Server for emulators
+The gamepad button beside **Set up** opens the mapping editor. A single Joy-Con is set up as a Pro
+Controller held sideways, so every button works in every game
+([why](docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers)).
 
-The virtual gamepad can't carry motion (HID gamepads have no motion channel). For gyro
-aiming in emulators, enable the DSU ([cemuhook](https://v1993.github.io/cemuhook-protocol/))
-server — UDP port 26760, no Shizuku needed.
+> [!NOTE]
+> Auto setup needs Shizuku, and some devices block writing into another app's `Android/data` — use
+> [manual setup](#manual-setup) if it fails. Emulators rewrite their config when they exit, so let the
+> app close an open one first. Run **Set up** again after changing players or updating the app.
 
-1. Assign controllers to players. Player N streams on DSU slot N−1 (P1–P4 only).
-   A Joy-Con pair streams motion from its **right** Joy-Con.
-2. Toggle **DSU Motion Server** in the app.
-3. Point the emulator's DSU/cemuhook input source at the address the app shows
-   (`127.0.0.1:26760`) — the server serves emulators running on this phone.
-4. Rest each controller on a surface for ~2 s — the server learns the gyro's resting bias
-   and re-learns it automatically whenever the controller is still.
+### Manual setup
 
-DSU and the Virtual Gamepad are independent — enable either or both. With both on, an
-emulator sees the controller twice (system gamepad + DSU device); map inputs from one,
-and turn the Virtual Gamepad off while mapping so input detection doesn't grab it.
+The DSU server binds each player to slot N−1. Press-to-detect in Android emulators never sees DSU
+inputs, so pick them from the input list instead.
 
-SL, SR and C are not streamed — DSU carries exactly the DS4 button set and every bit is
-taken. Exception: a solo sideways Joy-Con's SL/SR arrive as its shoulder buttons.
+<details>
+<summary><b>DSU input names</b></summary>
 
-#### DSU input names (DS4 conventions)
+DSU uses DS4 names. SL, SR and C aren't streamed, except that a sideways Joy-Con's SL/SR arrive as its
+shoulder buttons.
 
-| Joy-Con | DSU name | Joy-Con | DSU name |
+| Button | DSU name | Button | DSU name |
 |---|---|---|---|
 | A | `Circle` | B | `Cross` |
 | X | `Triangle` | Y | `Square` |
 | L / R | `L1` / `R1` | ZL / ZR | `L2` / `R2` |
 | − / + | `Share` / `Options` | LS / RS | `L3` / `R3` |
 | Home | `PS` | Camera | `Touch` |
-| D-Pad | `Pad N/S/E/W` | Sticks | `Left X±/Y±`, `Right X±/Y±` |
+| D-pad | `Pad N/S/E/W` | Sticks | `Left X±/Y±`, `Right X±/Y±` |
 
-#### Dolphin setup
+</details>
 
-**Automatic:** with DSU on, the DSU card's **Set up Dolphin and Wiimote mapping** button writes
-both `DSUClient.ini` (the server entry) and `WiimoteNew.ini` (per-player Wii Remote mappings, the
-accelerometer/gyro motion input, and the Swing translation) to match the current assignment, then
-prompts you to restart Dolphin. It needs Shizuku connected; if the write fails
-(some OEM builds block writing into another app's `Android/data`), fall back to the manual steps.
+<details>
+<summary><b>Eden</b></summary>
 
-**Manual** (no DSU settings UI — configure by file):
+1. In Eden's controller settings, turn on motion and the UDP controller, and add `127.0.0.1:26760` as a
+   server.
+2. Point each player's buttons, sticks and motion at the UDP controller. A pair has two motion inputs:
+   the second reads the left Joy-Con's own slot.
 
-1. Create `Config/DSUClient.ini` inside Dolphin's user folder
-   (`Android/data/org.dolphinemu.dolphinemu/files/`, containing exactly:
+</details>
+
+<details>
+<summary><b>Dolphin (Wii)</b></summary>
+
+1. Create `Android/data/org.dolphinemu.dolphinemu/files/Config/DSUClient.ini` containing exactly:
 
    ```ini
    [Server]
@@ -129,465 +138,93 @@ prompts you to restart Dolphin. It needs Shizuku connected; if the write fails
    Entries = Joycon2:127.0.0.1:26760;
    ```
 
-2. Restart Dolphin and open Wii Remote N → Emulated. A `DSUClient/<slot>/Joycon2` device
-   appears per assigned player. Dolphin starts its DSU client lazily — open an
-   input-mapping screen or a game first.
-3. **Map every input manually** (long-press a control → Advanced Mapping → pick from the
-   input list). Dolphin Android's press-to-detect only sees Android input devices, never
-   DSU; motion inputs are not auto-detectable on any platform.
-4. Under Motion Input, map all Accelerometer and Gyroscope entries name-to-name, and map
-   **Recenter** — gyro pointing drifts, so pressing Recenter in-game while aiming at the
-   screen centre is what summons the pointer. A solo Joy-Con streams in its sideways grip, so turn it back
-   into the remote's body instead — left Joy-Con: Accelerometer Left/Right/Forward/Backward ←
-   `Accel Backward`/`Accel Forward`/`Accel Left`/`Accel Right`, Gyroscope Pitch Up/Down ←
-   `Gyro Roll Right`/`Gyro Roll Left`, Roll Left/Right ← `Gyro Pitch Up`/`Gyro Pitch Down`; right
-   Joy-Con: Accelerometer Left/Right/Forward/Backward ← `Accel Forward`/`Accel Backward`/
-   `Accel Right`/`Accel Left`, Pitch Up/Down ← `Gyro Roll Left`/`Gyro Roll Right`, Roll Left/Right
-   ← `Gyro Pitch Down`/`Gyro Pitch Up`. Up/Down and Yaw stay name-to-name.
-5. Under Swing, map **Forward** to
-   ``(`Accel Forward` - `Accel Backward`) - smooth((`Accel Forward` - `Accel Backward`), 0.03)``
-   and set its **Range** to 7%. That is for a pair, with the right Joy-Con held like a Wii
-   Remote; a solo sideways Joy-Con thrusts out through its button face, so swap in `Accel Up`
-   and `Accel Down`. Dolphin only moves the emulated remote through Swing, and a game that reads
-   a thrust as distance to the sensor bar — Wii Play Billiards charges cue strength that way —
-   sees nothing from accelerometer and gyro alone. Pairing each input with its opposite makes the
-   value signed; subtracting the slew-limited copy high-passes it, so a tilted grip's gravity is
-   not read as a thrust held forever. The inputs arrive at 9.8 per g, so at full range the
-   lightest twitch would saturate the swing.
-6. A pair only: under Nunchuk → Motion Input, map the accelerometer to the second hand's
-   own slot — ``Nunchuk/IMUAccelerometer/Up = `DSUClient/<slot>/Joycon2:Accel Up` `` and so
-   on. The slot is the highest one no player occupies (3 with a single player). Dolphin
-   splits a control on its last colon, so `<device>:<input>` reads another pad; without it
-   the Nunchuk reports a hand that never moves, and two-handed games (Wii Sports boxing)
-   see nothing from the left Joy-Con. A real Nunchuk has no gyroscope, so there is none to map.
-7. Solo horizontal Joy-Con: enable "Sideways Wii Remote".
+2. Restart Dolphin and open **Wii Remote N → Emulated**. A `DSUClient/<slot>/Joycon2` device appears
+   once Dolphin's DSU client starts — open a mapping screen or a game first.
+3. Map buttons from the input list (long-press → Advanced Mapping).
+4. Under **Motion Input**, map the accelerometer and gyroscope, and map **Recenter** — press it while
+   aiming at the screen centre to bring the pointer back. A pair maps name-to-name; a single Joy-Con
+   streams in its sideways grip, so map it back to the remote's body:
 
-### Troubleshooting
+   | Dolphin input | Pair | Left Joy-Con | Right Joy-Con |
+   |---|---|---|---|
+   | Accelerometer Up / Down | `Accel Up` / `Down` | same | same |
+   | Accelerometer Left / Right | `Accel Left` / `Right` | `Accel Backward` / `Forward` | `Accel Forward` / `Backward` |
+   | Accelerometer Forward / Backward | `Accel Forward` / `Backward` | `Accel Left` / `Right` | `Accel Right` / `Left` |
+   | Gyroscope Pitch Up / Down | `Gyro Pitch Up` / `Down` | `Gyro Roll Right` / `Left` | `Gyro Roll Left` / `Right` |
+   | Gyroscope Roll Left / Right | `Gyro Roll Left` / `Right` | `Gyro Pitch Up` / `Down` | `Gyro Pitch Down` / `Up` |
+   | Gyroscope Yaw Left / Right | `Gyro Yaw Left` / `Right` | same | same |
 
-| Issue | Fix |
+5. Under **Swing**, set **Forward** to
+   ``(`Accel Forward` - `Accel Backward`) - smooth((`Accel Forward` - `Accel Backward`), 0.03)``,
+   **Range** to 7% and **Dead Zone** to 20%. For a single Joy-Con, use `Accel Up` and `Accel Down`.
+   This lets thrusts reach games like Wii Play Billiards ([why](docs/dsu-motion.md#dolphin-wii-remote-mapping)).
+6. **Pair only:** under **Nunchuk → Motion Input**, map each accelerometer entry to the left Joy-Con's
+   slot, e.g. `` `DSUClient/3/Joycon2:Accel Up` `` — the highest slot no player uses (3 with one
+   player).
+
+> [!WARNING]
+> Leave Dolphin's **Sideways Wii Remote** off with this mapping — it rotates motion a second time.
+
+</details>
+
+## Troubleshooting
+
+| Problem | Fix |
 |---|---|
-| "Shizuku is not running" | Open Shizuku app and start the service |
-| "Shizuku permission denied" | Open Shizuku → Apps → grant permission to Joycon2Android |
-| Controller not found during scan | Press SYNC again; move closer to device |
-| Gamepad not appearing in games | Check `adb shell getevent -p` for "Joy-Con Virtual Gamepad" |
-| Controller stops responding | Press SYNC to reset, then reconnect |
-| No DSUClient device in the emulator | Check the ini, restart the emulator, open a mapping screen; `adb logcat -s DsuServer` shows whether requests arrive |
-| Emulator doesn't detect DSU button presses | Map manually — detection never sees DSU devices; turn the Virtual Gamepad off while mapping |
-| Motion aiming stutters while the stick is smooth | DSU card → Motion settings: keep **Ignore this device's motion in Eden** on (needs Shizuku), and try **Faster motion updates** |
-| Tilting the phone/handheld moves the aim in Eden | Eden is reading the device's own gyro — turn on **Ignore this device's motion in Eden** |
-| Pointer drifts or starts off-screen | Rest the controller ~2 s to recalibrate, then press Recenter |
-| MotionPlus game replays its tutorial video every boot | Nothing to do with the DSU mapping — MotionPlus is attached by default. The game records "video seen" as `MPLS.MOVIE` in Dolphin's `Wii/shared2/sys/SYSCONF`, but `SysConf::~SysConf` writes back the entry list Dolphin loaded at launch, dropping anything the game appended. Set the flag with Dolphin **closed** so the next launch loads it |
-
----
-
-## Architecture
-
-```
-BLE notify ─→ Joycon2Manager ─→ SessionCoordinator ─→ AppUiState ─→ Compose UI
-                                       ├──→ UHID relay ─→ /dev/uhid ─→ Android input system
-                                       └──→ DSU server ─→ UDP :26760 ─→ emulators (cemuhook)
-```
-
-Single-activity Compose app, built as a **Gradle multi-module** project split by **feature ×
-layer**. Each feature (`connection`, `assignment`, `gamepad`, `dsu`) has `domain` / `data` /
-`presentation` modules, over shared `:core` modules and a thin `:app` composition root. The
-split enforces the dependency rules at compile time — a ViewModel can't reach a repository
-implementation, because presentation and data are separate modules sharing only domain.
-
-State flows from BLE notifications through `Joycon2Manager` into the `SessionCoordinator`, which
-combines connections and player assignments into an immutable `AppUiState` for the UI, and feeds
-the same state to the gamepad and DSU outputs on a synchronous per-packet path.
-
-**For contributors:** [`docs/architecture.md`](docs/architecture.md) is the living reference
-(module graph, layers, dependency rules, composition root). [`docs/adding-a-feature.md`](docs/adding-a-feature.md)
-is the recipe for adding or changing one. The sections below cover the hardware-level detail
-those docs link back to.
-
-### Virtual Gamepad (UHID)
-
-The app creates system-wide virtual gamepads using Linux's UHID (User-space HID) interface:
-
-1. **`uhid_relay.c`** — A small native binary that opens `/dev/uhid` and writes UHID events using `write()`. Runs as a shell-uid process (`u:r:shell:s0` SELinux context, which has `/dev/uhid` access).
-
-2. **`UhidRelay.kt`** — Launches the relay binary through a `PrivilegedShell`, sends a UHID_CREATE2 event (4380-byte struct with HID report descriptor), then streams UHID_INPUT2 events through the stdin pipe. `PrivilegedAccess` supplies that shell via Shizuku's `IShizukuService.newProcess()`, so neither the relay nor the rest of the app cares how the privilege was granted.
-
-3. **`ReportMapper.kt`** — Converts `PlayerState` into a 14-byte HID input report: 15 buttons + hat switch + 2x 16-bit sticks + 2x 8-bit triggers + 2 overflow buttons.
-
-4. **`GamepadManager.kt`** — Manages per-player relay instances and collects from `StateFlow<PlayerState>` to drive reports at input rate.
-
-One UHID device is created **per assigned player**, not one shared pad — each is its own
-`/dev/uhid` node named `Joy-Con Virtual Gamepad <N>` (N = player number), so Android exposes them
-as independent input devices and apps see a separate gamepad per player. Note that the device
-*name* carries the player number, but Android assigns each device an `InputDevice` id by
-enumeration order, not by player number — so P4 alongside P1 and P2 (no P3) is the 3rd pad,
-`Android/3/Joy-Con Virtual Gamepad 4`.
-(This is why `DolphinGcpadConfig` keys its `Device = Android/<id>/…` line on enumeration rank while
-the section/port stays on the player number.)
-
-The virtual device uses BUS_USB with generic vendor/product IDs (0x1234:0x5678) to ensure the kernel's `hid-generic` driver binds it (Nintendo VID/PID causes the `hid-nintendo` driver to claim and reject the device).
-
-### Emulator controller mapping
-
-The virtual gamepad is a generic HID pad, but each emulator still needs its controller bindings
-pointed at it. With the gamepad on, the Gamepad card's emulator picker writes the selected
-emulator's config to match the assignment. The generators live in `:feature:gamepad:domain`
-(`EdenGamepadConfig`, `DolphinGcpadConfig`) over shared primitives in `:core:emulatorconfig`
-(`IniEditor`, `DolphinPaths`); the Joy-Con → emulator-button tables they write are user-editable
-per console via `:core:buttonmapping`, with the defaults described below. Three things make this non-obvious — all confirmed against Eden's
-source and on-device behaviour:
-
-**1. Which HID button a Joy-Con button takes is not free.** Linux maps HID `Button n` in a Game Pad
-collection to `BTN_GAMEPAD + n - 1` — `BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z, BTN_TL…` — and
-Android's key layout names that fixed sequence. `ReportMapper` therefore assigns each Joy-Con button
-the *bit* whose keycode carries its own name, so nothing downstream deals in a shift:
-
-| Joy-Con | Bit | Keycode | Joy-Con | Bit | Keycode |
-|---|---|---|---|---|---|
-| A | 0 | 96 `BUTTON_A` | ZL | 8 | 104 `BUTTON_L2` |
-| B | 1 | 97 `BUTTON_B` | ZR | 9 | 105 `BUTTON_R2` |
-| Camera | 2 | 98 `BUTTON_C` | − | 10 | 109 `BUTTON_SELECT` |
-| X | 3 | 99 `BUTTON_X` | + | 11 | 108 `BUTTON_START` |
-| Y | 4 | 100 `BUTTON_Y` | Home | 12 | 110 `BUTTON_MODE` |
-| GL | 5 | 101 `BUTTON_Z` | LS | 13 | 106 `BUTTON_THUMBL` |
-| L | 6 | 102 `BUTTON_L1` | RS | 14 | 107 `BUTTON_THUMBR` |
-| R | 7 | 103 `BUTTON_R1` | | | |
-
-Camera and GL take `BUTTON_C`/`BUTTON_Z`, the two slots with no Switch equivalent. **GR and C sit
-outside the gamepad collection**: 15 buttons is all one such collection can carry — a 16th lands on
-`0x13F`, which no key layout names, so it would reach no app — and the Switch 2 controllers have 17.
-A trailing vendor-defined collection takes the overflow, because Linux falls back to
-`BTN_MISC + n - 1` for a Button usage whose application is neither pointer, joystick nor gamepad, and
-every key layout names that range `BUTTON_1..BUTTON_16`: GR is **188** and C is **189**. Firmware that
-re-publishes a pad under its own identity (see *Device identity*) forwards only the keys it knows, so
-those two can be dropped for the affected player.
-
-The **triggers are Brake (left) and Accelerator (right)**, never the reverse: Android aliases
-`AXIS_LTRIGGER` to `AXIS_BRAKE` and `AXIS_RTRIGGER` to `AXIS_GAS`, and re-publishing firmware
-synthesises its own `L2`/`R2` buttons from those axes — inverted, a ZR pull arrives as an L2 press
-and collides with whatever really owns that keycode.
-
-D-pad rides the HID hat (Android `AXIS_HAT_X` = 15, `AXIS_HAT_Y` = 16); the sticks are axes
-0/1 (left) and 11/14 (right). Eden's config uses the numeric keycodes; Dolphin's uses the equivalent
-control *names* (`Button L2` = ZL, `Select` = −, …).
-
-**2. Eden does not translate a sideways single Joy-Con.** For a `JoyconLeft` / `JoyconRight` npad,
-Eden masks the raw button bits straight into shared memory and only sets an `is_horizontal` flag —
-it never rotates the D-pad into A/B/X/Y. On real hardware that rotation is done by the game's own
-statically-linked `nn::hid` library; Eden has no equivalent, so a sideways Joy-Con's directions
-reach the game as a plain D-pad. Eden also **masks an npad by type**: a `JoyconLeft` exposes only
-D-pad / L / ZL / − / StickL / SL / SR (it has *no* A/B/X/Y), and a `JoyconRight` only
-A/B/X/Y / R / ZR / + / StickR / SL / SR (no D-pad, no left stick).
-
-**3. So single Joy-Cons are configured as Pro Controllers,** with the sideways rotation done in our
-config rather than left to the emulator: the lone stick → left stick, and the four-button cluster →
-A/B/X/Y (the left Joy-Con's D-pad rotated 90° CCW, the right Joy-Con's diamond 90° CW). This costs
-the authentic single-Joy-Con icon but makes every input work in every game. Dolphin emulates
-GameCube (no sideways concept), so `DolphinGcpadConfig` applies the same pre-rotation, keyed on
-whatever the relay emits per layout.
-
-`SidewaysMapper` rotates that cluster onto the relay's *real* face buttons, never onto the HID hat.
-A sideways Joy-Con has no D-pad, so a pad reporting its cluster as hat directions would have no
-A/B/X/Y at all — and anything that binds a hat axis without its sign (Eden's press-to-detect
-mapping does exactly this) cannot then tell Left from Right or Up from Down.
-
-The rail buttons are the shoulder pair in that grip, as they are on a real Switch, so SL/SR default
-to L/R. `SidewaysMapper` puts them on the shoulders the body *lacks* — a left Joy-Con's SL/SR report
-as R1/R2 because its own L/ZL already hold the left pair, and a right Joy-Con's as L1/L2 — which is
-why a single Joy-Con's `button_l` is not keycode 102 on both bodies. ZL/ZR get no default: the body's
-own shoulders point away from the player when held sideways, so there is nothing honest to put there.
-
-**Device identity.** An emulator addresses a pad by `port` — the device's enumeration rank, not the
-player number (the same rank Dolphin's `Android/<id>/…` uses above) — plus, for Eden, a `guid`
-built from the device's vendor/product ids. Both are read from the live input-device list per
-regenerate, never derived: handheld firmware may re-publish an external gamepad under the built-in
-controller's vendor/product (AYN's Odin/Thor line does), so the 0x1234:0x5678 our uhid device was
-created with is not necessarily what reaches the emulator, and a binding whose guid doesn't match
-is silently ignored. Each regenerate also clears that player's prior keys first, so a layout or
-port change can't leave a stale binding cross-firing onto another player's port.
-
-### DSU Motion Server
-
-`DsuServer` is a cemuhook UDP server (port 26760, bound to IPv4 `127.0.0.1`). Pad batches
-ride a buffered channel off the BLE state path — StateFlow conflation would drop motion
-samples. Collaborators:
-
-- **`DsuPacketEncoder`** — the 100-byte pad packets (and version/port-info responses),
-  written into a reused buffer once per Joy-Con report. The report rate is the BLE connection
-  interval: Android's default balanced priority can settle on 30 ms (~33 Hz, measured on an AYN
-  Thor), which reads as stuttery motion at 60 fps. **Faster motion updates** (DSU card → Motion
-  settings, off by default) requests `CONNECTION_PRIORITY_HIGH` while DSU runs — 15 ms (~67 Hz)
-  on the same Thor — at the cost of battery on both ends.
-- **`DsuMotionPolicy`** (`:app`) — applies the motion settings only while DSU runs. Eden's
-  Android build feeds the device's own gyro and accelerometer into Player 1 on top of any mapped
-  motion, and games that open the controller applet (Splatoon 2) put Player 1 back, so moving the
-  pad to another player does not escape it. **Ignore this device's motion in Eden** (on by
-  default) marks Eden's uid idle with `cmd sensorservice set-uid-state` through Shizuku, which
-  withholds continuous sensors from it. The override lives in system_server until reset or
-  reboot, so it is lifted when DSU stops and again at launch, in case the process was killed.
-- **`MotionConverter`** — raw Joy-Con IMU frame → cemuhook's DS4 frame. Axes, signs, and
-  scale factors were verified on hardware against Dolphin's Wii pointer; see the class
-  docs for the measured frames and `tools/README.md` for the calibration workflow.
-- **`SidewaysMotion`** — turns a lone Joy-Con's IMU 90° into its sideways grip, matching its
-  already-rotated buttons and stick. The direction was measured in Eden (Mario Kart 8) and is the
-  opposite of the stick's turn. Eden presents a solo Joy-Con as a Pro
-  Controller, so without it tilting read as if the Joy-Con's nose pointed at the screen. Dolphin's
-  emulated remote *is* the Joy-Con's body, so `DolphinWiimoteConfig` maps those inputs back.
-  A pair's second hand keeps its body frame even though it streams alone.
-- **`GyroCalibrator`** — learns each controller's gyro bias whenever it rests and
-  subtracts it, mirroring the Switch's own runtime recalibration.
-- **`DsuSlots`** — maps players onto the four slots. A pad packet carries one IMU, so a
-  player holding two Joy-Cons streams the second hand on a slot of its own, which is how
-  Dolphin's Nunchuk accelerometer gets data; players always win the slot their number
-  gives them, and pairs take what is left.
-- **`DsuClientRegistry`** — routes each slot's packets only to that slot's subscribers.
-  This matters: DSU clients (Dolphin included) overwrite their pad state with every
-  received packet without checking the slot, so server-side routing is what keeps
-  multiple players independent.
-
-Debug DSU clients for wire inspection and IMU calibration live in `tools/`.
-
-## Requirements
-
-- Android API 24+ (minSdk 24, targetSdk 36)
-- BLE-capable device
-- Joy-Con 2 controller(s) in pairing mode (press SYNC)
-- Shizuku running — the privileged path for the virtual gamepad
-
-### Permissions
-
-```xml
-<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
-<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
-<uses-permission android:name="android.permission.WAKE_LOCK" />
-<uses-permission android:name="android.permission.INTERNET" /> <!-- DSU UDP server -->
-```
-
----
-
-## BLE Protocol Reference
-
-All values extracted from the confirmed-working macOS implementation
-([Joycon2forMac](https://github.com/seitanmen/Joycon2forMac)'s `Joycon2BLEReceiver.mm`).
-Where this disagrees with community READMEs, trust this file.
-
-### Identifiers
-
-| Thing | Value |
-|---|---|
-| Manufacturer ID (advertising) | `0x0553` (Nintendo) |
-| Input service | `ab7de9be-89fe-49ad-828f-118f09df7fd0` |
-| Notify characteristic (input packets) | `ab7de9be-89fe-49ad-828f-118f09df7fd2` |
-| Write characteristic (commands) | `649d4ac9-8eb7-4e6c-af44-1ea54fe5f005` |
-| CCCD descriptor | `0x2902` |
-
-The write characteristic is **WRITE WITHOUT RESPONSE**. Writing to the wrong characteristic (`...fdf`) produces an enabled subscription but no data.
-
-### Advertising
-
-Joy-Con 2 advertisements carry manufacturer data for ID `0x0553`. Bytes `[5..6]` hold the
-little-endian product ID that identifies the controller type. Bytes `[10..15]` hold the
-**bonded host's MAC address**: a button press wakes a synced controller into a short-lived
-reconnect advertisement carrying that address, while holding SYNC (pairing mode) zeroes the
-field. The scanner only accepts controllers with a zeroed host field — otherwise every stray
-button press on a nearby synced Joy-Con would flash in and out of the device list.
-
-```
-pairing:  01 00 03 7E 05 66 20 00 01 00 [00 00 00 00 00 00] 0F ...
-wake:     01 00 03 7E 05 66 20 00 01 00 [09 A7 9A 55 E2 98] 0F ...   <- host MAC
-```
-
-**Reconnect-on-button-press is console-exclusive** (investigated 2026-06): during a wake
-advertisement the Joy-Con refuses GATT connections from anyone but its bonded host
-(immediate status 133). Standard SMP bonding is rejected (the controller drops the
-connection, status 22). The console pairs at the application layer instead — report
-`0x15` cmd `0x01` "PairingSetAddress" exists, but a lone SetAddress write doesn't change
-the stored host (the reply just echoes the controller's own MAC), and the rest of the
-handshake (cmds `0x02`–`0x04`, presumably the LTK exchange backing the `ConsoleMacA/B` /
-`LtkA/B` SPI slots) is undocumented. Even with it documented, reconnect likely requires
-link-layer encryption with that LTK, which Android's BLE API cannot inject. Hence: SYNC
-is required for every (re)connection.
-
-### Connection Sequence
-
-```
-connectGatt(TRANSPORT_LE)
- └ onConnectionStateChange(CONNECTED)
-     └ requestMtu(247)
-         └ onMtuChanged
-             └ discoverServices()
-                 └ onServicesDiscovered
-                     ├ find write char 649D4AC9..., notify char ...FD2
-                     ├ enqueue: write CCCD(...FD2) = ENABLE_NOTIFICATION
-                     ├ enqueue: write cmd1 to 649D4AC9... (NO_RESPONSE)
-                     └ enqueue: write cmd2 to 649D4AC9... (NO_RESPONSE)
- └ onCharacteristicChanged(...FD2) → parse 63 bytes → emit input
-```
-
-Init commands (12 bytes each, written without response, 500ms gap between):
-
-```
-Command 1 (buttons/standard):  0C 91 01 02 00 04 00 00 FF 00 00 00
-Command 2 (IMU/extended):      0C 91 01 04 00 04 00 00 FF 00 00 00
-```
-
-### Packet Layout (63 bytes, little-endian)
-
-| Field | Offset | Type | Notes |
-|---|---|---|---|
-| PacketID | 0x00 | uint24 | sequence counter |
-| Buttons | 0x03 | uint32 | bitmap (see below) |
-| Left Stick | 0x0A | 3 bytes | 12-bit X = val & 0xFFF, Y = (val>>12) & 0xFFF |
-| Right Stick | 0x0D | 3 bytes | same packing |
-| Mouse X/Y | 0x10-0x13 | int16 x2 | |
-| Mouse Unk | 0x14 | int16 | |
-| Mouse Distance | 0x16 | int16 | |
-| Mag X/Y/Z | 0x18-0x1D | int16 x3 | |
-| Battery Voltage | 0x1F | uint16 | volts = raw / 1000 |
-| Battery Current | 0x28 | int16 | mA = raw / 100 |
-| Temperature | 0x2E | int16 | C = 25 + raw/127 |
-| Accel X/Y/Z | 0x30-0x35 | int16 x3 | 4096 = 1G |
-| Gyro X/Y/Z | 0x36-0x3B | int16 x3 | 48000 = 360 deg/s |
-| Trigger L | 0x3C | uint8 | analog |
-| Trigger R | 0x3D | uint8 | analog |
-
-### Button Bitmask (uint32 at offset 0x03)
-
-```
-0x80000000 ZL          0x40000000 L           0x00010000 - (Select)
-0x00080000 LS          0x01000000 Dpad Down   0x02000000 Dpad Up
-0x04000000 Dpad Right  0x08000000 Dpad Left   0x00200000 Camera
-0x10000000 SR (L)      0x20000000 SL (L)      0x00100000 Home
-0x00400000 Chat        0x00020000 + (Start)   0x00001000 SR (R)
-0x00002000 SL (R)      0x00004000 R           0x00008000 ZR
-0x00040000 RS          0x00000100 Y           0x00000200 X
-0x00000400 B           0x00000800 A
-```
-
-The Pro Controller's two back paddles live in the next byte (uint8 at offset 0x07):
-
-```
-0x01 GR                0x02 GL
-```
-
-### Per-Controller Notes
-
-Each controller is an independent BLE peripheral with its own connection and notification stream.
-Type detection reads the product ID in the pairing advertisement's manufacturer data (see
-[Advertising](#advertising)): `0x2067` = Left Joy-Con 2, `0x2066` = Right Joy-Con 2,
-`0x2069` = Switch 2 Pro Controller. The pairing advertisement carries no local name, so this is
-the only type signal available before input starts streaming.
-
-Left Joy-Con's right-stick bytes are garbage (ignored); Right Joy-Con's left-stick bytes are garbage.
-
-### Stick Range and Centre
-
-The raw 12-bit sticks neither span `0x000..0xFFF` nor rest at the midpoint, and both vary per
-controller and per axis. Measured on hardware:
-
-```
-travel:  full left ~900   full right ~3400   full down ~890   full up ~3360   (half-span ~1250)
-rest:    left Joy-Con  x 2080  y 2157        right Joy-Con  x 2014  y 2022
-```
-
-Rest is **not** the midpoint of travel, so it has to be sampled rather than inferred: those
-extremes midpoint to 2150/2125, which matches neither controller. Treating 2048 as both centre and
-half-span leaves full deflection at ~60% of range with a permanent 4-5% drift at rest, and skews
-each direction oppositely.
-
-`StickCalibrator` therefore learns each axis' centre from the first still window after connect —
-frozen afterwards, because a stick held at full deflection is perfectly still and would otherwise
-be adopted as centre — and scales each direction by its own span, the same centre/below/above
-triple the controller's factory calibration stores. Calibration is applied where packets are
-parsed, so the live display, HID reports, and DSU all see the same corrected values.
-
----
-
-## HID Report Descriptor
-
-The virtual gamepad uses a standard HID gamepad descriptor (13-byte reports):
-
-| Field | Bits | Range | Mapping |
-|---|---|---|---|
-| Buttons 1-16 | 16 | 0/1 | A, B, X, Y, L, R, ZL, ZR, -, +, LS, RS, Home, Camera, GL, GR |
-| Hat switch | 4 | 0-7 or null | D-pad (0=N, 1=NE, 2=E, ..., 7=NW, 0xF=center) |
-| Padding | 4 | - | |
-| Left Stick X | 16 | -32767..32767 | |
-| Left Stick Y | 16 | -32767..32767 | inverted (up = negative) |
-| Right Stick X | 16 | -32767..32767 | |
-| Right Stick Y | 16 | -32767..32767 | inverted |
-| Left Trigger | 8 | 0-255 | digital: 0 or 255 |
-| Right Trigger | 8 | 0-255 | digital: 0 or 255 |
-
----
-
-## Android BLE Gotchas
-
-1. **MTU first.** Default ATT MTU 23 truncates 63-byte notifications. `requestMtu(247)` after CONNECTED, wait for `onMtuChanged`, then discover services.
-2. **One GATT op at a time.** Android serializes writes/descriptor-writes. Queue ops and advance only on the matching callback (`GattOpQueue` handles this).
-3. **CCCD required.** `setCharacteristicNotification(true)` alone won't deliver notifications — must also write descriptor `0x2902`.
-4. **TRANSPORT_LE.** Pass to `connectGatt` so it doesn't attempt classic Bluetooth.
-5. **Connect cooldown.** Repeated quick connect attempts make the Joy-Con stop responding. Press SYNC to re-advertise; wait if unresponsive.
-6. **Deprecated API usage.** The `.value =` pattern for writes is used intentionally for API 24+ compatibility. On API 33+ the newer overloads are functionally identical.
-
----
-
-## Sideways Mode
-
-When a single Joy-Con is assigned to a player, it's held sideways (L rotated 90 CCW, R rotated 90 CW). The UI remaps:
-
-- **Sticks:** L = `(4096 - rawY, rawX)`, R = `(rawY, 4096 - rawX)`
-- **D-pad (L):** visual up = Right press, down = Left, left = Up, right = Down
-- **Face buttons (R):** Y = top, X = right, A = bottom, B = left
-- **SL/SR** become the top rail buttons (like shoulder buttons when held sideways)
-
-This is `SidewaysMapper` in `:core:model` — it rotates the **sticks, the left Joy-Con's D-pad, and
-the SL/SR rail**, but passes a right Joy-Con's A/B/X/Y through unrotated (and the left Joy-Con has
-no face buttons). The face-button rotation that turns those into a usable sideways layout is applied
-per-emulator in the controller-mapping config, not here — see
-[Emulator controller mapping](#emulator-controller-mapping).
-
----
+| "Shizuku is not running" | Open Shizuku and start it |
+| "Shizuku permission denied" | Shizuku → Apps → allow Joycon2Android |
+| Controller not found | Hold SYNC again and move closer |
+| Controller stops responding | Press SYNC and reconnect; wait a moment if it stays silent |
+| Gamepad doesn't show up in games | Check `adb shell getevent -p` lists "Joy-Con Virtual Gamepad" |
+| No DSUClient device in the emulator | Check the server address, restart the emulator and open a mapping screen; `adb logcat -s DsuServer` shows whether it's connecting |
+| Emulator won't detect DSU presses | Pick inputs from the list — detection never sees DSU — with the virtual gamepad off |
+| Motion aiming stutters | DSU card → **Motion settings**: keep **Ignore this device's motion in Eden** on, and try **Faster motion updates** |
+| Tilting the device moves the aim in Eden | Turn on **Ignore this device's motion in Eden** |
+| Pointer drifts or starts off-screen | Rest the controller for ~2 s, then press Recenter |
+| MotionPlus tutorial replays every boot (Dolphin) | Set `MPLS.MOVIE` in `Wii/shared2/sys/SYSCONF` with Dolphin closed ([why](docs/dsu-motion.md#motionplus-tutorial-replays)) |
+
+## Roadmap and feedback
+
+Planned and in-progress work is on the [project board](https://github.com/users/JoeGeC/projects/2).
+Every card is an [issue](../../issues) you can subscribe to, and `area:` labels filter it to the parts
+you use. Found a bug or want something? [Open an issue](../../issues/new/choose).
+
+## Contributing
+
+Start with [CONTRIBUTING.md](CONTRIBUTING.md), then the [docs](docs/README.md):
+
+- [Architecture](docs/architecture.md) and [adding a feature](docs/adding-a-feature.md)
+- [BLE protocol](docs/protocol.md) — identifiers, packets, Android BLE gotchas
+- [Virtual gamepad](docs/virtual-gamepad.md) — UHID, keycodes, sideways Joy-Cons
+- [DSU motion](docs/dsu-motion.md) — slots, motion frames, emulator mapping details
+- [Debug tools](tools/README.md) — a DSU client for inspecting the stream
 
 ## Credits
 
-This app builds on the reverse-engineering work of the community. In particular:
+Built on the community's reverse-engineering work, in particular:
 
-- **[Joycon2forMac](https://github.com/seitanmen/Joycon2forMac)** by seitanmen — the working macOS
-  BLE implementation this project's connection sequence, init commands, and 63-byte packet layout
-  were extracted from.
-- **[JoyconDriver](https://github.com/german77/JoyconDriver)** by german77 — Nintendo Switch
-  controller protocol documentation, including the Switch 2 Wireshark dissector that documents
-  report types, command layouts, and the SPI flash map (source of the shell/accent colour
-  addresses).
+- **[Joycon2forMac](https://github.com/seitanmen/Joycon2forMac)** by seitanmen — the working macOS BLE
+  implementation the connection sequence, init commands and packet layout came from.
+- **[JoyconDriver](https://github.com/german77/JoyconDriver)** by german77 — Switch controller protocol
+  docs, including the Switch 2 Wireshark dissector and SPI flash map (shell colours).
 - **[ProCon 2 Enabler Tool](https://handheldlegend.github.io/procon2tool/)** by HandHeldLegend — a
-  working Web-Bluetooth implementation whose concrete SPI-read command bytes unlocked reading
-  colours from a live controller.
+  Web Bluetooth implementation whose SPI-read bytes unlocked reading controller colours.
 - **[Nintendo_Switch_Reverse_Engineering](https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering)**
-  by dekuNukem — the original Joy-Con reverse-engineering docs; source of the battery voltage
-  thresholds used by the battery gauge.
+  by dekuNukem — the original Joy-Con docs, and the battery voltage thresholds.
 - **[cemuhook protocol docs](https://v1993.github.io/cemuhook-protocol/)** by v1993 — the DSU wire
-  format the motion server implements.
-- **[Shizuku](https://shizuku.rikka.app/)** by RikkaApps — the privileged-access path that makes the
-  virtual gamepad and emulator auto-setup possible without root.
-
----
-
-## Support
-
-If you find this useful, you can support development on [Ko-fi](https://ko-fi.com/joestechprojects).
+  format.
+- **[Shizuku](https://shizuku.rikka.app/)** by RikkaApps — privileged access without root.
 
 ## License
 
-This project is licensed under the [GNU General Public License v3.0](LICENSE).
+[GNU General Public License v3.0](LICENSE). If you find this useful, you can support development on
+[Ko-fi](https://ko-fi.com/joestechprojects).
 
 ## Disclaimer
 
-This project is not affiliated with, endorsed by, or sponsored by Nintendo. Joy-Con, Nintendo
-Switch, and GameCube are trademarks of Nintendo. The BLE protocol implemented here was
-reverse-engineered by the community from their own hardware; this project contains no Nintendo
-code.
+Not affiliated with, endorsed by, or sponsored by Nintendo. Joy-Con, Nintendo Switch and GameCube are
+trademarks of Nintendo. The BLE protocol was reverse-engineered by the community from their own
+hardware; this project contains no Nintendo code.
 
-Claude (Anthropic's AI assistant) was used in building this project, directed and reviewed
-throughout by a professional software and Android engineer.
+Claude (Anthropic's AI assistant) was used in building this project, directed and reviewed throughout
+by a professional software and Android engineer.
