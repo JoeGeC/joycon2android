@@ -78,21 +78,35 @@ object DolphinWiimoteConfig {
 
     private val ACCEL_DIRECTIONS = listOf("Up", "Down", "Left", "Right", "Forward", "Backward")
 
-    private val imuLines = listOf(
-        "IMUAccelerometer/Up = `Accel Up`",
-        "IMUAccelerometer/Down = `Accel Down`",
-        "IMUAccelerometer/Left = `Accel Left`",
-        "IMUAccelerometer/Right = `Accel Right`",
-        "IMUAccelerometer/Forward = `Accel Forward`",
-        "IMUAccelerometer/Backward = `Accel Backward`",
-        "IMUGyroscope/Pitch Up = `Gyro Pitch Up`",
-        "IMUGyroscope/Pitch Down = `Gyro Pitch Down`",
-        "IMUGyroscope/Roll Left = `Gyro Roll Left`",
-        "IMUGyroscope/Roll Right = `Gyro Roll Right`",
-        "IMUGyroscope/Yaw Left = `Gyro Yaw Left`",
-        "IMUGyroscope/Yaw Right = `Gyro Yaw Right`",
-        "IMUIR/Enabled = True",
+    private val IMU_CONTROLS = ACCEL_DIRECTIONS.map { "IMUAccelerometer/$it" to "Accel $it" } +
+        listOf("Pitch Up", "Pitch Down", "Roll Left", "Roll Right", "Yaw Left", "Yaw Right")
+            .map { "IMUGyroscope/$it" to "Gyro $it" }
+
+    // A lone Joy-Con streams in its sideways grip (SidewaysMotion), but the emulated remote is the
+    // Joy-Con's own body, so its inputs turn back about the button face. Up/Down and yaw lie on
+    // that axis and pass through name-to-name.
+    private val LEFT_BODY_INPUTS = mapOf(
+        "Accel Left" to "Accel Backward", "Accel Right" to "Accel Forward",
+        "Accel Forward" to "Accel Left", "Accel Backward" to "Accel Right",
+        "Gyro Pitch Up" to "Gyro Roll Right", "Gyro Pitch Down" to "Gyro Roll Left",
+        "Gyro Roll Left" to "Gyro Pitch Up", "Gyro Roll Right" to "Gyro Pitch Down",
     )
+    private val RIGHT_BODY_INPUTS = mapOf(
+        "Accel Left" to "Accel Forward", "Accel Right" to "Accel Backward",
+        "Accel Forward" to "Accel Right", "Accel Backward" to "Accel Left",
+        "Gyro Pitch Up" to "Gyro Roll Left", "Gyro Pitch Down" to "Gyro Roll Right",
+        "Gyro Roll Left" to "Gyro Pitch Down", "Gyro Roll Right" to "Gyro Pitch Up",
+    )
+
+    private fun imuLines(side: JoyconSide): List<String> {
+        val bodyInputs = when (side) {
+            JoyconSide.LEFT -> LEFT_BODY_INPUTS
+            JoyconSide.RIGHT -> RIGHT_BODY_INPUTS
+            JoyconSide.DUAL -> emptyMap()
+        }
+        return IMU_CONTROLS.map { (control, input) -> "$control = `${bodyInputs[input] ?: input}`" } +
+            "IMUIR/Enabled = True"
+    }
 
     // Dolphin's emulated remote only ever translates through the Swing group — the IMU path feeds
     // rotation alone — so the virtual remote stays pinned in space and the IR dots never change
@@ -157,7 +171,7 @@ object DolphinWiimoteConfig {
         } else {
             emptyList()
         }
-        return (header + lines(side, mappingFor(side)) + imuLines + swingLines(side) + nunchukImu)
+        return (header + lines(side, mappingFor(side)) + imuLines(side) + swingLines(side) + nunchukImu)
             .joinToString("\n", postfix = "\n")
     }
 

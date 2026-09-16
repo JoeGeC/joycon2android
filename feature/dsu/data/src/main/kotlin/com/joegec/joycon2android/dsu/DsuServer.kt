@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.dsu
 import com.joegec.joycon2android.dsu.motion.GyroCalibrator
 import com.joegec.joycon2android.dsu.motion.MotionConverter
+import com.joegec.joycon2android.dsu.motion.SidewaysMotion
 
 import android.os.SystemClock
 import android.util.Log
@@ -28,9 +29,9 @@ class DsuServer(
 ) : DsuRepository {
 
     private val calibrator = GyroCalibrator()
-    private val encoder = DsuPacketEncoder(serverId = Random.nextInt()) { state ->
-        val source = state.motionSource
-        MotionConverter.convert(source?.let { calibrator.calibrate(it.address, it.input) })
+    private val encoder = DsuPacketEncoder(serverId = Random.nextInt()) { stream ->
+        val source = stream.state.motionSource
+        MotionConverter.convert(source?.let { SidewaysMotion.orient(stream, calibrator.calibrate(it.address, it.input)) })
     }
     private val registry = DsuClientRegistry()
     private val sendBuffer = ByteArray(DsuPacketEncoder.PAD_DATA_PACKET_SIZE)

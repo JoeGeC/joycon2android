@@ -135,6 +135,38 @@ class DolphinWiimoteConfigTest {
     }
 
     @Test
+    fun `a pair maps its motion name-to-name`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        val result = merge(null, listOf(both))
+
+        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Forward`"))
+        assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Pitch Up`"))
+    }
+
+    @Test
+    fun `a sideways right Joy-Con turns its streamed grip back into the remote's body`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+
+        assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up`"))
+        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Right`"))
+        assertTrue(result.contains("IMUAccelerometer/Left = `Accel Forward`"))
+        assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Left`"))
+        assertTrue(result.contains("IMUGyroscope/Roll Right = `Gyro Pitch Up`"))
+        assertTrue(result.contains("IMUGyroscope/Yaw Left = `Gyro Yaw Left`"))
+    }
+
+    @Test
+    fun `a sideways left Joy-Con turns its streamed grip back the other way`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))))
+
+        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left`"))
+        assertTrue(result.contains("IMUAccelerometer/Left = `Accel Backward`"))
+        assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`"))
+        assertTrue(result.contains("IMUGyroscope/Roll Right = `Gyro Pitch Down`"))
+    }
+
+    @Test
     fun `pro controllers are skipped`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
 

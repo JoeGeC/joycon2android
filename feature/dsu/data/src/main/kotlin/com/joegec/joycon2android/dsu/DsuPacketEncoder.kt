@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.dsu
 import com.joegec.joycon2android.dsu.motion.DsuMotion
 import com.joegec.joycon2android.dsu.motion.MotionConverter
+import com.joegec.joycon2android.dsu.motion.SidewaysMotion
 
 import com.joegec.joycon2android.model.BatteryGauge
 import com.joegec.joycon2android.model.GamepadState
@@ -19,7 +20,9 @@ import java.util.zip.CRC32
  */
 class DsuPacketEncoder(
     private val serverId: Int,
-    private val motion: (PlayerState) -> DsuMotion = { MotionConverter.convert(it.motionSource?.input) },
+    private val motion: (DsuStream) -> DsuMotion = { stream ->
+        MotionConverter.convert(stream.state.motionSource?.input?.let { SidewaysMotion.orient(stream, it) })
+    },
 ) {
 
     fun versionResponse(): ByteArray {
@@ -48,7 +51,7 @@ class DsuPacketEncoder(
         putSticks(packet, state.gamepad)
         putAnalogButtons(packet, state.gamepad)
         packet.position(packet.position() + TOUCH_BYTES)
-        putMotion(packet, state, motionTimestampMicros)
+        putMotion(packet, stream, motionTimestampMicros)
         return seal(packet)
     }
 
@@ -135,8 +138,8 @@ class DsuPacketEncoder(
         }
     }
 
-    private fun putMotion(packet: ByteBuffer, state: PlayerState, timestampMicros: Long) {
-        val sample = motion(state)
+    private fun putMotion(packet: ByteBuffer, stream: DsuStream, timestampMicros: Long) {
+        val sample = motion(stream)
         packet.putLong(timestampMicros)
         packet.putFloat(sample.accelX)
         packet.putFloat(sample.accelY)

@@ -22,7 +22,10 @@ object DsuSlots {
         val free = ((COUNT - 1) downTo 0) - slotted.map { it.slot }.toSet()
         return slotted.map { it.state }
             .filter { it.hasFullController }
-            .zip(free) { player, slot -> DsuStream(slot, PlayerState(player.player, left = player.left)) }
+            // Alone on its slot, but still the upright half of a pair.
+            .zip(free) { player, slot ->
+                DsuStream(slot, PlayerState(player.player, left = player.left), heldSideways = false)
+            }
     }
 
     fun coverage(players: List<PlayerState>): DsuCoverage {

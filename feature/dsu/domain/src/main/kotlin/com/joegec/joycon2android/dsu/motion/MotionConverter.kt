@@ -29,10 +29,9 @@ import com.joegec.joycon2android.model.JoyconInput
  * pointer's horizontal response reports it. Mirroring x strictly implies mirroring yaw too,
  * so if horizontal pointing ever reads backwards, flip yaw rather than re-deriving this.
  *
- * Deliberately no grip-dependent rotation: like a physical DS4, the stream always
- * reports the controller's body frame — grip handling belongs to the emulator
- * (e.g. Dolphin's "Sideways Wii Remote"). Left Joy-Con and Pro are assumed to share
- * this frame — unverified; recalibrate with tools/dsu_client if motion feels rotated.
+ * This converts whatever frame it is given; a lone sideways Joy-Con is turned into its grip
+ * first by [SidewaysMotion]. Left Joy-Con and Pro are assumed to share the raw frame —
+ * unverified; recalibrate with tools/dsu_client if motion feels rotated.
  */
 object MotionConverter {
 

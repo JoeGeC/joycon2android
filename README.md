@@ -137,7 +137,13 @@ prompts you to restart Dolphin. It needs Shizuku connected; if the write fails
    DSU; motion inputs are not auto-detectable on any platform.
 4. Under Motion Input, map all Accelerometer and Gyroscope entries name-to-name, and map
    **Recenter** — gyro pointing drifts, so pressing Recenter in-game while aiming at the
-   screen centre is what summons the pointer.
+   screen centre is what summons the pointer. A solo Joy-Con streams in its sideways grip, so turn it back
+   into the remote's body instead — left Joy-Con: Accelerometer Left/Right/Forward/Backward ←
+   `Accel Backward`/`Accel Forward`/`Accel Left`/`Accel Right`, Gyroscope Pitch Up/Down ←
+   `Gyro Roll Right`/`Gyro Roll Left`, Roll Left/Right ← `Gyro Pitch Up`/`Gyro Pitch Down`; right
+   Joy-Con: Accelerometer Left/Right/Forward/Backward ← `Accel Forward`/`Accel Backward`/
+   `Accel Right`/`Accel Left`, Pitch Up/Down ← `Gyro Roll Left`/`Gyro Roll Right`, Roll Left/Right
+   ← `Gyro Pitch Down`/`Gyro Pitch Up`. Up/Down and Yaw stay name-to-name.
 5. Under Swing, map **Forward** to
    ``(`Accel Forward` - `Accel Backward`) - smooth((`Accel Forward` - `Accel Backward`), 0.03)``
    and set its **Range** to 7%. That is for a pair, with the right Joy-Con held like a Wii
@@ -321,6 +327,12 @@ samples. Collaborators:
 - **`MotionConverter`** — raw Joy-Con IMU frame → cemuhook's DS4 frame. Axes, signs, and
   scale factors were verified on hardware against Dolphin's Wii pointer; see the class
   docs for the measured frames and `tools/README.md` for the calibration workflow.
+- **`SidewaysMotion`** — turns a lone Joy-Con's IMU 90° into its sideways grip, matching its
+  already-rotated buttons and stick. The direction was measured in Eden (Mario Kart 8) and is the
+  opposite of the stick's turn. Eden presents a solo Joy-Con as a Pro
+  Controller, so without it tilting read as if the Joy-Con's nose pointed at the screen. Dolphin's
+  emulated remote *is* the Joy-Con's body, so `DolphinWiimoteConfig` maps those inputs back.
+  A pair's second hand keeps its body frame even though it streams alone.
 - **`GyroCalibrator`** — learns each controller's gyro bias whenever it rests and
   subtracts it, mirroring the Switch's own runtime recalibration.
 - **`DsuSlots`** — maps players onto the four slots. A pad packet carries one IMU, so a
