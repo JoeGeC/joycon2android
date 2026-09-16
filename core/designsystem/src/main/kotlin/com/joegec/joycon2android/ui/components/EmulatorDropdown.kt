@@ -7,11 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,6 +22,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Dimens
 
@@ -46,8 +48,10 @@ fun EmulatorDropdown(
     }
 
     var expanded by remember { mutableStateOf(false) }
+    var anchorWidth by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
 
-    Box(modifier) {
+    Box(modifier.onSizeChanged { anchorWidth = with(density) { it.width.toDp() } }) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -66,16 +70,16 @@ fun EmulatorDropdown(
             )
             Icon(Icons.Filled.ArrowDropDown, contentDescription = null, tint = Accent)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option.label) },
-                    onClick = {
-                        onSelect(option.id)
-                        expanded = false
-                    },
-                )
-            }
-        }
+        PanelDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            options = options.map { it.id to it.label },
+            selectedId = selected.id,
+            modifier = Modifier.width(anchorWidth),
+            onSelect = { id ->
+                onSelect(id)
+                expanded = false
+            },
+        )
     }
 }
