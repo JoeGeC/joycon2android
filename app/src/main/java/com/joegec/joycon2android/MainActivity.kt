@@ -14,7 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.initializer
@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             Joycon2AndroidTheme {
                 Surface(Modifier.fillMaxSize(), color = Background) {
-                    var mappingConsole by remember { mutableStateOf<Console?>(null) }
+                    var mappingConsole by rememberSaveable { mutableStateOf<Console?>(null) }
                     val console = mappingConsole
 
                     if (console != null) {

@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":core:buttonmapping:domain"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:model"))
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
