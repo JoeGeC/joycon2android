@@ -27,6 +27,9 @@ class PrivilegedAccess : PrivilegedAccessRepository {
         Shizuku.addBinderDeadListener { _shizukuAvailable.value = false }
     }
 
+    /** The shell only if it is usable right now, never prompting for permission. */
+    fun readyShell(): PrivilegedShell? = shizuku.takeIf { it.isReady }
+
     fun acquire(onResult: (PrivilegedShell?) -> Unit) {
         when {
             shizuku.isReady -> {

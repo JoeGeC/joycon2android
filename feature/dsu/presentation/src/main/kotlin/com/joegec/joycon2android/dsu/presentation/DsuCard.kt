@@ -4,6 +4,7 @@ import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.ExpandableInfoSection
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
+import com.joegec.joycon2android.ui.components.SettingsRow
 import com.joegec.joycon2android.ui.components.WarningBox
 
 import androidx.compose.animation.AnimatedVisibility
@@ -19,6 +20,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
@@ -40,8 +45,20 @@ fun DsuCard(
     onSelectEmulator: (String) -> Unit,
     onSetUp: () -> Unit,
     onConfigureMapping: () -> Unit,
+    onFastMotionToggle: (Boolean) -> Unit,
+    onBlockDeviceMotionToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showMotionSettings by rememberSaveable { mutableStateOf(false) }
+    if (showMotionSettings) {
+        DsuMotionSettingsDialog(
+            settings = state.motionSettings,
+            deviceMotionBlockAvailable = state.deviceMotionBlockAvailable,
+            onFastMotionToggle = onFastMotionToggle,
+            onBlockDeviceMotionToggle = onBlockDeviceMotionToggle,
+            onDismiss = { showMotionSettings = false },
+        )
+    }
     FeatureToggleCard(
         title = stringResource(R.string.dsu_title),
         subtitle = subtitleFor(state),
@@ -69,6 +86,11 @@ fun DsuCard(
                     )
                     Spacer(Modifier.height(Dimens.elementSpacing))
                 }
+                SettingsRow(
+                    title = stringResource(R.string.dsu_motion_settings_title),
+                    onClick = { showMotionSettings = true },
+                )
+                Spacer(Modifier.height(Dimens.elementSpacing))
                 slotLimitText(state.coverage)?.let { warning ->
                     WarningBox(warning)
                     Spacer(Modifier.height(Dimens.elementSpacing))

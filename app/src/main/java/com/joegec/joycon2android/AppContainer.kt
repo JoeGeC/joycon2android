@@ -1,10 +1,12 @@
 package com.joegec.joycon2android
 
 import android.content.Context
+import com.joegec.joycon2android.connection.ConnectionPriorityRepository
 import com.joegec.joycon2android.connection.ControllerRepository
 import com.joegec.joycon2android.connection.DisconnectControllerUseCase
 import com.joegec.joycon2android.connection.Joycon2Manager
 import com.joegec.joycon2android.connection.ObserveViewModeUseCase
+import com.joegec.joycon2android.connection.SetHighConnectionPriorityUseCase
 import com.joegec.joycon2android.connection.SetViewModeUseCase
 import com.joegec.joycon2android.connection.StartScanUseCase
 import com.joegec.joycon2android.connection.StopScanUseCase
@@ -33,6 +35,13 @@ import com.joegec.joycon2android.dsu.DsuServer
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
 import com.joegec.joycon2android.dsu.PushDsuPadDataUseCase
+import com.joegec.joycon2android.dsu.DsuMotionSettingsDataStore
+import com.joegec.joycon2android.dsu.motion.DsuMotionSettingsRepository
+import com.joegec.joycon2android.dsu.motion.ObserveDsuMotionSettingsUseCase
+import com.joegec.joycon2android.dsu.motion.SetBlockDeviceMotionUseCase
+import com.joegec.joycon2android.dsu.motion.SetDeviceMotionBlockedUseCase
+import com.joegec.joycon2android.dsu.motion.SetFastMotionUseCase
+import com.joegec.joycon2android.emulator.EdenDeviceMotionBlocker
 import com.joegec.joycon2android.gamepad.DisableGamepadUseCase
 import com.joegec.joycon2android.gamepad.EnableGamepadUseCase
 import com.joegec.joycon2android.gamepad.GamepadManager
@@ -47,6 +56,7 @@ import com.joegec.joycon2android.gamepad.PushGamepadStateUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.map
 
 /**
  * Composition root: owns app-scoped repositories (data) and binds them to use cases
@@ -60,7 +70,10 @@ class AppContainer(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     // --- Connection (BLE) ---
-    val controllerRepository: ControllerRepository = Joycon2Manager(appContext, scope)
+    private val joycon2Manager = Joycon2Manager(appContext, scope)
+    val controllerRepository: ControllerRepository = joycon2Manager
+    private val connectionPriorityRepository: ConnectionPriorityRepository = joycon2Manager
+    private val setHighConnectionPriority = SetHighConnectionPriorityUseCase(connectionPriorityRepository)
     val startScan = StartScanUseCase(controllerRepository)
     val stopScan = StopScanUseCase(controllerRepository)
     val disconnectController = DisconnectControllerUseCase(controllerRepository)
@@ -82,6 +95,11 @@ class AppContainer(context: Context) {
     val disableDsu = DisableDsuUseCase(dsuRepository)
     val pushDsuPadData = PushDsuPadDataUseCase(dsuRepository)
     val observeDsuStatus = ObserveDsuStatusUseCase(dsuRepository)
+
+    private val dsuMotionSettings: DsuMotionSettingsRepository = DsuMotionSettingsDataStore(appContext)
+    val observeDsuMotionSettings = ObserveDsuMotionSettingsUseCase(dsuMotionSettings)
+    val setFastMotion = SetFastMotionUseCase(dsuMotionSettings)
+    val setBlockDeviceMotion = SetBlockDeviceMotionUseCase(dsuMotionSettings)
 
     // --- Assignment ---
     // Cross-feature orchestration that reacts to assignment (gamepad/DSU lifecycle) lives in
@@ -124,6 +142,15 @@ class AppContainer(context: Context) {
         },
         onPlayerAssigned = { onPlayerAssigned(it) },
         onPlayerUnassigned = { onPlayerUnassigned(it) },
+    ).also { it.start() }
+
+    private val dsuMotionPolicy = DsuMotionPolicy(
+        scope = scope,
+        dsuEnabled = observeDsuStatus().map { it.enabled },
+        settings = observeDsuMotionSettings(),
+        privilegedShellAvailable = observeShizukuAvailability(),
+        setHighConnectionPriority = setHighConnectionPriority,
+        setDeviceMotionBlocked = SetDeviceMotionBlockedUseCase(EdenDeviceMotionBlocker(privilegedAccess::readyShell)),
     ).also { it.start() }
 
     val observeSession = ObserveSessionUseCase(sessionCoordinator)

@@ -14,6 +14,13 @@
     <string name="dsu_dolphin_emulator_name">Dolphin (Wii)</string>
     <string name="dsu_setup_body">In the emulator\'s controller settings, point its DSU (cemuhook) input source at:</string>
     <string name="dsu_auto_setup">Set up</string>
+    <string name="dsu_motion_settings_title">Motion settings</string>
+    <string name="dsu_motion_settings_done">Done</string>
+    <string name="dsu_block_device_motion_title">Ignore this device\'s motion in Eden</string>
+    <string name="dsu_block_device_motion_description">Eden adds this device\'s gyro to Player 1, which makes controller motion stutter. Lifted when DSU turns off.</string>
+    <string name="dsu_block_device_motion_needs_shizuku">Needs Shizuku running.</string>
+    <string name="dsu_fast_motion_title">Faster motion updates</string>
+    <string name="dsu_fast_motion_warning">Smoother motion in some games, but uses more battery on the Joy-Cons and this device.</string>
     <string name="dsu_eden_emulator_name">Eden (Switch)</string>
     <string name="dsu_eden_servers">In Eden\'s controller settings, turn on motion and the UDP controller, with the address above as the server.</string>
     <string name="dsu_eden_motion">Then point each player\'s buttons, sticks and motion at the UDP controller. A player holding two Joy-Cons has two motion inputs — the second reads the other hand.</string>

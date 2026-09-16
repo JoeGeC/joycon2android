@@ -106,6 +106,7 @@ class JoyconConnection(
     private var pendingPlayerLed: PlayerNumber? = null
     @Volatile var initComplete = false
         private set
+    @Volatile private var highPriority = false
     private var ledSentAfterFirstPacket = false
 
     fun connect(device: BluetoothDevice) {
@@ -219,6 +220,7 @@ class JoyconConnection(
                     connected = true, ready = true, deviceName = deviceName
                 )
                 Log.i(TAG, "[$side] Init sequence complete")
+                if (highPriority) requestPriority(g)
                 false // no GATT op — advance immediately
             }
         }
@@ -250,6 +252,22 @@ class JoyconConnection(
         ) {
             handleCharacteristicChanged(g, ch.uuid, value)
         }
+    }
+
+    fun setHighPriority(enabled: Boolean) {
+        highPriority = enabled
+        if (initComplete) gatt?.let(::requestPriority)
+    }
+
+    // The default "balanced" connection interval lands on 30 ms on some phones, so the Joy-Con
+    // can only report ~33 times a second; high priority asks the stack for 7.5-15 ms.
+    private fun requestPriority(g: BluetoothGatt) {
+        val priority = if (highPriority) {
+            BluetoothGatt.CONNECTION_PRIORITY_HIGH
+        } else {
+            BluetoothGatt.CONNECTION_PRIORITY_BALANCED
+        }
+        Log.i(TAG, "[$side] Connection priority high=$highPriority accepted=${g.requestConnectionPriority(priority)}")
     }
 
     fun setPlayerLed(player: PlayerNumber) {
