@@ -89,7 +89,7 @@ fun EmulatorAutoSetup(
 private fun MappingButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.size(Dimens.buttonHeight),
+        modifier = modifier.size(Dimens.emulatorSetupButtonHeight),
         shape = RoundedCornerShape(Dimens.buttonCorner),
         contentPadding = PaddingValues(0.dp),
     ) {

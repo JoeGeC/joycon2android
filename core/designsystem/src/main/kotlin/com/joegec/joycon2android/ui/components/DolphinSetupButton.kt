@@ -38,7 +38,7 @@ fun DolphinSetupButton(
     ToastOnSetupSuccess(phase)
     Button(
         onClick = onClick,
-        modifier = modifier.height(Dimens.buttonHeight),
+        modifier = modifier.height(Dimens.emulatorSetupButtonHeight),
         enabled = phase != DolphinSetupPhase.WORKING,
         shape = RoundedCornerShape(Dimens.buttonCorner),
         colors = ButtonDefaults.buttonColors(

@@ -66,6 +66,7 @@ object Dimens {
 
     val emulatorPickerPadding = 12.dp
     val emulatorSetupRowGap = 4.dp
+    val emulatorSetupButtonHeight = 36.dp
 
     val viewTogglePadding = 4.dp
     val viewToggleCorner = 10.dp
