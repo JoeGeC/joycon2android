@@ -44,7 +44,7 @@ class ReportMapperTest {
         val expected = mapOf(
             JoyconButton.A to 0,        // BUTTON_A 96
             JoyconButton.B to 1,        // BUTTON_B 97
-            JoyconButton.Camera to 2,   // BUTTON_C 98
+            JoyconButton.Capture to 2,  // BUTTON_C 98
             JoyconButton.X to 3,        // BUTTON_X 99
             JoyconButton.Y to 4,        // BUTTON_Y 100
             JoyconButton.GL to 5,       // BUTTON_Z 101

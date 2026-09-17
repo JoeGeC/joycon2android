@@ -7,7 +7,7 @@ import com.joegec.joycon2android.model.Side
 /**
  * Infers Joy-Con side from observed input when BLE advertisement didn't identify it.
  *
- * Left-exclusive buttons: ZL, L, Minus, LS, DPad (Up/Down/Left/Right), Camera, SL(L), SR(L)
+ * Left-exclusive buttons: ZL, L, Minus, LS, DPad (Up/Down/Left/Right), Capture, SL(L), SR(L)
  * Right-exclusive buttons: ZR, R, Plus, RS, A, B, X, Y, Home, Chat, SL(R), SR(R)
  */
 object SideInference {
@@ -15,7 +15,7 @@ object SideInference {
     private val leftButtons = setOf(
         JoyconButton.ZL.id, JoyconButton.L.id, JoyconButton.Minus.id, JoyconButton.LS.id,
         JoyconButton.Up.id, JoyconButton.Down.id, JoyconButton.Left.id, JoyconButton.Right.id,
-        JoyconButton.Camera.id, JoyconButton.SlLeft.id, JoyconButton.SrLeft.id,
+        JoyconButton.Capture.id, JoyconButton.SlLeft.id, JoyconButton.SrLeft.id,
     )
 
     private val rightButtons = setOf(

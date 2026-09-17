@@ -41,7 +41,7 @@ import com.joegec.joycon2android.model.PlayerState
  */
 object EdenGamepadConfig {
     // Joy-Con button -> the Android keycode the relay's HID gamepad emits for it. ReportMapper
-    // places each one so the keycode carries its own name; Camera and GL take the two gamepad slots
+    // places each one so the keycode carries its own name; Capture and GL take the two gamepad slots
     // with no Switch equivalent, and GR/Chat the trailing vendor collection's BUTTON_1/BUTTON_2.
     private const val A = 96
     private const val B = 97
@@ -69,7 +69,7 @@ object EdenGamepadConfig {
         JoyconButton.L to L, JoyconButton.R to R, JoyconButton.ZL to ZL, JoyconButton.ZR to ZR,
         JoyconButton.Minus to MINUS, JoyconButton.Plus to PLUS,
         JoyconButton.LS to LS_CLICK, JoyconButton.RS to RS_CLICK,
-        JoyconButton.Home to HOME, JoyconButton.Camera to CAPTURE,
+        JoyconButton.Home to HOME, JoyconButton.Capture to CAPTURE,
         JoyconButton.GL to PADDLE_LEFT, JoyconButton.GR to PADDLE_RIGHT,
         JoyconButton.Chat to CHAT,
     )

@@ -11,11 +11,11 @@ object ReportMapper {
     // and Android's key layout then names. Each Joy-Con button takes the bit whose keycode carries
     // its own name — A on BTN_SOUTH (BUTTON_A), ZL on BTN_TL2 (BUTTON_L2), Minus on BTN_SELECT, and
     // so on — so nothing downstream has to know about a shift, and ZL/ZR agree with the brake and
-    // accelerator axes below. Camera and GL take the two leftover slots (BUTTON_C, BUTTON_Z).
+    // accelerator axes below. Capture and GL take the two leftover slots (BUTTON_C, BUTTON_Z).
     private val BUTTON_MAP: Map<String, Int> = mapOf(
         JoyconButton.A.id to 0,
         JoyconButton.B.id to 1,
-        JoyconButton.Camera.id to 2,
+        JoyconButton.Capture.id to 2,
         JoyconButton.X.id to 3,
         JoyconButton.Y.id to 4,
         JoyconButton.GL.id to 5,

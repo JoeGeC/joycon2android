@@ -54,7 +54,7 @@ object DolphinGcpadConfig {
     private val ANDROID_NAMES = mapOf(
         JoyconButton.A to "Button A",
         JoyconButton.B to "Button B",
-        JoyconButton.Camera to "Button C",
+        JoyconButton.Capture to "Button C",
         JoyconButton.X to "Button X",
         JoyconButton.Y to "Button Y",
         JoyconButton.GL to "Button Z",

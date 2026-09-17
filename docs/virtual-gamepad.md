@@ -48,14 +48,14 @@ shift:
 |---|---|---|---|---|---|
 | A | 0 | 96 `BUTTON_A` | ZL | 8 | 104 `BUTTON_L2` |
 | B | 1 | 97 `BUTTON_B` | ZR | 9 | 105 `BUTTON_R2` |
-| Camera | 2 | 98 `BUTTON_C` | − | 10 | 109 `BUTTON_SELECT` |
+| Capture | 2 | 98 `BUTTON_C` | − | 10 | 109 `BUTTON_SELECT` |
 | X | 3 | 99 `BUTTON_X` | + | 11 | 108 `BUTTON_START` |
 | Y | 4 | 100 `BUTTON_Y` | Home | 12 | 110 `BUTTON_MODE` |
 | GL | 5 | 101 `BUTTON_Z` | LS | 13 | 106 `BUTTON_THUMBL` |
 | L | 6 | 102 `BUTTON_L1` | RS | 14 | 107 `BUTTON_THUMBR` |
 | R | 7 | 103 `BUTTON_R1` | | | |
 
-- **Camera and GL** take `BUTTON_C` / `BUTTON_Z`, the two slots with no Switch equivalent.
+- **Capture and GL** take `BUTTON_C` / `BUTTON_Z`, the two slots with no Switch equivalent.
 - **GR and C overflow.** One gamepad collection carries 15 buttons — a 16th lands on `0x13F`, which
   no key layout names — and the Switch 2 controllers have 17. For a Button usage outside a
   pointer/joystick/gamepad collection Linux falls back to `BTN_MISC + n - 1`, which key layouts name

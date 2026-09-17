@@ -60,7 +60,7 @@ object EdenDsuConfig {
         JoyconButton.L to 0x00400, JoyconButton.R to 0x00800,
         JoyconButton.X to 0x01000, JoyconButton.A to 0x02000,
         JoyconButton.B to 0x04000, JoyconButton.Y to 0x08000,
-        JoyconButton.Home to 0x40000, JoyconButton.Camera to 0x80000,
+        JoyconButton.Home to 0x40000, JoyconButton.Capture to 0x80000,
     )
 
     private val LEFT_STICK_AXES = 0 to 1

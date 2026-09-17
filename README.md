@@ -112,7 +112,7 @@ shoulder buttons.
 | X | `Triangle` | Y | `Square` |
 | L / R | `L1` / `R1` | ZL / ZR | `L2` / `R2` |
 | − / + | `Share` / `Options` | LS / RS | `L3` / `R3` |
-| Home | `PS` | Camera | `Touch` |
+| Home | `PS` | Capture | `Touch` |
 | D-pad | `Pad N/S/E/W` | Sticks | `Left X±/Y±`, `Right X±/Y±` |
 
 </details>

@@ -195,7 +195,7 @@ private fun MappingTroubleshooting() {
 }
 
 // DSU carries exactly the DS4 button set — these are protocol input names, not UI copy.
-// SL/SR/Chat have no DSU slot (see dsu_mapping_missing); Camera rides the touchpad click.
+// SL/SR/Chat have no DSU slot (see dsu_mapping_missing); Capture rides the touchpad click.
 private val DS4_BUTTON_NAMES = listOf(
     "A" to "Circle", "B" to "Cross",
     "X" to "Triangle", "Y" to "Square",
@@ -203,7 +203,7 @@ private val DS4_BUTTON_NAMES = listOf(
     "ZL" to "L2", "ZR" to "R2",
     "−" to "Share", "+" to "Options",
     "LS" to "L3", "RS" to "R3",
-    "Home" to "PS", "Camera" to "Touch",
+    "Home" to "PS", "Capture" to "Touch",
     "D-Pad" to "Pad N/S/E/W",
 )
 

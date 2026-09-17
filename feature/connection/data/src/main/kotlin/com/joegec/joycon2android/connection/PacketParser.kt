@@ -16,7 +16,7 @@ object PacketParser {
     private val buttonMasks: List<Pair<Long, JoyconButton>> = listOf(
         0x80000000L to JoyconButton.ZL, 0x40000000L to JoyconButton.L, 0x00010000L to JoyconButton.Minus,
         0x00080000L to JoyconButton.LS, 0x01000000L to JoyconButton.Down, 0x02000000L to JoyconButton.Up,
-        0x04000000L to JoyconButton.Right, 0x08000000L to JoyconButton.Left, 0x00200000L to JoyconButton.Camera,
+        0x04000000L to JoyconButton.Right, 0x08000000L to JoyconButton.Left, 0x00200000L to JoyconButton.Capture,
         0x10000000L to JoyconButton.SrLeft, 0x20000000L to JoyconButton.SlLeft, 0x00100000L to JoyconButton.Home,
         0x00400000L to JoyconButton.Chat, 0x00020000L to JoyconButton.Plus, 0x00001000L to JoyconButton.SrRight,
         0x00002000L to JoyconButton.SlRight, 0x00004000L to JoyconButton.R, 0x00008000L to JoyconButton.ZR,

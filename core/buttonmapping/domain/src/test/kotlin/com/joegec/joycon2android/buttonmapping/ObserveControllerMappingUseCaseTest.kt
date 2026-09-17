@@ -51,6 +51,13 @@ class ObserveControllerMappingUseCaseTest {
     }
 
     @Test
+    fun `a source saved under the Capture button's former Camera name still binds Capture`() {
+        val mapping = observe(mapOf("A" to "Camera"))
+
+        assertEquals("Capture", mapping["A"])
+    }
+
+    @Test
     fun `a direction set to None overrides its default`() {
         val mapping = observe(mapOf("CStick_LEFT" to ""))
 

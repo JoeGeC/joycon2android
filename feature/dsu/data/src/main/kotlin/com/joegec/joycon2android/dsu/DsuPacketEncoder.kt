@@ -112,7 +112,7 @@ class DsuPacketEncoder(
         packet.put(bitmask(gamepad.pressed, BUTTON_MASKS_2))
         packet.put(if (JoyconButton.Home.id in gamepad.pressed) 1 else 0)
         // Capture stands in for the DS4 touchpad click — no other DSU slot fits it
-        packet.put(if (JoyconButton.Camera.id in gamepad.pressed) 1 else 0)
+        packet.put(if (JoyconButton.Capture.id in gamepad.pressed) 1 else 0)
     }
 
     private fun bitmask(pressed: Set<String>, masks: Map<String, Int>): Byte {

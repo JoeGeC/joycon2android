@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.map
 class ObserveControllerMappingUseCase(private val repository: ControllerMappingRepository) {
     operator fun invoke(console: Console, side: JoyconSide): Flow<Map<String, String>> =
         repository.observe(console, side).map { stored ->
-            defaultMappingEntries(console, side) + stored.withLegacyStickRoutesExpanded()
+            defaultMappingEntries(console, side) +
+                stored.withLegacyButtonNamesRenamed().withLegacyStickRoutesExpanded()
         }
 }

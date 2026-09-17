@@ -102,7 +102,7 @@ A left Joy-Con's right-stick bytes are garbage, and a right Joy-Con's left-stick
 ```
 0x80000000 ZL          0x40000000 L           0x00010000 - (Select)
 0x00080000 LS          0x01000000 Dpad Down   0x02000000 Dpad Up
-0x04000000 Dpad Right  0x08000000 Dpad Left   0x00200000 Camera
+0x04000000 Dpad Right  0x08000000 Dpad Left   0x00200000 Capture
 0x10000000 SR (L)      0x20000000 SL (L)      0x00100000 Home
 0x00400000 Chat (C)    0x00020000 + (Start)   0x00001000 SR (R)
 0x00002000 SL (R)      0x00004000 R           0x00008000 ZR

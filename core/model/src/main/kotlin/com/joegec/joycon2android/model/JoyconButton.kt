@@ -9,7 +9,7 @@ enum class JoyconButton(val id: String, val label: String) {
     Up("Up", "Up"),
     Right("Right", "Right"),
     Left("Left", "Left"),
-    Camera("Camera", "Camera"),
+    Capture("Capture", "Capture"),
     SrLeft("SR(L)", "SR"),
     SlLeft("SL(L)", "SL"),
     Home("Home", "Home"),

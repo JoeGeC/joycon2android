@@ -59,7 +59,7 @@ internal fun PlusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier: 
 
 @Composable
 internal fun CaptureButton(pressed: Set<String>, modifier: Modifier = Modifier) {
-    val on = JoyconButton.Camera.id in pressed
+    val on = JoyconButton.Capture.id in pressed
     val accent = LocalControllerAccent.current
     ControllerIconButton(
         on = on,

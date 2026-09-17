@@ -9,7 +9,7 @@ import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconButton.A
 import com.joegec.joycon2android.model.JoyconButton.B
-import com.joegec.joycon2android.model.JoyconButton.Camera
+import com.joegec.joycon2android.model.JoyconButton.Capture
 import com.joegec.joycon2android.model.JoyconButton.Down
 import com.joegec.joycon2android.model.JoyconButton.Home
 import com.joegec.joycon2android.model.JoyconButton.L
@@ -58,7 +58,7 @@ object DefaultControllerMappings {
             GameCubeButton.B to Left,
             GameCubeButton.X to Right,
             GameCubeButton.Y to Up,
-            GameCubeButton.Z to Camera,
+            GameCubeButton.Z to Capture,
             GameCubeButton.Start to Minus,
             GameCubeButton.TriggerL to SlLeft,
             GameCubeButton.TriggerR to SrLeft,
@@ -97,7 +97,7 @@ object DefaultControllerMappings {
             SwitchProButton.Plus to Plus,
             SwitchProButton.Minus to Minus,
             SwitchProButton.Home to Home,
-            SwitchProButton.Capture to Camera,
+            SwitchProButton.Capture to Capture,
             SwitchProButton.LStickClick to LS,
             SwitchProButton.RStickClick to RS,
             SwitchProButton.DPadUp to Up,
@@ -117,7 +117,7 @@ object DefaultControllerMappings {
             SwitchProButton.R to SrLeft,
             SwitchProButton.Minus to Minus,
             SwitchProButton.LStickClick to LS,
-            SwitchProButton.Capture to Camera,
+            SwitchProButton.Capture to Capture,
         )
         JoyconSide.RIGHT -> mapOf(
             SwitchProButton.A to X,
@@ -162,7 +162,7 @@ object DefaultControllerMappings {
             WiimoteButton.B to ZL,
             WiimoteButton.One to Up,
             WiimoteButton.Two to Left,
-            WiimoteButton.Home to Camera,
+            WiimoteButton.Home to Capture,
             WiimoteButton.Plus to Right,
             WiimoteButton.Minus to Minus,
         )

@@ -61,7 +61,7 @@ internal object MappingOptions {
         JoyconSide.LEFT -> listOf(
             JoyconButton.L, JoyconButton.ZL, JoyconButton.Minus, JoyconButton.LS,
             JoyconButton.Up, JoyconButton.Down, JoyconButton.Left, JoyconButton.Right,
-            JoyconButton.Camera, JoyconButton.SlLeft, JoyconButton.SrLeft,
+            JoyconButton.Capture, JoyconButton.SlLeft, JoyconButton.SrLeft,
         )
         JoyconSide.RIGHT -> listOf(
             JoyconButton.R, JoyconButton.ZR, JoyconButton.Plus, JoyconButton.RS,

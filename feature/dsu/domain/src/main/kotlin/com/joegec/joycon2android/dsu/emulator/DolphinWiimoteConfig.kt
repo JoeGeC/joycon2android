@@ -65,7 +65,7 @@ object DolphinWiimoteConfig {
         JoyconButton.LS to "L3",
         JoyconButton.RS to "R3",
         JoyconButton.Home to "PS",
-        JoyconButton.Camera to "Touch",
+        JoyconButton.Capture to "Touch",
     )
 
     // The D-Pad target reads the DS4 pad nibble instead of a face button.
