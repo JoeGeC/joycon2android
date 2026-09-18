@@ -99,14 +99,15 @@ false, and the asset is attached.
 Brief and human. Say what a player notices, not the mechanism — the commits hold
 the detail for anyone who wants it.
 
+Say what the release *is*, never what it was or could have been. No before/after
+contrast, no "used to", no "no more having to X", no recounting how a bug
+behaved. A fix reads as the thing working, not as the story of it breaking.
+
 - A single summary line at the top.
 - `## What's new` — concise bullets, each a bolded lead plus one sentence of
   consequence. Leave out tooling, CI and doc-only changes unless a user would
   feel them. The installed app shows the bolded leads of the first six bullets
   in its update prompt, so each lead has to read as a complete statement alone.
-- `## Upgrading` — only when the user must act. Rewriting an emulator's config
-  is the usual case: new bindings only reach Dolphin when **Set up Dolphin and
-  Wiimote mapping** runs again, with Dolphin closed.
 - `## Install` — download `joycon2android-X.Y.Z.apk`, installs over an existing
   copy, link the README setup guide.
 - `## Notes` — SYNC is needed for every connection, and the Nintendo
