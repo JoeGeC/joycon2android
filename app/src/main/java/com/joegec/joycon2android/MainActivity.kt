@@ -36,6 +36,8 @@ import com.joegec.joycon2android.dsu.DsuSlots
 import com.joegec.joycon2android.emulatorconfig.EdenPaths
 import com.joegec.joycon2android.ui.components.CloseEmulatorDialog
 import com.joegec.joycon2android.dsu.presentation.DsuCardState
+import com.joegec.joycon2android.update.presentation.UpdateDialog
+import com.joegec.joycon2android.update.presentation.UpdateViewModel
 import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.Joycon2AndroidTheme
 
@@ -71,6 +73,14 @@ class MainActivity : ComponentActivity() {
                     gamepadEmulators = c.emulatorSetup.gamepadEmulators(),
                     configureGamepad = c.emulatorSetup::configureGamepad,
                 )
+            }
+        }
+    }
+    private val updateViewModel: UpdateViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val c = (application as JoyconApplication).container
+                UpdateViewModel(c.checkForUpdate, c.skipUpdate, c.installUpdate)
             }
         }
     }
@@ -115,6 +125,8 @@ class MainActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize(), color = Background) {
                     var mappingConsole by rememberSaveable { mutableStateOf<Console?>(null) }
 
+                    UpdatePrompt()
+
                     AnimatedContent(
                         targetState = mappingConsole,
                         transitionSpec = { pushTransition(forward = targetState != null) },
@@ -133,6 +145,22 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun UpdatePrompt() {
+        val update by updateViewModel.availableUpdate.collectAsState()
+        val progress by updateViewModel.installProgress.collectAsState()
+
+        update?.let {
+            UpdateDialog(
+                update = it,
+                progress = progress,
+                onInstall = updateViewModel::install,
+                onSkip = updateViewModel::skip,
+                onDismiss = updateViewModel::dismiss,
+            )
         }
     }
 

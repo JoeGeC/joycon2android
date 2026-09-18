@@ -6,7 +6,7 @@ see [adding-a-feature.md](adding-a-feature.md).
 ## Shape in one paragraph
 
 A single-activity Compose app built as a **Gradle multi-module** project, split by **feature ×
-layer**. Each feature (`connection`, `assignment`, `gamepad`, `dsu`) has up to three modules —
+layer**. Each feature (`connection`, `assignment`, `gamepad`, `dsu`, `update`) has up to three modules —
 `domain`, `data`, `presentation` — plus shared `:core` modules and a thin `:app` that wires
 everything together. The split exists to *enforce* the dependency rules at compile time: a
 ViewModel physically cannot reach a repository implementation, because presentation and data
@@ -29,7 +29,7 @@ live in separate modules that share only domain.
 | `:app` | `com.android.application` | every feature module + all `:core` |
 | `:konsist` | `joycon.kotlin.jvm` (test-only) | — (scans the whole project) |
 
-…for each feature `<f>` ∈ { `connection`, `assignment`, `gamepad`, `dsu` }.
+…for each feature `<f>` ∈ { `connection`, `assignment`, `gamepad`, `dsu`, `update` }.
 
 ¹ `assignment:data` is pure Kotlin (`joycon.kotlin.jvm`) — it has no Android dependencies.
 
@@ -38,6 +38,9 @@ live in separate modules that share only domain.
 the user's button mapping). Each feature owns its own emulator-config
 *generators* — gamepad mapping in `gamepad:domain`, DSU/motion mapping in `dsu:domain` — over that
 shared leaf; no feature depends on another feature.
+
+³ `update` needs neither `:core:model` nor `:core:emulatorconfig` — it only reads GitHub's
+releases API and hands an APK to the system installer.
 
 The three convention plugins live in `build-logic/convention/` and dedupe all the per-module
 Gradle config (compileSdk, Java 11, Compose, test options) so each `build.gradle.kts` is a few
@@ -130,6 +133,7 @@ off `AppContainer`. This keeps the ViewModel class dependent only on its domain 
 
 - `DsuViewModel` — DSU status, enable toggle, motion settings and emulator auto setup.
 - `GamepadViewModel` — gamepad status, Shizuku availability and emulator auto setup.
+- `UpdateViewModel` — the once-per-launch release check and the update prompt.
 - `ControllerMappingViewModel` (in `:core:buttonmapping:presentation`) — the button-mapping editor.
 - `Joycon2ViewModel` (in `:app`) — the app-level host: the coordinator's session `uiState`
   (genuinely cross-feature), BLE permissions, scan/assign/disconnect, and the service binding.

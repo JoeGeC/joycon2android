@@ -25,6 +25,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Foreground-service notification while a Joy-Con is connected -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Hand a downloaded release APK to the system installer -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Detect emulators so we can offer to write their config (Android 11+ package visibility) -->
     <queries>
@@ -58,6 +60,16 @@
             android:name=".service.Joycon2Service"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_file_paths" />
+        </provider>
 
         <provider
             android:name="rikka.shizuku.ShizukuProvider"

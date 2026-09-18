@@ -53,10 +53,22 @@ import com.joegec.joycon2android.gamepad.OnPlayerAssignedUseCase
 import com.joegec.joycon2android.gamepad.OnPlayerUnassignedUseCase
 import com.joegec.joycon2android.gamepad.privileged.PrivilegedAccess
 import com.joegec.joycon2android.gamepad.PushGamepadStateUseCase
+import com.joegec.joycon2android.update.ApkDownloader
+import com.joegec.joycon2android.update.ApkUpdateInstaller
+import com.joegec.joycon2android.update.CheckForUpdateUseCase
+import com.joegec.joycon2android.update.GitHubReleases
+import com.joegec.joycon2android.update.InstallUpdateUseCase
+import com.joegec.joycon2android.update.SkipUpdateUseCase
+import com.joegec.joycon2android.update.SkippedVersionRepository
+import com.joegec.joycon2android.update.SystemPackageInstaller
+import com.joegec.joycon2android.update.UpdatePreferencesDataStore
+import com.joegec.joycon2android.update.UpdateRepository
+import com.joegec.joycon2android.update.installedAppVersion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.map
+import java.io.File
 
 /**
  * Composition root: owns app-scoped repositories (data) and binds them to use cases
@@ -129,6 +141,19 @@ class AppContainer(context: Context) {
         getControllerMapping = getControllerMapping,
     )
 
+    // --- Updates ---
+    private val skippedVersions: SkippedVersionRepository = UpdatePreferencesDataStore(appContext)
+    private val updateRepository: UpdateRepository = GitHubReleases(GITHUB_REPOSITORY)
+    val checkForUpdate = CheckForUpdateUseCase(updateRepository, skippedVersions, installedAppVersion(appContext))
+    val skipUpdate = SkipUpdateUseCase(skippedVersions)
+    val installUpdate = InstallUpdateUseCase(
+        ApkUpdateInstaller(
+            downloadDirectory = File(appContext.cacheDir, UPDATE_CACHE_DIRECTORY),
+            downloader = ApkDownloader(),
+            systemInstaller = SystemPackageInstaller(appContext),
+        )
+    )
+
     // --- Session (cross-feature coordinator) ---
     private val sessionCoordinator = SessionCoordinator(
         scope = scope,
@@ -163,5 +188,10 @@ class AppContainer(context: Context) {
         disableDsu()
         assignmentRepository.unassignAll()
         controllerRepository.disconnectAll()
+    }
+
+    private companion object {
+        const val GITHUB_REPOSITORY = "JoeGeC/joycon2android"
+        const val UPDATE_CACHE_DIRECTORY = "updates"
     }
 }

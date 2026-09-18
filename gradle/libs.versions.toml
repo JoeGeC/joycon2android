@@ -12,6 +12,7 @@ shizuku = "13.1.5"
 coroutines = "1.10.2"
 konsist = "0.17.3"
 datastore = "1.1.1"
+json = "20240303"
 
 [libraries]
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuku" }
@@ -24,6 +25,8 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+# Real org.json for unit tests; the android.jar stub returns defaults instead of parsing
+json = { group = "org.json", name = "json", version.ref = "json" }
 konsist = { group = "com.lemonappdev", name = "konsist", version.ref = "konsist" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

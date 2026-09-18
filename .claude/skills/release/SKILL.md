@@ -102,7 +102,8 @@ the detail for anyone who wants it.
 - A single summary line at the top.
 - `## What's new` — concise bullets, each a bolded lead plus one sentence of
   consequence. Leave out tooling, CI and doc-only changes unless a user would
-  feel them.
+  feel them. The installed app shows the bolded leads of the first six bullets
+  in its update prompt, so each lead has to read as a complete statement alone.
 - `## Upgrading` — only when the user must act. Rewriting an emulator's config
   is the usual case: new bindings only reach Dolphin when **Set up Dolphin and
   Wiimote mapping** runs again, with Dolphin closed.

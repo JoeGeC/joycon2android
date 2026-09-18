@@ -1,0 +1,11 @@
+<resources>
+    <string name="update_title">Version %1$s is available</string>
+    <string name="update_highlight">•  %1$s</string>
+    <string name="update_install">Update</string>
+    <string name="update_not_now">Not now</string>
+    <string name="update_skip">Skip this version</string>
+    <string name="update_downloading">Downloading… %1$d%%</string>
+    <string name="update_handed_off">Opening the installer…</string>
+    <string name="update_needs_permission">Allow this app to install apps, then tap Update again.</string>
+    <string name="update_failed">Download failed. Check your connection and try again.</string>
+</resources>
