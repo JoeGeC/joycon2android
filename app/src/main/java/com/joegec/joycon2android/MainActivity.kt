@@ -35,6 +35,8 @@ import com.joegec.joycon2android.ui.pushTransition
 import com.joegec.joycon2android.dsu.DsuSlots
 import com.joegec.joycon2android.emulatorconfig.EdenPaths
 import com.joegec.joycon2android.ui.components.CloseEmulatorDialog
+import com.joegec.joycon2android.ui.components.EmulatorOption
+import com.joegec.joycon2android.ui.components.StartEmulatorDialog
 import com.joegec.joycon2android.dsu.presentation.DsuCardState
 import com.joegec.joycon2android.update.presentation.UpdateDialog
 import com.joegec.joycon2android.update.presentation.UpdateViewModel
@@ -165,6 +167,19 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
+    private fun StartEmulatorPrompt(emulator: EmulatorOption?, onDismiss: () -> Unit) {
+        if (emulator == null) return
+        StartEmulatorDialog(
+            emulatorName = emulator.label,
+            onConfirm = {
+                onDismiss()
+                (application as JoyconApplication).container.emulatorLauncher.launch(emulator.id)
+            },
+            onDismiss = onDismiss,
+        )
+    }
+
+    @Composable
     private fun ControllerMappingRoute(console: Console, onBack: () -> Unit) {
         val leftMapping by controllerMappingViewModel.mapping(console, JoyconSide.LEFT).collectAsState()
         val rightMapping by controllerMappingViewModel.mapping(console, JoyconSide.RIGHT).collectAsState()
@@ -194,6 +209,8 @@ class MainActivity : ComponentActivity() {
         val dsuMotionSettings by dsuViewModel.motionSettings.collectAsState()
         val dsuEmulatorToClose by dsuViewModel.emulatorToClose.collectAsState()
         val gamepadEmulatorToClose by gamepadViewModel.emulatorToClose.collectAsState()
+        val dsuEmulatorToStart by dsuViewModel.emulatorToStart.collectAsState()
+        val gamepadEmulatorToStart by gamepadViewModel.emulatorToStart.collectAsState()
         val gamepadSetupPhase by gamepadViewModel.setupPhase.collectAsState()
         val selectedEmulator by gamepadViewModel.selectedEmulator.collectAsState()
         val permissionDenied by viewModel.permissionDenied.collectAsState()
@@ -223,6 +240,8 @@ class MainActivity : ComponentActivity() {
                 onDismiss = gamepadViewModel::cancelClose,
             )
         }
+        StartEmulatorPrompt(dsuEmulatorToStart, dsuViewModel::dismissStart)
+        StartEmulatorPrompt(gamepadEmulatorToStart, gamepadViewModel::dismissStart)
 
         JoyconScreen(
             state = state,

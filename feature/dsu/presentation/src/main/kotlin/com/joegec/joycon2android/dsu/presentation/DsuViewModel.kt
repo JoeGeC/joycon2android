@@ -51,6 +51,10 @@ class DsuViewModel(
     private val _emulatorToClose = MutableStateFlow<EmulatorOption?>(null)
     val emulatorToClose: StateFlow<EmulatorOption?> = _emulatorToClose.asStateFlow()
 
+    /** The emulator to offer to start once its config has been written. */
+    private val _emulatorToStart = MutableStateFlow<EmulatorOption?>(null)
+    val emulatorToStart: StateFlow<EmulatorOption?> = _emulatorToStart.asStateFlow()
+
     fun toggle(enabled: Boolean) {
         if (enabled) enableDsu() else disableDsu()
     }
@@ -66,12 +70,15 @@ class DsuViewModel(
     fun selectEmulator(id: String) {
         _selectedEmulator.value = id
         _emulatorToClose.value = null
+        _emulatorToStart.value = null
         resetSetupPhase()
     }
 
-    /** Clears a stale Done/Failed once the written config no longer matches the assignment. */
+    /** Clears a stale Done/Failed and its start prompt once the written config no longer matches the assignment. */
     fun resetSetupPhase() {
-        if (_setupPhase.value != DolphinSetupPhase.WORKING) _setupPhase.value = DolphinSetupPhase.IDLE
+        if (_setupPhase.value == DolphinSetupPhase.WORKING) return
+        _setupPhase.value = DolphinSetupPhase.IDLE
+        _emulatorToStart.value = null
     }
 
     fun configureDsu(players: List<PlayerState>) = write(players, closeEmulator = false)
@@ -87,6 +94,10 @@ class DsuViewModel(
         resetSetupPhase()
     }
 
+    fun dismissStart() {
+        _emulatorToStart.value = null
+    }
+
     private fun write(players: List<PlayerState>, closeEmulator: Boolean) {
         val emulatorId = _selectedEmulator.value
         if (emulatorId.isEmpty() || _setupPhase.value == DolphinSetupPhase.WORKING) return
@@ -100,13 +111,16 @@ class DsuViewModel(
                 EmulatorSetupResult.FAILED
             }
             if (result == EmulatorSetupResult.EMULATOR_RUNNING) {
-                _emulatorToClose.value = dsuEmulators.firstOrNull { it.id == emulatorId }
+                _emulatorToClose.value = emulator(emulatorId)
                 _setupPhase.value = DolphinSetupPhase.IDLE
             } else {
                 _setupPhase.value = result.toPhase()
+                if (result == EmulatorSetupResult.SUCCESS) _emulatorToStart.value = emulator(emulatorId)
             }
         }
     }
+
+    private fun emulator(id: String) = dsuEmulators.firstOrNull { it.id == id }
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L

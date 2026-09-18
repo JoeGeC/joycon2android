@@ -1,6 +1,5 @@
 package com.joegec.joycon2android.ui.components
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,13 +9,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -35,7 +28,6 @@ fun DolphinSetupButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ToastOnSetupSuccess(phase)
     Button(
         onClick = onClick,
         modifier = modifier.height(Dimens.emulatorSetupButtonHeight),
@@ -58,20 +50,6 @@ fun DolphinSetupButton(
         } else {
             Text(label, color = TextOnAccent, style = MaterialTheme.typography.labelLarge)
         }
-    }
-}
-
-// Keyed to the WORKING → SUCCESS transition rather than SUCCESS itself, which lingers in the
-// ViewModel and would re-toast whenever the card re-enters composition.
-@Composable
-private fun ToastOnSetupSuccess(phase: DolphinSetupPhase) {
-    val context = LocalContext.current
-    var previousPhase by remember { mutableStateOf(phase) }
-    LaunchedEffect(phase) {
-        if (previousPhase == DolphinSetupPhase.WORKING && phase == DolphinSetupPhase.SUCCESS) {
-            Toast.makeText(context, R.string.dolphin_setup_done, Toast.LENGTH_LONG).show()
-        }
-        previousPhase = phase
     }
 }
 

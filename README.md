@@ -79,7 +79,8 @@ same device connect to `127.0.0.1:26760`.
 
 ### 5. Set up your emulator
 
-Both cards have **Emulator auto setup**: pick an emulator, tap **Set up**, and restart the emulator.
+Both cards have **Emulator auto setup**: pick an emulator and tap **Set up**. The app offers to start
+the emulator afterwards — it only reads its config when it starts.
 
 | Card | Emulators | What it writes |
 |---|---|---|

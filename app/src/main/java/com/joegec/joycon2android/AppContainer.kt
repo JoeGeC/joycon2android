@@ -22,6 +22,7 @@ import com.joegec.joycon2android.assignment.AssignmentRepository
 import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerAssignmentManager
 import com.joegec.joycon2android.assignment.PlayerStateResolver
+import com.joegec.joycon2android.emulator.EmulatorLauncher
 import com.joegec.joycon2android.emulator.EmulatorSetup
 import com.joegec.joycon2android.emulator.dolphinGamepadIds
 import com.joegec.joycon2android.emulator.edenGamepads
@@ -140,6 +141,8 @@ class AppContainer(context: Context) {
         gamepadControllerNumbers = { dolphinGamepadIds(appContext) },
         getControllerMapping = getControllerMapping,
     )
+
+    val emulatorLauncher = EmulatorLauncher(appContext)
 
     // --- Updates ---
     private val skippedVersions: SkippedVersionRepository = UpdatePreferencesDataStore(appContext)
