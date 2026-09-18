@@ -38,7 +38,7 @@ class DolphinWiimoteConfigTest {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))))
 
         assertTrue(result.contains("Buttons/A = `Circle`")) // Down rotates onto A
-        assertTrue(result.contains("Buttons/Home = `Touch`"))
+        assertTrue(result.contains("Buttons/Home = `Touch Button`"))
         assertTrue(result.contains("IMUIR/Recenter = `L1`"))
     }
 

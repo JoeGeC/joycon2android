@@ -203,7 +203,7 @@ private val DS4_BUTTON_NAMES = listOf(
     "ZL" to "L2", "ZR" to "R2",
     "−" to "Share", "+" to "Options",
     "LS" to "L3", "RS" to "R3",
-    "Home" to "PS", "Capture" to "Touch",
+    "Home" to "PS", "Capture" to "Touch Button",
     "D-Pad" to "Pad N/S/E/W",
 )
 
