@@ -327,7 +327,9 @@ class JoyconConnection(
     }
 
     private fun handleCharacteristicChanged(g: BluetoothGatt, uuid: UUID, data: ByteArray) {
-        PacketParser.parse(data, side)?.let { parsed ->
+        val isNyxiChar = uuid == NYXI_INPUT_NOTIFY_CHAR || uuid == KEYLINKER_NOTIFY
+        
+        PacketParser.parse(data, side, isNyxiChar)?.let { parsed ->
             _input.value = stickCalibrator.calibrate(parsed)
             if (!ledSentAfterFirstPacket && initComplete) {
                 ledSentAfterFirstPacket = true

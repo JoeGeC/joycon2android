@@ -1,6 +1,5 @@
 package com.joegec.joycon2android.connection
 
-import android.util.Log
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.Side
@@ -8,8 +7,6 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 object PacketParser {
-
-    private fun ByteArray.hex(): String = joinToString("") { "%02X".format(it) }
 
     private const val MIN_PACKET_SIZE = 0x3B
 
@@ -28,15 +25,15 @@ object PacketParser {
         0x0100000000L to JoyconButton.GR, 0x0200000000L to JoyconButton.GL,
     )
 
-    fun parse(data: ByteArray, side: Side): JoyconInput? {
-        Log.d("PacketParser", "parse: len=${data.size}, hex=${data.take(8).toByteArray().hex()}")
+    fun parse(data: ByteArray, side: Side, isNyxiChar: Boolean = false): JoyconInput? {
         if (data.size < 12) return null
 
-        // Check for Nyxi / Switch 1 report layout where Byte 1 is status 0x18 and Byte 5..7 is 12-bit stick
-        if (isNyxiFormat(data)) {
+        // If it came from a Nyxi characteristic, OR it matches the Nyxi format, use the Nyxi parser
+        if (isNyxiChar || isNyxiFormat(data)) {
             return parseNyxiFormat(data, side)
         }
 
+        // Standard Switch parser should only run on non-Nyxi characteristics
         if (data.size < MIN_PACKET_SIZE) return null
         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
 
@@ -66,12 +63,33 @@ object PacketParser {
     private fun isNyxiFormat(data: ByteArray): Boolean {
         if (data.size < 8) return false
         val status = data[1].toInt() and 0xFF
-        val b4 = data[4].toInt() and 0xFF
-        return (status == 0x14 || status == 0x18 || status == 0x80 || status == 0x8E) &&
-            ((b4 and 0x0F) <= 7)
+        
+        // Nyxi/Keylinker input statuses. Status 0x3F and 0x81 are common heartbeat/init codes.
+        val isInputStatus = status == 0x14 || status == 0x10 || status == 0x18 || 
+                            status == 0x80 || status == 0x81 || status == 0x8E || status == 0x3F
+        
+        return isInputStatus
     }
 
     private fun parseNyxiFormat(data: ByteArray, side: Side): JoyconInput {
+        val status = data[1].toInt() and 0xFF
+        
+        // Nyxi hardware isolation: 
+        // Left Joy-Con uses 0x14 for input; 0x10 is a management heartbeat.
+        // Right Joy-Con uses 0x10 for input; 0x14 is a management heartbeat.
+        // FE is a generic vendor management header.
+        val isHeartbeat = (side == Side.LEFT && status == 0x10) ||
+                          (side == Side.RIGHT && (status == 0x14 || status == 0x18)) ||
+                          (data[0].toInt() and 0xFF == 0xFE)
+        
+        if (isHeartbeat) {
+            return JoyconInput(
+                packetId = (data[0].toInt() and 0xFF),
+                stickX = 2048, stickY = 2048, 
+                rightStickX = 2048, rightStickY = 2048
+            )
+        }
+
         val b2 = data[2].toInt() and 0xFF
         val b3 = data[3].toInt() and 0xFF
         val b4 = data[4].toInt() and 0xFF
@@ -131,20 +149,32 @@ object PacketParser {
             6 -> pressed.add(JoyconButton.Left.id)
         }
 
-        // Stick decoding: offset 5 for primary stick (present on both Left and Right halves), offset 8 for secondary stick (Pro controller)
-        val (lsx, lsy) = if (data.size >= 8) decodeStick(data, 5) else (2048 to 2048)
-        val (rsx, rsy) = if (data.size >= 11) decodeStick(data, 8) else (2048 to 2048)
+        // Stick decoding: Primary stick is usually at offset 5. 
+        // Second stick (Pro) at offset 8. Some Right Joy-Cons use offset 8 exclusively.
+        val (s1x, s1y) = if (data.size >= 8) decodeStick(data, 5) else (2048 to 2048)
+        val (s2x, s2y) = if (data.size >= 11) decodeStick(data, 8) else (2048 to 2048)
 
-        Log.d("PacketParser", "parseNyxiFormat: side=$side, pressed=$pressed, stick1=($lsx,$lsy), stick2=($rsx,$rsy)")
+        val s1Active = isStickActive(s1x to s1y)
+        val s2Active = isStickActive(s2x to s2y)
+        
+        val primaryX = when {
+            side == Side.LEFT -> s1x
+            side == Side.RIGHT -> if (s2Active && !s1Active) s2x else s1x
+            else -> s1x
+        }
+        val primaryY = when {
+            side == Side.LEFT -> s1y
+            side == Side.RIGHT -> if (s2Active && !s1Active) s2y else s1y
+            else -> s1y
+        }
 
         return JoyconInput(
             packetId = (data[0].toInt() and 0xFF),
-            buttons = 0L,
             pressed = pressed,
-            stickX = lsx,
-            stickY = lsy,
-            rightStickX = if (side == Side.PRO) rsx else 2048,
-            rightStickY = if (side == Side.PRO) rsy else 2048,
+            stickX = primaryX,
+            stickY = primaryY,
+            rightStickX = if (side == Side.PRO || side == Side.RIGHT) s2x else 2048,
+            rightStickY = if (side == Side.PRO || side == Side.RIGHT) s2y else 2048,
         )
     }
 
