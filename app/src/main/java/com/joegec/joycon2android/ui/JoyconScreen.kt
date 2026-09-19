@@ -313,11 +313,6 @@ fun JoyconScreen(
                     else -scrollState.value.toFloat().coerceIn(0f, appBarSpacePx)
                 },
             )
-
-            /*
-            // Debug Overlay
-            Column(...) { ... }
-            */
         }
     }
 }
