@@ -3,6 +3,8 @@ package com.joegec.joycon2android.connection
 import android.annotation.SuppressLint
 import android.bluetooth.le.ScanResult
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.joegec.joycon2android.model.Side
 import java.util.concurrent.ConcurrentHashMap
 
@@ -16,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
 @SuppressLint("MissingPermission")
 class ConnectionPool(private val context: Context) {
 
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val connections = ConcurrentHashMap<String, JoyconConnection>()
 
     var onPoolChanged: (() -> Unit)? = null
@@ -37,6 +40,12 @@ class ConnectionPool(private val context: Context) {
         connection.setHighPriority(highPriority)
         if (connections.putIfAbsent(address, connection) != null) return null
         connection.connect(result.device)
+
+        // Re-assert HIGH priority on all existing connections after new connection settles
+        mainHandler.postDelayed({
+            setHighPriority(true)
+        }, 1200L)
+
         return connection
     }
 

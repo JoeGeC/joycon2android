@@ -13,11 +13,8 @@ import android.util.Log
 import com.joegec.joycon2android.model.Side
 
 /**
- * Handles BLE scanning for Nintendo Joy-Con 2 controllers.
+ * Handles BLE scanning for Nintendo Joy-Con 2 and compatible controllers (like Nyxi).
  * Emits discovered devices via the [onDeviceFound] callback.
- *
- * All BLE operations require BLUETOOTH_SCAN and BLUETOOTH_CONNECT permissions,
- * which are verified by the permission launcher in MainActivity before any BLE code is reached.
  */
 @SuppressLint("MissingPermission")
 class BleScanner(context: Context) {
@@ -49,7 +46,7 @@ class BleScanner(context: Context) {
 
         isScanning = true
         scanner.startScan(null, lowLatencySettings(), createCallback(isKnownAddress))
-        Log.i(TAG, "Scanning for Joy-Con 2 controllers...")
+        Log.i(TAG, "Scanning for Joy-Con 2/Compatible controllers...")
         scheduleTimeout()
     }
 
@@ -67,17 +64,22 @@ class BleScanner(context: Context) {
         val callback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 if (!isScanning) return
-                val manufacturerData = nintendoData(result) ?: return
-                logAdvertisement(result, manufacturerData)
-                // A button press wakes a synced Joy-Con into a short-lived reconnect
-                // advertisement that only its bonded host can connect to (foreign
-                // connects fail with status 133) — connecting just flashes the UI
-                if (!JoyconAdvertisement.isPairing(manufacturerData)) return
-                if (isKnownAddress(result.device.address)) return
+
+                val scanRecord = result.scanRecord ?: return
+
+                // Accept devices carrying the Joy-Con 2 manufacturer record (0x0553)
+                if (scanRecord.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) == null) return
+
+                if (isKnownAddress(result.device.address)) {
+                    Log.d(TAG, "Filtered out: Already known address ${result.device.address}")
+                    return
+                }
 
                 val name = result.device.name
-                    ?: result.scanRecord?.deviceName
+                    ?: scanRecord.deviceName
                     ?: "Joy-Con 2"
+
+                // Pass the data and the type to detect side correctly
                 val side = detectSide(result, name)
                 onDeviceFound?.invoke(result, side, name)
             }
@@ -100,47 +102,40 @@ class BleScanner(context: Context) {
         }, SCAN_TIMEOUT_MS)
     }
 
-    private fun nintendoData(result: ScanResult): ByteArray? =
-        result.scanRecord?.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID)
-
-    private fun logAdvertisement(result: ScanResult, data: ByteArray) {
-        Log.d(
-            TAG,
-            "Adv ${result.device.address} name=${result.device.name ?: result.scanRecord?.deviceName} " +
-                "mfg=${data.joinToString(" ") { "%02X".format(it) }}",
-        )
-    }
-
     private fun lowLatencySettings() = ScanSettings.Builder()
         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
         .build()
 
     private fun detectSide(result: ScanResult, name: String): Side {
+        // 1. Try name-based detection first (most reliable for third-party)
         sideFromName(name)?.let { return it }
+
+        // 2. Try manufacturer-based detection
         sideFromManufacturerData(result)?.let { return it }
+
         return Side.UNKNOWN
     }
 
     private fun sideFromName(name: String): Side? = when {
-        name.contains("(L)") || name.contains("Left") -> Side.LEFT
-        name.contains("(R)") || name.contains("Right") -> Side.RIGHT
-        name.contains("Pro") -> Side.PRO
+        // Matches "Joy-Con (L)", "NJ22-L", "Left Hyperion"
+        name.contains("(L)") || name.contains("Left") || name.contains("-L") -> Side.LEFT
+        // Matches "Joy-Con (R)", "NJ22-R", "Right Hyperion"
+        name.contains("(R)") || name.contains("Right") || name.contains("-R") -> Side.RIGHT
+        // Matches "Pro Controller", "NJ22"
+        name.contains("Pro") || name.contains("NJ22") -> Side.PRO
         else -> null
     }
 
     /**
-     * Nintendo manufacturer data (company 0x0553) carries the little-endian USB/BLE product ID at
-     * bytes [5..6], so index 5 is its low byte: 0x67 = Left Joy-Con 2 (PID 0x2067), 0x66 = Right
-     * Joy-Con 2 (PID 0x2066), 0x69 = Switch 2 Pro Controller (PID 0x2069). Left/Right are confirmed
-     * on hardware and cross-checked against each controller's SPI accent colour (cyan left, coral
-     * right); the Pro value comes from community reverse-engineering of the same advertisement
-     * scheme. The pairing advertisement has no local name, so this byte is the only type signal
-     * available before the controller starts streaming input.
+     * Extracts side info from Nintendo-specific data packets.
+     * Note: Nyxi packets are usually too short for this index, so we skip this for Nyxi.
      */
     private fun sideFromManufacturerData(result: ScanResult): Side? {
         val mfgData = result.scanRecord
             ?.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) ?: return null
+
         if (mfgData.size <= SIDE_TYPE_INDEX) return null
+
         return when (mfgData[SIDE_TYPE_INDEX].toInt() and 0xFF) {
             0x67 -> Side.LEFT
             0x66 -> Side.RIGHT

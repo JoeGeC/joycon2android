@@ -18,7 +18,7 @@ class ArchitectureTest {
             .classes()
             .withNameEndingWith("ViewModel")
             .assertTrue {
-                val path = it.containingFile.path
+                val path = it.containingFile.path.replace('\\', '/')
                 path.contains("/presentation/") || path.contains("/app/")
             }
     }
@@ -37,7 +37,7 @@ class ArchitectureTest {
             .classes()
             .withNameEndingWith("UseCase")
             .assertTrue {
-                val path = it.containingFile.path
+                val path = it.containingFile.path.replace('\\', '/')
                 path.contains("/domain/") || path.contains("/core/session/")
             }
     }
@@ -55,6 +55,6 @@ class ArchitectureTest {
         Konsist.scopeFromProject()
             .interfaces()
             .withNameEndingWith("Repository")
-            .assertTrue { it.containingFile.path.contains("/domain/") }
+            .assertTrue { it.containingFile.path.replace('\\', '/').contains("/domain/") }
     }
 }

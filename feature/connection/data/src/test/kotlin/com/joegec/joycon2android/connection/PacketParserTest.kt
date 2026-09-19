@@ -64,4 +64,48 @@ class PacketParserTest {
         assertTrue(JoyconButton.GR.id !in input.pressed)
         assertTrue(JoyconButton.GL.id !in input.pressed)
     }
+
+    @Test
+    fun `nyxi short packets decode primary stick`() {
+        val data = ByteArray(12).apply {
+            this[1] = 0x14 // Status
+            putStick(5, 0x111 to 0x222)
+        }
+        val input = PacketParser.parse(data, Side.LEFT, isNyxiChar = true)!!
+        assertEquals(0x111, input.stickX)
+        assertEquals(0x222, input.stickY)
+    }
+
+    @Test
+    fun `nyxi heartbeats are stripped to neutral`() {
+        val data = ByteArray(12).apply {
+            this[1] = 0x10 // Heartbeat for Left
+            putStick(5, 0x999 to 0x999) // Should be ignored
+        }
+        val input = PacketParser.parse(data, Side.LEFT, isNyxiChar = true)!!
+        assertEquals(2048, input.stickX)
+        assertEquals(emptySet<String>(), input.pressed)
+    }
+
+    @Test
+    fun `nyxi right joycon decodes stick from offset 8`() {
+        val data = ByteArray(12).apply {
+            this[1] = 0x10 // Valid input for Right
+            putStick(8, 0x333 to 0x444)
+        }
+        val input = PacketParser.parse(data, Side.RIGHT, isNyxiChar = true)!!
+        assertEquals(0x333, input.stickX) // Primary
+        assertEquals(0x333, input.rightStickX) // Also mapped to right
+    }
+
+    @Test
+    fun `nyxi magic byte packets are neutral`() {
+        val data = ByteArray(64).apply {
+            this[0] = 0xFE.toByte()
+            this[1] = 0x10.toByte()
+            putStick(5, 0x555 to 0x666)
+        }
+        val input = PacketParser.parse(data, Side.PRO, isNyxiChar = true)!!
+        assertEquals(2048, input.stickX)
+    }
 }
