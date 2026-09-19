@@ -30,6 +30,7 @@ class GattOpQueue {
     }
 
     fun enqueue(op: () -> Boolean) {
+        Log.d(TAG, "Operation enqueued. Current queue size: ${queue.size}")
         queue.add(op)
         runNext()
     }
@@ -49,6 +50,7 @@ class GattOpQueue {
     private fun runNext() {
         if (inFlight) return
         val op = queue.poll() ?: return
+        Log.d(TAG, "Operation dequeued. Remaining queue size: ${queue.size}")
         inFlight = true
         val success = op()
         if (!success) {

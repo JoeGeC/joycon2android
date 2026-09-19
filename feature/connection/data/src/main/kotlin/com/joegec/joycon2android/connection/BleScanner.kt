@@ -22,7 +22,6 @@ class BleScanner(context: Context) {
     companion object {
         private const val TAG = "Joycon2"
         private const val NINTENDO_MANUFACTURER_ID = 0x0553
-        private const val NYXI_MANUFACTURER_ID = 0x6c42 // From Hyperion 3 scan results
         private const val SIDE_TYPE_INDEX = 5
         private const val SCAN_TIMEOUT_MS = 15_000L
     }
@@ -66,28 +65,27 @@ class BleScanner(context: Context) {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 if (!isScanning) return
 
-                // Determine which manufacturer data is present
                 val scanRecord = result.scanRecord ?: return
-                val nintendoData = scanRecord.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID)
-                val nyxiData = scanRecord.getManufacturerSpecificData(NYXI_MANUFACTURER_ID)
 
-                val manufacturerData = nintendoData ?: nyxiData ?: return
-                logAdvertisement(result, manufacturerData)
+                // Only accept devices carrying the Joy-Con 2 manufacturer record (0x0553)
+                val nintendoData = scanRecord.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) ?: return
 
-                // Only perform the Nintendo-specific pairing bit check if it's official hardware.
-                // Third-party controllers often use different pairing flag structures.
-                if (nintendoData != null) {
-                    if (!JoyconAdvertisement.isPairing(nintendoData)) return
+                if (!JoyconAdvertisement.isPairing(NINTENDO_MANUFACTURER_ID, nintendoData)) {
+                    Log.d(TAG, "Filtered out: isPairing=false for mfg 0x0553")
+                    return
                 }
 
-                if (isKnownAddress(result.device.address)) return
+                if (isKnownAddress(result.device.address)) {
+                    Log.d(TAG, "Filtered out: Already known address ${result.device.address}")
+                    return
+                }
 
                 val name = result.device.name
                     ?: scanRecord.deviceName
                     ?: "Joy-Con 2"
 
                 // Pass the data and the type to detect side correctly
-                val side = detectSide(result, name, nintendoData != null)
+                val side = detectSide(result, name)
                 onDeviceFound?.invoke(result, side, name)
             }
 
@@ -109,26 +107,16 @@ class BleScanner(context: Context) {
         }, SCAN_TIMEOUT_MS)
     }
 
-    private fun logAdvertisement(result: ScanResult, data: ByteArray) {
-        Log.d(
-            TAG,
-            "Adv ${result.device.address} name=${result.device.name ?: result.scanRecord?.deviceName} " +
-                "mfg=${data.joinToString(" ") { "%02X".format(it) }}",
-        )
-    }
-
     private fun lowLatencySettings() = ScanSettings.Builder()
         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
         .build()
 
-    private fun detectSide(result: ScanResult, name: String, isNintendo: Boolean): Side {
+    private fun detectSide(result: ScanResult, name: String): Side {
         // 1. Try name-based detection first (most reliable for third-party)
         sideFromName(name)?.let { return it }
 
-        // 2. Try manufacturer-based detection if it's official hardware
-        if (isNintendo) {
-            sideFromManufacturerData(result)?.let { return it }
-        }
+        // 2. Try manufacturer-based detection
+        sideFromManufacturerData(result)?.let { return it }
 
         return Side.UNKNOWN
     }
