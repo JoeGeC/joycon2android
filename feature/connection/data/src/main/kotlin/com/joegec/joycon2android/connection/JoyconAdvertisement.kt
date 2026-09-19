@@ -1,37 +1,19 @@
-import android.util.Log
+package com.joegec.joycon2android.connection
 
 /**
- * Joy-Con 2 advertisements carry the bonded host's MAC to signal wake vs pairing mode.
- * - ID 0x0553 (Nintendo): MAC at bytes [10..15]
- * - ID 0x75 (Nyxi): MAC at bytes [5..10]
- * Holding SYNC (pairing mode) zeroes this field.
+ * Joy-Con 2 advertisements (manufacturer ID 0x0553) carry the bonded host's MAC at
+ * bytes [10..15]: a button press wakes the controller to reconnect to that host and
+ * advertises its address; holding SYNC (pairing mode) zeroes the field.
  */
 object JoyconAdvertisement {
 
-    private const val TAG = "Joycon2"
+    private const val HOST_MAC_OFFSET = 10
     private const val HOST_MAC_LENGTH = 6
 
     /** True when the controller is open for pairing rather than waking for its bonded host. */
-    fun isPairing(id: Int, manufacturerData: ByteArray): Boolean {
-        val offset = when (id) {
-            0x0442 -> 3
-            0x6c42 -> 0
-            0x0553 -> 10
-            else -> return true
-        }
-
-        // For Nyxi/Keylinker (0x6c42), if data is too short, treat as pairing.
-        if (id == 0x6c42 && manufacturerData.size < offset + HOST_MAC_LENGTH) {
-            return true
-        }
-
-        if (manufacturerData.size < offset + HOST_MAC_LENGTH) return true
-
-        val macSlice = manufacturerData.sliceArray(offset until offset + HOST_MAC_LENGTH)
-        val isPairing = macSlice.all { it == 0.toByte() }
-        
-        Log.d(TAG, "isPairing check: id=0x${Integer.toHexString(id)}, offset=$offset, data=${macSlice.joinToString("") { "%02X".format(it) }} -> $isPairing")
-
-        return isPairing
+    fun isPairing(manufacturerData: ByteArray): Boolean {
+        if (manufacturerData.size < HOST_MAC_OFFSET + HOST_MAC_LENGTH) return true
+        return (HOST_MAC_OFFSET until HOST_MAC_OFFSET + HOST_MAC_LENGTH)
+            .all { manufacturerData[it] == 0.toByte() }
     }
 }

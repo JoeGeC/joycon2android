@@ -314,45 +314,10 @@ fun JoyconScreen(
                 },
             )
 
-            // Debug Overlay for raw hex of last 3 packets
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp)
-                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(8.dp))
-                    .padding(8.dp)
-            ) {
-                val allControllers = state.unassignedJoycons + state.activePlayers.flatMap { listOfNotNull(it.left, it.right) }
-                allControllers.forEach { controller ->
-                    val bondStr = when (controller.connectionState.bondState) {
-                        BluetoothDevice.BOND_NONE -> "NONE"
-                        BluetoothDevice.BOND_BONDING -> "BONDING"
-                        BluetoothDevice.BOND_BONDED -> "BONDED"
-                        else -> "UNKNOWN (${controller.connectionState.bondState})"
-                    }
-                    val count = JoyconConnection.packetCounts[controller.deviceName] ?: 0L
-                    Text(
-                        text = "${controller.deviceName}: $bondStr (Pkts: $count)",
-                        color = Color.Cyan,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-                if (allControllers.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
-                }
-                Text(
-                    text = "Last 3 Packets:",
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall
-                )
-                JoyconConnection.lastPackets.forEach { packet ->
-                    Text(
-                        text = packet,
-                        color = Color.Green,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
+            /*
+            // Debug Overlay
+            Column(...) { ... }
+            */
         }
     }
 }

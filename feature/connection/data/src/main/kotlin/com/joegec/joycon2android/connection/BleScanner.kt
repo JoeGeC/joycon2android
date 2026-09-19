@@ -67,13 +67,8 @@ class BleScanner(context: Context) {
 
                 val scanRecord = result.scanRecord ?: return
 
-                // Only accept devices carrying the Joy-Con 2 manufacturer record (0x0553)
-                val nintendoData = scanRecord.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) ?: return
-
-                if (!JoyconAdvertisement.isPairing(NINTENDO_MANUFACTURER_ID, nintendoData)) {
-                    Log.d(TAG, "Filtered out: isPairing=false for mfg 0x0553")
-                    return
-                }
+                // Accept devices carrying the Joy-Con 2 manufacturer record (0x0553)
+                if (scanRecord.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) == null) return
 
                 if (isKnownAddress(result.device.address)) {
                     Log.d(TAG, "Filtered out: Already known address ${result.device.address}")
