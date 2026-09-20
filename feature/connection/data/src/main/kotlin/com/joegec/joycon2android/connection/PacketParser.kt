@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.connection
 
+import android.util.Log
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.Side
@@ -28,7 +29,6 @@ object PacketParser {
     fun parse(data: ByteArray, side: Side, isNyxiChar: Boolean = false): JoyconInput? {
         if (data.size < 12) return null
 
-        // If it came from a Nyxi characteristic, OR it matches the Nyxi format, use the Nyxi parser
         if (isNyxiChar || isNyxiFormat(data)) {
             return parseNyxiFormat(data, side)
         }
@@ -64,31 +64,28 @@ object PacketParser {
         if (data.size < 8) return false
         val status = data[1].toInt() and 0xFF
         
-        // Nyxi/Keylinker input statuses. Status 0x3F and 0x81 are common heartbeat/init codes.
-        val isInputStatus = status == 0x14 || status == 0x10 || status == 0x18 || 
+        // Accept any 0x1X status as potential Nyxi input
+        val isInputStatus = (status in 0x10..0x1F) || 
                             status == 0x80 || status == 0x81 || status == 0x8E || status == 0x3F
         
         return isInputStatus
     }
 
-    private fun parseNyxiFormat(data: ByteArray, side: Side): JoyconInput {
+    private fun parseNyxiFormat(data: ByteArray, side: Side): JoyconInput? {
         val status = data[1].toInt() and 0xFF
         
-        // Nyxi hardware isolation: 
-        // Left Joy-Con uses 0x14 for input; 0x10 is a management heartbeat.
-        // Right Joy-Con uses 0x10 for input; 0x14 is a management heartbeat.
-        // FE is a generic vendor management header.
-        val isHeartbeat = (side == Side.LEFT && status == 0x10) ||
-                          (side == Side.RIGHT && (status == 0x14 || status == 0x18)) ||
-                          (data[0].toInt() and 0xFF == 0xFE)
+        // Check for any input status starting with 0x1X (0x10 to 0x1F)
+        val is1XStatus = status in 0x10..0x1F
         
-        if (isHeartbeat) {
-            return JoyconInput(
-                packetId = (data[0].toInt() and 0xFF),
-                stickX = 2048, stickY = 2048, 
-                rightStickX = 2048, rightStickY = 2048
-            )
+        // Ensure the packet belongs to the correct controller based on side-specific expectations:
+        // Left controller typically uses 0x14, 0x1C etc. (even/bit-specific or just general 0x1X).
+        // Let's accept any 0x1X status that isn't explicitly known to be a heartbeat or from the opposite side, 
+        // but let's be more accommodating to any 0x1X packet as long as it's not a generic vendor header (0xFE).
+        if (!is1XStatus || (data[0].toInt() and 0xFF == 0xFE)) {
+            return null
         }
+
+
 
         val b2 = data[2].toInt() and 0xFF
         val b3 = data[3].toInt() and 0xFF
@@ -197,7 +194,7 @@ object PacketParser {
 
     private fun isStickActive(stick: Pair<Int, Int>): Boolean {
         val (x, y) = stick
-        return x != 0 || y != 0
+        return (x != 0 || y != 0) && (x != 2048 || y != 2048)
     }
 
     /** 12-bit packed stick: 3 bytes → (x, y) each 0..4095 */

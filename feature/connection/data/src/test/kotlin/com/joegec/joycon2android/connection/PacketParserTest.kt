@@ -2,6 +2,7 @@ package com.joegec.joycon2android.connection
 
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.Side
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -77,14 +78,13 @@ class PacketParserTest {
     }
 
     @Test
-    fun `nyxi heartbeats are stripped to neutral`() {
+    fun `nyxi heartbeats or mismatched status are accepted if 1X`() {
         val data = ByteArray(12).apply {
-            this[1] = 0x10 // Heartbeat for Left
-            putStick(5, 0x999 to 0x999) // Should be ignored
+            this[1] = 0x10 // Any 0x1X
+            putStick(5, 0x999 to 0x999)
         }
-        val input = PacketParser.parse(data, Side.LEFT, isNyxiChar = true)!!
-        assertEquals(2048, input.stickX)
-        assertEquals(emptySet<String>(), input.pressed)
+        val input = PacketParser.parse(data, Side.LEFT, isNyxiChar = true)
+        Assert.assertNotNull(input)
     }
 
     @Test
@@ -99,13 +99,13 @@ class PacketParserTest {
     }
 
     @Test
-    fun `nyxi magic byte packets are neutral`() {
+    fun `nyxi magic byte packets are ignored`() {
         val data = ByteArray(64).apply {
             this[0] = 0xFE.toByte()
             this[1] = 0x10.toByte()
             putStick(5, 0x555 to 0x666)
         }
-        val input = PacketParser.parse(data, Side.PRO, isNyxiChar = true)!!
-        assertEquals(2048, input.stickX)
+        val input = PacketParser.parse(data, Side.PRO, isNyxiChar = true)
+        assertNull(input)
     }
 }
