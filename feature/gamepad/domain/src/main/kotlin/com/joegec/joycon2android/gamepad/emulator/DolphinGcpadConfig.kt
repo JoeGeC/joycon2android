@@ -125,16 +125,24 @@ object DolphinGcpadConfig {
     }
 
     private fun lines(side: JoyconSide, mapping: Map<String, String>): List<String> {
-        val buttonLines = mapping.toSourceMap<GameCubeButton>().mapNotNull { (target, source) ->
-            specFor(side, source)?.let { spec -> "${DOLPHIN_KEYS.getValue(target)} = `$spec`" }
+        val buttonLines = mapping.toSourceMap<GameCubeButton>().mapNotNull { (target, sources) ->
+            expressionFor(side, sources)?.let { expression -> "${DOLPHIN_KEYS.getValue(target)} = $expression" }
         }
         val stickLines = mapping.toStickDirectionMap<GameCubeStick>().flatMap { (target, directions) ->
-            directions.mapNotNull { (direction, source) ->
-                specFor(side, source)?.let { spec -> "${STICK_PREFIXES.getValue(target)}/${direction.displayName} = `$spec`" }
+            directions.mapNotNull { (direction, sources) ->
+                expressionFor(side, sources)?.let { expression ->
+                    "${STICK_PREFIXES.getValue(target)}/${direction.displayName} = $expression"
+                }
             }
         }
         return buttonLines + stickLines
     }
+
+    // Dolphin's expression language ORs its inputs, so every source bound to a target can fire it.
+    private fun expressionFor(side: JoyconSide, sources: List<MappingSource>): String? =
+        sources.mapNotNull { specFor(side, it) }
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(" | ") { "`$it`" }
 
     private fun specFor(side: JoyconSide, source: MappingSource): String? = when (source) {
         is MappingSource.Button -> source.button.emittedFor(side)?.let { ANDROID_NAMES[it] ?: HAT_NAMES[it] }

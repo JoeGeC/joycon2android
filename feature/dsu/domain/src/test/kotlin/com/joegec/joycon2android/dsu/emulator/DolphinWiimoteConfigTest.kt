@@ -2,7 +2,7 @@ package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
-import com.joegec.joycon2android.buttonmapping.defaultMappingEntries
+import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
@@ -11,14 +11,14 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-private fun defaultWiimoteMapping(side: JoyconSide) = defaultMappingEntries(Console.WIIMOTE_NUNCHUK, side)
+private fun defaultWiimoteMapping(side: JoyconSide) = MappingPresets.default(Console.WIIMOTE_NUNCHUK).entries(side)
 
 class DolphinWiimoteConfigTest {
 
     private fun joycon(side: Side) = ConnectedJoycon(address = side.name, side = side, deviceName = "Joy-Con")
 
-    private fun merge(existing: String?, players: List<PlayerState>) =
-        DolphinWiimoteConfig.merge(existing, players, ::defaultWiimoteMapping)
+    private fun merge(existing: String?, players: List<PlayerState>, sidewaysRemote: Boolean = false) =
+        DolphinWiimoteConfig.merge(existing, players, sidewaysRemote, ::defaultWiimoteMapping)
 
     @Test
     fun `right-only player maps the stick to the d-pad and uses no extension`() {
@@ -61,7 +61,7 @@ class DolphinWiimoteConfigTest {
         val pair = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
         val mapping = defaultWiimoteMapping(JoyconSide.DUAL) + mapOf("NunchukStick_UP" to "Up")
 
-        val result = DolphinWiimoteConfig.merge(null, listOf(pair)) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, listOf(pair), false) { mapping }
 
         assertTrue(result.contains("Nunchuk/Stick/Up = `Pad N`"))
         assertTrue(result.contains("Nunchuk/Stick/Down = `Left Y-`"))
@@ -70,13 +70,24 @@ class DolphinWiimoteConfigTest {
     @Test
     fun `a lone Joy-Con plugs in a nunchuk once its stick is mapped`() {
         val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("NunchukStick_UP" to "X", "NunchukStick_DOWN" to "B")
+        val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
 
-        val result = DolphinWiimoteConfig.merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, player, false) { mapping }
 
         assertTrue(result.contains("Extension = Nunchuk"))
         assertTrue(result.contains("Nunchuk/Stick/Up = `Circle`")) // physical X rotates onto A
         assertTrue(result.contains("D-Pad/Up = `Left Y+`")) // its own stick still steers the d-pad
         assertFalse(result.contains("Nunchuk/IMUAccelerometer")) // no second hand to stream one
+    }
+
+    @Test
+    fun `a target bound to several sources fires from any of them`() {
+        val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("DPadUp" to "RIGHT_STICK_UP|SlRight")
+        val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
+
+        val result = DolphinWiimoteConfig.merge(null, player, false) { mapping }
+
+        assertTrue(result.contains("D-Pad/Up = `Left Y+` | `L1`")) // SL rotates onto L held sideways
     }
 
     @Test
@@ -128,42 +139,76 @@ class DolphinWiimoteConfigTest {
     }
 
     @Test
-    fun `a sideways Joy-Con thrusts out through its button face`() {
+    fun `a lone Joy-Con thrusts along the axis its nose reads`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
 
-        assertTrue(result.contains("Swing/Forward = (`Accel Up` - `Accel Down`) - smooth("))
+        assertTrue(result.contains("Swing/Forward = (`Accel Right` - `Accel Left`) - smooth("))
     }
 
     @Test
-    fun `a pair maps its motion name-to-name`() {
-        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+    fun `the pointer's yaw clamp is widened past a living room's worth`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
 
-        val result = merge(null, listOf(both))
-
-        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Forward`"))
-        assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Pitch Up`"))
+        assertTrue(result.contains("IMUIR/Total Yaw = 60"))
     }
 
+    // Off, each Joy-Con is its own body: the nose is the shoulder edge the player aims down.
     @Test
-    fun `a sideways right Joy-Con turns its streamed grip back into the remote's body`() {
+    fun `a right Joy-Con keeps its own body until the layout plays sideways`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
 
         assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up`"))
         assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Right`"))
-        assertTrue(result.contains("IMUAccelerometer/Left = `Accel Forward`"))
         assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Left`"))
-        assertTrue(result.contains("IMUGyroscope/Roll Right = `Gyro Pitch Up`"))
         assertTrue(result.contains("IMUGyroscope/Yaw Left = `Gyro Yaw Left`"))
     }
 
+    // A sideways remote's nose points left, which a left Joy-Con's own body already does.
     @Test
-    fun `a sideways left Joy-Con turns its streamed grip back the other way`() {
-        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))))
+    fun `a left Joy-Con reads the same either way`() {
+        val player = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT)))
 
+        listOf(merge(null, player), merge(null, player, sidewaysRemote = true)).forEach { result ->
+            assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left`"))
+            assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`"))
+        }
+    }
+
+    @Test
+    fun `playing sideways turns a right Joy-Con onto the sideways remote's frame`() {
+        val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
+
+        val result = merge(null, player, sidewaysRemote = true)
+
+        assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up`"))
         assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left`"))
-        assertTrue(result.contains("IMUAccelerometer/Left = `Accel Backward`"))
         assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`"))
-        assertTrue(result.contains("IMUGyroscope/Roll Right = `Gyro Pitch Down`"))
+        assertTrue(result.contains("IMUGyroscope/Yaw Left = `Gyro Yaw Left`"))
+    }
+
+    // The player's up is a sideways remote's right, so the four bindings turn with the body.
+    @Test
+    fun `playing sideways turns the d-pad a quarter, on both bodies`() {
+        val right = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
+        val left = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))), sidewaysRemote = true)
+
+        listOf(right, left).forEach { result ->
+            assertTrue(result.contains("D-Pad/Right = `Left Y+`")) // the stick's up is the remote's right
+            assertTrue(result.contains("D-Pad/Down = `Left X+`"))
+            assertTrue(result.contains("D-Pad/Left = `Left Y-`"))
+            assertTrue(result.contains("D-Pad/Up = `Left X-`"))
+        }
+    }
+
+    @Test
+    fun `a pair is held like a remote already, so it never turns`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        val result = merge(null, listOf(both), sidewaysRemote = true)
+
+        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Forward`"))
+        assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Pitch Up`"))
+        assertTrue(result.contains("D-Pad/Up = `Pad N`"))
     }
 
     @Test

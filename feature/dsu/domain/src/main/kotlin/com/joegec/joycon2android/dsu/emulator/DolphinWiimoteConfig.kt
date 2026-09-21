@@ -29,6 +29,11 @@ import com.joegec.joycon2android.model.PlayerState
 object DolphinWiimoteConfig {
     val path = DolphinPaths.config("WiimoteNew.ini")
 
+    // Dolphin clamps the pointer's accumulated yaw to half of this, and its 25 degrees is a living
+    // room's worth: a captured aiming session (2026-09) swung +-20 to 25, so the cursor spent its
+    // time pinned against the clamp. Recenter (below) is what pulls it back when it drifts.
+    private const val IMU_TOTAL_YAW_DEGREES = 60
+
     // Keeps a tilted grip's gravity leak from nudging the virtual remote off its neutral position.
     private const val SWING_DEAD_ZONE_PERCENT = 20
     private const val SWING_RANGE_PERCENT = 7
@@ -82,10 +87,12 @@ object DolphinWiimoteConfig {
         listOf("Pitch Up", "Pitch Down", "Roll Left", "Roll Right", "Yaw Left", "Yaw Right")
             .map { "IMUGyroscope/$it" to "Gyro $it" }
 
-    // A lone Joy-Con streams in its sideways grip (SidewaysMotion), but the emulated remote is the
-    // Joy-Con's own body, so its inputs turn back about the button face. Up/Down and yaw lie on
-    // that axis and pass through name-to-name.
-    private val LEFT_BODY_INPUTS = mapOf(
+    // A lone Joy-Con streams in its sideways grip (SidewaysMotion); turning that grip back about the
+    // button face restores the Joy-Con's own body, which is the remote the player aims down its
+    // shoulder edge. The bodies rotate into their grips opposite ways, so their tables are each
+    // other half a turn — and a LEFT Joy-Con's own body already *is* a Wii Remote held sideways,
+    // since a sideways remote's nose points left just as its L/ZL edge does.
+    private val SIDEWAYS_REMOTE_INPUTS = mapOf(
         "Accel Left" to "Accel Backward", "Accel Right" to "Accel Forward",
         "Accel Forward" to "Accel Left", "Accel Backward" to "Accel Right",
         "Gyro Pitch Up" to "Gyro Roll Right", "Gyro Pitch Down" to "Gyro Roll Left",
@@ -98,22 +105,40 @@ object DolphinWiimoteConfig {
         "Gyro Roll Left" to "Gyro Pitch Down", "Gyro Roll Right" to "Gyro Pitch Up",
     )
 
-    private fun imuLines(side: JoyconSide): List<String> {
-        val bodyInputs = when (side) {
-            JoyconSide.LEFT -> LEFT_BODY_INPUTS
-            JoyconSide.RIGHT -> RIGHT_BODY_INPUTS
-            JoyconSide.DUAL -> emptyMap()
-        }
+    // So the sideways-remote layouts change one body's motion: a right Joy-Con gives up its own
+    // body — and with it the R/ZR edge as the nose, aiming moving to the tail — to read gravity the
+    // way a wheel game expects. A left Joy-Con needs no turn either way.
+    private fun bodyInputs(side: JoyconSide, sidewaysRemote: Boolean): Map<String, String> = when (side) {
+        JoyconSide.DUAL -> emptyMap()
+        JoyconSide.LEFT -> SIDEWAYS_REMOTE_INPUTS
+        JoyconSide.RIGHT -> if (sidewaysRemote) SIDEWAYS_REMOTE_INPUTS else RIGHT_BODY_INPUTS
+    }
+
+    // A sideways remote's d-pad turns with it: the player's up is the remote's right. Dolphin does
+    // this itself (dpad_sideways_bitmasks) when its Sideways Wii Remote option is on, but that
+    // option also turns the accelerometer a quarter, which our own table has already done — so the
+    // option stays off and the four bindings are turned here instead.
+    private val SIDEWAYS_DPAD_KEYS = mapOf(
+        WiimoteButton.DPadUp to "D-Pad/Right",
+        WiimoteButton.DPadRight to "D-Pad/Down",
+        WiimoteButton.DPadDown to "D-Pad/Left",
+        WiimoteButton.DPadLeft to "D-Pad/Up",
+    )
+
+    private fun dolphinKey(target: WiimoteButton, sideways: Boolean): String =
+        (if (sideways) SIDEWAYS_DPAD_KEYS[target] else null) ?: DOLPHIN_KEYS.getValue(target)
+
+    private fun imuLines(side: JoyconSide, sidewaysRemote: Boolean): List<String> {
+        val bodyInputs = bodyInputs(side, sidewaysRemote)
         return IMU_CONTROLS.map { (control, input) -> "$control = `${bodyInputs[input] ?: input}`" } +
-            "IMUIR/Enabled = True"
+            listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
     }
 
     // Dolphin's emulated remote only ever translates through the Swing group — the IMU path feeds
     // rotation alone — so the virtual remote stays pinned in space and the IR dots never change
     // separation. Games that read a thrust as distance to the sensor bar (Wii Play Billiards charges
     // cue strength that way) see nothing from accel and gyro alone. A push toward the screen lands
-    // on `Accel Forward` for a pair held like a Wii Remote, and on `Accel Up` for a solo sideways
-    // Joy-Con (out through the button face); pairing each with its opposite input makes the value
+    // on whichever input the remote's nose reads; pairing it with its opposite makes the value
     // signed, since Dolphin clamps a single input at zero.
     //
     // An accelerometer cannot tell gravity from sustained acceleration, so a tilted grip parks up to
@@ -121,9 +146,11 @@ object DolphinWiimoteConfig {
     // subtracting it high-passes the axis: the tracker catches a static tilt within a third of a
     // second and cancels it, while a thrust's ~80 ms transient outruns it. Range then trims the
     // inputs, which arrive at 9.8 per g, to a full-distance lunge at roughly a 1.5 g thrust.
-    private fun swingLines(side: JoyconSide): List<String> {
-        val thrust = if (side == JoyconSide.DUAL) "Accel Forward" else "Accel Up"
-        val pull = if (side == JoyconSide.DUAL) "Accel Backward" else "Accel Down"
+    private fun swingLines(side: JoyconSide, sidewaysRemote: Boolean): List<String> {
+        // A push toward the screen runs along the remote's nose, whichever input that body reads it from.
+        val body = bodyInputs(side, sidewaysRemote)
+        val thrust = body["Accel Forward"] ?: "Accel Forward"
+        val pull = body["Accel Backward"] ?: "Accel Backward"
         val signed = "(`$thrust` - `$pull`)"
         return listOf(
             "Swing/Forward = $signed - smooth($signed, $SWING_SETTLE_SECONDS)",
@@ -138,15 +165,23 @@ object DolphinWiimoteConfig {
     private fun nunchukImuLines(slot: Int): List<String> =
         ACCEL_DIRECTIONS.map { "Nunchuk/IMUAccelerometer/$it = `DSUClient/$slot/Joycon2:Accel $it`" }
 
-    fun merge(existing: String?, players: List<PlayerState>, mappingFor: (JoyconSide) -> Map<String, String>): String =
-        IniEditor.mergeSections(existing, sections(players, mappingFor))
+    fun merge(
+        existing: String?,
+        players: List<PlayerState>,
+        sidewaysRemote: Boolean,
+        mappingFor: (JoyconSide) -> Map<String, String>,
+    ): String = IniEditor.mergeSections(existing, sections(players, sidewaysRemote, mappingFor))
 
-    private fun sections(players: List<PlayerState>, mappingFor: (JoyconSide) -> Map<String, String>): Map<String, String> {
+    private fun sections(
+        players: List<PlayerState>,
+        sidewaysRemote: Boolean,
+        mappingFor: (JoyconSide) -> Map<String, String>,
+    ): Map<String, String> {
         val secondHands = DsuSlots.secondHands(players).associate { it.state.player to it.slot }
         return players.mapNotNull { player ->
             val slot = player.player.index - 1
             if (slot !in 0..3) return@mapNotNull null
-            bodyFor(player, slot, secondHands[player.player], mappingFor)
+            bodyFor(player, slot, secondHands[player.player], sidewaysRemote, mappingFor)
                 ?.let { "[Wiimote${player.player.index}]" to it }
         }.toMap()
     }
@@ -155,6 +190,7 @@ object DolphinWiimoteConfig {
         player: PlayerState,
         slot: Int,
         secondHandSlot: Int?,
+        sidewaysRemote: Boolean,
         mappingFor: (JoyconSide) -> Map<String, String>,
     ): String? {
         val side = when {
@@ -171,13 +207,15 @@ object DolphinWiimoteConfig {
         } else {
             emptyList()
         }
-        return (header + lines(side, mappingFor(side)) + imuLines(side) + swingLines(side) + nunchukImu)
+        val sideways = sidewaysRemote && side != JoyconSide.DUAL
+        return (header + lines(side, sideways, mappingFor(side)) + imuLines(side, sidewaysRemote) +
+            swingLines(side, sidewaysRemote) + nunchukImu)
             .joinToString("\n", postfix = "\n")
     }
 
-    private fun lines(side: JoyconSide, mapping: Map<String, String>): List<String> {
-        val buttonLines = mapping.toSourceMap<WiimoteButton>().mapNotNull { (target, source) ->
-            specFor(side, source)?.let { spec -> "${DOLPHIN_KEYS.getValue(target)} = `$spec`" }
+    private fun lines(side: JoyconSide, sideways: Boolean, mapping: Map<String, String>): List<String> {
+        val buttonLines = mapping.toSourceMap<WiimoteButton>().mapNotNull { (target, sources) ->
+            expressionFor(side, sources)?.let { expression -> "${dolphinKey(target, sideways)} = $expression" }
         }
         val stickLines = nunchukStickLines(side, mapping)
         val recenterSpec = if (side == JoyconSide.LEFT) "L1" else "R1"
@@ -191,10 +229,16 @@ object DolphinWiimoteConfig {
 
     private fun nunchukStickLines(side: JoyconSide, mapping: Map<String, String>): List<String> =
         mapping.toStickDirectionMap<WiimoteStick>().values.flatMap { directions ->
-            directions.mapNotNull { (direction, source) ->
-                specFor(side, source)?.let { spec -> "Nunchuk/Stick/${direction.displayName} = `$spec`" }
+            directions.mapNotNull { (direction, sources) ->
+                expressionFor(side, sources)?.let { expression -> "Nunchuk/Stick/${direction.displayName} = $expression" }
             }
         }
+
+    // Dolphin's expression language ORs its inputs, so every source bound to a target can fire it.
+    private fun expressionFor(side: JoyconSide, sources: List<MappingSource>): String? =
+        sources.mapNotNull { specFor(side, it) }
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(" | ") { "`$it`" }
 
     private fun specFor(side: JoyconSide, source: MappingSource): String? = when (source) {
         is MappingSource.Button -> source.button.emittedFor(side)?.let { DS4_NAMES[it] ?: PAD_NAMES[it] }

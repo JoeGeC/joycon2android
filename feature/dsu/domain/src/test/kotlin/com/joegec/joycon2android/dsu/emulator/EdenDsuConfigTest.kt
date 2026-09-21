@@ -2,7 +2,7 @@ package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
-import com.joegec.joycon2android.buttonmapping.defaultMappingEntries
+import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
@@ -13,7 +13,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-private fun defaultSwitchProMapping(side: JoyconSide) = defaultMappingEntries(Console.SWITCH_PRO, side)
+private fun defaultSwitchProMapping(side: JoyconSide) = MappingPresets.default(Console.SWITCH_PRO).entries(side)
 
 class EdenDsuConfigTest {
 
@@ -170,6 +170,15 @@ class EdenDsuConfigTest {
             "right:${nested("axis:2,threshold:0.5,invert:+")}"
         assertEquals("\"$expected\"", valueOf(result, "player_0_rstick"))
         assertEquals("\"${device(0)},axis:1,threshold:0.5,invert:+\"", valueOf(result, "player_0_button_a"))
+    }
+
+    @Test
+    fun `a target with several sources keeps the first one Eden can bind`() {
+        val mapping = defaultSwitchProMapping(JoyconSide.DUAL) + mapOf("A" to "X|Y")
+
+        val result = EdenDsuConfig.merge(null, listOf(pair(PlayerNumber.P1))) { mapping }
+
+        assertEquals("\"${device(0)},button:4096\"", valueOf(result, "player_0_button_a"))
     }
 
     @Test

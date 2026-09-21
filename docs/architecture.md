@@ -77,9 +77,11 @@ locations), and `EdenControls` (the `[Controls]` vocabulary both features write)
 gamepad and DSU features both write to Dolphin and Eden. Holds *mechanism*, not feature logic — the
 per-emulator config generators live in their owning feature's `domain`.
 
-**`:core:buttonmapping`** — the user-editable Joy-Con → emulator button mapping: the per-console
-defaults and mapping model (`domain`), their persistence (`data`), and the mapping editor
-(`presentation`). Both the gamepad and DSU config generators read it.
+**`:core:buttonmapping`** — the user-editable Joy-Con → emulator button mapping: the mapping model,
+the layouts a console can start from and the sideways-remote switch they seed (`domain`, layouts in
+`preset/`), their persistence (`data`), and the mapping editor (`presentation`). Both the gamepad and DSU config generators read it. A target
+holds *every* source bound to it, so Dolphin ORs them into one expression while Eden, which binds
+one input per key, keeps the first.
 
 ## Dependency rules
 

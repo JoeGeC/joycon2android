@@ -3,10 +3,10 @@ package com.joegec.joycon2android.buttonmapping
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Stores the user's overrides to the default Joy-Con button mapping, keyed by console shape and
- * body. Values are opaque strings (a [MappingSource] id, or a legacy whole-stick [StickSource]
- * name) — this layer knows nothing about what a key or value means, only how to
- * persist it; [DefaultControllerMappings] and the use cases give them meaning.
+ * Stores the user's overrides to the Joy-Con button mapping, keyed by console shape and body.
+ * Values are opaque strings (the [MappingSource] ids driving one target, joined by [sourceIdOf], or
+ * a legacy whole-stick [StickSource] name) — this layer knows nothing about what a key or value
+ * means, only how to persist it; the presets and use cases give them meaning.
  */
 interface ControllerMappingRepository {
     fun observe(console: Console, side: JoyconSide): Flow<Map<String, String>>

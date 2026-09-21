@@ -2,7 +2,7 @@ package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
-import com.joegec.joycon2android.buttonmapping.defaultMappingEntries
+import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
@@ -11,7 +11,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-private fun defaultSwitchProMapping(side: JoyconSide) = defaultMappingEntries(Console.SWITCH_PRO, side)
+private fun defaultSwitchProMapping(side: JoyconSide) = MappingPresets.default(Console.SWITCH_PRO).entries(side)
 
 class EdenGamepadConfigTest {
 

@@ -90,7 +90,15 @@ class MainActivity : ComponentActivity() {
         viewModelFactory {
             initializer {
                 val c = (application as JoyconApplication).container
-                ControllerMappingViewModel(c.observeControllerMapping, c.setControllerMapping, c.resetControllerMapping)
+                ControllerMappingViewModel(
+                    c.observeControllerMapping,
+                    c.setControllerMapping,
+                    c.resetControllerMapping,
+                    c.observeMappingPreset,
+                    c.applyMappingPreset,
+                    c.observeSidewaysRemote,
+                    c.setSidewaysRemote,
+                )
             }
         }
     }
@@ -184,12 +192,18 @@ class MainActivity : ComponentActivity() {
         val leftMapping by controllerMappingViewModel.mapping(console, JoyconSide.LEFT).collectAsState()
         val rightMapping by controllerMappingViewModel.mapping(console, JoyconSide.RIGHT).collectAsState()
         val dualMapping by controllerMappingViewModel.mapping(console, JoyconSide.DUAL).collectAsState()
+        val presetId by controllerMappingViewModel.preset(console).collectAsState()
+        val sidewaysRemote by controllerMappingViewModel.sidewaysRemote(console).collectAsState()
 
         ControllerMappingScreen(
             console = console,
+            presetId = presetId,
+            sidewaysRemote = sidewaysRemote,
             leftMapping = leftMapping,
             rightMapping = rightMapping,
             dualMapping = dualMapping,
+            onSelectPreset = { controllerMappingViewModel.selectPreset(console, it) },
+            onSetSidewaysRemote = { controllerMappingViewModel.setSidewaysRemoteEnabled(console, it) },
             onSetMapping = { side, targetKey, sourceId ->
                 controllerMappingViewModel.setMapping(console, side, targetKey, sourceId)
             },

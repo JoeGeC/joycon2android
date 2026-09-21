@@ -12,12 +12,21 @@ import com.joegec.joycon2android.connection.StartScanUseCase
 import com.joegec.joycon2android.connection.StopScanUseCase
 import com.joegec.joycon2android.connection.ViewModePreferences
 import com.joegec.joycon2android.connection.ViewModePreferencesDataStore
+import com.joegec.joycon2android.buttonmapping.ApplyMappingPresetUseCase
 import com.joegec.joycon2android.buttonmapping.ControllerMappingDataStore
 import com.joegec.joycon2android.buttonmapping.ControllerMappingRepository
 import com.joegec.joycon2android.buttonmapping.GetEffectiveControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.GetSidewaysRemoteUseCase
+import com.joegec.joycon2android.buttonmapping.MappingPresetDataStore
+import com.joegec.joycon2android.buttonmapping.MappingPresetRepository
 import com.joegec.joycon2android.buttonmapping.ObserveControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.ObserveMappingPresetUseCase
 import com.joegec.joycon2android.buttonmapping.ResetControllerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.SetSidewaysRemoteUseCase
+import com.joegec.joycon2android.buttonmapping.SidewaysRemoteDataStore
+import com.joegec.joycon2android.buttonmapping.SidewaysRemoteRepository
+import com.joegec.joycon2android.buttonmapping.ObserveSidewaysRemoteUseCase
 import com.joegec.joycon2android.assignment.AssignmentRepository
 import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerAssignmentManager
@@ -97,10 +106,18 @@ class AppContainer(context: Context) {
 
     // --- Controller button mapping (shared by Gamepad and DSU) ---
     private val controllerMappingRepository: ControllerMappingRepository = ControllerMappingDataStore(appContext)
-    val observeControllerMapping = ObserveControllerMappingUseCase(controllerMappingRepository)
+    private val mappingPresetRepository: MappingPresetRepository = MappingPresetDataStore(appContext)
+    val observeMappingPreset = ObserveMappingPresetUseCase(mappingPresetRepository)
+    private val sidewaysRemoteRepository: SidewaysRemoteRepository = SidewaysRemoteDataStore(appContext)
+    val observeSidewaysRemote = ObserveSidewaysRemoteUseCase(sidewaysRemoteRepository, observeMappingPreset)
+    val setSidewaysRemote = SetSidewaysRemoteUseCase(sidewaysRemoteRepository)
+    val applyMappingPreset =
+        ApplyMappingPresetUseCase(mappingPresetRepository, controllerMappingRepository, sidewaysRemoteRepository)
+    val observeControllerMapping = ObserveControllerMappingUseCase(controllerMappingRepository, observeMappingPreset)
     val setControllerMapping = SetControllerMappingUseCase(controllerMappingRepository)
     val resetControllerMapping = ResetControllerMappingUseCase(controllerMappingRepository)
     private val getControllerMapping = GetEffectiveControllerMappingUseCase(observeControllerMapping)
+    private val getSidewaysRemote = GetSidewaysRemoteUseCase(observeSidewaysRemote)
 
     // --- DSU ---
     private val dsuRepository: DsuRepository = DsuServer(scope)
@@ -140,6 +157,7 @@ class AppContainer(context: Context) {
         gamepadDevices = { edenGamepads(appContext) },
         gamepadControllerNumbers = { dolphinGamepadIds(appContext) },
         getControllerMapping = getControllerMapping,
+        getSidewaysRemote = getSidewaysRemote,
     )
 
     val emulatorLauncher = EmulatorLauncher(appContext)
