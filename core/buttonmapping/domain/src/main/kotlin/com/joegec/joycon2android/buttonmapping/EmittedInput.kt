@@ -23,11 +23,11 @@ fun MappingSource.Stick.emittedStick(side: JoyconSide): StickSource =
 /**
  * The stick a target can read as a whole — keeping its analog range — when all four of its
  * directions follow the same emitted stick the natural way round; null when they're rearranged,
- * partly unbound or mixed with buttons, which leaves each direction to be bound on its own.
+ * partly unbound, doubled up or mixed with buttons, which leaves each direction to be bound on its own.
  */
-fun Map<StickDirection, MappingSource>.wholeEmittedStick(side: JoyconSide): StickSource? {
+fun Map<StickDirection, List<MappingSource>>.wholeEmittedStick(side: JoyconSide): StickSource? {
     val sticks = StickDirection.entries.map { direction ->
-        val source = this[direction] as? MappingSource.Stick ?: return null
+        val source = this[direction]?.singleOrNull() as? MappingSource.Stick ?: return null
         if (source.direction != direction) return null
         source.emittedStick(side)
     }

@@ -1,4 +1,7 @@
 <resources>
     <string name="controller_mapping_back">Back</string>
+    <string name="controller_mapping_preset">Layout</string>
+    <string name="controller_mapping_sideways_remote">Sideways Wii Remote</string>
+    <string name="controller_mapping_sideways_remote_description">Play a single Joy-Con as a Wii Remote held sideways, the way Mario Kart\'s wheel expects. Steering reads correctly and the D-pad turns with it; a right Joy-Con then points from its tail rather than its R edge.</string>
     <string name="controller_mapping_reset">Reset to defaults</string>
 </resources>

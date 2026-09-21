@@ -7,7 +7,8 @@ import org.junit.Test
 
 class WholeEmittedStickTest {
 
-    private fun following(stick: StickSource) = MappingSource.directionsOf(stick).associateBy { it.direction }
+    private fun following(stick: StickSource): Map<StickDirection, List<MappingSource>> =
+        MappingSource.directionsOf(stick).associate { it.direction to listOf<MappingSource>(it) }
 
     @Test
     fun `directions that follow one stick the natural way read as that whole stick`() {
@@ -22,8 +23,8 @@ class WholeEmittedStickTest {
     @Test
     fun `swapped directions are not a whole stick`() {
         val swapped = following(StickSource.LEFT_STICK) + mapOf(
-            StickDirection.UP to MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.DOWN),
-            StickDirection.DOWN to MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.UP),
+            StickDirection.UP to listOf(MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.DOWN)),
+            StickDirection.DOWN to listOf(MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.UP)),
         )
 
         assertNull(swapped.wholeEmittedStick(JoyconSide.DUAL))
@@ -31,9 +32,22 @@ class WholeEmittedStickTest {
 
     @Test
     fun `a direction driven by a button or left unbound is not a whole stick`() {
-        val withButton = following(StickSource.LEFT_STICK) + (StickDirection.UP to MappingSource.Button(JoyconButton.X))
+        val withButton = following(StickSource.LEFT_STICK) +
+            (StickDirection.UP to listOf(MappingSource.Button(JoyconButton.X)))
 
         assertNull(withButton.wholeEmittedStick(JoyconSide.DUAL))
         assertNull((following(StickSource.LEFT_STICK) - StickDirection.LEFT).wholeEmittedStick(JoyconSide.DUAL))
+    }
+
+    @Test
+    fun `a direction with a second source of its own is not a whole stick`() {
+        val doubled = following(StickSource.LEFT_STICK) + (
+            StickDirection.UP to listOf(
+                MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.UP),
+                MappingSource.Button(JoyconButton.X),
+            )
+            )
+
+        assertNull(doubled.wholeEmittedStick(JoyconSide.DUAL))
     }
 }

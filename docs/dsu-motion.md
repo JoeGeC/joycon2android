@@ -53,10 +53,30 @@ if the Joy-Con's nose pointed at the screen.
   the IMU axes don't line up with the stick's.
 - **A pair's second hand isn't turned**, even though it streams alone on its slot (`DsuStream.heldSideways`).
 - **Dolphin maps it back.** Its emulated Wii Remote is the Joy-Con's own body, so
-  `DolphinWiimoteConfig` swaps a lone Joy-Con's IMU inputs back (table in the
-  [README](../README.md#manual-setup)).
-- **Don't enable Dolphin's "Sideways Wii Remote"** with that mapping. It rotates IMU input by 90°
-  itself (`Wiimote::GetOrientation`), so it would turn motion twice.
+  `DolphinWiimoteConfig` turns a lone Joy-Con's IMU inputs back about the button face (table in the
+  [README](../README.md#manual-setup)), putting the nose on the shoulder edge the player aims. The
+  bodies rotate into their grips opposite ways, so their tables are each other half a turn.
+- **A console can play as a sideways Wii Remote** — a switch in the mapping editor, seeded by the
+  layout (`MappingPreset.sidewaysRemote`, true only for **Mario Kart**) and overridable by the user
+  (`SidewaysRemoteRepository`; applying a layout clears the override). A game written for that grip reads gravity against a remote whose nose points
+  left, which is where a *left* Joy-Con's L/ZL edge already points — so only a right Joy-Con turns,
+  giving up its own body (and with it R/ZR as the nose: aiming moves to the tail) to steer true.
+  Both bodies also turn their four D-pad bindings a quarter, since the player's up is a sideways
+  remote's right. That is Dolphin's own `dpad_sideways_bitmasks`, applied here so its *Sideways Wii
+  Remote* option can stay off — the option would also turn the accelerometer, which we have turned
+  already.
+- **Pointing and a wheel want the nose half a turn apart on a right Joy-Con**, and no Dolphin option
+  bridges them: `GetOrientation()` turns a quarter (Sideways) or a quarter about the left axis
+  (Upright), and it reaches only the accelerometer the game reads, never
+  `GetTotalTransformation()` and so never the pointer. Hence the choice lives in the layout.
+- **Measure the pointer, don't reason about it.** `tools/dsu_client` plus a replay of
+  `EmulateIMUCursor` settles in minutes what guessing costs days. Posed captures mislead: asked to
+  hold an "aim up", a player produces a different rotation from the one they make while playing —
+  compare a captured session against candidate tables by how much cursor travel each yields.
+- **`IMUIR/Total Yaw` is widened to 60°.** Dolphin's 25° clamps the cursor after ±12.5° of turn,
+  which a hand-held aim overruns constantly; the clamp reads as the pointer sticking.
+- **Leave Dolphin's "Sideways Wii Remote" off.** A sideways layout already writes that quarter turn
+  itself, into both the motion and the D-pad; the option would apply it twice.
 
 ## Report rate
 

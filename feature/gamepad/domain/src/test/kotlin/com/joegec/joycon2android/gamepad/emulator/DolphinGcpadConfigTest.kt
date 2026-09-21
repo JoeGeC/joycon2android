@@ -2,7 +2,7 @@ package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
-import com.joegec.joycon2android.buttonmapping.defaultMappingEntries
+import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
@@ -20,7 +20,7 @@ class DolphinGcpadConfigTest {
         players: List<PlayerState>,
         controllerNumbers: Map<Int, Int> = players.associate { it.player.index to it.player.index },
     ) = DolphinGcpadConfig.merge(existing, players, controllerNumbers) { side ->
-        defaultMappingEntries(Console.GAMECUBE, side)
+        MappingPresets.default(Console.GAMECUBE).entries(side)
     }
 
     @Test
@@ -88,7 +88,7 @@ class DolphinGcpadConfigTest {
     @Test
     fun `a stick direction can be driven by a button, and a button by a stick direction`() {
         val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
-        val mapping = defaultMappingEntries(Console.GAMECUBE, JoyconSide.DUAL) +
+        val mapping = MappingPresets.default(Console.GAMECUBE).entries(JoyconSide.DUAL) +
             mapOf("MainStick_UP" to "X", "A" to "RIGHT_STICK_DOWN", "CStick_LEFT" to "")
 
         val result = DolphinGcpadConfig.merge(null, listOf(both), mapOf(1 to 1)) { mapping }

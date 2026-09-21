@@ -136,8 +136,8 @@ object EdenDsuConfig {
     private fun motion(pad: Int) = EdenControls.quote("${device(pad)},motion:0")
 
     private fun buttonBindings(side: JoyconSide, mapping: Map<String, String>): Map<String, String> =
-        mapping.toSourceMap<SwitchProButton>().mapNotNull { (target, source) ->
-            inputFor(side, source)?.let { EdenControls.BUTTON_KEYS.getValue(target) to it }
+        mapping.toSourceMap<SwitchProButton>().mapNotNull { (target, sources) ->
+            inputFor(side, sources)?.let { EdenControls.BUTTON_KEYS.getValue(target) to it }
         }.toMap()
 
     private fun stickBindings(side: JoyconSide, mapping: Map<String, String>, device: String): Map<String, String> =
@@ -145,19 +145,24 @@ object EdenDsuConfig {
             stickFor(side, directions, device)?.let { EdenControls.STICK_KEYS.getValue(target) to it }
         }.toMap()
 
-    private fun stickFor(side: JoyconSide, directions: Map<StickDirection, MappingSource>, device: String): String? {
+    private fun stickFor(side: JoyconSide, directions: Map<StickDirection, List<MappingSource>>, device: String): String? {
         directions.wholeEmittedStick(side)?.let { stick ->
             val (x, y) = axesOf(stick)
             return "$device,axis_x:$x,axis_y:$y"
         }
-        val inputs = directions.mapNotNull { (direction, source) ->
-            inputFor(side, source)?.let { direction to "$device,$it" }
+        val inputs = directions.mapNotNull { (direction, sources) ->
+            inputFor(side, sources)?.let { direction to "$device,$it" }
         }
         return inputs.takeIf { it.isNotEmpty() }?.let { EdenControls.stickFromButtons(it.toMap()) }
     }
 
     private fun axesOf(stick: StickSource) =
         if (stick == StickSource.LEFT_STICK) LEFT_STICK_AXES else RIGHT_STICK_AXES
+
+    // Eden binds one input per key, so a target driven by several sources keeps the first that its
+    // body can actually emit; the rest are only reachable through Dolphin.
+    private fun inputFor(side: JoyconSide, sources: List<MappingSource>): String? =
+        sources.firstNotNullOfOrNull { inputFor(side, it) }
 
     private fun inputFor(side: JoyconSide, source: MappingSource): String? = when (source) {
         is MappingSource.Button -> source.button.emittedFor(side)?.let(DS4_BITS::get)?.let { "button:$it" }

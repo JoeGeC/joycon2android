@@ -89,7 +89,20 @@ the emulator afterwards — it only reads its config when it starts.
 
 The gamepad button beside **Set up** opens the mapping editor. A single Joy-Con is set up as a Pro
 Controller held sideways, so every button works in every game
-([why](docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers)).
+([why](docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers)). A target can take **several
+sources at once** — tick as many as you like, and any of them fires it.
+
+The Wii editor also carries a **Sideways Wii Remote** switch — play a single Joy-Con as a Wii Remote
+held sideways, which is what a wheel game steers by. Each layout sets it (on for Mario Kart, off for
+the others) and you can override it; picking a layout hands it back.
+
+It also picks a **layout** to start from, which resets that console's customizations:
+
+| Layout | For |
+|---|---|
+| Wii | The Wii Remote's own arrangement: the trigger under your finger is B, 1 and 2 under the thumb |
+| Joy-Con | The same, with B and 2 swapped so the Joy-Con's own B is the remote's B |
+| Mario Kart | A sideways Joy-Con laid out as Mario Kart 8 uses one — 2 accelerates, 1 brakes, SR hops, and SL throws an item alongside the stick. The one layout that plays as a **sideways Wii Remote**: the wheel steers correctly, the d-pad turns with it, and a right Joy-Con aims from its tail |
 
 > [!NOTE]
 > Auto setup needs Shizuku, and some devices block writing into another app's `Android/data` — use
@@ -155,9 +168,27 @@ shoulder buttons.
    | Gyroscope Roll Left / Right | `Gyro Roll Left` / `Right` | `Gyro Pitch Up` / `Down` | `Gyro Pitch Down` / `Up` |
    | Gyroscope Yaw Left / Right | `Gyro Yaw Left` / `Right` | same | same |
 
+   That restores each Joy-Con's own body, which is what **pointing** wants: the remote's nose is the
+   shoulder edge, so aim R/ZR (or L/ZL) at the screen. Also set **Total Yaw** to around 60 —
+   Dolphin's 25 clamps the cursor after ±12.5° of turn, which a hand-held aim overruns.
+
+   **For a game written for a sideways Wii Remote** (Mario Kart Wii and its Wii Wheel), two changes,
+   both of which the in-app **Mario Kart** layout writes for you:
+
+   - Give a **right** Joy-Con the *left* column. Sideways, its top edge points where a sideways
+     remote's tail does, so without that half turn the wheel steers backwards; a left Joy-Con
+     already matches. Aiming then moves to the tail on that body.
+   - **Turn the four D-pad bindings a quarter**: put the source you'd bind to Up on **D-Pad/Right**,
+     Right on Down, Down on Left, Left on Up. A sideways remote's d-pad turns with it, so the
+     player's up is the remote's right.
+
+   Leave Dolphin's own **Sideways Wii Remote** option off either way — it would turn the
+   accelerometer a second quarter.
+
 5. Under **Swing**, set **Forward** to
    ``(`Accel Forward` - `Accel Backward`) - smooth((`Accel Forward` - `Accel Backward`), 0.03)``,
-   **Range** to 7% and **Dead Zone** to 20%. For a single Joy-Con, use `Accel Up` and `Accel Down`.
+   **Range** to 7% and **Dead Zone** to 20%. For a single Joy-Con use whichever pair its nose reads
+   above — `Accel Right`/`Left` on a right Joy-Con, and the other way round when it plays sideways.
    This lets thrusts reach games like Wii Play Billiards ([why](docs/dsu-motion.md#dolphin-wii-remote-mapping)).
 6. **Pair only:** under **Nunchuk → Motion Input**, map each accelerometer entry to the left Joy-Con's
    slot, e.g. `` `DSUClient/3/Joycon2:Accel Up` `` — the highest slot no player uses (3 with one

@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.buttonmapping
 
+import com.joegec.joycon2android.buttonmapping.preset.MarioKartWiiMapping
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -15,8 +16,21 @@ class ObserveControllerMappingUseCaseTest {
         override suspend fun clear(console: Console, side: JoyconSide) = Unit
     }
 
-    private fun observe(stored: Map<String, String>, side: JoyconSide = JoyconSide.DUAL) = runBlocking {
-        ObserveControllerMappingUseCase(StoredMapping(stored))(Console.GAMECUBE, side).first()
+    private class StoredPreset(private val presetId: String? = null) : MappingPresetRepository {
+        override fun observe(console: Console): Flow<String?> = flowOf(presetId)
+        override suspend fun set(console: Console, presetId: String) = Unit
+    }
+
+    private fun observe(
+        stored: Map<String, String>,
+        side: JoyconSide = JoyconSide.DUAL,
+        console: Console = Console.GAMECUBE,
+        presetId: String? = null,
+    ) = runBlocking {
+        ObserveControllerMappingUseCase(
+            StoredMapping(stored),
+            ObserveMappingPresetUseCase(StoredPreset(presetId)),
+        )(console, side).first()
     }
 
     @Test
@@ -55,6 +69,21 @@ class ObserveControllerMappingUseCaseTest {
         val mapping = observe(mapOf("A" to "Camera"))
 
         assertEquals("Capture", mapping["A"])
+    }
+
+    @Test
+    fun `the chosen preset supplies the defaults`() {
+        val mapping = observe(emptyMap(), JoyconSide.RIGHT, Console.WIIMOTE_NUNCHUK, MarioKartWiiMapping.id)
+
+        assertEquals("X", mapping["Two"])
+        assertEquals("RIGHT_STICK_UP|SlRight", mapping["DPadUp"])
+    }
+
+    @Test
+    fun `a preset id from another build falls back to the console's default`() {
+        val mapping = observe(emptyMap(), JoyconSide.RIGHT, Console.WIIMOTE_NUNCHUK, "NO_SUCH_PRESET")
+
+        assertEquals("B", mapping["Two"])
     }
 
     @Test

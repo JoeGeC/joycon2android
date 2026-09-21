@@ -4,6 +4,7 @@ import android.content.pm.PackageManager
 import android.util.Log
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.GetEffectiveControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.GetSidewaysRemoteUseCase
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.dsu.emulator.DolphinDsuConfig
 import com.joegec.joycon2android.dsu.emulator.DolphinWiimoteConfig
@@ -38,6 +39,7 @@ class EmulatorSetup(
     private val gamepadDevices: () -> Map<Int, EdenGamepad>,
     private val gamepadControllerNumbers: () -> Map<Int, Int>,
     private val getControllerMapping: GetEffectiveControllerMappingUseCase,
+    private val getSidewaysRemote: GetSidewaysRemoteUseCase,
 ) {
 
     private suspend fun mappingLookup(console: Console): (JoyconSide) -> Map<String, String> {
@@ -118,6 +120,7 @@ class EmulatorSetup(
             DolphinWiimoteConfig.merge(
                 shell.readText(DolphinWiimoteConfig.path),
                 players,
+                getSidewaysRemote(Console.WIIMOTE_NUNCHUK),
                 mappingLookup(Console.WIIMOTE_NUNCHUK),
             ),
         )

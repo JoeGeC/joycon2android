@@ -139,8 +139,8 @@ object EdenGamepadConfig {
     }
 
     private fun layoutFor(side: JoyconSide, mapping: Map<String, String>): Layout {
-        val buttons = mapping.toSourceMap<SwitchProButton>().mapNotNull { (target, source) ->
-            inputFor(side, source)?.let { EdenControls.BUTTON_KEYS.getValue(target) to it }
+        val buttons = mapping.toSourceMap<SwitchProButton>().mapNotNull { (target, sources) ->
+            inputFor(side, sources)?.let { EdenControls.BUTTON_KEYS.getValue(target) to it }
         }.toMap()
         val sticks = mapping.toStickDirectionMap<SwitchProStick>().mapNotNull { (target, directions) ->
             stickFor(side, directions)?.let { EdenControls.STICK_KEYS.getValue(target) to it }
@@ -148,11 +148,16 @@ object EdenGamepadConfig {
         return Layout(buttons, sticks)
     }
 
-    private fun stickFor(side: JoyconSide, directions: Map<StickDirection, MappingSource>): Stick? {
+    private fun stickFor(side: JoyconSide, directions: Map<StickDirection, List<MappingSource>>): Stick? {
         directions.wholeEmittedStick(side)?.let { return AnalogStick(axesOf(it)) }
-        val inputs = directions.mapNotNull { (direction, source) -> inputFor(side, source)?.let { direction to it } }
+        val inputs = directions.mapNotNull { (direction, sources) -> inputFor(side, sources)?.let { direction to it } }
         return inputs.takeIf { it.isNotEmpty() }?.let { DigitalStick(it.toMap()) }
     }
+
+    // Eden binds one input per key, so a target driven by several sources keeps the first that its
+    // body can actually emit; the rest are only reachable through Dolphin.
+    private fun inputFor(side: JoyconSide, sources: List<MappingSource>): Input? =
+        sources.firstNotNullOfOrNull { inputFor(side, it) }
 
     private fun inputFor(side: JoyconSide, source: MappingSource): Input? = when (source) {
         is MappingSource.Button -> source.button.emittedFor(side)?.let { KEY_CODES[it]?.let(::Key) ?: HAT_AXES[it] }
