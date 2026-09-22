@@ -78,10 +78,21 @@ gamepad and DSU features both write to Dolphin and Eden. Holds *mechanism*, not 
 per-emulator config generators live in their owning feature's `domain`.
 
 **`:core:buttonmapping`** — the user-editable Joy-Con → emulator button mapping: the mapping model,
-the layouts a console can start from and the sideways-remote switch they seed (`domain`, layouts in
-`preset/`), their persistence (`data`), and the mapping editor (`presentation`). Both the gamepad and DSU config generators read it. A target
-holds *every* source bound to it, so Dolphin ORs them into one expression while Eden, which binds
-one input per key, keeps the first.
+the layouts a body can start from and the sideways-remote switch they seed (`domain`, shipped
+layouts in `preset/`), their persistence (`data`), and the mapping editor (`presentation`). Both the
+gamepad and DSU config generators read it. A target holds *every* source bound to it, so Dolphin ORs
+them into one expression while Eden, which binds one input per key, keeps the first.
+
+Everything is keyed by `PlayerBody` — a player plus the body they hold — so each player maps
+independently. **A layout is never a stored reference, only a name for a set of bindings**: applying
+one copies out everything it says (`ApplyPlayerMappingUseCase`), and `MappingLayouts.matching` reads
+the name back by comparing what a body is bound to against every layout the app ships and every one
+the user saved (`SavedLayout`, scoped to the body it came from). No match is the editor's "Custom".
+That is what lets a deleted layout take away its name and nothing else, and lets the same bindings
+answer to it again the day an identical layout is saved back. `GlobalLayout` freezes the whole
+session the same way — every player's bindings in full, not a layout id — so it restores what it
+saved whatever has happened to the layouts since; it carries the bodies it was saved from, which is
+why it can only be restored onto those players.
 
 ## Dependency rules
 

@@ -1,60 +1,52 @@
 package com.joegec.joycon2android.buttonmapping
 
+import com.joegec.joycon2android.buttonmapping.MappingFixture.Companion.right
 import com.joegec.joycon2android.buttonmapping.preset.MarioKartWiiMapping
 import com.joegec.joycon2android.buttonmapping.preset.WiiMapping
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
+import com.joegec.joycon2android.model.PlayerNumber
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SidewaysRemoteTest {
 
-    private class Chosen(private val enabled: Boolean? = null) : SidewaysRemoteRepository {
-        var cleared = false
-        override fun observe(console: Console): Flow<Boolean?> = flowOf(enabled)
-        override suspend fun set(console: Console, enabled: Boolean) = Unit
-        override suspend fun clear(console: Console) { cleared = true }
-    }
+    private val fixture = MappingFixture()
+    private val body = right(PlayerNumber.P1)
 
-    private class StoredPreset(private val presetId: String?) : MappingPresetRepository {
-        override fun observe(console: Console): Flow<String?> = flowOf(presetId)
-        override suspend fun set(console: Console, presetId: String) = Unit
-    }
-
-    private class StoredMapping : ControllerMappingRepository {
-        override fun observe(console: Console, side: JoyconSide): Flow<Map<String, String>> = flowOf(emptyMap())
-        override suspend fun set(console: Console, side: JoyconSide, targetKey: String, sourceId: String) = Unit
-        override suspend fun clear(console: Console, side: JoyconSide) = Unit
-    }
-
-    private fun observe(chosen: Boolean?, presetId: String?) = runBlocking {
-        ObserveSidewaysRemoteUseCase(
-            Chosen(chosen),
-            ObserveMappingPresetUseCase(StoredPreset(presetId)),
-        )(Console.WIIMOTE_NUNCHUK).first()
+    @Test
+    fun `a body nothing has set follows the console's default layout`() = runBlocking {
+        assertFalse(fixture.playerMapping(body).sidewaysRemote)
     }
 
     @Test
-    fun `the layout decides until the user does`() {
-        assertTrue(observe(chosen = null, presetId = MarioKartWiiMapping.id))
-        assertEquals(false, observe(chosen = null, presetId = WiiMapping.id))
+    fun `applying a layout takes its answer with it, either way`() = runBlocking {
+        fixture.applyLayout(fixture.console, body, MarioKartWiiMapping.id)
+        assertTrue(fixture.playerMapping(body).sidewaysRemote)
+
+        fixture.applyLayout(fixture.console, body, WiiMapping.id)
+        assertFalse(fixture.playerMapping(body).sidewaysRemote)
     }
 
     @Test
-    fun `the user's switch outranks the layout, either way`() {
-        assertEquals(false, observe(chosen = false, presetId = MarioKartWiiMapping.id))
-        assertTrue(observe(chosen = true, presetId = WiiMapping.id))
+    fun `the player's switch stands until a layout is applied over it`() = runBlocking {
+        fixture.applyLayout(fixture.console, body, WiiMapping.id)
+
+        fixture.setSidewaysRemote(fixture.console, body, true)
+        assertTrue(fixture.playerMapping(body).sidewaysRemote)
+
+        fixture.applyLayout(fixture.console, body, WiiMapping.id)
+        assertFalse(fixture.playerMapping(body).sidewaysRemote)
     }
 
     @Test
-    fun `applying a layout hands the switch back to it`() = runBlocking {
-        val chosen = Chosen(enabled = true)
+    fun `one player's switch leaves the others alone`() = runBlocking {
+        val other = right(PlayerNumber.P2)
 
-        ApplyMappingPresetUseCase(StoredPreset(null), StoredMapping(), chosen)(Console.WIIMOTE_NUNCHUK, WiiMapping.id)
+        fixture.setSidewaysRemote(fixture.console, body, true)
 
-        assertTrue(chosen.cleared)
+        assertTrue(fixture.playerMapping(body).sidewaysRemote)
+        assertEquals(false, fixture.playerMapping(other).sidewaysRemote)
     }
 }

@@ -56,15 +56,26 @@ if the Joy-Con's nose pointed at the screen.
   `DolphinWiimoteConfig` turns a lone Joy-Con's IMU inputs back about the button face (table in the
   [README](../README.md#manual-setup)), putting the nose on the shoulder edge the player aims. The
   bodies rotate into their grips opposite ways, so their tables are each other half a turn.
-- **A console can play as a sideways Wii Remote** — a switch in the mapping editor, seeded by the
-  layout (`MappingPreset.sidewaysRemote`, true only for **Mario Kart**) and overridable by the user
-  (`SidewaysRemoteRepository`; applying a layout clears the override). A game written for that grip reads gravity against a remote whose nose points
+- **A player can play as a sideways Wii Remote** — a switch on their card in the mapping editor,
+  seeded by their layout (`MappingLayout.sidewaysRemote`, true only for **Mario Kart**) and
+  overridable per player (`SidewaysRemoteRepository`; applying a layout clears the override). A game written for that grip reads gravity against a remote whose nose points
   left, which is where a *left* Joy-Con's L/ZL edge already points — so only a right Joy-Con turns,
   giving up its own body (and with it R/ZR as the nose: aiming moves to the tail) to steer true.
   Both bodies also turn their four D-pad bindings a quarter, since the player's up is a sideways
   remote's right. That is Dolphin's own `dpad_sideways_bitmasks`, applied here so its *Sideways Wii
   Remote* option can stay off — the option would also turn the accelerometer, which we have turned
   already.
+- **A sideways layout amplifies the flick, for tricks.** Mario Kart Wii has four tricks and picks
+  between them by the *direction* of the flick, read from the accelerometer alone (no MotionPlus),
+  so nothing synthetic serves: Dolphin's `Shake` group is one axis and symmetric, and fires whichever
+  trick that axis happens to mean. The real jerk is amplified instead — `smooth()` is a slew limiter,
+  so subtracting it leaves what gravity is not, and adding that back over again lifts a flick while
+  leaving the gravity that steers and settles the pointer alone. Measured: a flick carries 1.6–3.6 g
+  against 0.35 g for the sharpest steering, so doubling the transient keeps them well apart.
+- **A flick has to land in the plane of the wheel.** Captured flicks went along the *axle* five times
+  in six — the player held the Joy-Con nearly flat (31–38° off vertical) and flicked upward, which
+  pushes along the face normal, a direction the game has no trick for. Hardware wouldn't trick off
+  that either. Held like a wheel, up/down/left/right flicks fall in the plane the game reads.
 - **Pointing and a wheel want the nose half a turn apart on a right Joy-Con**, and no Dolphin option
   bridges them: `GetOrientation()` turns a quarter (Sideways) or a quarter about the left axis
   (Upright), and it reaches only the accelerometer the game reads, never

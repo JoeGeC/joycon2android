@@ -14,4 +14,5 @@
     <string name="start_emulator_dismiss">Not now</string>
     <string name="emulator_auto_setup_configure_mapping">Configure button mapping</string>
     <string name="emulator_auto_setup_info_body">Auto setup might not work on every device. If the emulator doesn\'t respond to Joy-Con input after setting up, configure the controller manually in the emulator\'s own settings instead.</string>
+    <string name="dropdown_delete_option">Delete</string>
 </resources>

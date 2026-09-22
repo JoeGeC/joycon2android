@@ -1,15 +1,11 @@
 package com.joegec.joycon2android.buttonmapping
 
+import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
-/** Whether a console plays as a sideways Wii Remote: the user's choice, else its layout's. */
-class ObserveSidewaysRemoteUseCase(
-    private val repository: SidewaysRemoteRepository,
-    private val observeMappingPreset: ObserveMappingPresetUseCase,
-) {
-    operator fun invoke(console: Console): Flow<Boolean> =
-        combine(repository.observe(console), observeMappingPreset(console)) { chosen, preset ->
-            chosen ?: preset.sidewaysRemote
-        }
+/** Whether a body plays as a sideways Wii Remote, falling back to the console's default layout. */
+class ObserveSidewaysRemoteUseCase(private val repository: SidewaysRemoteRepository) {
+    operator fun invoke(console: Console, body: PlayerBody): Flow<Boolean> =
+        repository.observe(console, body).map { it ?: MappingPresets.default(console).sidewaysRemote }
 }

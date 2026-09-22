@@ -20,52 +20,42 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import com.joegec.joycon2android.buttonmapping.Console
-import com.joegec.joycon2android.buttonmapping.JoyconSide
-import com.joegec.joycon2android.buttonmapping.sourceIdOf
-import com.joegec.joycon2android.buttonmapping.sourceIdsOf
+import com.joegec.joycon2android.buttonmapping.MappingLayouts
+import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
-import com.joegec.joycon2android.ui.components.ExpandableInfoSection
-import com.joegec.joycon2android.ui.components.LabeledDropdown
-import com.joegec.joycon2android.ui.components.MultiSelectDropdown
-import com.joegec.joycon2android.ui.components.SettingSwitch
+import com.joegec.joycon2android.model.PlayerState
+import com.joegec.joycon2android.ui.components.ConfirmDialog
+import com.joegec.joycon2android.ui.components.TextInputDialog
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
 fun ControllerMappingScreen(
-    console: Console,
-    presetId: String,
-    sidewaysRemote: Boolean,
-    leftMapping: Map<String, String>,
-    rightMapping: Map<String, String>,
-    dualMapping: Map<String, String>,
-    onSelectPreset: (presetId: String) -> Unit,
-    onSetSidewaysRemote: (enabled: Boolean) -> Unit,
-    onSetMapping: (side: JoyconSide, targetKey: String, sourceId: String) -> Unit,
-    onResetMapping: (side: JoyconSide) -> Unit,
+    state: ControllerMappingUiState,
+    players: List<PlayerState>,
+    actions: MappingActions,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BackHandler(onBack = onBack)
+    var dialog by remember { mutableStateOf<MappingDialog?>(null) }
+
     Column(
         modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = Dimens.screenPaddingHorizontal),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.controller_mapping_back))
-            }
-            Text(console.displayName, style = MaterialTheme.typography.headlineSmall, color = Color.White)
-        }
+        ScreenHeader(state, onBack)
         Spacer(Modifier.height(Dimens.sectionSpacing))
         Column(
             Modifier
@@ -73,104 +63,115 @@ fun ControllerMappingScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
         ) {
-            PresetRow(console, presetId, onSelectPreset)
-            SidewaysRemoteSwitch(console, sidewaysRemote, onSetSidewaysRemote)
-            ExpandableInfoSection(JoyconSide.LEFT.displayName) {
-                MappingSection(console, JoyconSide.LEFT, leftMapping, onSetMapping, onResetMapping)
+            if (state.players.isEmpty()) {
+                Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
+            } else {
+                AllPlayersRow(state.global, actions) { dialog = it }
             }
-            ExpandableInfoSection(JoyconSide.RIGHT.displayName) {
-                MappingSection(console, JoyconSide.RIGHT, rightMapping, onSetMapping, onResetMapping)
-            }
-            ExpandableInfoSection(JoyconSide.DUAL.displayName) {
-                MappingSection(console, JoyconSide.DUAL, dualMapping, onSetMapping, onResetMapping)
+            state.players.forEach { player ->
+                val connected = players.firstOrNull { it.player == player.body.player }
+                if (connected != null) {
+                    PlayerMappingCard(
+                        console = state.console,
+                        player = connected,
+                        state = player,
+                        actions = actions,
+                        onSaveLayout = { dialog = MappingDialog.Save(player.body) },
+                        onDeleteLayout = { dialog = MappingDialog.Delete(it.id, it.label, global = false) },
+                    )
+                }
             }
             Spacer(Modifier.height(Dimens.sectionSpacing))
         }
     }
+
+    MappingDialogs(state, dialog, actions) { dialog = null }
 }
 
-/** Only consoles with a layout to choose between show the row. */
 @Composable
-private fun PresetRow(console: Console, presetId: String, onSelectPreset: (String) -> Unit) {
-    val presets = MappingOptions.presets(console)
-    if (presets.size < 2) return
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(stringResource(R.string.controller_mapping_preset), color = TextDim, modifier = Modifier.weight(1f))
-        LabeledDropdown(
-            options = presets,
-            selectedId = presetId,
-            onSelect = onSelectPreset,
-            modifier = Modifier.weight(1f),
-        )
+private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onBack) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.controller_mapping_back),
+            )
+        }
+        Text(state.console.displayName, style = MaterialTheme.typography.headlineSmall, color = Color.White)
     }
 }
 
-/**
- * A lone Joy-Con stands in for a Wii Remote held sideways: what a wheel game steers by, and what
- * turns its d-pad. A layout sets it; this is the user having the last word.
- */
+/** The session read as one setting, so a whole table can be set — and kept — in a single move. */
 @Composable
-private fun SidewaysRemoteSwitch(console: Console, enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
-    if (!MappingOptions.offersSidewaysRemote(console)) return
-    SettingSwitch(
-        title = stringResource(R.string.controller_mapping_sideways_remote),
-        description = stringResource(R.string.controller_mapping_sideways_remote_description),
-        checked = enabled,
-        onCheckedChange = onSetEnabled,
-    )
-}
-
-@Composable
-private fun MappingSection(
-    console: Console,
-    side: JoyconSide,
-    mapping: Map<String, String>,
-    onSetMapping: (side: JoyconSide, targetKey: String, sourceId: String) -> Unit,
-    onResetMapping: (side: JoyconSide) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
-        val sourceOptions = MappingOptions.sources(side)
-        (MappingOptions.buttonTargets(console) + MappingOptions.stickDirectionTargets(console)).forEach { (key, label) ->
-            val selectedIds = sourceIdsOf(mapping[key].orEmpty())
-            MappingRow(label, selectedIds, sourceOptions) { toggled ->
-                onSetMapping(side, key, sourceIdOf(selectedIds.toggling(toggled)))
-            }
-        }
-        TextButton(onClick = { onResetMapping(side) }) {
-            Text(stringResource(R.string.controller_mapping_reset))
-        }
-    }
-}
-
-@Composable
-private fun MappingRow(
-    label: String,
-    selectedIds: List<String>,
-    options: List<Pair<String, String>>,
-    onToggle: (String) -> Unit,
+private fun AllPlayersRow(
+    state: GlobalLayoutUiState,
+    actions: MappingActions,
+    onDialog: (MappingDialog) -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, color = TextDim, modifier = Modifier.weight(1f))
-        MultiSelectDropdown(
-            options = options,
-            selectedIds = selectedIds,
-            onToggle = onToggle,
+        Text(
+            stringResource(R.string.controller_mapping_all_players),
+            color = TextDim,
+            modifier = Modifier.weight(1f),
+        )
+        LayoutRow(
+            options = state.options,
+            selectedId = state.selectedId,
+            layoutName = state.layoutName,
+            subLabel = state.playerSummary,
+            onSelect = actions.selectGlobalLayout,
+            onSave = { onDialog(MappingDialog.Save(body = null)) },
+            onDelete = { onDialog(MappingDialog.Delete(it.id, it.label, global = true)) },
             modifier = Modifier.weight(1f),
         )
     }
 }
 
-/** Any source can fire a target, so picking one adds it; picking "None" empties the row. */
-private fun List<String>.toggling(sourceId: String): List<String> = when {
-    sourceId == MappingOptions.NONE_ID -> emptyList()
-    sourceId in this -> this - sourceId
-    else -> this + sourceId
+@Composable
+private fun MappingDialogs(
+    state: ControllerMappingUiState,
+    dialog: MappingDialog?,
+    actions: MappingActions,
+    onDismiss: () -> Unit,
+) {
+    when (dialog) {
+        null -> Unit
+        is MappingDialog.Save -> TextInputDialog(
+            title = stringResource(R.string.controller_mapping_save_layout),
+            fieldLabel = stringResource(R.string.controller_mapping_layout_name),
+            defaultValue = MappingLayouts.nextName(
+                stringResource(R.string.controller_mapping_layout_custom),
+                if (dialog.body == null) state.global.savedNames else state.savedLayoutNames,
+            ),
+            confirmLabel = stringResource(R.string.controller_mapping_save),
+            dismissLabel = stringResource(R.string.controller_mapping_cancel),
+            onConfirm = { name ->
+                actions.saveLayout(dialog.body, name)
+                onDismiss()
+            },
+            onDismiss = onDismiss,
+        )
+        is MappingDialog.Delete -> ConfirmDialog(
+            title = stringResource(R.string.controller_mapping_delete_layout),
+            body = stringResource(R.string.controller_mapping_delete_layout_body, dialog.name),
+            confirmLabel = stringResource(R.string.controller_mapping_delete),
+            dismissLabel = stringResource(R.string.controller_mapping_cancel),
+            onConfirm = {
+                actions.deleteLayout(dialog.id, dialog.global)
+                onDismiss()
+            },
+            onDismiss = onDismiss,
+        )
+    }
+}
+
+private sealed interface MappingDialog {
+    /** A null body names the session as a whole rather than one player. */
+    data class Save(val body: PlayerBody?) : MappingDialog
+
+    data class Delete(val id: String, val name: String, val global: Boolean) : MappingDialog
 }

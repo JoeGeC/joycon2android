@@ -2,6 +2,7 @@ package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
@@ -19,8 +20,8 @@ class DolphinGcpadConfigTest {
         existing: String?,
         players: List<PlayerState>,
         controllerNumbers: Map<Int, Int> = players.associate { it.player.index to it.player.index },
-    ) = DolphinGcpadConfig.merge(existing, players, controllerNumbers) { side ->
-        MappingPresets.default(Console.GAMECUBE).entries(side)
+    ) = DolphinGcpadConfig.merge(existing, players, controllerNumbers) { body ->
+        MappingPresets.default(Console.GAMECUBE).entries(body.side)
     }
 
     @Test

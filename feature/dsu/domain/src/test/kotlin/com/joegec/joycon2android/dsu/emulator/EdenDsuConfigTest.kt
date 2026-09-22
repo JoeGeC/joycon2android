@@ -2,6 +2,7 @@ package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.model.ConnectedJoycon
@@ -14,6 +15,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 private fun defaultSwitchProMapping(side: JoyconSide) = MappingPresets.default(Console.SWITCH_PRO).entries(side)
+
+private val switchProMapping: (PlayerBody) -> Map<String, String> = { defaultSwitchProMapping(it.side) }
 
 class EdenDsuConfigTest {
 
@@ -30,7 +33,7 @@ class EdenDsuConfigTest {
         config.lines().first { it.substringBefore('=').trim() == key }.substringAfter('=').trim()
 
     private fun merge(existing: String?, players: List<PlayerState>) =
-        EdenDsuConfig.merge(existing, players, ::defaultSwitchProMapping)
+        EdenDsuConfig.merge(existing, players, switchProMapping)
 
     private fun device(pad: Int) =
         "engine:cemuhookudp,guid:0000000000000000000000007f000001,port:${DsuConfig.PORT},pad:$pad"

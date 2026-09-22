@@ -2,6 +2,7 @@ package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.emittedFor
@@ -83,9 +84,11 @@ object DolphinWiimoteConfig {
 
     private val ACCEL_DIRECTIONS = listOf("Up", "Down", "Left", "Right", "Forward", "Backward")
 
-    private val IMU_CONTROLS = ACCEL_DIRECTIONS.map { "IMUAccelerometer/$it" to "Accel $it" } +
+    private val GYRO_DIRECTIONS =
         listOf("Pitch Up", "Pitch Down", "Roll Left", "Roll Right", "Yaw Left", "Yaw Right")
-            .map { "IMUGyroscope/$it" to "Gyro $it" }
+
+    private val IMU_CONTROLS = ACCEL_DIRECTIONS.map { "IMUAccelerometer/$it" to "Accel $it" } +
+        GYRO_DIRECTIONS.map { "IMUGyroscope/$it" to "Gyro $it" }
 
     // A lone Joy-Con streams in its sideways grip (SidewaysMotion); turning that grip back about the
     // button face restores the Joy-Con's own body, which is the remote the player aims down its
@@ -128,10 +131,31 @@ object DolphinWiimoteConfig {
     private fun dolphinKey(target: WiimoteButton, sideways: Boolean): String =
         (if (sideways) SIDEWAYS_DPAD_KEYS[target] else null) ?: DOLPHIN_KEYS.getValue(target)
 
+    // Mario Kart Wii has four tricks and picks between them by the direction of the flick, read from
+    // the accelerometer alone since it has no MotionPlus. Nothing synthetic can carry that — a shake
+    // is one axis and symmetric — so the real jerk has to arrive big enough instead: a Joy-Con is a
+    // fraction of the mass a Wii Wheel throws, and a flick lands a fraction of the jerk with it.
+    //
+    // smooth() is a slew limiter, so subtracting it leaves what gravity is not, and adding that back
+    // over again amplifies the flick while leaving untouched the gravity the wheel steers by and the
+    // pointer settles against. Measured 2026-09: a flick carries 1.6 to 3.6 g, the sharpest steering
+    // 0.35 g, so doubling the transient keeps those a wheel's turn apart.
+    private const val TRICK_GAIN = 2
+    private const val TRICK_SETTLE_SECONDS = 0.03
+
+    private fun accelExpression(input: String, amplified: Boolean): String =
+        if (!amplified) "`$input`"
+        else "`$input` + (`$input` - smooth(`$input`, $TRICK_SETTLE_SECONDS)) * $TRICK_GAIN"
+
     private fun imuLines(side: JoyconSide, sidewaysRemote: Boolean): List<String> {
         val bodyInputs = bodyInputs(side, sidewaysRemote)
-        return IMU_CONTROLS.map { (control, input) -> "$control = `${bodyInputs[input] ?: input}`" } +
-            listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
+        val amplified = sidewaysRemote && side != JoyconSide.DUAL
+        return IMU_CONTROLS.map { (control, input) ->
+            val read = bodyInputs[input] ?: input
+            val expression =
+                if (control.startsWith("IMUAccelerometer")) accelExpression(read, amplified) else "`$read`"
+            "$control = $expression"
+        } + listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
     }
 
     // Dolphin's emulated remote only ever translates through the Swing group — the IMU path feeds
@@ -168,20 +192,20 @@ object DolphinWiimoteConfig {
     fun merge(
         existing: String?,
         players: List<PlayerState>,
-        sidewaysRemote: Boolean,
-        mappingFor: (JoyconSide) -> Map<String, String>,
-    ): String = IniEditor.mergeSections(existing, sections(players, sidewaysRemote, mappingFor))
+        sidewaysRemoteFor: (PlayerBody) -> Boolean,
+        mappingFor: (PlayerBody) -> Map<String, String>,
+    ): String = IniEditor.mergeSections(existing, sections(players, sidewaysRemoteFor, mappingFor))
 
     private fun sections(
         players: List<PlayerState>,
-        sidewaysRemote: Boolean,
-        mappingFor: (JoyconSide) -> Map<String, String>,
+        sidewaysRemoteFor: (PlayerBody) -> Boolean,
+        mappingFor: (PlayerBody) -> Map<String, String>,
     ): Map<String, String> {
         val secondHands = DsuSlots.secondHands(players).associate { it.state.player to it.slot }
         return players.mapNotNull { player ->
             val slot = player.player.index - 1
             if (slot !in 0..3) return@mapNotNull null
-            bodyFor(player, slot, secondHands[player.player], sidewaysRemote, mappingFor)
+            bodyFor(player, slot, secondHands[player.player], sidewaysRemoteFor, mappingFor)
                 ?.let { "[Wiimote${player.player.index}]" to it }
         }.toMap()
     }
@@ -190,8 +214,8 @@ object DolphinWiimoteConfig {
         player: PlayerState,
         slot: Int,
         secondHandSlot: Int?,
-        sidewaysRemote: Boolean,
-        mappingFor: (JoyconSide) -> Map<String, String>,
+        sidewaysRemoteFor: (PlayerBody) -> Boolean,
+        mappingFor: (PlayerBody) -> Map<String, String>,
     ): String? {
         val side = when {
             player.hasPro -> return null
@@ -200,6 +224,8 @@ object DolphinWiimoteConfig {
             player.left != null -> JoyconSide.LEFT
             else -> return null
         }
+        val body = PlayerBody(player.player, side)
+        val sidewaysRemote = sidewaysRemoteFor(body)
         // Source = 1 forces this Wii Remote slot to Emulated, so the mappings actually apply
         val header = listOf("Source = 1", "Device = DSUClient/$slot/Joycon2")
         val nunchukImu = if (side == JoyconSide.DUAL && secondHandSlot != null) {
@@ -208,7 +234,7 @@ object DolphinWiimoteConfig {
             emptyList()
         }
         val sideways = sidewaysRemote && side != JoyconSide.DUAL
-        return (header + lines(side, sideways, mappingFor(side)) + imuLines(side, sidewaysRemote) +
+        return (header + lines(side, sideways, mappingFor(body)) + imuLines(side, sidewaysRemote) +
             swingLines(side, sidewaysRemote) + nunchukImu)
             .joinToString("\n", postfix = "\n")
     }

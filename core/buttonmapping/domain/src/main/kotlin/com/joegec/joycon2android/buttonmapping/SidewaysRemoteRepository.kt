@@ -2,12 +2,8 @@ package com.joegec.joycon2android.buttonmapping
 
 import kotlinx.coroutines.flow.Flow
 
-/**
- * The user's own answer to whether a console plays as a sideways Wii Remote, kept apart from the
- * layout that seeds it: null until they touch the switch, and cleared again when a layout is applied.
- */
+/** The body's answer to whether it plays as a sideways Wii Remote; null until anything has set it. */
 interface SidewaysRemoteRepository {
-    fun observe(console: Console): Flow<Boolean?>
-    suspend fun set(console: Console, enabled: Boolean)
-    suspend fun clear(console: Console)
+    fun observe(console: Console, body: PlayerBody): Flow<Boolean?>
+    suspend fun set(console: Console, body: PlayerBody, enabled: Boolean)
 }

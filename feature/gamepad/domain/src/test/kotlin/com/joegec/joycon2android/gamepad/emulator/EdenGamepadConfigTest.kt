@@ -2,6 +2,7 @@ package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
@@ -13,6 +14,8 @@ import org.junit.Test
 
 private fun defaultSwitchProMapping(side: JoyconSide) = MappingPresets.default(Console.SWITCH_PRO).entries(side)
 
+private val switchProMapping: (PlayerBody) -> Map<String, String> = { defaultSwitchProMapping(it.side) }
+
 class EdenGamepadConfigTest {
 
     private fun joycon(side: Side) = ConnectedJoycon(address = side.name, side = side, deviceName = "Joy-Con")
@@ -22,7 +25,7 @@ class EdenGamepadConfigTest {
             existing,
             players,
             ports.mapValues { (_, port) -> EdenGamepad.of(port, VENDOR_ID, PRODUCT_ID) },
-            ::defaultSwitchProMapping,
+            switchProMapping,
         )
 
     @Test
@@ -128,7 +131,7 @@ class EdenGamepadConfigTest {
         // A handheld that re-publishes our pad under its built-in controller's vendor/product.
         val republished = mapOf(1 to EdenGamepad.of(port = 2, vendorId = 0x2020, productId = 0x0111))
 
-        val result = EdenGamepadConfig.merge(null, players, republished, ::defaultSwitchProMapping)
+        val result = EdenGamepadConfig.merge(null, players, republished, switchProMapping)
 
         assertTrue(result.contains("guid:00000000000001110000000000002020"))
         assertFalse(result.contains(GUID))

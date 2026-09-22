@@ -1,15 +1,17 @@
 package com.joegec.joycon2android.buttonmapping
 
+import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
-/** The mapping actually in effect for a console/body: stored overrides layered on its preset. */
-class ObserveControllerMappingUseCase(
-    private val repository: ControllerMappingRepository,
-    private val observeMappingPreset: ObserveMappingPresetUseCase,
-) {
-    operator fun invoke(console: Console, side: JoyconSide): Flow<Map<String, String>> =
-        combine(observeMappingPreset(console), repository.observe(console, side)) { preset, stored ->
-            preset.entries(side) + stored.withLegacyButtonNamesRenamed().withLegacyStickRoutesExpanded()
+/**
+ * What a player's body is bound to: whatever has been set on it, over the console's default layout
+ * so that every target is answered even when nothing has ever set that one.
+ */
+class ObserveControllerMappingUseCase(private val repository: ControllerMappingRepository) {
+    operator fun invoke(console: Console, body: PlayerBody): Flow<Map<String, String>> =
+        repository.observe(console, body).map { stored ->
+            MappingPresets.default(console).entries(body.side) +
+                stored.withLegacyButtonNamesRenamed().withLegacyStickRoutesExpanded()
         }
 }

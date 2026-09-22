@@ -6,7 +6,6 @@ import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.directionKey
-import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
 import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
@@ -19,11 +18,9 @@ import com.joegec.joycon2android.model.JoyconButton
 internal object MappingOptions {
     const val NONE_ID = ""
 
-    fun presets(console: Console): List<Pair<String, String>> =
-        MappingPresets.forConsole(console).map { it.id to it.displayName }
-
-    /** Only a Wii Remote can be held sideways in the sense the switch means. */
-    fun offersSidewaysRemote(console: Console) = console == Console.WIIMOTE_NUNCHUK
+    /** Only a lone Joy-Con standing in for a Wii Remote can be held sideways in the sense the switch means. */
+    fun offersSidewaysRemote(console: Console, side: JoyconSide) =
+        console == Console.WIIMOTE_NUNCHUK && side != JoyconSide.DUAL
 
     fun buttonTargets(console: Console): List<Pair<String, String>> = when (console) {
         Console.GAMECUBE -> GameCubeButton.entries.map { it.name to it.displayName }

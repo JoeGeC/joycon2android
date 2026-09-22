@@ -5,7 +5,9 @@ import android.util.Log
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.GetEffectiveControllerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.GetSidewaysRemoteUseCase
-import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.PlayerBody
+import com.joegec.joycon2android.buttonmapping.body
+import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.dsu.emulator.DolphinDsuConfig
 import com.joegec.joycon2android.dsu.emulator.DolphinWiimoteConfig
 import com.joegec.joycon2android.dsu.emulator.EdenDsuConfig
@@ -42,10 +44,26 @@ class EmulatorSetup(
     private val getSidewaysRemote: GetSidewaysRemoteUseCase,
 ) {
 
-    private suspend fun mappingLookup(console: Console): (JoyconSide) -> Map<String, String> {
-        val bySide = JoyconSide.entries.associateWith { getControllerMapping(console, it) }
-        return { side -> bySide.getValue(side) }
+    // Read up front, once per body in play: the generators are synchronous, and a player whose body
+    // was never stored falls back to the console's default layout rather than to nothing.
+    private suspend fun mappingLookup(
+        console: Console,
+        players: List<PlayerState>,
+    ): (PlayerBody) -> Map<String, String> {
+        val stored = bodiesOf(players).associateWith { getControllerMapping(console, it) }
+        return { body -> stored[body] ?: MappingPresets.default(console).entries(body.side) }
     }
+
+    private suspend fun sidewaysRemoteLookup(
+        console: Console,
+        players: List<PlayerState>,
+    ): (PlayerBody) -> Boolean {
+        val stored = bodiesOf(players).associateWith { getSidewaysRemote(console, it) }
+        return { body -> stored[body] ?: false }
+    }
+
+    private fun bodiesOf(players: List<PlayerState>) = players.mapNotNull { it.body() }.distinct()
+
     /** Installed emulators whose controller mapping the Virtual Gamepad can configure. */
     fun gamepadEmulators(): List<EmulatorOption> = buildList {
         if (isInstalled(DolphinPaths.PACKAGE)) {
@@ -96,7 +114,7 @@ class EmulatorSetup(
             val path = EdenDsuConfig.path(emulatorId)
             val written = shell.writeText(
                 path,
-                EdenDsuConfig.merge(shell.readText(path), players, mappingLookup(Console.SWITCH_PRO)),
+                EdenDsuConfig.merge(shell.readText(path), players, mappingLookup(Console.SWITCH_PRO, players)),
             )
             if (written) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
         }
@@ -120,8 +138,8 @@ class EmulatorSetup(
             DolphinWiimoteConfig.merge(
                 shell.readText(DolphinWiimoteConfig.path),
                 players,
-                getSidewaysRemote(Console.WIIMOTE_NUNCHUK),
-                mappingLookup(Console.WIIMOTE_NUNCHUK),
+                sidewaysRemoteLookup(Console.WIIMOTE_NUNCHUK, players),
+                mappingLookup(Console.WIIMOTE_NUNCHUK, players),
             ),
         )
 
@@ -146,7 +164,7 @@ class EmulatorSetup(
                         shell.readText(path),
                         players,
                         gamepadDevices(),
-                        mappingLookup(Console.SWITCH_PRO),
+                        mappingLookup(Console.SWITCH_PRO, players),
                     ),
                 )
             } else {
@@ -154,7 +172,7 @@ class EmulatorSetup(
                     shell.readText(DolphinGcpadConfig.path),
                     players,
                     gamepadControllerNumbers(),
-                    mappingLookup(Console.GAMECUBE),
+                    mappingLookup(Console.GAMECUBE, players),
                 )
                 val mappingsOk = shell.writeText(DolphinGcpadConfig.path, mappings)
                 // Dolphin GC ports default to "None"; set them to Standard Controller
