@@ -8,6 +8,7 @@ import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.Side
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -15,6 +16,8 @@ import org.junit.Test
 private fun defaultWiimoteMapping(side: JoyconSide) = MappingPresets.default(Console.WIIMOTE_NUNCHUK).entries(side)
 
 private val wiimoteMapping: (PlayerBody) -> Map<String, String> = { defaultWiimoteMapping(it.side) }
+
+private fun wiimoteMappingFor(body: PlayerBody) = defaultWiimoteMapping(body.side)
 
 class DolphinWiimoteConfigTest {
 
@@ -175,8 +178,8 @@ class DolphinWiimoteConfigTest {
             assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left`"))
             assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`"))
         }
-        // ...though only the sideways one amplifies its flick.
-        assertFalse(merge(null, player).contains("smooth(`Accel"))
+        // ...though only the sideways one turns its flick into a trick.
+        assertFalse(merge(null, player).contains("pulse("))
     }
 
     @Test
@@ -185,8 +188,8 @@ class DolphinWiimoteConfigTest {
 
         val result = merge(null, player, sidewaysRemote = true)
 
-        assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up` +"))
-        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left` +"))
+        assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up`"))
+        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left`"))
         assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`"))
         assertTrue(result.contains("IMUGyroscope/Yaw Left = `Gyro Yaw Left`"))
     }
@@ -216,27 +219,76 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("D-Pad/Up = `Pad N`"))
     }
 
-    // Tricks pick a direction out of the flick itself, so the real jerk is amplified rather than
-    // replaced by anything synthetic — gravity, which steers and settles the pointer, is untouched.
+    // A flick is nearly all rotation, which the game cannot read, so the trick is fired from the
+    // gyroscope — and delivered through the accelerometer, the path steering proves reaches the game.
     @Test
-    fun `playing sideways amplifies the flick, not the gravity under it`() {
+    fun `playing sideways turns a wrist flick into a trick`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
 
+        val rate = "(`Gyro Pitch Up` + `Gyro Pitch Down` + `Gyro Roll Left` + `Gyro Roll Right` + " +
+            "`Gyro Yaw Left` + `Gyro Yaw Right`)"
+        val flick = "($rate - smooth($rate, 0.02)) / 15"
         assertTrue(
             result.contains(
-                "IMUAccelerometer/Forward = `Accel Left` + (`Accel Left` - smooth(`Accel Left`, 0.03)) * 2",
+                "IMUAccelerometer/Up = `Accel Up` + pulse(deadzone(($flick), 0.2), 0.6) * " +
+                    "sin(timer(0.15) * 6.2832) * 50",
             ),
         )
-        assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`")) // gyroscope passes through
+        assertFalse(result.contains("Shake/")) // Dolphin's own group never landed one
+    }
+
+    // Steering a lone Joy-Con held as a wheel is itself rotation, so only what outruns the tracker
+    // counts as a flick — otherwise a firm turn shakes the accelerometer the wheel is read from.
+    @Test
+    fun `a sustained turn is subtracted out of the flick`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
+
+        assertTrue(result.contains("- smooth((`Gyro Pitch Up`"))
+    }
+
+    // What landed a trick by hand was a hard shake, so opposite inputs swing half a cycle apart
+    // rather than one being leaned on.
+    @Test
+    fun `the trick swings every input, opposites in antiphase`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
+
+        listOf("Up", "Left", "Forward").forEach {
+            assertTrue(it, result.contains("IMUAccelerometer/$it = `Accel") && result.contains("* 6.2832) * 50"))
+        }
+        listOf("Down", "Right", "Backward").forEach {
+            assertTrue(it, result.contains("* 6.2832 + 3.1416) * 50"))
+        }
+        assertEquals(6, result.split("pulse(").size - 1)
+    }
+
+    // Its remote hand is still while the Nunchuk's stick steers, so a pair can flick for a trick too.
+    @Test
+    fun `a pair flicks for a trick as well, once the layout plays as a sideways remote`() {
+        val pair = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
+
+        val result = DolphinWiimoteConfig.merge(null, pair, { true }, ::wiimoteMappingFor)
+
+        assertTrue(result.contains("pulse(deadzone((((`Gyro Pitch Up`"))
+
+        // ...but its motion frame is untouched, since it is already held like a remote.
+        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Forward` +"))
     }
 
     @Test
-    fun `nothing is amplified unless the layout plays sideways`() {
-        val lone = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
-        val pair = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+    fun `a bound source tricks without a flick, so any body can trick at all`() {
+        val pair = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
+        val mapping = defaultWiimoteMapping(JoyconSide.DUAL) + mapOf("Shake" to "R")
 
-        assertFalse(lone.contains("smooth(`Accel"))
-        assertFalse(merge(null, listOf(pair), sidewaysRemote = true).contains("smooth(`Accel"))
+        val result = DolphinWiimoteConfig.merge(null, pair, { false }) { mapping }
+
+        assertTrue(result.contains("pulse(deadzone((`R1`), 0.2), 0.6)"))
+    }
+
+    @Test
+    fun `nothing shakes the accelerometer when there is no trick to fire`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+
+        assertFalse(result.contains("pulse("))
     }
 
     @Test

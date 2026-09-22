@@ -63,13 +63,42 @@ class WiiPresetsTest {
     }
 
     @Test
-    fun `a pair has no sideways grip to match, so Mario Kart leaves it on the Wii layout`() {
-        assertEquals(WiiMapping.entries(JoyconSide.DUAL), MarioKartWiiMapping.entries(JoyconSide.DUAL))
+    fun `Mario Kart moves a pair's index fingers onto the shoulders, and tricks from one`() {
+        val pair = MarioKartWiiMapping.entries(JoyconSide.DUAL)
+
+        // The remote's trigger hand, and the Joy-Con's own B so either finger can hop.
+        assertEquals("R|B", pair.getValue(WiimoteButton.B.name))
+        assertEquals("L", pair.getValue(WiimoteButton.NunchukZ.name)) // the Nunchuk's
+        assertEquals("X", pair.getValue(WiimoteButton.NunchukC.name))
+        assertEquals("Minus", pair.getValue(WiimoteButton.Minus.name))
+        assertEquals("R", pair.getValue(WiimoteButton.Shake.name)) // the finger that hops also tricks
+    }
+
+    @Test
+    fun `a pair has no sideways grip to match, so the rest stays the Wii layout`() {
+        val untouched = WiiMapping.entries(JoyconSide.DUAL) - MarioKartWiiMapping.entries(JoyconSide.DUAL).keys
+
+        assertTrue(untouched.isEmpty())
+        assertEquals(
+            WiiMapping.entries(JoyconSide.DUAL).getValue(WiimoteButton.A.name),
+            MarioKartWiiMapping.entries(JoyconSide.DUAL).getValue(WiimoteButton.A.name),
+        )
+    }
+
+    @Test
+    fun `Mario Kart tricks off SR on a lone Joy-Con, the shoulder that already hops`() {
+        JoyconSide.entries.filterNot { it == JoyconSide.DUAL }.forEach { side ->
+            val lone = MarioKartWiiMapping.entries(side)
+
+            assertEquals("$side", lone.getValue(WiimoteButton.B.name), lone.getValue(WiimoteButton.Shake.name))
+        }
     }
 
     @Test
     fun `every Wii layout binds the whole remote on a lone Joy-Con`() {
-        val remote = (WiimoteButton.entries - WiimoteButton.NunchukC - WiimoteButton.NunchukZ).map { it.name }
+        // Shake is a motion of the remote rather than a button on it, so no layout owes it a source.
+        val remote = (WiimoteButton.entries - WiimoteButton.NunchukC - WiimoteButton.NunchukZ -
+            WiimoteButton.Shake).map { it.name }
 
         MappingPresets.forConsole(Console.WIIMOTE_NUNCHUK).forEach { preset ->
             assertTrue("${preset.displayName} binds the remote", preset.entries(JoyconSide.RIGHT).keys.containsAll(remote))

@@ -10,9 +10,11 @@ import com.joegec.joycon2android.model.JoyconButton.B
 import com.joegec.joycon2android.model.JoyconButton.Capture
 import com.joegec.joycon2android.model.JoyconButton.Down
 import com.joegec.joycon2android.model.JoyconButton.Home
+import com.joegec.joycon2android.model.JoyconButton.L
 import com.joegec.joycon2android.model.JoyconButton.Left
 import com.joegec.joycon2android.model.JoyconButton.Minus
 import com.joegec.joycon2android.model.JoyconButton.Plus
+import com.joegec.joycon2android.model.JoyconButton.R
 import com.joegec.joycon2android.model.JoyconButton.Right
 import com.joegec.joycon2android.model.JoyconButton.SlLeft
 import com.joegec.joycon2android.model.JoyconButton.SlRight
@@ -28,7 +30,8 @@ import com.joegec.joycon2android.model.JoyconButton.Y
  * which a sideways body already steers from its stick, so SL fires it too — the shoulder that
  * throws in Mario Kart 8.
  *
- * A pair keeps the [WiiMapping] layout: held two-handed there is no sideways grip to match.
+ * A pair keeps the [WiiMapping] layout's shape — held two-handed there is no sideways grip to match
+ * — but moves the jobs an index finger does onto the shoulders that finger already rests on.
  *
  * It is also the layout that plays as a sideways Wii Remote, which is what the wheel steers by.
  */
@@ -39,9 +42,22 @@ object MarioKartWiiMapping : MappingPreset {
     override val sidewaysRemote = true
 
     override fun entries(side: JoyconSide) = when (side) {
-        JoyconSide.DUAL -> WiiMapping.entries(side)
+        JoyconSide.DUAL -> WiiMapping.entries(side) + pairButtons()
         else -> buttons(side).buttonEntries() + dPadSticks(side).sourceEntries()
     }
+
+    // Held as a remote and a nunchuk, each index finger rests on that hand's shoulder, which is
+    // where the controller it stands in for keeps its trigger: the remote's B on the right, the
+    // Nunchuk's Z on the left. Hopping also keeps the Joy-Con's own B, so either the thumb or the
+    // index finger can do it. The trick rides the same shoulder as the hop, as SR does on a lone
+    // Joy-Con, so the finger that jumps is the finger that tricks.
+    private fun pairButtons(): Map<String, String> = mapOf(
+        WiimoteButton.B to listOf(R, B),
+        WiimoteButton.Shake to listOf(R),
+        WiimoteButton.Minus to listOf(Minus),
+        WiimoteButton.NunchukC to listOf(X),
+        WiimoteButton.NunchukZ to listOf(L),
+    ).mapValues { (_, buttons) -> buttons.map(MappingSource::Button) }.sourceEntries()
 
     private fun buttons(side: JoyconSide): Map<WiimoteButton, JoyconButton> = when (side) {
         JoyconSide.LEFT -> mapOf(
@@ -52,6 +68,7 @@ object MarioKartWiiMapping : MappingPreset {
             WiimoteButton.Home to Capture,
             WiimoteButton.Plus to Minus,
             WiimoteButton.Minus to Up,
+            WiimoteButton.Shake to SrLeft,
         )
         else -> mapOf(
             WiimoteButton.A to Y,
@@ -61,6 +78,7 @@ object MarioKartWiiMapping : MappingPreset {
             WiimoteButton.Home to Home,
             WiimoteButton.Plus to Plus,
             WiimoteButton.Minus to B,
+            WiimoteButton.Shake to SrRight,
         )
     }
 

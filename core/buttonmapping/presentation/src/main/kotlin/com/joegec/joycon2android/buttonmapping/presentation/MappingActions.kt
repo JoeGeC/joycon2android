@@ -11,6 +11,5 @@ class MappingActions(
     val saveLayout: (body: PlayerBody?, name: String) -> Unit,
     val deleteLayout: (layoutId: String, global: Boolean) -> Unit,
     val setMapping: (body: PlayerBody, targetKey: String, sourceId: String) -> Unit,
-    val resetMapping: (body: PlayerBody) -> Unit,
     val setSidewaysRemote: (body: PlayerBody, enabled: Boolean) -> Unit,
 )

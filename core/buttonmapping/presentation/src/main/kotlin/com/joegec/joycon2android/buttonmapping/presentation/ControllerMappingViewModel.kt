@@ -10,7 +10,6 @@ import com.joegec.joycon2android.buttonmapping.DeleteGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveGlobalMappingUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveSavedLayoutsUseCase
 import com.joegec.joycon2android.buttonmapping.PlayerBody
-import com.joegec.joycon2android.buttonmapping.ResetControllerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.SaveCustomLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SaveGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
@@ -34,7 +33,6 @@ class ControllerMappingViewModel(
     private val applyMappingLayout: ApplyMappingLayoutUseCase,
     private val applyGlobalLayout: ApplyGlobalLayoutUseCase,
     private val setControllerMapping: SetControllerMappingUseCase,
-    private val resetControllerMapping: ResetControllerMappingUseCase,
     private val setSidewaysRemote: SetSidewaysRemoteUseCase,
     private val saveCustomLayout: SaveCustomLayoutUseCase,
     private val saveGlobalLayout: SaveGlobalLayoutUseCase,
@@ -63,8 +61,6 @@ class ControllerMappingViewModel(
     fun setMapping(body: PlayerBody, targetKey: String, sourceId: String) = onTarget {
         setControllerMapping(it.console, body, targetKey, sourceId)
     }
-
-    fun resetMapping(body: PlayerBody) = onTarget { resetControllerMapping(it.console, body) }
 
     fun setSidewaysRemoteEnabled(body: PlayerBody, enabled: Boolean) = onTarget {
         setSidewaysRemote(it.console, body, enabled)

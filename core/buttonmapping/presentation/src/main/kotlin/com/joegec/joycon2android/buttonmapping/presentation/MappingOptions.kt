@@ -22,13 +22,24 @@ internal object MappingOptions {
     fun offersSidewaysRemote(console: Console, side: JoyconSide) =
         console == Console.WIIMOTE_NUNCHUK && side != JoyconSide.DUAL
 
-    fun buttonTargets(console: Console): List<Pair<String, String>> = when (console) {
+    /** Every row the editor offers, in reading order: buttons, then sticks, then what is neither. */
+    fun targets(console: Console): List<Pair<String, String>> =
+        buttonTargets(console) + stickDirectionTargets(console) + motionTargets(console)
+
+    private fun buttonTargets(console: Console): List<Pair<String, String>> = when (console) {
         Console.GAMECUBE -> GameCubeButton.entries.map { it.name to it.displayName }
-        Console.WIIMOTE_NUNCHUK -> WiimoteButton.entries.map { it.name to it.displayName }
+        Console.WIIMOTE_NUNCHUK -> (WiimoteButton.entries - MOTION_TARGETS).map { it.name to it.displayName }
         Console.SWITCH_PRO -> SwitchProButton.entries.map { it.name to it.displayName }
     }
 
-    fun stickDirectionTargets(console: Console): List<Pair<String, String>> {
+    // Shaking the remote is a motion of it rather than a button on it, so it sits below the sticks
+    // instead of among the face buttons.
+    private val MOTION_TARGETS = setOf(WiimoteButton.Shake)
+
+    private fun motionTargets(console: Console): List<Pair<String, String>> =
+        if (console == Console.WIIMOTE_NUNCHUK) MOTION_TARGETS.map { it.name to it.displayName } else emptyList()
+
+    private fun stickDirectionTargets(console: Console): List<Pair<String, String>> {
         val sticks = when (console) {
             Console.GAMECUBE -> GameCubeStick.entries.map { it to it.displayName }
             Console.WIIMOTE_NUNCHUK -> WiimoteStick.entries.map { it to it.displayName }

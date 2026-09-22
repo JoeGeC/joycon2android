@@ -28,7 +28,6 @@ import com.joegec.joycon2android.buttonmapping.ObserveGlobalMappingUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveSavedLayoutsUseCase
 import com.joegec.joycon2android.buttonmapping.ObservePlayerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveSidewaysRemoteUseCase
-import com.joegec.joycon2android.buttonmapping.ResetControllerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.SaveCustomLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SaveGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SavedLayoutDataStore
@@ -132,7 +131,6 @@ class AppContainer(context: Context) {
     val setControllerMapping = SetControllerMappingUseCase(controllerMappingRepository)
     val setSidewaysRemote = SetSidewaysRemoteUseCase(sidewaysRemoteRepository)
     val applyMappingLayout = ApplyMappingLayoutUseCase(savedLayoutRepository, applyPlayerMapping)
-    val resetControllerMapping = ResetControllerMappingUseCase(applyMappingLayout)
     val applyGlobalLayout =
         ApplyGlobalLayoutUseCase(globalLayoutRepository, applyMappingLayout, applyPlayerMapping)
     val saveCustomLayout = SaveCustomLayoutUseCase(savedLayoutRepository, observePlayerMapping)

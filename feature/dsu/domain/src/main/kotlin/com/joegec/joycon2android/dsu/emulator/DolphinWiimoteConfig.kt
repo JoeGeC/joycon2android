@@ -131,30 +131,77 @@ object DolphinWiimoteConfig {
     private fun dolphinKey(target: WiimoteButton, sideways: Boolean): String =
         (if (sideways) SIDEWAYS_DPAD_KEYS[target] else null) ?: DOLPHIN_KEYS.getValue(target)
 
-    // Mario Kart Wii has four tricks and picks between them by the direction of the flick, read from
-    // the accelerometer alone since it has no MotionPlus. Nothing synthetic can carry that — a shake
-    // is one axis and symmetric — so the real jerk has to arrive big enough instead: a Joy-Con is a
-    // fraction of the mass a Wii Wheel throws, and a flick lands a fraction of the jerk with it.
+    // A trick is a flick, and a flick of something Joy-Con sized is mostly rotation: captured ones
+    // peak past 1200 deg/s summed while carrying barely a g of linear jerk, where jerking a real Wii
+    // Wheel throws the whole thing. Mario Kart Wii has no MotionPlus and reads only the
+    // accelerometer, so the flick never reaches it — on hardware it wouldn't either. The gyroscope
+    // therefore fires the trick, which hardware could not do. Summing each axis with its opposite
+    // input gives |rate|, since Dolphin clamps one of any pair at zero.
     //
-    // smooth() is a slew limiter, so subtracting it leaves what gravity is not, and adding that back
-    // over again amplifies the flick while leaving untouched the gravity the wheel steers by and the
-    // pointer settles against. Measured 2026-09: a flick carries 1.6 to 3.6 g, the sharpest steering
-    // 0.35 g, so doubling the transient keeps those a wheel's turn apart.
-    private const val TRICK_GAIN = 2
-    private const val TRICK_SETTLE_SECONDS = 0.03
+    // Dolphin's own Shake group is not the way to deliver it: bound straight to a key in Dolphin's
+    // config, a full 7 g oscillation of it never landed a trick (tested 2026-09). The accelerometer
+    // is the path that demonstrably reaches the game, since steering is read from it, so the jerk
+    // goes there — onto one input of each pair, a diagonal no axis can miss, with the opposites left
+    // alone so the pair cannot cancel it.
+    //
+    // It is a shake, not a push. What actually landed one (2026-09) was shaking a Joy-Con hard for
+    // about a second, so the synthetic trick copies that shape: an oscillation held for
+    // TRICK_SECONDS, with each input of a pair swung in antiphase so the remote is thrown back and
+    // forth rather than leaned on. Amplitude is not the lever — an emulated Wii Remote saturates
+    // around +3.9/-4.9 g (ACCEL_ZERO_G 0x80, ACCEL_ONE_G 0x9A over 8 bits), which
+    // TRICK_ACCELERATION already passes — so a bigger number only clips sooner. Duration and
+    // swinging are what a held push was missing, and pulse() gives a flick and a held button the
+    // same one however long either lasted.
+    //
+    // A rate alone cannot tell a flick from a turn, because steering a lone Joy-Con held as a wheel
+    // *is* rotation — which is why only single Joy-Cons suffered for it: a pair steers from the
+    // Nunchuk's stick with its remote hand still. Subtracting a slew limiter leaves only what climbs
+    // faster than the limiter can follow. At 0.02 the tracker moves 50 rad/s, so it has caught the
+    // sharpest measured steering (6.5) within about a seventh of a second and left nothing behind,
+    // while a flick's ~40 ms rise to 21 outruns it almost untouched.
+    //
+    // A trick fired by accident costs nothing — the game only tricks a kart already airborne — but a
+    // trick fired *while steering* costs plenty, since the shake below lands on the accelerometer the
+    // wheel is read from. Hence a discriminator rather than a bigger number.
+    private const val FLICK_RADIANS = 15
+    private const val FLICK_SETTLE_SECONDS = 0.02
+    private const val FLICK_DEAD_ZONE = 0.2
+    private const val TRICK_ACCELERATION = 50 // m/s^2, past what an emulated remote can report
+    private const val TRICK_SECONDS = 0.6
+    private const val TRICK_PERIOD_SECONDS = 0.15
+    private const val FULL_TURN = 6.2832
+    private const val HALF_TURN = 3.1416
 
-    private fun accelExpression(input: String, amplified: Boolean): String =
-        if (!amplified) "`$input`"
-        else "`$input` + (`$input` - smooth(`$input`, $TRICK_SETTLE_SECONDS)) * $TRICK_GAIN"
+    // The three that lead; their opposites follow half a cycle later, which is the swing.
+    private val TRICK_LEADING =
+        setOf("IMUAccelerometer/Up", "IMUAccelerometer/Left", "IMUAccelerometer/Forward")
 
-    private fun imuLines(side: JoyconSide, sidewaysRemote: Boolean): List<String> {
+    /**
+     * What fires a trick: a flick, and whatever is bound to Shake. Every body flicks, a pair
+     * included — its remote hand is still while the Nunchuk's stick does the steering — but only
+     * while the layout plays as a sideways remote, so no other game is handed a shake it never asked
+     * for when its remote is swung.
+     */
+    private fun shakeTrigger(side: JoyconSide, sidewaysRemote: Boolean, bound: List<MappingSource>?): String? {
+        val rate = "(${GYRO_DIRECTIONS.joinToString(" + ") { "`Gyro $it`" }})"
+        val flick = if (sidewaysRemote) "($rate - smooth($rate, $FLICK_SETTLE_SECONDS)) / $FLICK_RADIANS" else null
+        return listOfNotNull(flick, bound?.let { expressionFor(side, it) })
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(" | ")
+    }
+
+    private fun trickShake(trigger: String?, control: String): String? {
+        if (trigger == null || !control.startsWith("IMUAccelerometer/")) return null
+        val phase = if (control in TRICK_LEADING) "" else " + $HALF_TURN"
+        return "pulse(deadzone(($trigger), $FLICK_DEAD_ZONE), $TRICK_SECONDS) * " +
+            "sin(timer($TRICK_PERIOD_SECONDS) * $FULL_TURN$phase) * $TRICK_ACCELERATION"
+    }
+
+    private fun imuLines(side: JoyconSide, sidewaysRemote: Boolean, trigger: String?): List<String> {
         val bodyInputs = bodyInputs(side, sidewaysRemote)
-        val amplified = sidewaysRemote && side != JoyconSide.DUAL
         return IMU_CONTROLS.map { (control, input) ->
-            val read = bodyInputs[input] ?: input
-            val expression =
-                if (control.startsWith("IMUAccelerometer")) accelExpression(read, amplified) else "`$read`"
-            "$control = $expression"
+            val read = "`${bodyInputs[input] ?: input}`"
+            "$control = " + (trickShake(trigger, control)?.let { "$read + $it" } ?: read)
         } + listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
     }
 
@@ -234,15 +281,18 @@ object DolphinWiimoteConfig {
             emptyList()
         }
         val sideways = sidewaysRemote && side != JoyconSide.DUAL
-        return (header + lines(side, sideways, mappingFor(body)) + imuLines(side, sidewaysRemote) +
+        val mapping = mappingFor(body)
+        val trigger = shakeTrigger(side, sidewaysRemote, mapping.toSourceMap<WiimoteButton>()[WiimoteButton.Shake])
+        return (header + lines(side, sideways, mapping) + imuLines(side, sidewaysRemote, trigger) +
             swingLines(side, sidewaysRemote) + nunchukImu)
             .joinToString("\n", postfix = "\n")
     }
 
     private fun lines(side: JoyconSide, sideways: Boolean, mapping: Map<String, String>): List<String> {
-        val buttonLines = mapping.toSourceMap<WiimoteButton>().mapNotNull { (target, sources) ->
-            expressionFor(side, sources)?.let { expression -> "${dolphinKey(target, sideways)} = $expression" }
-        }
+        val buttonLines = (mapping.toSourceMap<WiimoteButton>() - WiimoteButton.Shake)
+            .mapNotNull { (target, sources) ->
+                expressionFor(side, sources)?.let { expression -> "${dolphinKey(target, sideways)} = $expression" }
+            }
         val stickLines = nunchukStickLines(side, mapping)
         val recenterSpec = if (side == JoyconSide.LEFT) "L1" else "R1"
         val extension = if (usesNunchuk(side, buttonLines + stickLines)) "Nunchuk" else "None"

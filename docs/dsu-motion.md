@@ -65,17 +65,46 @@ if the Joy-Con's nose pointed at the screen.
   remote's right. That is Dolphin's own `dpad_sideways_bitmasks`, applied here so its *Sideways Wii
   Remote* option can stay off — the option would also turn the accelerometer, which we have turned
   already.
-- **A sideways layout amplifies the flick, for tricks.** Mario Kart Wii has four tricks and picks
-  between them by the *direction* of the flick, read from the accelerometer alone (no MotionPlus),
-  so nothing synthetic serves: Dolphin's `Shake` group is one axis and symmetric, and fires whichever
-  trick that axis happens to mean. The real jerk is amplified instead — `smooth()` is a slew limiter,
-  so subtracting it leaves what gravity is not, and adding that back over again lifts a flick while
-  leaving the gravity that steers and settles the pointer alone. Measured: a flick carries 1.6–3.6 g
-  against 0.35 g for the sharpest steering, so doubling the transient keeps them well apart.
-- **A flick has to land in the plane of the wheel.** Captured flicks went along the *axle* five times
-  in six — the player held the Joy-Con nearly flat (31–38° off vertical) and flicked upward, which
-  pushes along the face normal, a direction the game has no trick for. Hardware wouldn't trick off
-  that either. Held like a wheel, up/down/left/right flicks fall in the plane the game reads.
+- **A sideways body turns a flick into a trick.** Mario Kart Wii tricks off a flick, and a flick of
+  something Joy-Con sized is mostly rotation: captured ones peak past 1200 °/s summed while carrying
+  barely a g of linear jerk, where jerking a real Wii Wheel throws the whole thing. The game has no
+  MotionPlus and reads only the accelerometer, so the flick never reaches it — on hardware it
+  wouldn't either. The gyroscope therefore fires it, which hardware could not do: each axis summed
+  with its opposite input gives |rate| (Dolphin clamps one of a pair at zero), over `/15` and a half
+  dead zone, which fires above 11 rad/s and leaves the sharpest measured steering (6.5) and aiming
+  (4.1) a wide berth. `Shake` is a mapping target of its own too, so a pair — which has no sideways
+  flick to read — can trick from a button.
+
+  **Dolphin's own `Shake` group is not how it is delivered.** Bound straight to a key in Dolphin's
+  config, a full 7 g oscillation of it never once landed a trick (tested 2026-09), so the group is
+  not written at all. The accelerometer is the path that demonstrably reaches the game, since
+  steering is read from it, and the jerk goes there instead:
+  `pulse(deadzone(trigger, 0.2), 0.6) * sin(timer(0.15) * 2π) * 50` added to every
+  `IMUAccelerometer` input, the three opposites carrying a half-turn of phase.
+
+  It is a *shake*, not a push: an oscillation held for 0.6 s at about 6.7 Hz, each input of a pair
+  swung half a cycle apart so the remote is thrown back and forth rather than leaned on. That shape
+  is what landed a trick by hand — shaking a Joy-Con hard for about a second — where a single held
+  push did not. Amplitude is not the lever: an emulated Wii Remote saturates around +3.9/−4.9 g
+  (`ACCEL_ZERO_G` 0x80, `ACCEL_ONE_G` 0x9A over 8 bits), which the 50 m/s² already passes, so a
+  bigger number only clips sooner. `pulse()` gives a flick and a held button the same shake however
+  long either lasted.
+
+  **A rate alone cannot tell a flick from a turn**, because steering a lone Joy-Con held as a wheel
+  *is* rotation — which is why only single Joy-Cons suffered for it, a pair steering from the
+  Nunchuk's stick with its remote hand still. The trigger therefore subtracts a slew limiter,
+  `(rate − smooth(rate, 0.02)) / 15`, leaving only what climbs faster than the limiter can follow:
+  at 0.02 the tracker moves 50 rad/s, so it has caught the sharpest measured steering (6.5) within
+  about a seventh of a second and left nothing behind, while a flick's ~40 ms rise to 21 outruns it
+  almost untouched. A trick fired by accident costs nothing — the game only tricks a kart already
+  airborne — but one fired *while steering* costs plenty, since the shake lands on the very
+  accelerometer the wheel is read from. Every body flicks, a pair included: its remote hand is still while the Nunchuk's
+  stick steers. Only a layout that plays as a sideways remote flicks at all, so no other game is
+  handed a shake it never asked for when its remote is swung.
+
+  Verified against Dolphin's source (2026-09): `|` is a max and binds looser than `/`;
+  `m_shake_state.acceleration` is added to the reported acceleration unconditionally, so binding
+  `IMUAccelerometer` does not disable the Shake group — it simply never produced a trick.
 - **Pointing and a wheel want the nose half a turn apart on a right Joy-Con**, and no Dolphin option
   bridges them: `GetOrientation()` turns a quarter (Sideways) or a quarter about the left axis
   (Upright), and it reaches only the accelerometer the game reads, never

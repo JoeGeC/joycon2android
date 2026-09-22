@@ -16,7 +16,6 @@ internal class MappingFixture(val console: Console = Console.WIIMOTE_NUNCHUK) {
 
     val observePlayerMapping = ObservePlayerMappingUseCase(observeMapping, observeSideways, savedLayouts)
     val applyLayout = ApplyMappingLayoutUseCase(savedLayouts, applyPlayerMapping)
-    val resetMapping = ResetControllerMappingUseCase(applyLayout)
     val setMapping = SetControllerMappingUseCase(mappings)
     val setSidewaysRemote = SetSidewaysRemoteUseCase(sidewaysRemotes)
     val saveCustomLayout = SaveCustomLayoutUseCase(savedLayouts, observePlayerMapping)
