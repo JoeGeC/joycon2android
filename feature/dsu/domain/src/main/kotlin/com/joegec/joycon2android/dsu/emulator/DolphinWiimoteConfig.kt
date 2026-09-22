@@ -119,44 +119,59 @@ object DolphinWiimoteConfig {
     private fun dolphinKey(target: WiimoteButton, sideways: Boolean): String =
         (if (sideways) SIDEWAYS_DPAD_KEYS[target] else null) ?: DOLPHIN_KEYS.getValue(target)
 
-    // A trick is fired from the gyroscope and delivered as a shake of the accelerometer: a Joy-Con
-    // flick carries almost no linear jerk, and Mario Kart Wii has no MotionPlus, so it reads only
-    // the accelerometer. Every constant below is measured, and the two obvious alternatives —
-    // amplifying the accelerometer's own transient, and Dolphin's Shake group — were tried and do
-    // not work. Numbers, measurements and dead ends: docs/dsu-motion.md#sideways-joy-cons.
-    private const val FLICK_RADIANS = 5 // pulse() fires at half of it: 2.5 rad/s past the limiter
-    private const val FLICK_SETTLE_SECONDS = 0.01 // the limiter that tells a flick from a turn
+    // A flick is fired from the gyroscope and delivered as a jerk of the accelerometer, because a
+    // Joy-Con flick carries almost no linear jerk and Mario Kart Wii reads only the accelerometer.
+    // Every constant is measured: docs/dsu-motion.md#sideways-joy-cons.
+    private const val FLICK_RADIANS = 9
+    private const val FLICK_LOCKOUT_SECONDS = 0.4
     private const val TRICK_ACCELERATION = 50 // m/s^2, past what an emulated remote can report
     private const val TRICK_SECONDS = 0.6
     private const val TRICK_PERIOD_SECONDS = 0.15
     private const val FULL_TURN = 6.2832
-    private const val HALF_TURN = 3.1416
 
-    // The three that lead; their opposites follow half a cycle later, which is the swing.
-    private val TRICK_LEADING =
-        setOf("IMUAccelerometer/Up", "IMUAccelerometer/Left", "IMUAccelerometer/Forward")
+    // A wheelie is a state an up-flick starts and a down-flick drops, so unlike a trick it needs the
+    // direction the player flicked. Pitch carries it on both bodies; the remote is jerked the same
+    // way it was flicked.
+    private const val UP = "IMUAccelerometer/Up"
+    private val TRICK_AXES = mapOf(UP to ("Pitch Up" to "Pitch Down"), "IMUAccelerometer/Down" to ("Pitch Down" to "Pitch Up"))
 
-    /** Only a layout that plays as a sideways remote flicks, so no other game is handed a shake. */
-    private fun shakeTrigger(side: JoyconSide, sidewaysRemote: Boolean, bound: List<MappingSource>?): String? {
-        val rate = "(${GYRO_DIRECTIONS.joinToString(" + ") { "`Gyro $it`" }})"
-        val flick = if (sidewaysRemote) "($rate - smooth($rate, $FLICK_SETTLE_SECONDS)) / $FLICK_RADIANS" else null
-        return listOfNotNull(flick, bound?.let { expressionFor(side, it) })
-            .takeIf { it.isNotEmpty() }
-            ?.joinToString(" | ")
+    /**
+     * Each direction locks the other out: every flick rebounds the opposite way about a quarter of a
+     * second later, and that rebound would otherwise answer the gesture and cancel the wheelie.
+     * Gating the pulse's input rather than its output lets a jerk already running finish.
+     */
+    private fun trickTrigger(
+        side: JoyconSide,
+        control: String,
+        sidewaysRemote: Boolean,
+        bound: List<MappingSource>?,
+    ): String? {
+        val (own, opposite) = TRICK_AXES[control] ?: return null
+        val flick = if (sidewaysRemote) {
+            "(`Gyro $own` / $FLICK_RADIANS) & not(pulse(`Gyro $opposite` / $FLICK_RADIANS, $FLICK_LOCKOUT_SECONDS))"
+        } else {
+            null
+        }
+        val pressed = bound?.takeIf { control == UP }?.let { expressionFor(side, it) }
+        return listOfNotNull(flick, pressed).takeIf { it.isNotEmpty() }?.joinToString(" | ")
     }
 
-    private fun trickShake(trigger: String?, control: String): String? {
-        if (trigger == null || !control.startsWith("IMUAccelerometer/")) return null
-        val phase = if (control in TRICK_LEADING) "" else " + $HALF_TURN"
-        return "pulse($trigger, $TRICK_SECONDS) * " +
-            "sin(timer($TRICK_PERIOD_SECONDS) * $FULL_TURN$phase) * $TRICK_ACCELERATION"
+    // Half a wave, so the jerks all go the way the flick did — a full one would cancel the wheelie
+    // it just started, four times a second.
+    private fun trickShake(trigger: String?): String? = trigger?.let {
+        "pulse($it, $TRICK_SECONDS) * max(sin(timer($TRICK_PERIOD_SECONDS) * $FULL_TURN), 0) * $TRICK_ACCELERATION"
     }
 
-    private fun imuLines(side: JoyconSide, sidewaysRemote: Boolean, trigger: String?): List<String> {
+    private fun imuLines(
+        side: JoyconSide,
+        sidewaysRemote: Boolean,
+        bound: List<MappingSource>?,
+    ): List<String> {
         val bodyInputs = bodyInputs(side, sidewaysRemote)
         return IMU_CONTROLS.map { (control, input) ->
             val read = "`${bodyInputs[input] ?: input}`"
-            "$control = " + (trickShake(trigger, control)?.let { "$read + $it" } ?: read)
+            val shake = trickShake(trickTrigger(side, control, sidewaysRemote, bound))
+            "$control = " + (shake?.let { "$read + $it" } ?: read)
         } + listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
     }
 
@@ -227,8 +242,8 @@ object DolphinWiimoteConfig {
         }
         val sideways = sidewaysRemote && side != JoyconSide.DUAL
         val mapping = mappingFor(body)
-        val trigger = shakeTrigger(side, sidewaysRemote, mapping.toSourceMap<WiimoteButton>()[WiimoteButton.Shake])
-        return (header + lines(side, sideways, mapping) + imuLines(side, sidewaysRemote, trigger) +
+        val shake = mapping.toSourceMap<WiimoteButton>()[WiimoteButton.Shake]
+        return (header + lines(side, sideways, mapping) + imuLines(side, sidewaysRemote, shake) +
             swingLines(side, sidewaysRemote) + nunchukImu)
             .joinToString("\n", postfix = "\n")
     }
