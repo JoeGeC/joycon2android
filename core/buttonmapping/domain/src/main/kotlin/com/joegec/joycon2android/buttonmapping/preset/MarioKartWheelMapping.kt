@@ -34,6 +34,7 @@ import com.joegec.joycon2android.model.JoyconButton.Y
 object MarioKartWheelMapping : MappingPreset {
     override val id = "MARIO_KART_WHEEL"
     override val displayName = "Mario Kart Wheel"
+    override val description = "Motion steering, MK8 mapping"
     override val console = Console.WIIMOTE_NUNCHUK
     override val family = MARIO_KART
     override val sides = setOf(JoyconSide.LEFT, JoyconSide.RIGHT)

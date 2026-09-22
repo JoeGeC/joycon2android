@@ -82,6 +82,7 @@ fun PlayerMappingCard(
                     options = state.layoutOptions,
                     selectedId = state.selectedLayoutId,
                     layoutName = state.layoutName,
+                    subLabel = state.layoutDescription,
                     onSelect = { actions.selectLayout(state.body, it) },
                     onSave = onSaveLayout,
                     onDelete = onDeleteLayout,

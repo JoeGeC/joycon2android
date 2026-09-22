@@ -42,6 +42,7 @@ import com.joegec.joycon2android.model.JoyconButton.ZR
 object MarioKartNunchukMapping : MappingPreset {
     override val id = "MARIO_KART_NUNCHUK"
     override val displayName = "Mario Kart Nunchuck"
+    override val description = "Stick steering, MK8 mapping"
     override val console = Console.WIIMOTE_NUNCHUK
     override val family = MARIO_KART
     override val sidewaysRemote = true
