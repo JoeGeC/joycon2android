@@ -12,12 +12,25 @@
 - Code should read like well-written prose
 - Methods should be short enough that they explain themselves
 - Methods and composables should be reusable like components
+
 ## Comments
 - Default to **no comment**: a well-named class or method is its own documentation
 - Never write a comment that restates the code, the signature, or what the next line does — if a comment can be made redundant by renaming or extracting, do that instead
 - A genuine "why" (a constraint the code cannot express, e.g. "StateFlow conflation requires a synchronous callback") gets one or two lines, never a paragraph
 - New classes get **no KDoc by default**; earn it only with a non-obvious "why"
-- Comments describing the physical world ARE welcome and can be detailed: BLE protocol details, byte layouts, timing constraints, and hardware behavior being mirrored (e.g. Switch combo/LED conventions) — these cannot be derived from code
+- **Three lines is the ceiling.** If a comment is outgrowing that, it has stopped explaining the
+  line in front of it and started explaining the subject — a derivation, a measurement, a byte
+  layout, an emulator's behaviour, why two other approaches failed. That belongs in
+  [`docs/`](docs/README.md), with a one-line pointer where the code needs it:
+  `/** … : docs/dsu-motion.md#motion-frame */`
+- Physical-world facts still can't be derived from code — BLE protocol, byte layouts, timing
+  constraints, hardware conventions being mirrored — so write them down properly, in the doc that
+  owns them (`protocol.md`, `virtual-gamepad.md`, `dsu-motion.md`, `DESIGN.md`, `architecture.md`)
+  rather than at the top of whichever class happened to need them first
+- **One home per fact.** A comment and a doc saying the same thing will drift, and the stale one is
+  found only once it has misled someone
+- Keep in code only what a reader needs *at that line* and cannot reconstruct from it: a byte's
+  meaning in a descriptor, a constant's unit, what a workaround is working around
 - Litmus test before writing any comment: "could a reader reconstruct this from the code alone?" If yes, delete it
 
 ## SOLID Principles
