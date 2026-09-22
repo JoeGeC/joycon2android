@@ -1,7 +1,22 @@
 <resources>
     <string name="controller_mapping_back">Back</string>
-    <string name="controller_mapping_preset">Layout</string>
+    <string name="controller_mapping_all_players">All players</string>
+    <string name="controller_mapping_layout_custom">Custom</string>
+    <string name="controller_mapping_layout_name">Name</string>
+    <string name="controller_mapping_layout_unavailable">\"%1$s\" was saved for %2$s</string>
+    <string name="controller_mapping_save_layout">Save layout</string>
+    <string name="controller_mapping_layout_already_saved">This is already \"%1$s\"</string>
+    <string name="controller_mapping_save">Save</string>
+    <string name="controller_mapping_cancel">Cancel</string>
+    <string name="controller_mapping_delete_layout">Delete layout?</string>
+    <string name="controller_mapping_delete_layout_body">Only the name goes — everyone playing on it keeps their buttons, and reads as \"Custom\" until you save it again.</string>
+    <string name="controller_mapping_delete">Delete</string>
+    <string name="controller_mapping_no_players">Connect a controller to map it.</string>
     <string name="controller_mapping_sideways_remote">Sideways Wii Remote</string>
-    <string name="controller_mapping_sideways_remote_description">Play a single Joy-Con as a Wii Remote held sideways, the way Mario Kart\'s wheel expects. Steering reads correctly and the D-pad turns with it; a right Joy-Con then points from its tail rather than its R edge.</string>
+    <string name="controller_mapping_sideways_remote_description">Steering reads correctly, the D-pad turns with it, and flicks are amplified.\nA right Joy-Con points from its tail rather than its R edge.</string>
     <string name="controller_mapping_reset">Reset to defaults</string>
+    <string name="player_label">P%1$d</string>
+    <string name="controller_left">Left</string>
+    <string name="controller_right">Right</string>
+    <string name="controller_pro">Pro</string>
 </resources>

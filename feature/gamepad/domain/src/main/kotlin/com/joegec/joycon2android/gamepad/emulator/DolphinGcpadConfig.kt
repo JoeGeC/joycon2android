@@ -2,6 +2,7 @@ package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.emittedFor
@@ -83,7 +84,7 @@ object DolphinGcpadConfig {
         existing: String?,
         players: List<PlayerState>,
         controllerNumbers: Map<Int, Int>,
-        mappingFor: (JoyconSide) -> Map<String, String>,
+        mappingFor: (PlayerBody) -> Map<String, String>,
     ): String = IniEditor.mergeSections(existing, sections(players, controllerNumbers, mappingFor))
 
     /** Sets each configured player's GameCube port to a Standard Controller in Dolphin.ini. */
@@ -101,7 +102,7 @@ object DolphinGcpadConfig {
     private fun sections(
         players: List<PlayerState>,
         controllerNumbers: Map<Int, Int>,
-        mappingFor: (JoyconSide) -> Map<String, String>,
+        mappingFor: (PlayerBody) -> Map<String, String>,
     ): Map<String, String> =
         players.filter { it.hasController }
             .sortedBy { it.player.index }
@@ -112,7 +113,12 @@ object DolphinGcpadConfig {
                 bodyFor(player, index, deviceId, mappingFor)?.let { "[GCPad$index]" to it }
             }.toMap()
 
-    private fun bodyFor(player: PlayerState, index: Int, deviceId: Int, mappingFor: (JoyconSide) -> Map<String, String>): String? {
+    private fun bodyFor(
+        player: PlayerState,
+        index: Int,
+        deviceId: Int,
+        mappingFor: (PlayerBody) -> Map<String, String>,
+    ): String? {
         val side = when {
             player.hasPro -> return null
             player.hasFullController -> JoyconSide.DUAL
@@ -121,7 +127,8 @@ object DolphinGcpadConfig {
             else -> return null
         }
         val device = "Device = Android/$deviceId/Joy-Con Virtual Gamepad $index"
-        return (listOf(device) + lines(side, mappingFor(side))).joinToString("\n", postfix = "\n")
+        return (listOf(device) + lines(side, mappingFor(PlayerBody(player.player, side))))
+            .joinToString("\n", postfix = "\n")
     }
 
     private fun lines(side: JoyconSide, mapping: Map<String, String>): List<String> {

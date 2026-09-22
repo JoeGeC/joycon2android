@@ -87,16 +87,29 @@ the emulator afterwards — it only reads its config when it starts.
 | Virtual Gamepad | Eden, Eden Nightly, Dolphin (GameCube) | buttons and sticks |
 | DSU Motion Server | Eden, Eden Nightly, Dolphin (Wii) | buttons, sticks and motion |
 
-The gamepad button beside **Set up** opens the mapping editor. A single Joy-Con is set up as a Pro
-Controller held sideways, so every button works in every game
+The gamepad button beside **Set up** opens the mapping editor. Every connected player gets a card —
+tap one to open its bindings. A single Joy-Con is set up as a Pro Controller held sideways, so every
+button works in every game
 ([why](docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers)). A target can take **several
 sources at once** — tick as many as you like, and any of them fires it.
 
-The Wii editor also carries a **Sideways Wii Remote** switch — play a single Joy-Con as a Wii Remote
-held sideways, which is what a wheel game steers by. Each layout sets it (on for Mario Kart, off for
-the others) and you can override it; picking a layout hands it back.
+Each player picks their own **layout** to start from, which resets that player's customizations. The
+name on the card reads **Custom** the moment you change a binding, and reads the layout's own name
+again as soon as you change it back. The **save** icon beside the name keeps what you have built as a
+layout of your own, offered to any player holding the same body — it suggests the next free
+**Custom N**, and dims once there is nothing new to save, since a mapping that already reads as a
+layout has a name. The bin in the dropdown deletes
+one: your buttons stay exactly as they are, the name just becomes **Custom** until you save it again.
 
-It also picks a **layout** to start from, which resets that console's customizations:
+**All players** at the top sets everyone at once, and saves the same way. A saved set remembers which
+player held which body — the sub-label under its name says which ("P1 L, P2 R, P3 L/R") — so it stays
+greyed out until those players are back.
+
+A player holding a lone Joy-Con on the Wii console also gets a **Sideways Wii Remote** switch — play
+it as a Wii Remote held sideways, which is what a wheel game steers by. Each layout sets it (on for
+Mario Kart, off for the others) and you can override it; picking a layout hands it back.
+
+The layouts the app ships:
 
 | Layout | For |
 |---|---|
@@ -181,6 +194,12 @@ shoulder buttons.
    - **Turn the four D-pad bindings a quarter**: put the source you'd bind to Up on **D-Pad/Right**,
      Right on Down, Down on Left, Left on Up. A sideways remote's d-pad turns with it, so the
      player's up is the remote's right.
+   - For **tricks**, amplify each accelerometer input's transient — write
+     ``\`Accel Up\` + (\`Accel Up\` - smooth(\`Accel Up\`, 0.03)) * 2`` in place of ``\`Accel Up\``,
+     and so on for all six. A Joy-Con flick lands a fraction of the jerk a Wii Wheel does; this lifts
+     it without moving the gravity that steers. Flick in the **plane of the wheel** — an upward jab
+     of a flat-held Joy-Con goes along the axle, which has no trick
+     ([why](docs/dsu-motion.md#dolphin-wii-remote-mapping)).
 
    Leave Dolphin's own **Sideways Wii Remote** option off either way — it would turn the
    accelerometer a second quarter.

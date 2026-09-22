@@ -9,22 +9,28 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.sidewaysRemoteDataStore: DataStore<Preferences> by
-    preferencesDataStore(name = "sideways_remote")
+private val Context.sidewaysRemoteDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "sideways_remote",
+    produceMigrations = { listOf(PerPlayerMigration(::perPlayerSidewaysNames)) },
+)
+
+// The switch used to be keyed by the console alone, for every player and body at once.
+private fun perPlayerSidewaysNames(legacyName: String): List<String>? =
+    segmentsOf(legacyName).singleOrNull()
+        ?.let(::consoleNamed)
+        ?.let { everyBodyKey(it) }
 
 class SidewaysRemoteDataStore(context: Context) : SidewaysRemoteRepository {
 
     private val dataStore = context.applicationContext.sidewaysRemoteDataStore
 
-    override fun observe(console: Console): Flow<Boolean?> = dataStore.data.map { it[preferenceKey(console)] }
+    override fun observe(console: Console, body: PlayerBody): Flow<Boolean?> =
+        dataStore.data.map { it[preferenceKey(console, body)] }
 
-    override suspend fun set(console: Console, enabled: Boolean) {
-        dataStore.edit { it[preferenceKey(console)] = enabled }
+    override suspend fun set(console: Console, body: PlayerBody, enabled: Boolean) {
+        dataStore.edit { it[preferenceKey(console, body)] = enabled }
     }
 
-    override suspend fun clear(console: Console) {
-        dataStore.edit { it.remove(preferenceKey(console)) }
-    }
-
-    private fun preferenceKey(console: Console) = booleanPreferencesKey(console.name)
+    private fun preferenceKey(console: Console, body: PlayerBody) =
+        booleanPreferencesKey(bodyKeyPrefix(console, body))
 }

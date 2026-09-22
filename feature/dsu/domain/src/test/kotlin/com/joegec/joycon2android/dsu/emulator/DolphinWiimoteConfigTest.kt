@@ -2,6 +2,7 @@ package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
@@ -13,12 +14,14 @@ import org.junit.Test
 
 private fun defaultWiimoteMapping(side: JoyconSide) = MappingPresets.default(Console.WIIMOTE_NUNCHUK).entries(side)
 
+private val wiimoteMapping: (PlayerBody) -> Map<String, String> = { defaultWiimoteMapping(it.side) }
+
 class DolphinWiimoteConfigTest {
 
     private fun joycon(side: Side) = ConnectedJoycon(address = side.name, side = side, deviceName = "Joy-Con")
 
     private fun merge(existing: String?, players: List<PlayerState>, sidewaysRemote: Boolean = false) =
-        DolphinWiimoteConfig.merge(existing, players, sidewaysRemote, ::defaultWiimoteMapping)
+        DolphinWiimoteConfig.merge(existing, players, { sidewaysRemote }, wiimoteMapping)
 
     @Test
     fun `right-only player maps the stick to the d-pad and uses no extension`() {
@@ -61,7 +64,7 @@ class DolphinWiimoteConfigTest {
         val pair = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
         val mapping = defaultWiimoteMapping(JoyconSide.DUAL) + mapOf("NunchukStick_UP" to "Up")
 
-        val result = DolphinWiimoteConfig.merge(null, listOf(pair), false) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, listOf(pair), { false }) { mapping }
 
         assertTrue(result.contains("Nunchuk/Stick/Up = `Pad N`"))
         assertTrue(result.contains("Nunchuk/Stick/Down = `Left Y-`"))
@@ -72,7 +75,7 @@ class DolphinWiimoteConfigTest {
         val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("NunchukStick_UP" to "X", "NunchukStick_DOWN" to "B")
         val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
 
-        val result = DolphinWiimoteConfig.merge(null, player, false) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, player, { false }) { mapping }
 
         assertTrue(result.contains("Extension = Nunchuk"))
         assertTrue(result.contains("Nunchuk/Stick/Up = `Circle`")) // physical X rotates onto A
@@ -85,7 +88,7 @@ class DolphinWiimoteConfigTest {
         val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("DPadUp" to "RIGHT_STICK_UP|SlRight")
         val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
 
-        val result = DolphinWiimoteConfig.merge(null, player, false) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, player, { false }) { mapping }
 
         assertTrue(result.contains("D-Pad/Up = `Left Y+` | `L1`")) // SL rotates onto L held sideways
     }
@@ -172,6 +175,8 @@ class DolphinWiimoteConfigTest {
             assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left`"))
             assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`"))
         }
+        // ...though only the sideways one amplifies its flick.
+        assertFalse(merge(null, player).contains("smooth(`Accel"))
     }
 
     @Test
@@ -180,8 +185,8 @@ class DolphinWiimoteConfigTest {
 
         val result = merge(null, player, sidewaysRemote = true)
 
-        assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up`"))
-        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left`"))
+        assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up` +"))
+        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left` +"))
         assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`"))
         assertTrue(result.contains("IMUGyroscope/Yaw Left = `Gyro Yaw Left`"))
     }
@@ -209,6 +214,29 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Forward`"))
         assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Pitch Up`"))
         assertTrue(result.contains("D-Pad/Up = `Pad N`"))
+    }
+
+    // Tricks pick a direction out of the flick itself, so the real jerk is amplified rather than
+    // replaced by anything synthetic — gravity, which steers and settles the pointer, is untouched.
+    @Test
+    fun `playing sideways amplifies the flick, not the gravity under it`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
+
+        assertTrue(
+            result.contains(
+                "IMUAccelerometer/Forward = `Accel Left` + (`Accel Left` - smooth(`Accel Left`, 0.03)) * 2",
+            ),
+        )
+        assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`")) // gyroscope passes through
+    }
+
+    @Test
+    fun `nothing is amplified unless the layout plays sideways`() {
+        val lone = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+        val pair = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        assertFalse(lone.contains("smooth(`Accel"))
+        assertFalse(merge(null, listOf(pair), sidewaysRemote = true).contains("smooth(`Accel"))
     }
 
     @Test

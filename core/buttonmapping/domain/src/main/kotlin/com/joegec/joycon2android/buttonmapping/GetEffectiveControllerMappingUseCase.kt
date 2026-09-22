@@ -6,6 +6,6 @@ import kotlinx.coroutines.flow.first
 class GetEffectiveControllerMappingUseCase(
     private val observeControllerMapping: ObserveControllerMappingUseCase,
 ) {
-    suspend operator fun invoke(console: Console, side: JoyconSide): Map<String, String> =
-        observeControllerMapping(console, side).first()
+    suspend operator fun invoke(console: Console, body: PlayerBody): Map<String, String> =
+        observeControllerMapping(console, body).first()
 }

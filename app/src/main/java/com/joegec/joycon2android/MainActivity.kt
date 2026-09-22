@@ -24,9 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.joegec.joycon2android.buttonmapping.Console
-import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.body
 import com.joegec.joycon2android.buttonmapping.presentation.ControllerMappingScreen
 import com.joegec.joycon2android.buttonmapping.presentation.ControllerMappingViewModel
+import com.joegec.joycon2android.buttonmapping.presentation.MappingActions
 import com.joegec.joycon2android.dsu.presentation.DsuViewModel
 import com.joegec.joycon2android.gamepad.presentation.GamepadViewModel
 import com.joegec.joycon2android.ui.Joycon2ViewModel
@@ -91,13 +92,17 @@ class MainActivity : ComponentActivity() {
             initializer {
                 val c = (application as JoyconApplication).container
                 ControllerMappingViewModel(
-                    c.observeControllerMapping,
+                    c.observeGlobalMapping,
+                    c.observeSavedLayouts,
+                    c.applyMappingLayout,
+                    c.applyGlobalLayout,
                     c.setControllerMapping,
                     c.resetControllerMapping,
-                    c.observeMappingPreset,
-                    c.applyMappingPreset,
-                    c.observeSidewaysRemote,
                     c.setSidewaysRemote,
+                    c.saveCustomLayout,
+                    c.saveGlobalLayout,
+                    c.deleteCustomLayout,
+                    c.deleteGlobalLayout,
                 )
             }
         }
@@ -189,28 +194,36 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun ControllerMappingRoute(console: Console, onBack: () -> Unit) {
-        val leftMapping by controllerMappingViewModel.mapping(console, JoyconSide.LEFT).collectAsState()
-        val rightMapping by controllerMappingViewModel.mapping(console, JoyconSide.RIGHT).collectAsState()
-        val dualMapping by controllerMappingViewModel.mapping(console, JoyconSide.DUAL).collectAsState()
-        val presetId by controllerMappingViewModel.preset(console).collectAsState()
-        val sidewaysRemote by controllerMappingViewModel.sidewaysRemote(console).collectAsState()
+        val session by viewModel.uiState.collectAsState()
+        val players = session.activePlayers
+        val bodies = players.mapNotNull { it.body() }
+        val state by controllerMappingViewModel.uiState.collectAsState()
 
-        ControllerMappingScreen(
-            console = console,
-            presetId = presetId,
-            sidewaysRemote = sidewaysRemote,
-            leftMapping = leftMapping,
-            rightMapping = rightMapping,
-            dualMapping = dualMapping,
-            onSelectPreset = { controllerMappingViewModel.selectPreset(console, it) },
-            onSetSidewaysRemote = { controllerMappingViewModel.setSidewaysRemoteEnabled(console, it) },
-            onSetMapping = { side, targetKey, sourceId ->
-                controllerMappingViewModel.setMapping(console, side, targetKey, sourceId)
-            },
-            onResetMapping = { side -> controllerMappingViewModel.resetMapping(console, side) },
-            onBack = onBack,
-        )
+        LaunchedEffect(console, bodies) { controllerMappingViewModel.edit(console, bodies) }
+
+        state?.let {
+            ControllerMappingScreen(
+                state = it,
+                players = players,
+                actions = mappingActions,
+                onBack = onBack,
+            )
+        }
     }
+
+    private val mappingActions = MappingActions(
+        selectLayout = { body, layoutId -> controllerMappingViewModel.selectLayout(body, layoutId) },
+        selectGlobalLayout = { controllerMappingViewModel.selectGlobalLayout(it) },
+        saveLayout = { body, name -> controllerMappingViewModel.saveLayout(body, name) },
+        deleteLayout = { layoutId, global -> controllerMappingViewModel.deleteLayout(layoutId, global) },
+        setMapping = { body, targetKey, sourceId ->
+            controllerMappingViewModel.setMapping(body, targetKey, sourceId)
+        },
+        resetMapping = { controllerMappingViewModel.resetMapping(it) },
+        setSidewaysRemote = { body, enabled ->
+            controllerMappingViewModel.setSidewaysRemoteEnabled(body, enabled)
+        },
+    )
 
     @Composable
     private fun MainRoute(onScan: () -> Unit, onOpenMapping: (Console) -> Unit) {

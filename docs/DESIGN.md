@@ -133,9 +133,12 @@ Odd trailing items take a half cell with a weighted `Spacer` filling the other h
 
 Shared in `core/designsystem/.../ui/components/`:
 - `FeatureToggleCard` — the primary on/off feature surface (gamepad, DSU)
-- `EmulatorDropdown` / `EmulatorOption` / `EmulatorAutoSetup` / `PanelDropdownMenu` — emulator picker + one-tap setup
+- `OptionDropdown` / `DropdownOption` / `PanelDropdownMenu` — the app's picker: an accented current
+  value over a panel of alternatives, each row optionally sub-labelled, dimmed or deletable
+- `EmulatorDropdown` / `EmulatorOption` / `EmulatorAutoSetup` — emulator picker + one-tap setup
 - `DolphinSetupButton` / `DolphinSetupPhase` / `CloseEmulatorDialog` — staged setup flow
-- `SettingsRow` · `SettingSwitch` · `LabeledDropdown` — settings surfaces (e.g. Motion settings)
+- `SettingsRow` · `SettingSwitch` — settings surfaces (e.g. Motion settings)
+- `ConfirmDialog` · `TextInputDialog` — ask before a change lands, or ask it for a name
 - `ErrorBox` · `WarningBox` · `LabeledBorderBox` · `ExpandableInfoSection` · `CopyableCode`
 
 ## Motion

@@ -2,6 +2,7 @@ package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.emittedFor
@@ -87,7 +88,7 @@ object EdenGamepadConfig {
         existing: String?,
         players: List<PlayerState>,
         gamepads: Map<Int, EdenGamepad>,
-        mappingFor: (JoyconSide) -> Map<String, String>,
+        mappingFor: (PlayerBody) -> Map<String, String>,
     ): String {
         // Drop every player's prior bindings first: a layout or port change leaves stale keys that
         // would otherwise linger and cross-fire onto another player's port.
@@ -98,7 +99,7 @@ object EdenGamepadConfig {
     private fun controlKeys(
         players: List<PlayerState>,
         gamepads: Map<Int, EdenGamepad>,
-        mappingFor: (JoyconSide) -> Map<String, String>,
+        mappingFor: (PlayerBody) -> Map<String, String>,
     ): Map<String, String> {
         val keys = LinkedHashMap<String, String>()
         players.forEach { player ->
@@ -107,7 +108,7 @@ object EdenGamepadConfig {
             val gamepad = gamepads[index] ?: return@forEach
             val type = EdenControls.npadType(player) ?: return@forEach
             val side = sideFor(player) ?: return@forEach
-            val layout = layoutFor(side, mappingFor(side))
+            val layout = layoutFor(side, mappingFor(PlayerBody(player.player, side)))
             val p = index - 1
             val device = "engine:android,port:${gamepad.port},guid:${gamepad.guid},pad:0"
             val display = "Joy-Con Virtual Gamepad $index ${gamepad.port}"

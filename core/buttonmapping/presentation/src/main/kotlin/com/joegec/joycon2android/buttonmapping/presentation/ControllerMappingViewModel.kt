@@ -2,81 +2,97 @@ package com.joegec.joycon2android.buttonmapping.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.joegec.joycon2android.buttonmapping.ApplyMappingPresetUseCase
+import com.joegec.joycon2android.buttonmapping.ApplyGlobalLayoutUseCase
+import com.joegec.joycon2android.buttonmapping.ApplyMappingLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.Console
-import com.joegec.joycon2android.buttonmapping.JoyconSide
-import com.joegec.joycon2android.buttonmapping.ObserveControllerMappingUseCase
-import com.joegec.joycon2android.buttonmapping.ObserveMappingPresetUseCase
-import com.joegec.joycon2android.buttonmapping.ObserveSidewaysRemoteUseCase
+import com.joegec.joycon2android.buttonmapping.DeleteCustomLayoutUseCase
+import com.joegec.joycon2android.buttonmapping.DeleteGlobalLayoutUseCase
+import com.joegec.joycon2android.buttonmapping.ObserveGlobalMappingUseCase
+import com.joegec.joycon2android.buttonmapping.ObserveSavedLayoutsUseCase
+import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.ResetControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.SaveCustomLayoutUseCase
+import com.joegec.joycon2android.buttonmapping.SaveGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.SetSidewaysRemoteUseCase
-import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Feature-scoped state holder for the controller mapping editor screen. */
+/** State holder for the mapping editor: one console's layouts, per player. */
+@OptIn(ExperimentalCoroutinesApi::class)
 class ControllerMappingViewModel(
-    private val observeControllerMapping: ObserveControllerMappingUseCase,
+    private val observeGlobalMapping: ObserveGlobalMappingUseCase,
+    private val observeSavedLayouts: ObserveSavedLayoutsUseCase,
+    private val applyMappingLayout: ApplyMappingLayoutUseCase,
+    private val applyGlobalLayout: ApplyGlobalLayoutUseCase,
     private val setControllerMapping: SetControllerMappingUseCase,
     private val resetControllerMapping: ResetControllerMappingUseCase,
-    private val observeMappingPreset: ObserveMappingPresetUseCase,
-    private val applyMappingPreset: ApplyMappingPresetUseCase,
-    private val observeSidewaysRemote: ObserveSidewaysRemoteUseCase,
     private val setSidewaysRemote: SetSidewaysRemoteUseCase,
+    private val saveCustomLayout: SaveCustomLayoutUseCase,
+    private val saveGlobalLayout: SaveGlobalLayoutUseCase,
+    private val deleteCustomLayout: DeleteCustomLayoutUseCase,
+    private val deleteGlobalLayout: DeleteGlobalLayoutUseCase,
 ) : ViewModel() {
 
-    private val mappingFlows = mutableMapOf<Pair<Console, JoyconSide>, StateFlow<Map<String, String>>>()
-    private val presetFlows = mutableMapOf<Console, StateFlow<String>>()
-    private val sidewaysRemoteFlows = mutableMapOf<Console, StateFlow<Boolean>>()
+    private val editing = MutableStateFlow<MappingTarget?>(null)
 
-    fun mapping(console: Console, side: JoyconSide): StateFlow<Map<String, String>> =
-        mappingFlows.getOrPut(console to side) {
-            observeControllerMapping(console, side)
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyMap())
-        }
+    val uiState: StateFlow<ControllerMappingUiState?> = editing
+        .flatMapLatest { target -> target?.let(::observe) ?: flowOf(null) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    fun preset(console: Console): StateFlow<String> =
-        presetFlows.getOrPut(console) {
-            observeMappingPreset(console)
-                .map { it.id }
-                .stateIn(
-                    viewModelScope,
-                    SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-                    MappingPresets.default(console).id,
-                )
-        }
-
-    fun sidewaysRemote(console: Console): StateFlow<Boolean> =
-        sidewaysRemoteFlows.getOrPut(console) {
-            observeSidewaysRemote(console)
-                .stateIn(
-                    viewModelScope,
-                    SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-                    MappingPresets.default(console).sidewaysRemote,
-                )
-        }
-
-    fun setSidewaysRemoteEnabled(console: Console, enabled: Boolean) {
-        viewModelScope.launch { setSidewaysRemote(console, enabled) }
+    fun edit(console: Console, bodies: List<PlayerBody>) {
+        editing.value = MappingTarget(console, bodies)
     }
 
-    fun setMapping(console: Console, side: JoyconSide, targetKey: String, sourceId: String) {
-        viewModelScope.launch { setControllerMapping(console, side, targetKey, sourceId) }
+    fun selectLayout(body: PlayerBody, layoutId: String) = onTarget {
+        applyMappingLayout(it.console, body, layoutId)
     }
 
-    fun selectPreset(console: Console, presetId: String) {
-        viewModelScope.launch { applyMappingPreset(console, presetId) }
+    fun selectGlobalLayout(layoutId: String) = onTarget {
+        applyGlobalLayout(it.console, it.bodies, layoutId)
     }
 
-    fun resetMapping(console: Console, side: JoyconSide) {
-        viewModelScope.launch { resetControllerMapping(console, side) }
+    fun setMapping(body: PlayerBody, targetKey: String, sourceId: String) = onTarget {
+        setControllerMapping(it.console, body, targetKey, sourceId)
+    }
+
+    fun resetMapping(body: PlayerBody) = onTarget { resetControllerMapping(it.console, body) }
+
+    fun setSidewaysRemoteEnabled(body: PlayerBody, enabled: Boolean) = onTarget {
+        setSidewaysRemote(it.console, body, enabled)
+    }
+
+    /** A null body names the session as a whole rather than one player. */
+    fun saveLayout(body: PlayerBody?, name: String) = onTarget { target ->
+        if (body == null) saveGlobalLayout(target.console, target.bodies, name)
+        else saveCustomLayout(target.console, body, name)
+    }
+
+    fun deleteLayout(layoutId: String, global: Boolean) = onTarget {
+        if (global) deleteGlobalLayout(layoutId) else deleteCustomLayout(layoutId)
+    }
+
+    private fun observe(target: MappingTarget): Flow<ControllerMappingUiState> = combine(
+        observeGlobalMapping(target.console, target.bodies),
+        observeSavedLayouts(target.console),
+    ) { mapping, saved -> controllerMappingUiState(target.console, mapping, saved) }
+
+    private fun onTarget(block: suspend (MappingTarget) -> Unit) {
+        val target = editing.value ?: return
+        viewModelScope.launch { block(target) }
     }
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
     }
 }
+
+private data class MappingTarget(val console: Console, val bodies: List<PlayerBody>)

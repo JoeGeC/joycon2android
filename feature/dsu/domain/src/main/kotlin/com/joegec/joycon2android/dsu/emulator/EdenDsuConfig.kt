@@ -2,6 +2,7 @@ package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.emittedFor
@@ -71,7 +72,7 @@ object EdenDsuConfig {
     fun merge(
         existing: String?,
         players: List<PlayerState>,
-        mappingFor: (JoyconSide) -> Map<String, String>,
+        mappingFor: (PlayerBody) -> Map<String, String>,
     ): String {
         // A reassignment leaves stale bindings on players who no longer hold a controller, and
         // those would keep feeding an emulated pad from whoever now owns that slot.
@@ -105,7 +106,7 @@ object EdenDsuConfig {
 
     private fun playerKeys(
         players: List<PlayerState>,
-        mappingFor: (JoyconSide) -> Map<String, String>,
+        mappingFor: (PlayerBody) -> Map<String, String>,
     ): Map<String, String> {
         val secondHands = DsuSlots.secondHands(players).associate { it.state.player to it.slot }
         val keys = LinkedHashMap<String, String>()
@@ -114,7 +115,7 @@ object EdenDsuConfig {
             if (slot !in 0 until DsuSlots.COUNT) return@forEach
             val type = EdenControls.npadType(player) ?: return@forEach
             val side = sideFor(player) ?: return@forEach
-            val mapping = mappingFor(side)
+            val mapping = mappingFor(PlayerBody(player.player, side))
             val device = device(slot)
 
             keys.defineEdenKey("player_${slot}_type", type.toString())
