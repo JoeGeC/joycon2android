@@ -31,7 +31,8 @@ import com.joegec.joycon2android.ui.theme.Dimens
 /**
  * Id/label picker for a row that can hold several choices at once. The menu stays open while they
  * are ticked off; tapping outside closes it. With nothing selected it reads as the first option,
- * which callers put there as their "none" row.
+ * which callers put there as their "none" row — picking that one empties the row, so it closes
+ * rather than waiting for a tick that cannot come.
  */
 @Composable
 fun MultiSelectDropdown(
@@ -45,6 +46,8 @@ fun MultiSelectDropdown(
         ?: options.firstOrNull()?.second
         ?: return
     var expanded by remember { mutableStateOf(false) }
+
+    val none = options.firstOrNull()?.first
 
     Box(modifier) {
         Row(
@@ -70,7 +73,10 @@ fun MultiSelectDropdown(
                 DropdownMenuItem(
                     text = { Text(text) },
                     leadingIcon = { SelectionTick(selected = id in selectedIds) },
-                    onClick = { onToggle(id) },
+                    onClick = {
+                        onToggle(id)
+                        if (id == none) expanded = false
+                    },
                 )
             }
         }
