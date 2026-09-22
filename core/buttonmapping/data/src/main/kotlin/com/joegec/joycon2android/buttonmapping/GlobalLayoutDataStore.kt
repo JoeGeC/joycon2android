@@ -18,7 +18,7 @@ class GlobalLayoutDataStore(context: Context) : GlobalLayoutRepository {
     )
 
     override fun observe(): Flow<List<GlobalLayout>> =
-        documents.observe().map { layouts -> layouts.sortedBy { it.displayName } }
+        documents.observe().map { layouts -> layouts.sortedBy { it.name } }
 
     override suspend fun save(layout: GlobalLayout) = documents.save(layout.id, layout)
 

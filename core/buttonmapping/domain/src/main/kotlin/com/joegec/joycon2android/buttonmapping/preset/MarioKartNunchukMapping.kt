@@ -2,6 +2,7 @@ package com.joegec.joycon2android.buttonmapping.preset
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.LayoutFamily
 import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.StickSource.LEFT_STICK
@@ -41,10 +42,8 @@ import com.joegec.joycon2android.model.JoyconButton.ZR
  */
 object MarioKartNunchukMapping : MappingPreset {
     override val id = "MARIO_KART_NUNCHUK"
-    override val displayName = "Mario Kart Nunchuck"
-    override val description = "Stick steering, MK8 mapping"
     override val console = Console.WIIMOTE_NUNCHUK
-    override val family = MARIO_KART
+    override val family = LayoutFamily.MARIO_KART
     override val sidewaysRemote = true
 
     override fun entries(side: JoyconSide) = when (side) {

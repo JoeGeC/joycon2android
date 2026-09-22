@@ -33,7 +33,6 @@ import com.joegec.joycon2android.model.JoyconButton.ZR
 
 object SwitchProMapping : MappingPreset {
     override val id = "STANDARD"
-    override val displayName = "Standard"
     override val console = Console.SWITCH_PRO
 
     override fun entries(side: JoyconSide) = buttons(side).buttonEntries() + sticks(side).stickEntries()

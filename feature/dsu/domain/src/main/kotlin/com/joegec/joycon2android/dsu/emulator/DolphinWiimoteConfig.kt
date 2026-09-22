@@ -12,6 +12,7 @@ import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.buttonmapping.toSourceMap
 import com.joegec.joycon2android.buttonmapping.toStickDirectionMap
 import com.joegec.joycon2android.dsu.DsuSlots
+import com.joegec.joycon2android.emulatorconfig.DolphinControls
 import com.joegec.joycon2android.emulatorconfig.DolphinPaths
 import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.JoyconButton
@@ -266,7 +267,7 @@ object DolphinWiimoteConfig {
     private fun nunchukStickLines(side: JoyconSide, mapping: Map<String, String>): List<String> =
         mapping.toStickDirectionMap<WiimoteStick>().values.flatMap { directions ->
             directions.mapNotNull { (direction, sources) ->
-                expressionFor(side, sources)?.let { expression -> "Nunchuk/Stick/${direction.displayName} = $expression" }
+                expressionFor(side, sources)?.let { expression -> "Nunchuk/Stick/${DolphinControls.DIRECTIONS.getValue(direction)} = $expression" }
             }
         }
 

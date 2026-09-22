@@ -29,7 +29,6 @@ import com.joegec.joycon2android.model.JoyconButton.Y
 
 object GameCubeMapping : MappingPreset {
     override val id = "STANDARD"
-    override val displayName = "Standard"
     override val console = Console.GAMECUBE
 
     override fun entries(side: JoyconSide) = buttons(side).buttonEntries() + sticks(side).stickEntries()

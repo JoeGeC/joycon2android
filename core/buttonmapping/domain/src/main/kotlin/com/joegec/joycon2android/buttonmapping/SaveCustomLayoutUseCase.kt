@@ -15,7 +15,7 @@ class SaveCustomLayoutUseCase(
         savedLayouts.save(
             SavedLayout(
                 id = MappingLayouts.newId(),
-                displayName = name,
+                name = name,
                 console = console,
                 side = body.side,
                 bindings = current.entries,

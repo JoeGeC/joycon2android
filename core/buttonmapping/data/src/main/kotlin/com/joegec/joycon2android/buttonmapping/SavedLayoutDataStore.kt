@@ -18,7 +18,7 @@ class SavedLayoutDataStore(context: Context) : SavedLayoutRepository {
     )
 
     override fun observe(): Flow<List<SavedLayout>> =
-        documents.observe().map { layouts -> layouts.sortedBy { it.displayName } }
+        documents.observe().map { layouts -> layouts.sortedBy { it.name } }
 
     override suspend fun save(layout: SavedLayout) = documents.save(layout.id, layout)
 

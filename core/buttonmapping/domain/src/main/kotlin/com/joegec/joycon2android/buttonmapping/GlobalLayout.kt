@@ -7,12 +7,9 @@ package com.joegec.joycon2android.buttonmapping
  */
 data class GlobalLayout(
     val id: String,
-    val displayName: String,
+    val name: String,
     val console: Console,
     val bodies: List<PlayerLayoutSnapshot>,
 ) {
-    val playerSummary: String
-        get() = bodies.joinToString(", ") { "P${it.body.player.index} ${it.body.side.shortName}" }
-
     fun fits(bodies: List<PlayerBody>): Boolean = this.bodies.map { it.body }.toSet() == bodies.toSet()
 }

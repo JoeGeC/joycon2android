@@ -62,7 +62,16 @@
 
 ## Conventions
 - Use `enableEdgeToEdge()` with `WindowInsets.systemBars` for edge-to-edge inset handling
-- Avoid hard-coded strings — use string resources where possible
+- **User-facing strings never live in a domain module.** Those modules are pure Kotlin/JVM and
+  cannot see `R.string` at all, so a name in one is a name that can never be translated or reworded
+  without touching logic. A domain type carries its *identity* — the enum entry, the id it is stored
+  under — and presentation gives it a word, through an exhaustive `when` over the type so that
+  adding a case without a word fails to build (see `MappingLabels` / `LayoutLabels`)
+- Two things that look like copy but are not, and stay: **wire tokens** an emulator or protocol must
+  match exactly (`DolphinControls.DIRECTIONS`, `EdenControls`), and the **markings printed on the
+  hardware** that the controller graphics draw (`JoyconButton.label` — "ZL", "+", "A" are the same
+  in every language, and are part of the picture rather than prose)
+- Avoid hard-coded strings elsewhere too — use string resources where possible
 - Use theme for dimensions and colors rather than inline literals
 - Prefer immutable data classes for state
 - Use `@SuppressLint("MissingPermission")` only on methods guarded by the permission launcher
