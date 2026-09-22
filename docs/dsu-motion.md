@@ -93,12 +93,24 @@ if the Joy-Con's nose pointed at the screen.
   **A rate alone cannot tell a flick from a turn**, because steering a lone Joy-Con held as a wheel
   *is* rotation — which is why only single Joy-Cons suffered for it, a pair steering from the
   Nunchuk's stick with its remote hand still. The trigger therefore subtracts a slew limiter,
-  `(rate − smooth(rate, 0.02)) / 15`, leaving only what climbs faster than the limiter can follow:
-  at 0.02 the tracker moves 50 rad/s, so it has caught the sharpest measured steering (6.5) within
-  about a seventh of a second and left nothing behind, while a flick's ~40 ms rise to 21 outruns it
-  almost untouched. A trick fired by accident costs nothing — the game only tricks a kart already
-  airborne — but one fired *while steering* costs plenty, since the shake lands on the very
-  accelerometer the wheel is read from. Every body flicks, a pair included: its remote hand is still while the Nunchuk's
+  `(rate − smooth(rate, 0.01)) / 5`, leaving only what climbs faster than the limiter can follow.
+
+  Both numbers are measured, from a capture of flicks and a capture of hard steering read back by
+  [`tools/flick_stats.py`](../tools/README.md#flick-measurement) (2026-09-22, right Joy-Con, 15 ms
+  stream):
+
+  | | peak rate | residual after the limiter |
+  |---|---|---|
+  | flicks (4) | 11–16 rad/s | 5.6, 6.1, 8.3, 9.1 |
+  | hard steering (25 s) | 3.6 rad/s | ≤ 1.2 |
+
+  A *slower* limiter is worse, not better: it lifts a flick's residual but lifts steering's faster,
+  and the ratio between them — all that matters — falls from 4.7 at 0.01 to 3.8 at 0.02 and 2.0 at
+  0.04. `pulse()` fires as its input crosses a half, so the threshold is 2.5 rad/s of residual:
+  2.1× above the worst steering and 2.2× below the weakest flick. Erring low is right anyway — a
+  trick fired by accident costs nothing, since the game only tricks a kart already airborne, while
+  one fired *while steering* costs plenty, the shake landing on the very accelerometer the wheel is
+  read from. Every body flicks, a pair included: its remote hand is still while the Nunchuk's
   stick steers. Only a layout that plays as a sideways remote flicks at all, so no other game is
   handed a shake it never asked for when its remote is swung.
 
