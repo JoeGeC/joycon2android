@@ -2,9 +2,11 @@ package com.joegec.joycon2android.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -32,6 +34,8 @@ fun PanelDropdownMenu(
     onSelect: (DropdownOption) -> Unit,
     modifier: Modifier = Modifier,
     onDelete: ((DropdownOption) -> Unit)? = null,
+    /** A menu of a set rather than a choice: every row keeps room for its tick. */
+    ticked: Set<String>? = null,
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -45,6 +49,7 @@ fun PanelDropdownMenu(
         options.forEach { option ->
             DropdownMenuItem(
                 text = { OptionText(option, selected = option.id == selectedId) },
+                leadingIcon = tickSlot(ticked, option),
                 trailingIcon = deleteAction(option, onDelete),
                 onClick = { onSelect(option) },
             )
@@ -81,6 +86,23 @@ private fun deleteAction(
                 tint = TextDim,
                 modifier = Modifier.size(Dimens.iconSizeMedium),
             )
+        }
+    }
+}
+
+// Every row of a set keeps the slot, ticked or not, or the labels would shift as one is chosen.
+private fun tickSlot(ticked: Set<String>?, option: DropdownOption): (@Composable () -> Unit)? {
+    if (ticked == null) return null
+    return {
+        if (option.id in ticked) {
+            Icon(
+                Icons.Filled.Check,
+                contentDescription = null,
+                tint = Accent,
+                modifier = Modifier.size(Dimens.iconSizeMedium),
+            )
+        } else {
+            Spacer(Modifier.size(Dimens.iconSizeMedium))
         }
     }
 }
