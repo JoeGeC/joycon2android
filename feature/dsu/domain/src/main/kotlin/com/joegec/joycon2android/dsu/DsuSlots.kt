@@ -3,14 +3,8 @@ package com.joegec.joycon2android.dsu
 import com.joegec.joycon2android.model.PlayerState
 
 /**
- * Maps players onto the protocol's four slots. Player N streams on slot N-1, so P5-P8 get no
- * slot and are not served.
- *
- * A pad packet carries exactly one accelerometer and gyroscope, so a player holding two Joy-Cons
- * cannot report both hands on one slot: the second hand needs a slot of its own for an emulator
- * to read it (Dolphin's Nunchuk accelerometer, say). Players themselves always win the slot their
- * number gives them; slotted pairs then take whatever is left, highest first, in player order.
- * Four players therefore leave nothing over and no pair gets a second hand.
+ * Maps players onto the protocol's four slots, and a pair's second hand onto a slot of its own
+ * since one packet carries one IMU: docs/dsu-motion.md#slots.
  */
 object DsuSlots {
     const val COUNT = 4

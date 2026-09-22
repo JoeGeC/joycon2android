@@ -167,11 +167,8 @@ class UhidRelay(private val name: String, private val playerIndex: Int) {
             0x09, 0x05,               // Usage (Game Pad)
             0xA1.toByte(), 0x01,      // Collection (Application)
 
-            // Buttons 1-15, the most a Game Pad collection can spend: Linux maps Button n to
-            // BTN_GAMEPAD + n - 1, and that range ends at BTN_THUMBR (Button 15). A 16th would land
-            // on 0x13F, which no Android key layout names, so it would reach no app at all.
-            // ReportMapper picks which Joy-Con button takes which bit so that each lands on its
-            // same-named Android keycode.
+            // Buttons 1-15, the most a Game Pad collection can spend before a button reaches no
+            // app at all: docs/virtual-gamepad.md#buttons-and-keycodes.
             0x05, 0x09,               //   Usage Page (Button)
             0x19, 0x01,               //   Usage Minimum (Button 1)
             0x29, 0x0F,               //   Usage Maximum (Button 15)

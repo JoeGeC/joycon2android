@@ -33,10 +33,37 @@ Players always win their own slot; pairs take what's left, so four players leave
 
 ## Motion frame
 
-Scale factors are the Switch 1 values, verified on Joy-Con 2: accel 4096 LSB per g, gyro
-0.061 °/s per LSB. The axis mapping was measured against Dolphin's Wii pointer — the
-`MotionConverter` KDoc records the frames and signs, and [tools/README.md](../tools/README.md) the
-calibration workflow.
+Scale factors are the Switch 1 values, verified on Joy-Con 2 (2026-06: at rest gravity reads
+exactly −1.00 g): accel ±8 g over 4096 LSB per g, gyro ±2000 °/s at 0.06103 °/s per LSB.
+[tools/README.md](../tools/README.md) has the calibration workflow.
+
+**The two frames.** `MotionConverter` turns one into the other, and neither is guessable:
+
+| | x | y | z |
+|---|---|---|---|
+| Joy-Con (R) raw, measured | the controller's **right** | toward the **tail** | out of the **button face** |
+| cemuhook wire | **left** | **down** through the controller | toward the **player** |
+
+Flat at rest reads accel `(0, −1, 0)`; nose up reads accel z = −1 and gyro pitch −; turning right
+reads +yaw; rolling right reads +roll.
+
+**The signs are DS4 hardware history, not a consistent right-handed frame**, so derive nothing from
+them — verify any change against Dolphin's on-screen pointer, testing fast and slow movements
+separately. Its complementary filter makes the *accelerometer* the authority on sustained pitch, so
+gyro signs cannot be judged from pointer direction alone; gyro shows up in the fast response, accel
+in the settled position.
+
+- **Raw x was documented as "left" until 2026-09**, when a rail-down static pose — SL/SR against the
+  table, so gravity points toward the controller's right — read +1 g on the wire's left axis.
+  Mirrored. Left/right tilt had been reaching games reversed, and because angular velocity is a
+  pseudovector, roll had to mirror with it to stay physically consistent, which is why both flipped
+  together.
+- **Yaw is the one sign no measurement here pins.** It turns about gravity, so a static pose cannot
+  see it and neither can the accel/gyro consistency check. It is kept as the pointer's horizontal
+  response reports it. Mirroring x strictly implies mirroring yaw too, so if horizontal pointing
+  ever reads backwards, flip yaw rather than re-deriving the frame.
+- **Left Joy-Con and Pro are assumed to share the raw frame** — unverified. Recalibrate with
+  `tools/dsu_client` if their motion feels rotated.
 
 **Gyro bias.** Joy-Con 2 gyros idle with a constant offset (+0.2 °/s yaw, +0.9 °/s roll observed),
 which clients integrate into pointer drift. Whenever a controller stays within ~2.4 °/s for ~2 s,
@@ -75,20 +102,22 @@ if the Joy-Con's nose pointed at the screen.
   (4.1) a wide berth. `Shake` is a mapping target of its own too, so a pair — which has no sideways
   flick to read — can trick from a button.
 
-  **Dolphin's own `Shake` group is not how it is delivered.** Bound straight to a key in Dolphin's
-  config, a full 7 g oscillation of it never once landed a trick (tested 2026-09), so the group is
-  not written at all. The accelerometer is the path that demonstrably reaches the game, since
-  steering is read from it, and the jerk goes there instead:
-  `pulse(deadzone(trigger, 0.2), 0.6) * sin(timer(0.15) * 2π) * 50` added to every
-  `IMUAccelerometer` input, the three opposites carrying a half-turn of phase.
+  **Two ways of delivering it do not work, and both were tried.** *Amplifying the accelerometer's
+  own transient* does nothing, because an emulated Wii Remote saturates around +3.9/−4.9 g
+  (`ACCEL_ZERO_G` 0x80, `ACCEL_ONE_G` 0x9A over 8 bits) and the push already passes that, so a
+  bigger number only clips sooner. *Dolphin's `Shake` group* does nothing either: bound straight to
+  a key in Dolphin's own config, a full 7 g oscillation of it never once landed a trick (tested
+  2026-09) — and not for want of reaching the game, since `m_shake_state.acceleration` is added to
+  the reported acceleration unconditionally, whether or not `IMUAccelerometer` is bound. Neither is
+  written any more.
 
-  It is a *shake*, not a push: an oscillation held for 0.6 s at about 6.7 Hz, each input of a pair
-  swung half a cycle apart so the remote is thrown back and forth rather than leaned on. That shape
-  is what landed a trick by hand — shaking a Joy-Con hard for about a second — where a single held
-  push did not. Amplitude is not the lever: an emulated Wii Remote saturates around +3.9/−4.9 g
-  (`ACCEL_ZERO_G` 0x80, `ACCEL_ONE_G` 0x9A over 8 bits), which the 50 m/s² already passes, so a
-  bigger number only clips sooner. `pulse()` gives a flick and a held button the same shake however
-  long either lasted.
+  **What is written goes into the accelerometer**, the path that demonstrably reaches the game since
+  steering is read from it: `pulse(flick, 0.6) * sin(timer(0.15) * 2π) * 50` added to every
+  `IMUAccelerometer` input, the three opposites carrying a half-turn of phase. It is a *shake*, not
+  a push — an oscillation held for 0.6 s at about 6.7 Hz, each input of a pair swung half a cycle
+  apart so the remote is thrown back and forth rather than leaned on. That shape is what landed a
+  trick by hand, shaking a Joy-Con hard for about a second, where a single held push did not.
+  `pulse()` gives a flick and a held button the same shake however long either lasted.
 
   **A rate alone cannot tell a flick from a turn**, because steering a lone Joy-Con held as a wheel
   *is* rotation — which is why only single Joy-Cons suffered for it, a pair steering from the
@@ -114,9 +143,8 @@ if the Joy-Con's nose pointed at the screen.
   stick steers. Only a layout that plays as a sideways remote flicks at all, so no other game is
   handed a shake it never asked for when its remote is swung.
 
-  Verified against Dolphin's source (2026-09): `|` is a max and binds looser than `/`;
-  `m_shake_state.acceleration` is added to the reported acceleration unconditionally, so binding
-  `IMUAccelerometer` does not disable the Shake group — it simply never produced a trick.
+  One more thing verified against Dolphin's source (2026-09), since the expressions depend on it:
+  `|` is a max, and it binds looser than `/`.
 - **Pointing and a wheel want the nose half a turn apart on a right Joy-Con**, and no Dolphin option
   bridges them: `GetOrientation()` turns a quarter (Sideways) or a quarter about the left axis
   (Upright), and it reaches only the accelerometer the game reads, never
@@ -136,6 +164,30 @@ The Joy-Con reports once per BLE connection interval. Android's balanced priorit
 (~33 Hz) on an AYN Thor, which reads as stutter at 60 fps. **Faster motion updates** requests
 `CONNECTION_PRIORITY_HIGH` while DSU runs — 15 ms (~67 Hz) on the same Thor — at a battery cost on
 both ends.
+
+## Eden's cemuhook bindings
+
+Eden's cemuhook engine addresses a pad by `guid`, `port` and `pad`, and nothing else:
+
+- **`guid`** is the server's IPv4 as a 32-bit integer in hex, right-aligned in an otherwise-zero
+  UUID written raw, no dashes — so loopback is `0000000000000000000000007f000001`.
+- **`port`** is the UDP port, not a controller index.
+- **`pad`** is a global index, `client * 4 + slot`, so with our server as Eden's only client it is
+  the DSU slot itself.
+
+`EdenDsuConfig`'s button table is protocol wiring, not preference: cemuhook's two button bytes
+packed low-then-high are exactly Eden's `PadButton` values, with Home and the touchpad click riding
+the bytes above them. Sticks arrive as raw bytes that Eden reads as `(v − 127) / 127`, so the axis
+pairs need no inversion.
+
+**Motion is the one thing a pad cannot share.** A pad packet carries a single accelerometer and
+gyroscope, so `motion` is always index 0 and each hand streams on a slot of its own ([Slots](#slots)).
+The hand holding the player's own slot lands on `motionright` and its second hand on `motionleft`;
+one Joy-Con, or a pair that ran out of slots, binds both to the same pad — which is what Eden's own
+auto-mapping does for every device.
+
+A cemuhook pad carries the full DS4 button set and both sticks, so nothing else is needed for a
+player to play: the Virtual Gamepad is an alternative route to the same keys, not a prerequisite.
 
 ## Eden reads the device's own motion
 

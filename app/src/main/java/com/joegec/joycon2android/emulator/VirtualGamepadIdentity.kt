@@ -8,28 +8,9 @@ import android.view.MotionEvent
 import com.joegec.joycon2android.gamepad.emulator.EdenGamepad
 
 /*
- * Resolves how each emulator identifies our virtual gamepads, by reading the live input-device
- * list rather than deriving a number from the player index.
- *
- * Every emulator picks its own quantity, and none of them is the player number, so each rule is
- * read from the emulator's own source and mirrored here:
- *
- * - **Dolphin** takes the id in its `Android/<id>/<name>` qualifier from
- *   `InputDevice.getControllerNumber()` — Android's gamepad enumeration counter.
- *   `ControllerInterface::AddDevice` prefers `GetPreferredId()`, which the Android backend fills
- *   from `getControllerNumber()`, falling back to a duplicate-name index only for non-gamepads.
- * - **Eden** (yuzu lineage) numbers `port` by walking `InputDevice.getDeviceIds()` and counting
- *   *every* physical game controller it passes, so any built-in pad shifts ours along. See
- *   `InputHandler.getDevices()`: a controller number already registered is skipped but still
- *   consumes a port, which edenGamepadPorts reproduces.
- *
- * A guessed number binds a config to the wrong device or to none, and any handheld with a built-in
- * controller already occupies the low numbers — hence read, never derive.
- *
- * The same goes for the vendor/product ids behind Eden's `guid`: some handheld firmware re-publishes
- * an external gamepad under the built-in controller's ids, leaving two devices with our name — so
- * every field of a player's identity is taken from one and the same [InputDevice], the last match,
- * which is the republished one where that happens.
+ * Resolves how each emulator identifies our virtual gamepads, by reading the live input-device list
+ * rather than deriving a number from the player index. Each emulator's rule, and why a guess breaks:
+ * docs/virtual-gamepad.md#device-identity.
  */
 
 private const val PREFIX = "Joy-Con Virtual Gamepad "

@@ -116,6 +116,28 @@ A left Joy-Con's right-stick bytes are garbage, and a right Joy-Con's left-stick
 0x01 GR                0x02 GL
 ```
 
+## SPI reads
+
+The controller keeps its factory data in SPI flash, read back through the command-response
+characteristic. `SpiColorParser` wants one field out of it: the **shell accent colour**, 3 bytes
+RGB at `0x01301F`. Not the body colour at `0x013019` — that is the near-black shell, identical on
+both Switch 2 Joy-Cons, so it identifies nothing. The accent is the per-side colour (coral right,
+blue left) the UI paints each controller with. We request the surrounding DeviceInfo block and pull
+the field out of the reply.
+
+Reply layout, little-endian, confirmed against a live controller:
+
+| Offset | Meaning |
+|---|---|
+| `0` | report type — `0x02` for SPI |
+| `3` | command — `0x04` for SPI read |
+| `8` | data length |
+| `12..15` | source address, echoing the address requested |
+| `16..` | data bytes, starting at that source address |
+
+The echoed source address is what makes the read robust: the field's offset in the reply is
+`16 + (wanted address − echoed address)`, so the block can be requested at any alignment.
+
 ## Stick range and centre
 
 The raw 12-bit sticks neither span `0x000..0xFFF` nor rest at the midpoint, and both vary per

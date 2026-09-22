@@ -1,23 +1,6 @@
 package com.joegec.joycon2android.connection
 
-/**
- * Extracts the Joy-Con 2 shell accent color from an SPI-flash read reply.
- *
- * The controller stores several colors in SPI flash. The body color at
- * 0x013019 is the near-black shell, identical across both Switch 2 Joy-Cons;
- * the accent color at [ACCENT_COLOR_ADDRESS] is the per-side colour (coral on
- * the right, blue on the left) that actually identifies a controller. We
- * request a read of the surrounding DeviceInfo block and pull the accent out
- * of the reply.
- *
- * Reply layout (command-response characteristic, little-endian), confirmed
- * against a live controller:
- *   [0]      report type (0x02 = SPI)
- *   [3]      command     (0x04 = SPI read)
- *   [8]      data length
- *   [12..15] source address (LE) — echoes the requested read address
- *   [16..]   data bytes, starting at the source address
- */
+/** Pulls the shell accent colour out of an SPI-flash read reply: docs/protocol.md#spi-reads. */
 object SpiColorParser {
 
     private const val REPORT_TYPE_SPI = 0x02
@@ -25,13 +8,9 @@ object SpiColorParser {
     private const val ADDRESS_OFFSET = 0x0C
     private const val DATA_OFFSET = 0x10
 
-    /** SPI flash address of the shell accent color, 3 bytes RGB. */
     const val ACCENT_COLOR_ADDRESS = 0x01301F
 
-    /**
-     * Returns the packed 0xRRGGBB accent color from an SPI-read reply, or null
-     * if [reply] is not an SPI-read reply or doesn't span the accent address.
-     */
+    /** Packed 0xRRGGBB, or null if this is not an SPI read or does not span the accent address. */
     fun parseAccentColor(reply: ByteArray): Int? {
         if (reply.size < DATA_OFFSET) return null
         if (reply[0].toInt() and 0xFF != REPORT_TYPE_SPI) return null
