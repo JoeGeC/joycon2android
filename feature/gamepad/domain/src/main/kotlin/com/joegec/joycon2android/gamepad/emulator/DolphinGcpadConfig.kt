@@ -11,6 +11,7 @@ import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
 import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
 import com.joegec.joycon2android.buttonmapping.toSourceMap
 import com.joegec.joycon2android.buttonmapping.toStickDirectionMap
+import com.joegec.joycon2android.emulatorconfig.DolphinControls
 import com.joegec.joycon2android.emulatorconfig.DolphinPaths
 import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.JoyconButton
@@ -131,7 +132,7 @@ object DolphinGcpadConfig {
         val stickLines = mapping.toStickDirectionMap<GameCubeStick>().flatMap { (target, directions) ->
             directions.mapNotNull { (direction, sources) ->
                 expressionFor(side, sources)?.let { expression ->
-                    "${STICK_PREFIXES.getValue(target)}/${direction.displayName} = $expression"
+                    "${STICK_PREFIXES.getValue(target)}/${DolphinControls.DIRECTIONS.getValue(direction)} = $expression"
                 }
             }
         }

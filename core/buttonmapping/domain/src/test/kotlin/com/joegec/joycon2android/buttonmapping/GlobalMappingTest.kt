@@ -23,13 +23,17 @@ class GlobalMappingTest {
     private suspend fun putBothOn(layoutId: String) =
         fixture.applyGlobalLayout(fixture.console, bodies, layoutId)
 
+    // The domain says what a session agrees on; naming it is presentation's, so this stands in.
+    private fun GlobalMapping.agreedName(): String? =
+        matchingSaved?.name ?: sharedLayout?.id ?: sharedFamily?.name
+
     private suspend fun savedSet() = fixture.globalMapping(first, second).savedLayouts.single()
 
     @Test
     fun `a layout every player reads as names the session`() = runBlocking {
         putBothOn(WiiMapping.id)
 
-        assertEquals(WiiMapping.displayName, fixture.globalMapping(first, second).displayName)
+        assertEquals(WiiMapping.id, fixture.globalMapping(first, second).agreedName())
     }
 
     @Test
@@ -38,7 +42,7 @@ class GlobalMappingTest {
 
         fixture.setMapping(fixture.console, first, "A", "Up")
 
-        assertNull(fixture.globalMapping(first, second).displayName)
+        assertNull(fixture.globalMapping(first, second).agreedName())
     }
 
     @Test
@@ -46,7 +50,7 @@ class GlobalMappingTest {
         fixture.applyLayout(fixture.console, first, MarioKartWheelMapping.id)
         fixture.applyLayout(fixture.console, second, WiiMapping.id)
 
-        assertNull(fixture.globalMapping(first, second).displayName)
+        assertNull(fixture.globalMapping(first, second).agreedName())
     }
 
     @Test
@@ -55,10 +59,10 @@ class GlobalMappingTest {
         fixture.setMapping(fixture.console, first, "A", "Up")
 
         fixture.saveGlobalLayout(fixture.console, bodies, "Party")
-        assertEquals("Party", fixture.globalMapping(first, second).displayName)
+        assertEquals("Party", fixture.globalMapping(first, second).agreedName())
 
         fixture.setMapping(fixture.console, second, "A", "Down")
-        assertNull(fixture.globalMapping(first, second).displayName)
+        assertNull(fixture.globalMapping(first, second).agreedName())
     }
 
     // A table rarely holds the same thing, so the grip each body can be held in is what it gets.
@@ -80,7 +84,7 @@ class GlobalMappingTest {
 
         fixture.applyGlobalLayout(fixture.console, mixed, MarioKartWheelMapping.id)
 
-        assertEquals("Mario Kart", fixture.globalMapping(first, second, pair).displayName)
+        assertEquals(LayoutFamily.MARIO_KART.name, fixture.globalMapping(first, second, pair).agreedName())
     }
 
     @Test
@@ -94,12 +98,13 @@ class GlobalMappingTest {
         assertFalse(saved.fits(listOf(first, PlayerBody(PlayerNumber.P2, JoyconSide.DUAL))))
     }
 
+    // Which bodies, in which order — what they are *called* is presentation's, so it is not here.
     @Test
-    fun `a saved set names the bodies it wants, player by player`() = runBlocking {
+    fun `a saved set records the bodies it wants, player by player`() = runBlocking {
         val three = bodies + PlayerBody(PlayerNumber.P3, JoyconSide.DUAL)
         fixture.saveGlobalLayout(fixture.console, three, "Party")
 
-        assertEquals("P1 L, P2 R, P3 L/R", savedSet().playerSummary)
+        assertEquals(three, savedSet().bodies.map { it.body })
     }
 
     @Test
@@ -135,7 +140,7 @@ class GlobalMappingTest {
 
         fixture.saveCustomLayout(fixture.console, first, "My Wheel")
 
-        assertEquals("My Wheel", fixture.playerMapping(first).layout?.displayName)
-        assertEquals("Party", fixture.globalMapping(first, second).displayName)
+        assertEquals("My Wheel", (fixture.playerMapping(first).layout as? SavedLayout)?.name)
+        assertEquals("Party", fixture.globalMapping(first, second).agreedName())
     }
 }

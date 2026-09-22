@@ -3,7 +3,7 @@ package com.joegec.joycon2android.buttonmapping
 /** A layout the user saved from one player's body, offered back to any player holding that body. */
 data class SavedLayout(
     override val id: String,
-    override val displayName: String,
+    val name: String,
     val console: Console,
     val side: JoyconSide,
     val bindings: Map<String, String>,

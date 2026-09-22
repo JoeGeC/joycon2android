@@ -2,8 +2,6 @@ package com.joegec.joycon2android.buttonmapping.preset
 
 import com.joegec.joycon2android.buttonmapping.Console
 
-internal const val MARIO_KART = "Mario Kart"
-
 /** Every layout the app ships, and which one a console falls back to. */
 object MappingPresets {
 

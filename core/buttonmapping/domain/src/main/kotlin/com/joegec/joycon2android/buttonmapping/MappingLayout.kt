@@ -5,13 +5,12 @@ package com.joegec.joycon2android.buttonmapping
  * ([com.joegec.joycon2android.buttonmapping.preset.MappingPreset]) or one the user saved
  * ([SavedLayout]). Entries are in the repository's opaque string form, so a layout and a stored
  * override are the same kind of value.
+ *
+ * What a shipped one is *called* is not here — that is copy, and it lives in presentation's
+ * resources, keyed by the layout itself.
  */
 interface MappingLayout {
     val id: String
-    val displayName: String
-
-    /** A line under the name, saying what picking it does. */
-    val description: String? get() = null
 
     /**
      * Whether this layout stands a lone Joy-Con in for a Wii Remote held sideways, the way a game

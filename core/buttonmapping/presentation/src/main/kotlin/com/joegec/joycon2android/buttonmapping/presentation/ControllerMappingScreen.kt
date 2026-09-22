@@ -29,7 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import com.joegec.joycon2android.buttonmapping.Console
+import com.joegec.joycon2android.buttonmapping.GlobalMapping
 import com.joegec.joycon2android.buttonmapping.MappingLayouts
+import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
+import com.joegec.joycon2android.ui.components.DropdownOption
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.PlayerState
@@ -48,6 +52,7 @@ fun ControllerMappingScreen(
 ) {
     BackHandler(onBack = onBack)
     var dialog by remember { mutableStateOf<MappingDialog?>(null) }
+    val labels = rememberLayoutLabels()
 
     Column(
         modifier
@@ -66,7 +71,7 @@ fun ControllerMappingScreen(
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
             } else {
-                AllPlayersRow(state.global, actions) { dialog = it }
+                AllPlayersRow(state.console, state.global, labels, actions) { dialog = it }
             }
             state.players.forEach { player ->
                 val connected = players.firstOrNull { it.player == player.body.player }
@@ -75,6 +80,7 @@ fun ControllerMappingScreen(
                         console = state.console,
                         player = connected,
                         state = player,
+                        labels = labels,
                         actions = actions,
                         onSaveLayout = { dialog = MappingDialog.Save(player.body) },
                         onDeleteLayout = { dialog = MappingDialog.Delete(it.id, it.label, global = false) },
@@ -97,17 +103,29 @@ private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit) {
                 contentDescription = stringResource(R.string.controller_mapping_back),
             )
         }
-        Text(state.console.displayName, style = MaterialTheme.typography.headlineSmall, color = Color.White)
+        Text(state.console.label(), style = MaterialTheme.typography.headlineSmall, color = Color.White)
     }
 }
 
 /** The session read as one setting, so a whole table can be set — and kept — in a single move. */
 @Composable
 private fun AllPlayersRow(
-    state: GlobalLayoutUiState,
+    console: Console,
+    global: GlobalMapping,
+    labels: LayoutLabels,
     actions: MappingActions,
     onDialog: (MappingDialog) -> Unit,
 ) {
+    val saved = global.savedLayouts.map {
+        DropdownOption(
+            id = it.id,
+            label = labels.name(it),
+            subLabel = it.playerSummary(),
+            available = it.fits(global.bodies),
+            deletable = true,
+        )
+    }
+
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
@@ -119,10 +137,10 @@ private fun AllPlayersRow(
             modifier = Modifier.weight(1f),
         )
         LayoutRow(
-            options = state.options,
-            selectedId = state.selectedId,
-            layoutName = state.layoutName,
-            subLabel = state.playerSummary,
+            options = MappingPresets.forConsole(console).map { labels.option(it) } + saved,
+            selectedId = global.selectedId,
+            layoutName = labels.sessionName(global),
+            subLabel = global.matchingSaved?.let { it.playerSummary() },
             onSelect = actions.selectGlobalLayout,
             onSave = { onDialog(MappingDialog.Save(body = null)) },
             onDelete = { onDialog(MappingDialog.Delete(it.id, it.label, global = true)) },
@@ -145,7 +163,7 @@ private fun MappingDialogs(
             fieldLabel = stringResource(R.string.controller_mapping_layout_name),
             defaultValue = MappingLayouts.nextName(
                 stringResource(R.string.controller_mapping_layout_custom),
-                if (dialog.body == null) state.global.savedNames else state.savedLayoutNames,
+                state.takenNames(dialog.body == null),
             ),
             confirmLabel = stringResource(R.string.controller_mapping_save),
             dismissLabel = stringResource(R.string.controller_mapping_cancel),

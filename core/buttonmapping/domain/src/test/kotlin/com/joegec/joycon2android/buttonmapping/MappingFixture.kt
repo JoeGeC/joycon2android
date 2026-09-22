@@ -30,7 +30,7 @@ internal class MappingFixture(val console: Console = Console.WIIMOTE_NUNCHUK) {
     suspend fun globalMapping(vararg bodies: PlayerBody) = observeGlobalMapping(console, bodies.toList()).first()
 
     suspend fun savedLayoutNamed(name: String) =
-        observeSavedLayouts(console).first().first { it.displayName == name }
+        observeSavedLayouts(console).first().first { it.name == name }
 
     suspend fun layoutsFor(side: JoyconSide) =
         MappingLayouts.forBody(console, side, observeSavedLayouts(console).first())

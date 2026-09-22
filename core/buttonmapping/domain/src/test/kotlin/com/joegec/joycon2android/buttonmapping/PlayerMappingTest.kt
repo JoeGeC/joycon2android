@@ -22,7 +22,7 @@ class PlayerMappingTest {
     fun `an untouched player reads as the layout they chose`() = runBlocking {
         fixture.applyLayout(fixture.console, body, MarioKartWheelMapping.id)
 
-        assertEquals(MarioKartWheelMapping.displayName, fixture.playerMapping(body).layout?.displayName)
+        assertEquals(MarioKartWheelMapping, fixture.playerMapping(body).layout)
     }
 
     @Test
@@ -66,9 +66,9 @@ class PlayerMappingTest {
         fixture.saveCustomLayout(fixture.console, body, "My Wheel")
 
         val mapping = fixture.playerMapping(body)
-        assertEquals("My Wheel", mapping.layout?.displayName)
+        assertEquals("My Wheel", (mapping.layout as? SavedLayout)?.name)
         assertEquals("Up", mapping.entries["A"])
-        assertTrue(fixture.layoutsFor(body.side).any { it.displayName == "My Wheel" })
+        assertTrue(fixture.layoutsFor(body.side).any { it is SavedLayout && it.name == "My Wheel" })
     }
 
     @Test
@@ -77,7 +77,7 @@ class PlayerMappingTest {
 
         val other = fixture.layoutsFor(right().side)
 
-        assertFalse(other.any { it.displayName == "My Wheel" })
+        assertFalse(other.any { it is SavedLayout && it.name == "My Wheel" })
     }
 
     @Test
@@ -101,7 +101,7 @@ class PlayerMappingTest {
 
         fixture.saveCustomLayout(fixture.console, body, "My Wheel")
 
-        assertEquals("My Wheel", fixture.playerMapping(body).layout?.displayName)
+        assertEquals("My Wheel", (fixture.playerMapping(body).layout as? SavedLayout)?.name)
     }
 
     @Test
@@ -113,6 +113,6 @@ class PlayerMappingTest {
         fixture.setMapping(fixture.console, other, "A", "Up")
 
         assertNotNull(fixture.playerMapping(other).layout)
-        assertEquals("My Wheel", fixture.playerMapping(other).layout?.displayName)
+        assertEquals("My Wheel", (fixture.playerMapping(other).layout as? SavedLayout)?.name)
     }
 }

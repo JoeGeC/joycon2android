@@ -29,8 +29,6 @@ import com.joegec.joycon2android.model.JoyconButton.ZR
 /** The Wii Remote's own layout: the trigger under the finger is B, and 1 and 2 sit under the thumb. */
 object WiiMapping : MappingPreset {
     override val id = "WII"
-    override val displayName = "Wii"
-    override val description = "Like a Wiimote, B → ZR"
     override val console = Console.WIIMOTE_NUNCHUK
 
     override fun entries(side: JoyconSide) =

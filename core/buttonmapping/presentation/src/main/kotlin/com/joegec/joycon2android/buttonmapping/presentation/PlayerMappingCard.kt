@@ -51,6 +51,7 @@ fun PlayerMappingCard(
     console: Console,
     player: PlayerState,
     state: PlayerMappingUiState,
+    labels: LayoutLabels,
     actions: MappingActions,
     onSaveLayout: () -> Unit,
     onDeleteLayout: (DropdownOption) -> Unit,
@@ -64,7 +65,7 @@ fun PlayerMappingCard(
             .clip(RoundedCornerShape(Dimens.cardCorner))
             .background(CardBg),
     ) {
-        CardHeader(player, state.layoutName, expanded) { expanded = !expanded }
+        CardHeader(player, state.layout?.let(labels::name), expanded) { expanded = !expanded }
         AnimatedVisibility(
             visible = expanded,
             enter = fadeIn() + expandVertically(),
@@ -79,10 +80,10 @@ fun PlayerMappingCard(
                 verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
             ) {
                 LayoutRow(
-                    options = state.layoutOptions,
-                    selectedId = state.selectedLayoutId,
-                    layoutName = state.layoutName,
-                    subLabel = state.layoutDescription,
+                    options = state.layouts.map { labels.option(it) },
+                    selectedId = state.layout?.id,
+                    layoutName = state.layout?.let(labels::name),
+                    subLabel = state.layout?.let(labels::description),
                     onSelect = { actions.selectLayout(state.body, it) },
                     onSave = onSaveLayout,
                     onDelete = onDeleteLayout,

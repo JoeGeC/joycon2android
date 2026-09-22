@@ -14,7 +14,7 @@ private const val PLAYER = "player"
 private const val ENTRIES = "entries"
 
 internal fun SavedLayout.toJson(): String = JSONObject()
-    .put(NAME, displayName)
+    .put(NAME, name)
     .put(CONSOLE, console.name)
     .put(SIDE, side.name)
     .put(SIDEWAYS_REMOTE, sidewaysRemote)
@@ -26,7 +26,7 @@ internal fun savedLayoutOf(id: String, json: String): SavedLayout? = runCatching
     val document = JSONObject(json)
     SavedLayout(
         id = id,
-        displayName = document.getString(NAME),
+        name = document.getString(NAME),
         console = Console.valueOf(document.getString(CONSOLE)),
         side = JoyconSide.valueOf(document.getString(SIDE)),
         bindings = document.getJSONObject(BINDINGS).toStringMap(),
@@ -35,7 +35,7 @@ internal fun savedLayoutOf(id: String, json: String): SavedLayout? = runCatching
 }.getOrNull()
 
 internal fun GlobalLayout.toJson(): String = JSONObject()
-    .put(NAME, displayName)
+    .put(NAME, name)
     .put(CONSOLE, console.name)
     .put(BODIES, JSONArray(bodies.map { it.toJson() }))
     .toString()
@@ -44,7 +44,7 @@ internal fun globalLayoutOf(id: String, json: String): GlobalLayout? = runCatchi
     val document = JSONObject(json)
     GlobalLayout(
         id = id,
-        displayName = document.getString(NAME),
+        name = document.getString(NAME),
         console = Console.valueOf(document.getString(CONSOLE)),
         bodies = document.getJSONArray(BODIES).objects().map { it.toSnapshot() },
     )

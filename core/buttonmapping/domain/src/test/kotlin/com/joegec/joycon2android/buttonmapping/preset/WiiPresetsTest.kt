@@ -198,7 +198,7 @@ class WiiPresetsTest {
             .filterNot { it == MarioKartNunchukMapping }
             .forEach { preset ->
                 assertTrue(
-                    "${preset.displayName} binds the remote",
+                    "${preset.id} binds the remote",
                     preset.entries(JoyconSide.RIGHT).keys.containsAll(remote),
                 )
             }
