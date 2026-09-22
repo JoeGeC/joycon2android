@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.joegec.joycon2android.buttonmapping.Console
+import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerState
@@ -86,7 +87,9 @@ fun PlayerMappingCard(
                     onDelete = onDeleteLayout,
                 )
                 if (state.offersSidewaysRemote) {
-                    SidewaysRemoteSwitch(state.sidewaysRemote) { actions.setSidewaysRemote(state.body, it) }
+                    SidewaysRemoteSwitch(state.body.side, state.sidewaysRemote) {
+                        actions.setSidewaysRemote(state.body, it)
+                    }
                 }
                 MappingBindings(console, state, actions)
             }
@@ -153,14 +156,22 @@ private fun ControllerChip(textRes: Int, joycon: ConnectedJoycon) {
 }
 
 /**
- * A lone Joy-Con stands in for a Wii Remote held sideways: what a wheel game steers by, and what
- * turns its d-pad. A layout sets it; this is the player having the last word.
+ * A lone Joy-Con stands in for a Wii Remote held sideways. A left Joy-Con's own body already is one
+ * — a sideways remote's nose points left, just as its L/ZL edge does — so the switch only turns its
+ * d-pad and amplifies its flicks. A right Joy-Con additionally gives up its own body to steer true,
+ * and with it the R edge as the nose it aims down, which is what the warning is for.
  */
 @Composable
-private fun SidewaysRemoteSwitch(enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
+private fun SidewaysRemoteSwitch(side: JoyconSide, enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
+    val aimsFromItsTail = side == JoyconSide.RIGHT
     SettingSwitch(
         title = stringResource(R.string.controller_mapping_sideways_remote),
-        description = stringResource(R.string.controller_mapping_sideways_remote_description),
+        description = stringResource(
+            if (aimsFromItsTail) R.string.controller_mapping_sideways_remote_description_right
+            else R.string.controller_mapping_sideways_remote_description_left,
+        ),
+        warning = stringResource(R.string.controller_mapping_sideways_remote_warning)
+            .takeIf { aimsFromItsTail },
         checked = enabled,
         onCheckedChange = onSetEnabled,
     )
