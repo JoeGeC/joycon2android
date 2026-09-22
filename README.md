@@ -195,9 +195,9 @@ shoulder buttons.
      Right on Down, Down on Left, Left on Up. A sideways remote's d-pad turns with it, so the
      player's up is the remote's right.
    - For **tricks**, append
-     ``+ pulse(deadzone((<flick>), 0.2), 0.6) * sin(timer(0.15) * 6.2832) * 50`` to each
+     ``+ pulse(<flick>, 0.6) * sin(timer(0.15) * 6.2832) * 50`` to each
      **IMUAccelerometer** input, where `<flick>` is
-     ``(<rate> - smooth(<rate>, 0.02)) / 15`` and `<rate>` is
+     ``(<rate> - smooth(<rate>, 0.01)) / 5`` and `<rate>` is
      ``(\`Gyro Pitch Up\` + \`Gyro Pitch Down\` + \`Gyro Roll Left\` + \`Gyro Roll Right\` + \`Gyro Yaw Left\` + \`Gyro Yaw Right\`)``
      — and add `+ 3.1416` inside the `sin` for Down, Right and Backward so they swing the other way.
      A flick of a Joy-Con is nearly all rotation, which the game can't read from an accelerometer

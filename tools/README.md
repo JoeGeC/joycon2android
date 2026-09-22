@@ -20,6 +20,34 @@ The third argument sets the motion print interval; it defaults to a readable 0.2
 `0` prints every packet (~90 Hz), which is what differentiating the gravity vector needs.
 
 
+## Flick measurement
+
+`flick_stats.py` reads a `dsu_client` capture and reports what a flick leaves behind after
+the slew limiter `DolphinWiimoteConfig` subtracts — the number that decides whether a trick
+fires. Use it to set `FLICK_RADIANS` from a hand rather than from an assumption.
+
+Enable DSU in the app with a single Joy-Con on P1 (slot 0), then capture twice:
+
+```sh
+adb shell /data/local/tmp/dsu_client 127.0.0.1 20 0 > flick.log   # ~10 flicks, as if tricking
+adb shell /data/local/tmp/dsu_client 127.0.0.1 20 0 > steer.log   # steering hard, as if racing
+tools/flick_stats.py flick.log
+tools/flick_stats.py steer.log
+```
+
+The motion interval must be `0`, or the peaks are averaged away before the file is written.
+
+Three things to read out of it:
+
+- **The interval.** A flick lasts 40–80 ms. At the ~30 ms of a balanced connection it is
+  sampled once or twice and its crest is often missed entirely, which no threshold can
+  recover; fast motion roughly halves that.
+- **The spread across events.** Flicks of the same strength reading very different residuals
+  means the stream is catching them at different points, not that the hand varied.
+- **The gap between the two captures.** `FLICK_RADIANS` has to sit under twice the weakest
+  flick and over twice the largest steering residual. If those cross, the limiter is the
+  wrong discriminator and no threshold will do.
+
 ### Axis calibration workflow
 
 1. Capture while performing slow single-axis motions with holds (still → yaw left →

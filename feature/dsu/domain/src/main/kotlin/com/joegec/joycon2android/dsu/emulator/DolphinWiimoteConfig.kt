@@ -156,16 +156,22 @@ object DolphinWiimoteConfig {
     // A rate alone cannot tell a flick from a turn, because steering a lone Joy-Con held as a wheel
     // *is* rotation — which is why only single Joy-Cons suffered for it: a pair steers from the
     // Nunchuk's stick with its remote hand still. Subtracting a slew limiter leaves only what climbs
-    // faster than the limiter can follow. At 0.02 the tracker moves 50 rad/s, so it has caught the
-    // sharpest measured steering (6.5) within about a seventh of a second and left nothing behind,
-    // while a flick's ~40 ms rise to 21 outruns it almost untouched.
+    // faster than the limiter can follow.
     //
-    // A trick fired by accident costs nothing — the game only tricks a kart already airborne — but a
-    // trick fired *while steering* costs plenty, since the shake below lands on the accelerometer the
-    // wheel is read from. Hence a discriminator rather than a bigger number.
-    private const val FLICK_RADIANS = 15
-    private const val FLICK_SETTLE_SECONDS = 0.02
-    private const val FLICK_DEAD_ZONE = 0.2
+    // Both numbers are measured, over a capture of flicks and a capture of hard steering read back
+    // by tools/flick_stats.py (2026-09-22, right Joy-Con, 15 ms stream). Flicks peaked at 11 to 16
+    // rad/s and left 5.6 to 9.1 behind the limiter; 25 s of the sharpest steering peaked at 3.6 and
+    // left at most 1.2. A slower limiter is worse, not better: it lifts a flick's residual but lifts
+    // steering's faster, and the ratio between them — all that matters — falls from 4.7 at 0.01 to
+    // 3.8 at 0.02 and 2.0 at 0.04.
+    //
+    // pulse() fires as its input crosses a half, so the threshold is 2.5 rad/s of residual: 2.1x
+    // above the worst steering and 2.2x below the weakest flick, which is as evenly as two sparsely
+    // sampled distributions can be split. Erring low is right anyway — a trick fired by accident
+    // costs nothing, since the game only tricks a kart already airborne, while one fired *while
+    // steering* costs plenty, the shake landing on the accelerometer the wheel is read from.
+    private const val FLICK_RADIANS = 5
+    private const val FLICK_SETTLE_SECONDS = 0.01
     private const val TRICK_ACCELERATION = 50 // m/s^2, past what an emulated remote can report
     private const val TRICK_SECONDS = 0.6
     private const val TRICK_PERIOD_SECONDS = 0.15
@@ -193,7 +199,7 @@ object DolphinWiimoteConfig {
     private fun trickShake(trigger: String?, control: String): String? {
         if (trigger == null || !control.startsWith("IMUAccelerometer/")) return null
         val phase = if (control in TRICK_LEADING) "" else " + $HALF_TURN"
-        return "pulse(deadzone(($trigger), $FLICK_DEAD_ZONE), $TRICK_SECONDS) * " +
+        return "pulse($trigger, $TRICK_SECONDS) * " +
             "sin(timer($TRICK_PERIOD_SECONDS) * $FULL_TURN$phase) * $TRICK_ACCELERATION"
     }
 

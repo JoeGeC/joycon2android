@@ -227,10 +227,10 @@ class DolphinWiimoteConfigTest {
 
         val rate = "(`Gyro Pitch Up` + `Gyro Pitch Down` + `Gyro Roll Left` + `Gyro Roll Right` + " +
             "`Gyro Yaw Left` + `Gyro Yaw Right`)"
-        val flick = "($rate - smooth($rate, 0.02)) / 15"
+        val flick = "($rate - smooth($rate, 0.01)) / 5"
         assertTrue(
             result.contains(
-                "IMUAccelerometer/Up = `Accel Up` + pulse(deadzone(($flick), 0.2), 0.6) * " +
+                "IMUAccelerometer/Up = `Accel Up` + pulse($flick, 0.6) * " +
                     "sin(timer(0.15) * 6.2832) * 50",
             ),
         )
@@ -268,7 +268,7 @@ class DolphinWiimoteConfigTest {
 
         val result = DolphinWiimoteConfig.merge(null, pair, { true }, ::wiimoteMappingFor)
 
-        assertTrue(result.contains("pulse(deadzone((((`Gyro Pitch Up`"))
+        assertTrue(result.contains("pulse(((`Gyro Pitch Up`"))
 
         // ...but its motion frame is untouched, since it is already held like a remote.
         assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Forward` +"))
@@ -281,7 +281,7 @@ class DolphinWiimoteConfigTest {
 
         val result = DolphinWiimoteConfig.merge(null, pair, { false }) { mapping }
 
-        assertTrue(result.contains("pulse(deadzone((`R1`), 0.2), 0.6)"))
+        assertTrue(result.contains("pulse(`R1`, 0.6)"))
     }
 
     @Test
