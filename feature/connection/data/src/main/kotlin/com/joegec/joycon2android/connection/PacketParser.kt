@@ -1,6 +1,6 @@
 package com.joegec.joycon2android.connection
 
-import android.util.Log
+
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.Side
@@ -64,8 +64,8 @@ object PacketParser {
         if (data.size < 8) return false
         val status = data[1].toInt() and 0xFF
         
-        // Accept any 0x1X status as potential Nyxi input
-        val isInputStatus = (status in 0x10..0x1F) || 
+        // Accept any 0x0X or 0x1X status as potential Nyxi input
+        val isInputStatus = (status in 0x00..0x1F) || 
                             status == 0x80 || status == 0x81 || status == 0x8E || status == 0x3F
         
         return isInputStatus
@@ -74,14 +74,12 @@ object PacketParser {
     private fun parseNyxiFormat(data: ByteArray, side: Side): JoyconInput? {
         val status = data[1].toInt() and 0xFF
         
-        // Check for any input status starting with 0x1X (0x10 to 0x1F)
-        val is1XStatus = status in 0x10..0x1F
+        // Accept any low-range status (0x0X, 0x1X) as input, provided it's not a generic vendor header (0xFE).
+        // Some Nyxi controllers swap status codes (e.g. 0x10 for Left, 0x0C for Right) or use new ones like 0x1C.
+        val isValidStatus = (status in 0x00..0x1F) || 
+                            status == 0x80 || status == 0x81 || status == 0x8E || status == 0x3F
         
-        // Ensure the packet belongs to the correct controller based on side-specific expectations:
-        // Left controller typically uses 0x14, 0x1C etc. (even/bit-specific or just general 0x1X).
-        // Let's accept any 0x1X status that isn't explicitly known to be a heartbeat or from the opposite side, 
-        // but let's be more accommodating to any 0x1X packet as long as it's not a generic vendor header (0xFE).
-        if (!is1XStatus || (data[0].toInt() and 0xFF == 0xFE)) {
+        if (!isValidStatus || (data[0].toInt() and 0xFF == 0xFE)) {
             return null
         }
 
@@ -92,6 +90,7 @@ object PacketParser {
         val b4 = data[4].toInt() and 0xFF
 
         val pressed = mutableSetOf<String>()
+
 
         // Byte 2 & Byte 3: Button mappings depend on whether this is the Left or Right controller half
         if (side == Side.LEFT) {

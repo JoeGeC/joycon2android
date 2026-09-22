@@ -78,9 +78,9 @@ class PacketParserTest {
     }
 
     @Test
-    fun `nyxi heartbeats or mismatched status are accepted if 1X`() {
+    fun `nyxi heartbeats or mismatched status are accepted if valid status range`() {
         val data = ByteArray(12).apply {
-            this[1] = 0x10 // Any 0x1X
+            this[1] = 0x0C // Any valid status like 0x0C or 0x10
             putStick(5, 0x999 to 0x999)
         }
         val input = PacketParser.parse(data, Side.LEFT, isNyxiChar = true)
