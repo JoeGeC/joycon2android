@@ -25,36 +25,49 @@ LINE = re.compile(
 
 
 def samples(path, slot):
-    """(timestamp, rate in rad/s) per packet, rate being what Dolphin sums from the six inputs."""
+    """(timestamp, rate, axes) per packet — rate is what Dolphin sums from the six one-way inputs,
+    axes keeps the signed pitch/yaw/roll so a gesture's direction can be read back."""
     for line in open(path):
         found = LINE.match(line.strip())
         if not found or int(found.group(2)) != slot:
             continue
-        pitch, yaw, roll = (float(v) for v in found.group(3).split(","))
-        yield float(found.group(1)), math.radians(abs(pitch) + abs(yaw) + abs(roll))
+        axes = tuple(math.radians(float(v)) for v in found.group(3).split(","))
+        yield float(found.group(1)), sum(abs(a) for a in axes), axes
 
 
 def residuals(rates, settle):
     """What survives Dolphin's `rate - smooth(rate, settle)`: a limiter moving 1/settle per second."""
     state = rates[0][1]
-    for previous, (at, rate) in zip(rates, rates[1:]):
+    for previous, (at, rate, axes) in zip(rates, rates[1:]):
         most = (at - previous[0]) / settle
         state += max(-most, min(most, rate - state))
-        yield at, rate, rate - state
+        yield at, rate, rate - state, axes
 
 
 def peaks(measured, floor, apart):
     """One entry per burst, so a single flick is not counted as several."""
     burst = []
-    for at, rate, residual in measured:
-        if residual < floor:
+    for sample in measured:
+        if sample[2] < floor:
             continue
-        if burst and at - burst[-1][0] > apart:
+        if burst and sample[0] - burst[-1][0] > apart:
             yield max(burst, key=lambda it: it[2])
             burst = []
-        burst.append((at, rate, residual))
+        burst.append(sample)
     if burst:
         yield max(burst, key=lambda it: it[2])
+
+
+AXES = ("pitch", "yaw", "roll")
+
+
+def direction(axes):
+    """The turn the gesture mostly is, named as Dolphin names its two one-way inputs for that axis."""
+    size = max(range(3), key=lambda i: abs(axes[i]))
+    ends = {"pitch": ("Pitch Up", "Pitch Down"), "yaw": ("Yaw Left", "Yaw Right"),
+            "roll": ("Roll Left", "Roll Right")}[AXES[size]]
+    share = abs(axes[size]) / sum(abs(a) for a in axes)
+    return f"{ends[0] if axes[size] > 0 else ends[1]:11} {share:.0%} of the turn"
 
 
 def main():
@@ -86,8 +99,9 @@ def main():
 
     plural = "" if len(found) == 1 else "s"
     print(f"{len(found)} event{plural} (peak residual >= {args.floor}, at least {args.apart}s apart):")
-    for at, rate, residual in found:
-        print(f"  t={at:8.2f}  rate {rate:6.1f}  residual {residual:6.1f}  fires while FLICK_RADIANS <= {2 * residual:.0f}")
+    for at, rate, residual, axes in found:
+        signed = " ".join(f"{n} {v:+6.1f}" for n, v in zip(AXES, axes))
+        print(f"  t={at:8.2f}  residual {residual:6.1f}  [{signed}]  {direction(axes)}")
 
     weakest = min(it[2] for it in found)
     print(f"\nweakest event leaves {weakest:.1f} rad/s of residual.")

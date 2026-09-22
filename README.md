@@ -194,17 +194,15 @@ shoulder buttons.
    - **Turn the four D-pad bindings a quarter**: put the source you'd bind to Up on **D-Pad/Right**,
      Right on Down, Down on Left, Left on Up. A sideways remote's d-pad turns with it, so the
      player's up is the remote's right.
-   - For **tricks**, append
-     ``+ pulse(<flick>, 0.6) * sin(timer(0.15) * 6.2832) * 50`` to each
-     **IMUAccelerometer** input, where `<flick>` is
-     ``(<rate> - smooth(<rate>, 0.01)) / 5`` and `<rate>` is
-     ``(\`Gyro Pitch Up\` + \`Gyro Pitch Down\` + \`Gyro Roll Left\` + \`Gyro Roll Right\` + \`Gyro Yaw Left\` + \`Gyro Yaw Right\`)``
-     — and add `+ 3.1416` inside the `sin` for Down, Right and Backward so they swing the other way.
-     A flick of a Joy-Con is nearly all rotation, which the game can't read from an accelerometer
-     alone, so the gyroscope shakes the accelerometer for you — and the `smooth` subtraction is what
-     keeps steering, which is also rotation, from setting it off
-     ([why](docs/dsu-motion.md#dolphin-wii-remote-mapping)). Don't use Dolphin's **Shake** group —
-     it doesn't land tricks. You can also bind **Shake** to a button.
+   - For **tricks and wheelies**, append
+     ``+ pulse(<flick>, 0.6) * max(sin(timer(0.15) * 6.2832), 0) * 50`` to **IMUAccelerometer/Up**,
+     where `<flick>` is ``(\`Gyro Pitch Up\` / 9) & not(pulse(\`Gyro Pitch Down\` / 9, 0.4))`` —
+     then the same on **/Down** with Up and Down swapped. A flick of a Joy-Con is nearly all
+     rotation, which the game can't read from an accelerometer alone
+     ([why](docs/dsu-motion.md#dolphin-wii-remote-mapping)). Steering is roll, never pitch, so it
+     can't set this off; the lock-out stops a flick's rebound cancelling the wheelie it just
+     started. Don't use Dolphin's **Shake** group — it doesn't land tricks. You can also bind
+     **Shake** to a button.
 
    Leave Dolphin's own **Sideways Wii Remote** option off either way — it would turn the
    accelerometer a second quarter.

@@ -119,29 +119,31 @@ if the Joy-Con's nose pointed at the screen.
   trick by hand, shaking a Joy-Con hard for about a second, where a single held push did not.
   `pulse()` gives a flick and a held button the same shake however long either lasted.
 
-  **A rate alone cannot tell a flick from a turn**, because steering a lone Joy-Con held as a wheel
-  *is* rotation — which is why only single Joy-Cons suffered for it, a pair steering from the
-  Nunchuk's stick with its remote hand still. The trigger therefore subtracts a slew limiter,
-  `(rate − smooth(rate, 0.01)) / 5`, leaving only what climbs faster than the limiter can follow.
+  **The flick reads pitch, and only pitch.** Measured over three captures (2026-09-22, right
+  Joy-Con, 15 ms stream), a flick is 59–89% pitch on *both* bodies — a lone sideways Joy-Con and a
+  pair alike, despite a lone one being rotated into its grip before it reaches the wire — while
+  steering a wheel is roll and never exceeds 2.8 rad/s of pitch:
 
-  Both numbers are measured, from a capture of flicks and a capture of hard steering read back by
-  [`tools/flick_stats.py`](../tools/README.md#flick-measurement) (2026-09-22, right Joy-Con, 15 ms
-  stream):
+  | | raw pitch, per gesture |
+  |---|---|
+  | steering, hard, 25 s | ≤ 2.8 rad/s |
+  | wheelie flicks | 7.0 – 10.7 |
+  | trick flicks | 8.8 – 14.5 |
 
-  | | peak rate | residual after the limiter |
-  |---|---|---|
-  | flicks (4) | 11–16 rad/s | 5.6, 6.1, 8.3, 9.1 |
-  | hard steering (25 s) | 3.6 rad/s | ≤ 1.2 |
+  Reading pitch alone therefore separates a flick from a turn by axis rather than by rate, which no
+  slew limiter could: the wheelie's down-flick is a slow gesture, and a limiter fast enough to
+  reject a turn ate all but 0.9 rad/s of it. `pulse()` fires as its input crosses a half, so the
+  threshold is 4.5 rad/s — 1.6× above the worst steering, 1.6× below the weakest gesture.
 
-  A *slower* limiter is worse, not better: it lifts a flick's residual but lifts steering's faster,
-  and the ratio between them — all that matters — falls from 4.7 at 0.01 to 3.8 at 0.02 and 2.0 at
-  0.04. `pulse()` fires as its input crosses a half, so the threshold is 2.5 rad/s of residual:
-  2.1× above the worst steering and 2.2× below the weakest flick. Erring low is right anyway — a
-  trick fired by accident costs nothing, since the game only tricks a kart already airborne, while
-  one fired *while steering* costs plenty, the shake landing on the very accelerometer the wheel is
-  read from. Every body flicks, a pair included: its remote hand is still while the Nunchuk's
-  stick steers. Only a layout that plays as a sideways remote flicks at all, so no other game is
-  handed a shake it never asked for when its remote is swung.
+  **Direction matters, because a wheelie is a state.** An up-flick starts one and a down-flick drops
+  it, where a trick takes any direction and only one per jump. So the remote is jerked the way it was
+  flicked — positive wire pitch is up on both bodies — and the wave is *half* rectified
+  (`max(sin(…), 0)`), since a full one would cancel the wheelie it just started four times a second.
+
+  **Each direction locks the other out for 0.4 s**, because every flick rebounds the opposite way
+  0.12–0.32 s later, and a rebound is often stronger than a genuine flick elsewhere in the same
+  capture — 8.5 against 7.0 — so only order can tell them apart. The gate sits on the pulse's input
+  rather than its output, so a jerk already running finishes.
 
   One more thing verified against Dolphin's source (2026-09), since the expressions depend on it:
   `|` is a max, and it binds looser than `/`.
