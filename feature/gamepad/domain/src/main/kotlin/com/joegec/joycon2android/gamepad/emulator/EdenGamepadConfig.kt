@@ -19,26 +19,11 @@ import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 
 /**
- * Generates Eden's `config.ini` `[Controls]` bindings for the Virtual Gamepad, driven by the
- * user's customizable Joy-Con -> Pro Controller mapping.
- *
- * The relay exposes every player as one standard Android HID gamepad, wired so each Joy-Con button
- * lands on the keycode of the same name (Switch A is BUTTON_A, ZL is BUTTON_L2, − is BUTTON_SELECT).
- * The d-pad is the HID hat (HAT_X = axis 15, HAT_Y = axis 16); [KEY_CODES]/[HAT_AXES] are that
- * fixed, body-independent wiring.
- *
- * Eden does not translate a sideways single Joy-Con: it only sets an `is_horizontal` flag (which on
- * hardware the game's own nn::hid honours, but Eden has no equivalent), and it masks an npad by
- * type — a JoyconLeft can't even report A/B/X/Y. So we present each single Joy-Con as a Pro
- * Controller and apply the sideways rotation ourselves: [inputFor] resolves a customized source to
- * what its body actually emits, so e.g. the left Joy-Con's d-pad resolves to the face-button
- * keycodes it is rotated onto.
- *
- * A target stick whose directions still follow one real stick binds its axes, keeping the analog
- * range; any other arrangement is assembled from its directions with [EdenControls.stickFromButtons].
- *
- * Each pad's [EdenGamepad] — port and guid both — comes from the app's read of the live
- * input-device list, since neither can be derived from the player number.
+ * Generates Eden's `config.ini` `[Controls]` bindings for the Virtual Gamepad, driven by the user's
+ * own Joy-Con → Pro Controller mapping. The relay exposes every player as one standard Android HID
+ * gamepad; that fixed wiring, and why a single Joy-Con is presented as a Pro Controller and rotated
+ * on our side, are in docs/virtual-gamepad.md#buttons-and-keycodes and
+ * docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers.
  */
 object EdenGamepadConfig {
     // Joy-Con button -> the Android keycode the relay's HID gamepad emits for it. ReportMapper

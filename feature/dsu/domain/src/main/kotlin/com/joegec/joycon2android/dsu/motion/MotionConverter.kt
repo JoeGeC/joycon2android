@@ -3,35 +3,13 @@ package com.joegec.joycon2android.dsu.motion
 import com.joegec.joycon2android.model.JoyconInput
 
 /**
- * Raw Joy-Con IMU → cemuhook/DS4 motion frame.
+ * Raw Joy-Con IMU → cemuhook's DS4 motion frame. Both frames, the scale factors and the sign
+ * history are in docs/dsu-motion.md#motion-frame — the signs are DS4 hardware convention rather
+ * than a right-handed frame, so verify any change against Dolphin's pointer rather than reasoning
+ * about it.
  *
- * Scale factors are the Switch 1 family values, verified on Joy-Con 2 hardware
- * (2026-06: at rest gravity reads exactly −1.00 g): accel ±8 g → 0.000244 g/LSB,
- * gyro ±2000 dps → 0.06103 dps/LSB.
- *
- * Measured Joy-Con (R) raw frame: X = controller's RIGHT, Y = toward the tail, Z = out of
- * the button face. X was documented as "left" until 2026-09, when a rail-down static pose
- * (SL/SR against the table, so gravity points toward the controller's right) read +1 g on
- * the wire's left axis — mirrored. Left/right tilt reached games reversed, and because
- * angular velocity is a pseudovector, roll had to be mirrored with it to stay physically
- * consistent, which is why both flipped together. The cemuhook wire frame,
- * anchored against Dolphin's on-screen Wii pointer (its complementary filter makes the
- * ACCELEROMETER the authority on sustained pitch — gyro signs alone can't be judged
- * from pointer direction): x = left, y = down through the controller, z = toward the
- * player. Flat at rest → accel (0,−1,0); nose up → accel z = −1 and gyro pitch −
- * (verified via pointer flicks: gyro shows up in the fast response, accel in the
- * settled position); turn right → +yaw; roll right → +roll. The axis signs are DS4
- * hardware history, not a consistent right-handed frame — verify any change against
- * the pointer itself, fast and slow movements separately.
- *
- * Yaw is the one sign no measurement here pins: it turns about gravity, so a static pose
- * cannot see it and the accel/gyro consistency check cannot either. It is kept as the
- * pointer's horizontal response reports it. Mirroring x strictly implies mirroring yaw too,
- * so if horizontal pointing ever reads backwards, flip yaw rather than re-deriving this.
- *
- * This converts whatever frame it is given; a lone sideways Joy-Con is turned into its grip
- * first by [SidewaysMotion]. Left Joy-Con and Pro are assumed to share the raw frame —
- * unverified; recalibrate with tools/dsu_client if motion feels rotated.
+ * Converts whatever frame it is given; a lone sideways Joy-Con is turned into its grip first by
+ * [SidewaysMotion].
  */
 object MotionConverter {
 

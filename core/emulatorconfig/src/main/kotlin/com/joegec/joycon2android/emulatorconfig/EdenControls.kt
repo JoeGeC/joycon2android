@@ -30,12 +30,7 @@ object EdenControls {
 
     val STICK_KEYS = mapOf(SwitchProStick.LStick to "lstick", SwitchProStick.RStick to "rstick")
 
-    /**
-     * Eden's npad type. Both single Joy-Cons report as Pro: Eden doesn't translate a sideways
-     * Joy-Con — it only sets an `is_horizontal` flag and masks an npad by type, so a JoyconLeft
-     * can't even report A/B/X/Y — so a normalised full controller is presented and the rotation
-     * done on our side instead.
-     */
+    /** Both single Joy-Cons report as Pro: docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers. */
     fun npadType(player: PlayerState): Int? = when {
         player.hasPro -> PRO
         player.hasFullController -> DUAL_JOYCON
@@ -45,11 +40,8 @@ object EdenControls {
 
     fun quote(value: String) = "\"$value\""
 
-    /**
-     * A stick assembled from up to four digital inputs, each a whole binding of its own. Eden parses
-     * the nested bindings out of one value, so their `:`, `,` and `$` are escaped as `$0`, `$1` and
-     * `$2`, exactly as its ParamPackage serializes them.
-     */
+    /** A stick built from up to four whole bindings nested in one value, escaped as Eden's
+     * ParamPackage serializes them: docs/virtual-gamepad.md#emulator-config. */
     fun stickFromButtons(directions: Map<StickDirection, String>): String =
         (listOf("engine:analog_from_button") + directions.map { (direction, binding) ->
             "${direction.name.lowercase()}:${escapeNested(binding)}"

@@ -17,16 +17,9 @@ import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 
 /**
- * Generates Dolphin's GCPadNew.ini mappings for the Virtual Gamepad, one `[GCPadN]` section per
- * assigned player, driven by the user's customizable Joy-Con -> GameCube mapping. Each player's
- * UHID pad shows up to Dolphin as a distinct Android input device
- * (`Android/<controllerNumber>/Joy-Con Virtual Gamepad <player>`); the relay remaps buttons/sticks
- * by orientation (see [SidewaysMapper]), so which physical button reaches a given Android control differs
- * between a sideways single Joy-Con and a pair. [ANDROID_NAMES]/[HAT_NAMES] are the fixed,
- * body-independent Dolphin names for each Android keycode/hat direction our virtual pad emits
- * (captured from a real mapping); [specFor] resolves a customized source to the one its body
- * actually emits. Every stick direction is its own Dolphin input, so a stick target can mix
- * stick tilts and buttons freely without losing analog range on the tilts.
+ * Generates Dolphin's `GCPadNew.ini` mappings for the Virtual Gamepad, one `[GCPadN]` section per
+ * assigned player, driven by the user's own Joy-Con → GameCube mapping. The device qualifier, the
+ * name tables and why each stick direction binds separately: docs/virtual-gamepad.md#emulator-config.
  */
 object DolphinGcpadConfig {
     val path = DolphinPaths.config("GCPadNew.ini")

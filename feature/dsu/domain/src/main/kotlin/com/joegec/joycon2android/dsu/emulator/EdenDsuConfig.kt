@@ -23,26 +23,9 @@ import com.joegec.joycon2android.model.PlayerState
 
 /**
  * Binds Eden to our DSU server in `config.ini`'s `[Controls]`: the three server switches, then a
- * whole controller per assigned player — buttons, sticks and motion — driven by the user's
- * customizable Joy-Con -> Pro Controller mapping. A cemuhook pad carries the full DS4 button set
- * and both sticks, so nothing else is needed for a player to play; the Virtual Gamepad is an
- * alternative route to the same keys, not a prerequisite.
- *
- * Eden's cemuhook engine addresses a pad by `guid`, `port` and `pad`, and nothing else. The
- * server's `guid` is its IPv4 address as a 32-bit integer, hex, right-aligned in an otherwise-zero
- * UUID written raw (no dashes); `port` is the UDP port, not a controller index. `pad` is a global
- * index, `client * 4 + slot`, so with our server as Eden's only client it is the DSU slot itself.
- *
- * [DS4_BITS] is the protocol wiring, not a preference: cemuhook's two button bytes packed
- * low-then-high are exactly Eden's `PadButton` values, and Home and the touchpad click ride the
- * bytes above them. Sticks arrive as raw bytes that Eden reads as `(v - 127) / 127`, so the
- * axis pairs need no inversion.
- *
- * Motion is the one thing a pad cannot share: a pad packet carries a single accelerometer and
- * gyroscope, so `motion` is always index 0 and each hand streams on a slot of its own
- * ([DsuSlots]). The hand holding the player's own slot lands on `motionright`, its second hand on
- * `motionleft`; one Joy-Con, or a pair that ran out of slots, binds both to the same pad, which is
- * what Eden's own auto-mapping does for every device.
+ * whole controller per assigned player — buttons, sticks and motion — driven by the user's own
+ * Joy-Con → Pro Controller mapping. How Eden addresses a cemuhook pad, and why the button table
+ * reads the way it does: docs/dsu-motion.md#edens-cemuhook-bindings.
  */
 object EdenDsuConfig {
     private const val ENGINE = "cemuhookudp"

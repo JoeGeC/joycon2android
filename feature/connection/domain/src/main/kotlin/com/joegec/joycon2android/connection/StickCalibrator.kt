@@ -3,22 +3,11 @@ package com.joegec.joycon2android.connection
 import com.joegec.joycon2android.model.JoyconInput
 
 /**
- * Rescales one controller's raw stick readings onto the full 0..4095 range, centred on 2048,
- * that every downstream consumer assumes.
+ * Rescales one controller's raw sticks onto the full 0..4095 range, centred on 2048, that every
+ * downstream consumer assumes. Measured travel and rest points: docs/protocol.md#stick-range-and-centre.
  *
- * Measured on hardware (2026-09): the raw 12-bit sticks reach only about +-1250 LSB of travel
- * (full left 900, full right 3400) and they do not rest at 2048 — left Joy-Con x 2080 / y 2157,
- * right x 2014 / y 2022. Taking 2048 as both the centre and the half-span therefore leaves full
- * deflection at roughly 60% of range with a permanent 4-5% drift at rest.
- *
- * Travel is asymmetric about rest, so each direction carries its own span — the same
- * centre/below/above triple the controller's own factory calibration stores. Spans start at
- * [seedHalfSpan] and only ever widen, so a stick reaches full tilt from the first packet and
- * self-corrects to units that travel further.
- *
- * Centre is learned from the first still window after connect and then frozen. Gyro bias can be
- * re-learned whenever the controller goes quiet, but a stick held at full deflection is perfectly
- * still, so "no movement means at rest" would happily adopt full tilt as centre.
+ * Centre is learned from the first still window and then frozen, because a stick held at full
+ * deflection is perfectly still too; spans only ever widen, so a stick tilts fully from packet one.
  */
 class StickCalibrator(
     restWindowSize: Int = DEFAULT_REST_WINDOW,
