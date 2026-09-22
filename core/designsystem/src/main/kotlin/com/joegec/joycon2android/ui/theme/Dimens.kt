@@ -30,6 +30,7 @@ object Dimens {
     val dpadSize = 46.dp
     val faceButtonSize = 46.dp
     val iconButtonSize = 36.dp
+    val iconSizeTiny = 14.dp // sits beside bodySmall text rather than standing on its own
     val iconSizeSmall = 18.dp
     val iconSizeMedium = 20.dp
     val progressIndicatorSmall = 14.dp
