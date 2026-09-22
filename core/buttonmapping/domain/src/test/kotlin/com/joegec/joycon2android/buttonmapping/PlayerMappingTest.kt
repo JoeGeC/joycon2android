@@ -59,17 +59,6 @@ class PlayerMappingTest {
     }
 
     @Test
-    fun `resetting puts the body back on the console's own layout`() = runBlocking {
-        fixture.applyLayout(fixture.console, body, MarioKartWiiMapping.id)
-
-        fixture.resetMapping(fixture.console, body)
-
-        val mapping = fixture.playerMapping(body)
-        assertEquals(WiiMapping.id, mapping.layout?.id)
-        assertFalse(mapping.sidewaysRemote)
-    }
-
-    @Test
     fun `saving names what the player built and offers it to that body`() = runBlocking {
         fixture.applyLayout(fixture.console, body, MarioKartWiiMapping.id)
         fixture.setMapping(fixture.console, body, "A", "Up")

@@ -97,7 +97,6 @@ class MainActivity : ComponentActivity() {
                     c.applyMappingLayout,
                     c.applyGlobalLayout,
                     c.setControllerMapping,
-                    c.resetControllerMapping,
                     c.setSidewaysRemote,
                     c.saveCustomLayout,
                     c.saveGlobalLayout,
@@ -219,7 +218,6 @@ class MainActivity : ComponentActivity() {
         setMapping = { body, targetKey, sourceId ->
             controllerMappingViewModel.setMapping(body, targetKey, sourceId)
         },
-        resetMapping = { controllerMappingViewModel.resetMapping(it) },
         setSidewaysRemote = { body, enabled ->
             controllerMappingViewModel.setSidewaysRemoteEnabled(body, enabled)
         },
