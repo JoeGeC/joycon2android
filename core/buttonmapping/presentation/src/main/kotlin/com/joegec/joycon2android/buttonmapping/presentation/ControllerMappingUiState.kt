@@ -32,6 +32,7 @@ data class PlayerMappingUiState(
     val layoutOptions: List<DropdownOption>,
     val selectedLayoutId: String?,
     val layoutName: String?,
+    val layoutDescription: String?,
     val sidewaysRemote: Boolean,
     val offersSidewaysRemote: Boolean,
     val mapping: Map<String, String>,
@@ -51,7 +52,7 @@ internal fun controllerMappingUiState(
 )
 
 private fun GlobalMapping.uiState(console: Console) = GlobalLayoutUiState(
-    options = MappingPresets.forConsole(console).map { DropdownOption(it.id, it.displayName) } +
+    options = MappingPresets.forConsole(console).map { DropdownOption(it.id, it.displayName, it.description) } +
         savedLayouts.map {
             DropdownOption(
                 id = it.id,
@@ -69,9 +70,12 @@ private fun GlobalMapping.uiState(console: Console) = GlobalLayoutUiState(
 
 private fun PlayerMapping.uiState(console: Console, layouts: List<MappingLayout>) = PlayerMappingUiState(
     body = body,
-    layoutOptions = layouts.map { DropdownOption(it.id, it.displayName, deletable = it is SavedLayout) },
+    layoutOptions = layouts.map {
+        DropdownOption(it.id, it.displayName, subLabel = it.description, deletable = it is SavedLayout)
+    },
     selectedLayoutId = layout?.id,
     layoutName = layout?.displayName,
+    layoutDescription = layout?.description,
     sidewaysRemote = sidewaysRemote,
     offersSidewaysRemote = MappingOptions.offersSidewaysRemote(console, body.side),
     mapping = entries,

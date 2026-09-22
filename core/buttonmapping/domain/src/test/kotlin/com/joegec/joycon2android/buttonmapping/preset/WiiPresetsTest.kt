@@ -20,14 +20,37 @@ class WiiPresetsTest {
         assertEquals(WiiMapping, MappingPresets.default(Console.WIIMOTE_NUNCHUK))
     }
 
+    // 1 and 2 go on the shoulders, so a thumb never leaves the stick to reach them.
     @Test
-    fun `the Joy-Con layout swaps the remote's B and 2 on every body`() {
-        JoyconSide.entries.forEach { side ->
-            val wii = WiiMapping.entries(side)
-            val joycon = JoyconWiiMapping.entries(side)
+    fun `the Joy-Con layout puts the remote's buttons where a Joy-Con keeps them`() {
+        val dual = JoyconWiiMapping.entries(JoyconSide.DUAL)
+        assertEquals("B", dual.getValue(WiimoteButton.B.name))
+        assertEquals("R", dual.getValue(WiimoteButton.One.name))
+        assertEquals("ZR", dual.getValue(WiimoteButton.Two.name))
+        assertEquals("Minus", dual.getValue(WiimoteButton.Minus.name))
 
-            assertEquals("B on $side", wii.getValue(WiimoteButton.Two.name), joycon.getValue(WiimoteButton.B.name))
-            assertEquals("2 on $side", wii.getValue(WiimoteButton.B.name), joycon.getValue(WiimoteButton.Two.name))
+        val right = JoyconWiiMapping.entries(JoyconSide.RIGHT)
+        assertEquals("B", right.getValue(WiimoteButton.B.name))
+        assertEquals("R", right.getValue(WiimoteButton.One.name))
+        assertEquals("ZR", right.getValue(WiimoteButton.Two.name))
+
+        val left = JoyconWiiMapping.entries(JoyconSide.LEFT)
+        assertEquals("Right", left.getValue(WiimoteButton.A.name))
+        assertEquals("Down", left.getValue(WiimoteButton.B.name))
+        assertEquals("L", left.getValue(WiimoteButton.One.name))
+        assertEquals("ZL", left.getValue(WiimoteButton.Two.name))
+        assertEquals("Up", left.getValue(WiimoteButton.Plus.name))
+    }
+
+    @Test
+    fun `no button fires two of the Joy-Con layout's targets`() {
+        JoyconSide.entries.forEach { side ->
+            val fired = mutableMapOf<String, MutableSet<String>>()
+            JoyconWiiMapping.entries(side).forEach { (target, value) ->
+                sourceIdsOf(value).forEach { fired.getOrPut(it) { mutableSetOf() }.add(target) }
+            }
+
+            assertEquals("$side", emptyMap<String, Set<String>>(), fired.filterValues { it.size > 1 })
         }
     }
 

@@ -16,10 +16,3 @@ internal fun <K : Enum<K>> Map<K, StickSource>.stickEntries(): Map<String, Strin
     entries.flatMap { (target, stick) ->
         MappingSource.directionsOf(stick).map { target.directionKey(it.direction) to it.id }
     }.toMap()
-
-/** Leaves the layout alone unless both targets are bound, so a preset can't lose one to a swap. */
-internal fun Map<String, String>.swappingSources(first: Enum<*>, second: Enum<*>): Map<String, String> {
-    val firstSource = this[first.name] ?: return this
-    val secondSource = this[second.name] ?: return this
-    return this + mapOf(first.name to secondSource, second.name to firstSource)
-}

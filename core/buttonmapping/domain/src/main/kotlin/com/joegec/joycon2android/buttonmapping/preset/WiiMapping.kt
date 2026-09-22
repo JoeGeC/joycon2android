@@ -30,6 +30,7 @@ import com.joegec.joycon2android.model.JoyconButton.ZR
 object WiiMapping : MappingPreset {
     override val id = "WII"
     override val displayName = "Wii"
+    override val description = "Like a Wiimote, B → ZR"
     override val console = Console.WIIMOTE_NUNCHUK
 
     override fun entries(side: JoyconSide) =

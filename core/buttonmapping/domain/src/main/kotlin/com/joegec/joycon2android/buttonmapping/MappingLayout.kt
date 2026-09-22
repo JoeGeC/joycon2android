@@ -10,6 +10,9 @@ interface MappingLayout {
     val id: String
     val displayName: String
 
+    /** A line under the name, saying what picking it does. */
+    val description: String? get() = null
+
     /**
      * Whether this layout stands a lone Joy-Con in for a Wii Remote held sideways, the way a game
      * written for that grip expects one. Its motion turns onto the sideways remote's frame and its
