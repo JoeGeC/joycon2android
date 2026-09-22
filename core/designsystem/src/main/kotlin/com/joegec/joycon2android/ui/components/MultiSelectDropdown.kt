@@ -41,7 +41,7 @@ fun MultiSelectDropdown(
     modifier: Modifier = Modifier,
 ) {
     val selectedLabels = selectedIds.mapNotNull { id -> options.firstOrNull { it.first == id }?.second }
-    val label = selectedLabels.takeIf { it.isNotEmpty() }?.joinToString(" + ")
+    val label = selectedLabels.takeIf { it.isNotEmpty() }?.joinToString(", ")
         ?: options.firstOrNull()?.second
         ?: return
     var expanded by remember { mutableStateOf(false) }

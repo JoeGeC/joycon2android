@@ -23,6 +23,8 @@ import com.joegec.joycon2android.model.JoyconButton.SrRight
 import com.joegec.joycon2android.model.JoyconButton.Up
 import com.joegec.joycon2android.model.JoyconButton.X
 import com.joegec.joycon2android.model.JoyconButton.Y
+import com.joegec.joycon2android.model.JoyconButton.ZL
+import com.joegec.joycon2android.model.JoyconButton.ZR
 
 /**
  * A sideways Joy-Con laid out the way Mario Kart 8 uses one, so the same thumb does the same job in
@@ -46,12 +48,12 @@ object MarioKartWiiMapping : MappingPreset {
         else -> buttons(side).buttonEntries() + dPadSticks(side).sourceEntries()
     }
 
-    // Held as a remote and a nunchuk, each index finger rests on that hand's shoulder, which is
-    // where the controller it stands in for keeps its trigger: the remote's B on the right, the
-    // Nunchuk's Z on the left. Hopping also keeps the Joy-Con's own B, so either the thumb or the
-    // index finger can do it. The trick rides the same shoulder as the hop, as SR does on a lone
-    // Joy-Con, so the finger that jumps is the finger that tricks.
+    // Held as a remote and a nunchuk, the four shoulders carry what each hand's controller keeps
+    // under a finger: the remote's B and the Nunchuk's Z on the upper pair, 1 and 2 on the lower.
+    // The hop also takes the Joy-Con's own B, and the trick rides its shoulder as SR does alone.
     private fun pairButtons(): Map<String, String> = mapOf(
+        WiimoteButton.One to listOf(ZL),
+        WiimoteButton.Two to listOf(ZR),
         WiimoteButton.B to listOf(R, B),
         WiimoteButton.Shake to listOf(R),
         WiimoteButton.Minus to listOf(Minus),

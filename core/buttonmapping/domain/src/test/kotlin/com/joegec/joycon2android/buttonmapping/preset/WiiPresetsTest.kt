@@ -66,6 +66,8 @@ class WiiPresetsTest {
     fun `Mario Kart moves a pair's index fingers onto the shoulders, and tricks from one`() {
         val pair = MarioKartWiiMapping.entries(JoyconSide.DUAL)
 
+        assertEquals("ZL", pair.getValue(WiimoteButton.One.name))
+        assertEquals("ZR", pair.getValue(WiimoteButton.Two.name))
         // The remote's trigger hand, and the Joy-Con's own B so either finger can hop.
         assertEquals("R|B", pair.getValue(WiimoteButton.B.name))
         assertEquals("L", pair.getValue(WiimoteButton.NunchukZ.name)) // the Nunchuk's
