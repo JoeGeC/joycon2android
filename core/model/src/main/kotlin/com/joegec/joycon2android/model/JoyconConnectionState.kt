@@ -5,7 +5,9 @@ data class JoyconConnectionState(
     val connecting: Boolean = false,
     val ready: Boolean = false,
     val deviceName: String? = null,
+    val bondState: Int = 10, // BluetoothDevice.BOND_NONE
     val error: String? = null,
     /** Shell accent color read from SPI flash, packed as 0xRRGGBB. Null until read (or unset on the controller). */
     val accentColor: Int? = null,
+    val notificationCount: Int = 0,
 )

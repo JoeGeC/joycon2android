@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.connection
 
+
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.Side
@@ -25,7 +26,14 @@ object PacketParser {
         0x0100000000L to JoyconButton.GR, 0x0200000000L to JoyconButton.GL,
     )
 
-    fun parse(data: ByteArray, side: Side): JoyconInput? {
+    fun parse(data: ByteArray, side: Side, isNyxiChar: Boolean = false): JoyconInput? {
+        if (data.size < 12) return null
+
+        if (isNyxiChar || isNyxiFormat(data)) {
+            return parseNyxiFormat(data, side)
+        }
+
+        // Standard Switch parser should only run on non-Nyxi characteristics
         if (data.size < MIN_PACKET_SIZE) return null
         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
 
@@ -52,6 +60,120 @@ object PacketParser {
         )
     }
 
+    private fun isNyxiFormat(data: ByteArray): Boolean {
+        if (data.size < 8) return false
+        val status = data[1].toInt() and 0xFF
+        
+        // Accept any 0x0X or 0x1X status as potential Nyxi input
+        val isInputStatus = (status in 0x00..0x1F) || 
+                            status == 0x80 || status == 0x81 || status == 0x8E || status == 0x3F
+        
+        return isInputStatus
+    }
+
+    private fun parseNyxiFormat(data: ByteArray, side: Side): JoyconInput? {
+        val status = data[1].toInt() and 0xFF
+        
+        // Accept any low-range status (0x0X, 0x1X) as input, provided it's not a generic vendor header (0xFE).
+        // Some Nyxi controllers swap status codes (e.g. 0x10 for Left, 0x0C for Right) or use new ones like 0x1C.
+        val isValidStatus = (status in 0x00..0x1F) || 
+                            status == 0x80 || status == 0x81 || status == 0x8E || status == 0x3F
+        
+        if (!isValidStatus || (data[0].toInt() and 0xFF == 0xFE)) {
+            return null
+        }
+
+
+
+        val b2 = data[2].toInt() and 0xFF
+        val b3 = data[3].toInt() and 0xFF
+        val b4 = data[4].toInt() and 0xFF
+
+        val pressed = mutableSetOf<String>()
+
+
+        // Byte 2 & Byte 3: Button mappings depend on whether this is the Left or Right controller half
+        if (side == Side.LEFT) {
+            // Left Joy-Con Byte 2 (D-Pad & Left shoulders - oriented for sideways single Joy-Con display)
+            if ((b2 and 0x01) != 0) pressed.add(JoyconButton.Down.id)   // Physical Right -> Screen ▶
+            if ((b2 and 0x02) != 0) pressed.add(JoyconButton.Right.id)  // Physical Up -> Screen ▲
+            if ((b2 and 0x04) != 0) pressed.add(JoyconButton.Left.id)   // Physical Down -> Screen ▼
+            if ((b2 and 0x08) != 0) pressed.add(JoyconButton.Up.id)     // Physical Left -> Screen ◀
+            if ((b2 and 0x10) != 0) pressed.add(JoyconButton.L.id)
+            if ((b2 and 0x20) != 0) pressed.add(JoyconButton.ZL.id)
+            if ((b2 and 0x40) != 0) pressed.add(JoyconButton.Minus.id)
+            if ((b2 and 0x80) != 0) pressed.add(JoyconButton.LS.id)
+
+            // Left Joy-Con Byte 3 (Capture, SL/SR, etc.)
+            if ((b3 and 0x01) != 0) pressed.add(JoyconButton.Capture.id) // "O" button
+            if ((b3 and 0x02) != 0) pressed.add(JoyconButton.Minus.id)
+            if ((b3 and 0x04) != 0) pressed.add(JoyconButton.LS.id)
+            if ((b3 and 0x10) != 0) pressed.add(JoyconButton.Capture.id)
+            if ((b3 and 0x20) != 0) pressed.add(JoyconButton.GL.id)
+            if ((b3 and 0x40) != 0) pressed.add(JoyconButton.SrLeft.id)
+            if ((b3 and 0x80) != 0) pressed.add(JoyconButton.SlLeft.id)
+        } else {
+            // Right / Pro Controller Byte 2 (Face buttons & Right shoulders)
+            if ((b2 and 0x01) != 0) pressed.add(JoyconButton.B.id)
+            if ((b2 and 0x02) != 0) pressed.add(JoyconButton.A.id)
+            if ((b2 and 0x04) != 0) pressed.add(JoyconButton.Y.id)
+            if ((b2 and 0x08) != 0) pressed.add(JoyconButton.X.id)
+            if ((b2 and 0x10) != 0) pressed.add(JoyconButton.R.id)
+            if ((b2 and 0x20) != 0) pressed.add(JoyconButton.ZR.id)
+            if ((b2 and 0x40) != 0) pressed.add(JoyconButton.Plus.id)
+            if ((b2 and 0x80) != 0) pressed.add(JoyconButton.RS.id)
+
+            // Right / Pro Controller Byte 3 (Home, Chat, SL/SR, etc.)
+            if ((b3 and 0x01) != 0) pressed.add(JoyconButton.Home.id)
+            if ((b3 and 0x02) != 0) pressed.add(JoyconButton.Plus.id)
+            if ((b3 and 0x04) != 0) pressed.add(JoyconButton.RS.id)
+            if ((b3 and 0x10) != 0) pressed.add(JoyconButton.Chat.id)   // "C" Chat button on Right Joy-Con
+            if ((b3 and 0x20) != 0) pressed.add(JoyconButton.GR.id)
+            if ((b3 and 0x40) != 0) pressed.add(JoyconButton.SrRight.id)
+            if ((b3 and 0x80) != 0) pressed.add(JoyconButton.SlRight.id)
+        }
+
+        // Byte 4 D-Pad Hat Switch
+        val hat = b4 and 0x0F
+        when (hat) {
+            0 -> pressed.add(JoyconButton.Up.id)
+            1 -> { pressed.add(JoyconButton.Up.id); pressed.add(JoyconButton.Right.id) }
+            2 -> pressed.add(JoyconButton.Right.id)
+            3 -> { pressed.add(JoyconButton.Down.id); pressed.add(JoyconButton.Right.id) }
+            4 -> pressed.add(JoyconButton.Down.id)
+            5 -> { pressed.add(JoyconButton.Down.id); pressed.add(JoyconButton.Left.id) }
+            6 -> pressed.add(JoyconButton.Left.id)
+        }
+
+        // Stick decoding: Primary stick is usually at offset 5. 
+        // Second stick (Pro) at offset 8. Some Right Joy-Cons use offset 8 exclusively.
+        val (s1x, s1y) = if (data.size >= 8) decodeStick(data, 5) else (2048 to 2048)
+        val (s2x, s2y) = if (data.size >= 11) decodeStick(data, 8) else (2048 to 2048)
+
+        val s1Active = isStickActive(s1x to s1y)
+        val s2Active = isStickActive(s2x to s2y)
+        
+        val primaryX = when {
+            side == Side.LEFT -> s1x
+            side == Side.RIGHT -> if (s2Active && !s1Active) s2x else s1x
+            else -> s1x
+        }
+        val primaryY = when {
+            side == Side.LEFT -> s1y
+            side == Side.RIGHT -> if (s2Active && !s1Active) s2y else s1y
+            else -> s1y
+        }
+
+        return JoyconInput(
+            packetId = (data[0].toInt() and 0xFF),
+            pressed = pressed,
+            stickX = primaryX,
+            stickY = primaryY,
+            rightStickX = if (side == Side.PRO || side == Side.RIGHT) s2x else 2048,
+            rightStickY = if (side == Side.PRO || side == Side.RIGHT) s2y else 2048,
+        )
+    }
+
     private fun resolveStick(data: ByteArray, side: Side): Pair<Int, Int> {
         if (side == Side.LEFT || side == Side.PRO) return decodeStick(data, 0x0A)
         if (side == Side.RIGHT) return decodeStick(data, 0x0D)
@@ -71,7 +193,7 @@ object PacketParser {
 
     private fun isStickActive(stick: Pair<Int, Int>): Boolean {
         val (x, y) = stick
-        return x != 0 || y != 0
+        return (x != 0 || y != 0) && (x != 2048 || y != 2048)
     }
 
     /** 12-bit packed stick: 3 bytes → (x, y) each 0..4095 */

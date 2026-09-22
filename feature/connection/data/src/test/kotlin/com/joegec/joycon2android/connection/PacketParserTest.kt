@@ -2,6 +2,7 @@ package com.joegec.joycon2android.connection
 
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.Side
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -63,5 +64,48 @@ class PacketParserTest {
         val input = PacketParser.parse(packet(paddleByte = 0x00), Side.PRO)!!
         assertTrue(JoyconButton.GR.id !in input.pressed)
         assertTrue(JoyconButton.GL.id !in input.pressed)
+    }
+
+    @Test
+    fun `nyxi short packets decode primary stick`() {
+        val data = ByteArray(12).apply {
+            this[1] = 0x14 // Status
+            putStick(5, 0x111 to 0x222)
+        }
+        val input = PacketParser.parse(data, Side.LEFT, isNyxiChar = true)!!
+        assertEquals(0x111, input.stickX)
+        assertEquals(0x222, input.stickY)
+    }
+
+    @Test
+    fun `nyxi heartbeats or mismatched status are accepted if valid status range`() {
+        val data = ByteArray(12).apply {
+            this[1] = 0x0C // Any valid status like 0x0C or 0x10
+            putStick(5, 0x999 to 0x999)
+        }
+        val input = PacketParser.parse(data, Side.LEFT, isNyxiChar = true)
+        Assert.assertNotNull(input)
+    }
+
+    @Test
+    fun `nyxi right joycon decodes stick from offset 8`() {
+        val data = ByteArray(12).apply {
+            this[1] = 0x10 // Valid input for Right
+            putStick(8, 0x333 to 0x444)
+        }
+        val input = PacketParser.parse(data, Side.RIGHT, isNyxiChar = true)!!
+        assertEquals(0x333, input.stickX) // Primary
+        assertEquals(0x333, input.rightStickX) // Also mapped to right
+    }
+
+    @Test
+    fun `nyxi magic byte packets are ignored`() {
+        val data = ByteArray(64).apply {
+            this[0] = 0xFE.toByte()
+            this[1] = 0x10.toByte()
+            putStick(5, 0x555 to 0x666)
+        }
+        val input = PacketParser.parse(data, Side.PRO, isNyxiChar = true)
+        assertNull(input)
     }
 }

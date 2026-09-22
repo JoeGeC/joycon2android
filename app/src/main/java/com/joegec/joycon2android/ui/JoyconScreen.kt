@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.ui
 
+import android.bluetooth.BluetoothDevice
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -82,6 +83,7 @@ import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.gamepad.presentation.ShizukuSetupCard
 import com.joegec.joycon2android.assignment.presentation.AssignmentPanel
+import com.joegec.joycon2android.connection.JoyconConnection
 import com.joegec.joycon2android.connection.presentation.CompactPlayerRow
 import com.joegec.joycon2android.model.ConnectionViewMode
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase

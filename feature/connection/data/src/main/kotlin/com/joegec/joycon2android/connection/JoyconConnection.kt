@@ -23,11 +23,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
 /**
- * Manages a single BLE GATT connection to one Joy-Con 2.
+ * Manages a single BLE GATT connection to one Joy-Con 2 or compatible controller.
  * Each Joy-Con gets its own instance with independent state.
- *
- * All BLE operations require BLUETOOTH_CONNECT permission, which is verified
- * by the permission launcher in MainActivity before any BLE code is reached.
  */
 @SuppressLint("MissingPermission")
 class JoyconConnection(
@@ -45,6 +42,11 @@ class JoyconConnection(
         private val CMD_RESPONSE_CHAR = UUID.fromString("c765a961-d9d8-4d36-a20a-5315b111836a")
         private val CCCD = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
+        private val KEYLINKER_SERVICE = UUID.fromString("d7f010e0-660d-46e9-96c3-19c4148bdab5")
+        private val KEYLINKER_WRITE = UUID.fromString("d7f010e1-660d-46e9-96c3-19c4148bdab5")
+        private val KEYLINKER_NOTIFY = UUID.fromString("d7f010e2-660d-46e9-96c3-19c4148bdab5")
+        private val NYXI_INPUT_NOTIFY_CHAR = UUID.fromString("d5a9e01e-2ffc-4cca-b20c-8b67142bf442")
+
         private val INIT_CMD_1 = byteArrayOf(
             0x0C, 0x91.toByte(), 0x01, 0x02, 0x00, 0x04,
             0x00, 0x00, 0xFF.toByte(), 0x00, 0x00, 0x00
@@ -54,23 +56,11 @@ class JoyconConnection(
             0x00, 0x00, 0xFF.toByte(), 0x00, 0x00, 0x00
         )
 
-        // SPI read (report 0x02, cmd 0x04): read 0x40 bytes from the DeviceInfo block
-        // at 0x013000, which contains the shell colors (body color at 0x013019).
-        // Payload: read length (0x40), 0x7E magic, then the 4-byte LE source address.
-        // The reply arrives on the command-response characteristic and is decoded
-        // by [SpiColorParser].
-        // Byte [2] is 0x00 for SPI reads (matching HandHeldLegend procon2tool);
-        // the INIT_CMD_* feature commands use 0x01 there, but SPI reads only
-        // reply when this is 0x00.
         private val SPI_READ_COLOR_CMD = byteArrayOf(
             0x02, 0x91.toByte(), 0x00, 0x04, 0x00, 0x08, 0x00, 0x00,
             0x40, 0x7E, 0x00, 0x00, 0x00, 0x30, 0x01, 0x00
         )
 
-        // Subcommand 0x07: set LED pattern via bitmask (16 bytes)
-        // Lower nibble = solid LEDs (0x01=P1, 0x02=P2, 0x04=P3, 0x08=P4)
-        // Upper nibble = flashing LEDs (0x10=P1, 0x20=P2, 0x40=P3, 0x80=P4)
-        // 0xF0 = all flashing = default cycling animation
         private fun playerLedCmd(bitmask: Byte): ByteArray {
             return byteArrayOf(
                 0x09, 0x91.toByte(), 0x01, 0x07, 0x00, 0x08, 0x00, 0x00,
@@ -78,7 +68,6 @@ class JoyconConnection(
             )
         }
 
-        // All 4 player LEDs solid on (0x0F = P1+P2+P3+P4)
         private val LED_ALL_ON_CMD = byteArrayOf(
             0x09, 0x91.toByte(), 0x01, 0x07, 0x00, 0x08, 0x00, 0x00,
             0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -106,7 +95,7 @@ class JoyconConnection(
     private var pendingPlayerLed: PlayerNumber? = null
     @Volatile var initComplete = false
         private set
-    @Volatile private var highPriority = false
+    @Volatile private var highPriority = true
     private var ledSentAfterFirstPacket = false
 
     fun connect(device: BluetoothDevice) {
@@ -129,7 +118,7 @@ class JoyconConnection(
                 BluetoothProfile.STATE_CONNECTED -> {
                     Log.i(TAG, "[$side] Connected. Requesting MTU $DESIRED_MTU")
                     _connectionState.value = JoyconConnectionState(
-                        connected = true, deviceName = deviceName
+                        connected = true, deviceName = deviceName, bondState = g.device.bondState
                     )
                     g.requestMtu(DESIRED_MTU)
                 }
@@ -166,36 +155,64 @@ class JoyconConnection(
                 return
             }
 
-            val svc = g.getService(INPUT_SERVICE)
+            // Subscribe to all notification characteristics across all discovered services
+            for (s in g.services) {
+                for (char in s.characteristics) {
+                    if ((char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0) {
+                        if (g.setCharacteristicNotification(char, true)) {
+                            val cccd = char.getDescriptor(CCCD)
+                            if (cccd != null) {
+                                opQueue.enqueue {
+                                    writeDescriptor(g, cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            var svc = g.getService(INPUT_SERVICE)
             if (svc == null) {
+                svc = g.getService(KEYLINKER_SERVICE)
+            }
+
+            if (svc == null) {
+                val uuids = g.services.joinToString(", ") { it.uuid.toString().take(8) }
                 _connectionState.value = JoyconConnectionState(
-                    error = "Not a compatible Joy-Con 2", deviceName = deviceName
+                    error = "[$deviceName] Not a compatible Joy-Con 2 (Services: $uuids)",
+                    deviceName = deviceName
                 )
                 return
             }
 
-            writeChar = svc.getCharacteristic(WRITE_CHAR)
-            notifyChar = svc.getCharacteristic(NOTIFY_CHAR)
-            cmdResponseChar = svc.getCharacteristic(CMD_RESPONSE_CHAR)
+            if (svc.uuid == KEYLINKER_SERVICE) {
+                Log.i(TAG, "[$side] Using Keylinker service")
+                writeChar = svc.getCharacteristic(KEYLINKER_WRITE)
+                notifyChar = svc.getCharacteristic(KEYLINKER_NOTIFY)
+                cmdResponseChar = svc.getCharacteristic(KEYLINKER_NOTIFY)
+            } else {
+                writeChar = svc.getCharacteristic(WRITE_CHAR)
+                notifyChar = svc.getCharacteristic(NOTIFY_CHAR) ?: svc.getCharacteristic(NYXI_INPUT_NOTIFY_CHAR)
+                cmdResponseChar = svc.getCharacteristic(CMD_RESPONSE_CHAR)
+            }
+
             if (writeChar == null || notifyChar == null) {
                 _connectionState.value = JoyconConnectionState(
-                    error = "Missing BLE characteristics", deviceName = deviceName
+                    error = "Missing BLE characteristics", deviceName = deviceName,
+                    bondState = g.device.bondState
                 )
                 return
             }
             writeChar!!.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
 
-            // Subscribe to command response notifications (required for LED commands)
-            if (cmdResponseChar != null) {
+            // Subscribe to command response notifications
+            if (cmdResponseChar != null && cmdResponseChar != notifyChar) {
                 g.setCharacteristicNotification(cmdResponseChar, true)
                 val cmdCccd = cmdResponseChar!!.getDescriptor(CCCD)
                 if (cmdCccd != null) {
                     opQueue.enqueue {
-                        Log.d(TAG, "[$side] Writing CMD_RESPONSE CCCD")
                         writeDescriptor(g, cmdCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
                     }
-                } else {
-                    Log.w(TAG, "[$side] CMD_RESPONSE char has no CCCD descriptor")
                 }
             }
 
@@ -204,38 +221,54 @@ class JoyconConnection(
             val notifyCccd = notifyChar!!.getDescriptor(CCCD)
             if (notifyCccd != null) {
                 opQueue.enqueue {
-                    Log.d(TAG, "[$side] Writing NOTIFY CCCD")
                     writeDescriptor(g, notifyCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
                 }
-            } else {
-                Log.e(TAG, "[$side] NOTIFY char has no CCCD descriptor — notifications won't work!")
             }
+
+            // Subscribe to Nyxi / Espressif input notifications if present as a distinct characteristic
+            val nyxiNotifyChar = svc.getCharacteristic(NYXI_INPUT_NOTIFY_CHAR)
+            if (nyxiNotifyChar != null && nyxiNotifyChar != notifyChar) {
+                g.setCharacteristicNotification(nyxiNotifyChar, true)
+                val nyxiCccd = nyxiNotifyChar.getDescriptor(CCCD)
+                if (nyxiCccd != null) {
+                    opQueue.enqueue {
+                        writeDescriptor(g, nyxiCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+                    }
+                }
+            }
+
             enqueueInitWrite(g, INIT_CMD_1)
             enqueueInitWrite(g, INIT_CMD_2)
-            enqueueInitWrite(g, SPI_READ_COLOR_CMD)
+            if (svc.uuid != KEYLINKER_SERVICE) {
+                enqueueInitWrite(g, SPI_READ_COLOR_CMD)
+            }
 
             opQueue.enqueue {
                 initComplete = true
                 _connectionState.value = _connectionState.value.copy(
-                    connected = true, ready = true, deviceName = deviceName
+                    connected = true, ready = true, deviceName = deviceName,
+                    bondState = g.device.bondState
                 )
-                Log.i(TAG, "[$side] Init sequence complete")
+                Log.i(TAG, "[$side] Init sequence complete — requesting HIGH priority")
                 if (highPriority) requestPriority(g)
-                false // no GATT op — advance immediately
+
+                // Schedule follow-up priority requests to prevent Android Bluetooth stack demotion when multiple controllers connect
+                mainHandler.postDelayed({ if (initComplete && highPriority) requestPriority(g) }, 1000L)
+                mainHandler.postDelayed({ if (initComplete && highPriority) requestPriority(g) }, 2500L)
+
+                false
             }
         }
 
         override fun onDescriptorWrite(
             g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int
         ) {
-            Log.i(TAG, "[$side] CCCD write status=$status")
             mainHandler.post { opQueue.complete() }
         }
 
         override fun onCharacteristicWrite(
             g: BluetoothGatt, ch: BluetoothGattCharacteristic, status: Int
         ) {
-            Log.d(TAG, "[$side] Char write status=$status initComplete=$initComplete")
             val delay = if (initComplete) 0L else INIT_GAP_MS
             mainHandler.postDelayed({ opQueue.complete() }, delay)
         }
@@ -259,15 +292,13 @@ class JoyconConnection(
         if (initComplete) gatt?.let(::requestPriority)
     }
 
-    // The default "balanced" connection interval lands on 30 ms on some phones, so the Joy-Con
-    // can only report ~33 times a second; high priority asks the stack for 7.5-15 ms.
     private fun requestPriority(g: BluetoothGatt) {
         val priority = if (highPriority) {
             BluetoothGatt.CONNECTION_PRIORITY_HIGH
         } else {
             BluetoothGatt.CONNECTION_PRIORITY_BALANCED
         }
-        Log.i(TAG, "[$side] Connection priority high=$highPriority accepted=${g.requestConnectionPriority(priority)}")
+        g.requestConnectionPriority(priority)
     }
 
     fun setPlayerLed(player: PlayerNumber) {
@@ -288,7 +319,6 @@ class JoyconConnection(
         val pending = pendingPlayerLed
         pendingPlayerLed = null
         val cmd = if (pending != null) playerLedCmd(pending.ledBitmask) else LED_ALL_ON_CMD
-        Log.i(TAG, "[$side] Sending LED cmd: ${cmd.joinToString(" ") { "%02X".format(it) }}")
         return writeCharacteristic(g, writeChar!!, cmd)
     }
 
@@ -297,21 +327,24 @@ class JoyconConnection(
     }
 
     private fun handleCharacteristicChanged(g: BluetoothGatt, uuid: UUID, data: ByteArray) {
-        when (uuid) {
-            NOTIFY_CHAR -> {
-                PacketParser.parse(data, side)?.let { _input.value = stickCalibrator.calibrate(it) }
-                if (!ledSentAfterFirstPacket && initComplete) {
-                    ledSentAfterFirstPacket = true
-                    mainHandler.post { opQueue.enqueue { sendLedCommand(g) } }
-                }
+        val isNyxiChar = uuid == NYXI_INPUT_NOTIFY_CHAR || uuid == KEYLINKER_NOTIFY
+        
+        PacketParser.parse(data, side, isNyxiChar)?.let { parsed ->
+            _input.value = stickCalibrator.calibrate(parsed)
+            if (!ledSentAfterFirstPacket && initComplete) {
+                ledSentAfterFirstPacket = true
+                mainHandler.post { opQueue.enqueue { sendLedCommand(g) } }
             }
-            CMD_RESPONSE_CHAR -> {
-                Log.d(TAG, "[$side] Cmd response: ${data.joinToString(" ") { "%02X".format(it) }}")
-                SpiColorParser.parseAccentColor(data)?.let { color ->
-                    Log.i(TAG, "[$side] Accent color: #${"%06X".format(color)}")
-                    _connectionState.value = _connectionState.value.copy(accentColor = color)
-                }
-            }
+        }
+
+        if (uuid == CMD_RESPONSE_CHAR || uuid == KEYLINKER_NOTIFY) {
+            handleCmdResponse(data)
+        }
+    }
+
+    private fun handleCmdResponse(data: ByteArray) {
+        SpiColorParser.parseAccentColor(data)?.let { color ->
+            _connectionState.value = _connectionState.value.copy(accentColor = color)
         }
     }
 
@@ -345,5 +378,4 @@ class JoyconConnection(
             g.writeDescriptor(descriptor)
         }
     }
-
 }

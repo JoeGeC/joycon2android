@@ -3,9 +3,7 @@ package com.joegec.joycon2android.connection
 /**
  * Joy-Con 2 advertisements (manufacturer ID 0x0553) carry the bonded host's MAC at
  * bytes [10..15]: a button press wakes the controller to reconnect to that host and
- * advertises its address; holding SYNC (pairing mode) zeroes the field. Observed on
- * hardware 2026-06 — wake: `… 01 00 09 A7 9A 55 E2 98 0F …`, pairing:
- * `… 01 00 00 00 00 00 00 00 0F …`.
+ * advertises its address; holding SYNC (pairing mode) zeroes the field.
  */
 object JoyconAdvertisement {
 

@@ -127,8 +127,8 @@ private fun JoyconAssignmentRow(
                             strokeWidth = 2.dp,
                         )
                         Text(
-                            stringResource(R.string.status_connecting),
-                            color = TextDim,
+                            joycon.connectionState.error ?: stringResource(R.string.status_connecting),
+                            color = if (joycon.connectionState.error != null) MaterialTheme.colorScheme.error else TextDim,
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }

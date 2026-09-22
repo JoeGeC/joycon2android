@@ -34,7 +34,7 @@ class Joycon2Manager(
     private val connectionJobs = mutableMapOf<String, Job>()
 
     @Volatile
-    private var highPriority = false
+    private var highPriority = true
 
     private val _controllers = MutableStateFlow<List<ConnectedJoycon>>(emptyList())
     override val controllers: StateFlow<List<ConnectedJoycon>> = _controllers.asStateFlow()
