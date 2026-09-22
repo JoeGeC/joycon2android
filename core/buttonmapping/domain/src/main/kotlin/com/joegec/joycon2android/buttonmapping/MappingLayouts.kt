@@ -1,12 +1,14 @@
 package com.joegec.joycon2android.buttonmapping
 
+import com.joegec.joycon2android.buttonmapping.preset.MappingPreset
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 
 /** The layouts one body can choose between: the console's shipped ones, then the user's own. */
 object MappingLayouts {
 
     fun forBody(console: Console, side: JoyconSide, saved: List<SavedLayout>): List<MappingLayout> =
-        MappingPresets.forConsole(console) + saved.filter { it.console == console && it.side == side }
+        MappingPresets.forConsole(console).filter { side in it.sides } +
+            saved.filter { it.console == console && it.side == side }
 
     /**
      * What applying [layout] leaves behind: its own bindings over the console's default ones, so a
@@ -31,9 +33,20 @@ object MappingLayouts {
         it.sidewaysRemote == sidewaysRemote && entriesOf(console, side, it) == entries
     }
 
-    /** Falls back to the console's default for an id whose layout has since been deleted. */
+    /**
+     * A body that cannot be held in the grip asked for takes its family's other grip instead, and
+     * failing that the console's default — which is also where a deleted layout lands.
+     */
     fun byId(console: Console, side: JoyconSide, id: String?, saved: List<SavedLayout>): MappingLayout =
-        forBody(console, side, saved).firstOrNull { it.id == id } ?: MappingPresets.default(console)
+        forBody(console, side, saved).firstOrNull { it.id == id }
+            ?: familyMember(console, side, id)
+            ?: MappingPresets.default(console)
+
+    private fun familyMember(console: Console, side: JoyconSide, id: String?): MappingPreset? {
+        val presets = MappingPresets.forConsole(console)
+        val family = presets.firstOrNull { it.id == id }?.family ?: return null
+        return presets.firstOrNull { it.family == family && side in it.sides }
+    }
 
     /** Ids the user chose, so a saved layout can never collide with a shipped one. */
     fun newId(): String = "saved-${java.util.UUID.randomUUID()}"

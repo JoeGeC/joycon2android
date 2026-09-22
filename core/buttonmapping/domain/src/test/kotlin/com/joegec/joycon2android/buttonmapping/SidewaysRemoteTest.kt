@@ -1,7 +1,7 @@
 package com.joegec.joycon2android.buttonmapping
 
 import com.joegec.joycon2android.buttonmapping.MappingFixture.Companion.right
-import com.joegec.joycon2android.buttonmapping.preset.MarioKartWiiMapping
+import com.joegec.joycon2android.buttonmapping.preset.MarioKartWheelMapping
 import com.joegec.joycon2android.buttonmapping.preset.WiiMapping
 import com.joegec.joycon2android.model.PlayerNumber
 import kotlinx.coroutines.runBlocking
@@ -22,7 +22,7 @@ class SidewaysRemoteTest {
 
     @Test
     fun `applying a layout takes its answer with it, either way`() = runBlocking {
-        fixture.applyLayout(fixture.console, body, MarioKartWiiMapping.id)
+        fixture.applyLayout(fixture.console, body, MarioKartWheelMapping.id)
         assertTrue(fixture.playerMapping(body).sidewaysRemote)
 
         fixture.applyLayout(fixture.console, body, WiiMapping.id)

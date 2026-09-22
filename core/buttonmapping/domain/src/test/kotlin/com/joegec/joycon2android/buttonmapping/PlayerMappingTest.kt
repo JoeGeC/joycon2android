@@ -2,7 +2,7 @@ package com.joegec.joycon2android.buttonmapping
 
 import com.joegec.joycon2android.buttonmapping.MappingFixture.Companion.left
 import com.joegec.joycon2android.buttonmapping.MappingFixture.Companion.right
-import com.joegec.joycon2android.buttonmapping.preset.MarioKartWiiMapping
+import com.joegec.joycon2android.buttonmapping.preset.MarioKartWheelMapping
 import com.joegec.joycon2android.buttonmapping.preset.WiiMapping
 import com.joegec.joycon2android.model.PlayerNumber
 import kotlinx.coroutines.runBlocking
@@ -20,26 +20,26 @@ class PlayerMappingTest {
 
     @Test
     fun `an untouched player reads as the layout they chose`() = runBlocking {
-        fixture.applyLayout(fixture.console, body, MarioKartWiiMapping.id)
+        fixture.applyLayout(fixture.console, body, MarioKartWheelMapping.id)
 
-        assertEquals(MarioKartWiiMapping.displayName, fixture.playerMapping(body).layout?.displayName)
+        assertEquals(MarioKartWheelMapping.displayName, fixture.playerMapping(body).layout?.displayName)
     }
 
     @Test
     fun `changing a binding turns it custom, and undoing that change turns it back`() = runBlocking {
-        fixture.applyLayout(fixture.console, body, MarioKartWiiMapping.id)
-        val original = MarioKartWiiMapping.entries(body.side).getValue("A")
+        fixture.applyLayout(fixture.console, body, MarioKartWheelMapping.id)
+        val original = MarioKartWheelMapping.entries(body.side).getValue("A")
 
         fixture.setMapping(fixture.console, body, "A", "Up")
         assertNull(fixture.playerMapping(body).layout)
 
         fixture.setMapping(fixture.console, body, "A", original)
-        assertEquals(MarioKartWiiMapping.id, fixture.playerMapping(body).layout?.id)
+        assertEquals(MarioKartWheelMapping.id, fixture.playerMapping(body).layout?.id)
     }
 
     @Test
     fun `the sideways-remote switch counts as a change of its own`() = runBlocking {
-        fixture.applyLayout(fixture.console, body, MarioKartWiiMapping.id)
+        fixture.applyLayout(fixture.console, body, MarioKartWheelMapping.id)
 
         fixture.setSidewaysRemote(fixture.console, body, false)
 
@@ -49,7 +49,7 @@ class PlayerMappingTest {
     @Test
     fun `one player's change leaves the next player's mapping alone`() = runBlocking {
         val other = left(PlayerNumber.P2)
-        fixture.applyLayout(fixture.console, body, MarioKartWiiMapping.id)
+        fixture.applyLayout(fixture.console, body, MarioKartWheelMapping.id)
         fixture.applyLayout(fixture.console, other, WiiMapping.id)
 
         fixture.setMapping(fixture.console, body, "A", "Up")
@@ -60,7 +60,7 @@ class PlayerMappingTest {
 
     @Test
     fun `saving names what the player built and offers it to that body`() = runBlocking {
-        fixture.applyLayout(fixture.console, body, MarioKartWiiMapping.id)
+        fixture.applyLayout(fixture.console, body, MarioKartWheelMapping.id)
         fixture.setMapping(fixture.console, body, "A", "Up")
 
         fixture.saveCustomLayout(fixture.console, body, "My Wheel")
