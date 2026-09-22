@@ -101,7 +101,10 @@ layout of your own, offered to any player holding the same body — it suggests 
 layout has a name. The bin in the dropdown deletes
 one: your buttons stay exactly as they are, the name just becomes **Custom** until you save it again.
 
-**All players** at the top sets everyone at once, and saves the same way. A saved set remembers which
+**All players** at the top sets everyone at once, and saves the same way. Picking a grip only some
+bodies can be held in — **Mario Kart Wheel**, say — gives every other body the same game's other
+grip, so a table of singles and pairs all end up on Mario Kart rather than half of them on the
+default. A saved set remembers which
 player held which body — the sub-label under its name says which ("P1 L, P2 R, P3 L/R") — so it stays
 greyed out until those players are back.
 
@@ -115,7 +118,8 @@ The layouts the app ships:
 |---|---|
 | Wii | The Wii Remote's own arrangement: the trigger under your finger is B, 1 and 2 under the thumb |
 | Joy-Con | The same, with B and 2 swapped so the Joy-Con's own B is the remote's B |
-| Mario Kart | A sideways Joy-Con laid out as Mario Kart 8 uses one — 2 accelerates, 1 brakes, SR hops, and SL throws an item alongside the stick. The one layout that plays as a **sideways Wii Remote**: the wheel steers correctly, the d-pad turns with it, and a right Joy-Con aims from its tail |
+| Mario Kart Wheel | A lone Joy-Con held sideways as a wheel, laid out the way Mario Kart 8 uses one — 2 accelerates, 1 brakes, SR hops and tricks, and SL throws an item alongside the stick. Steers by **tilt**, so it plays as a sideways Wii Remote: the d-pad turns with it and a right Joy-Con aims from its tail |
+| Mario Kart Nunchuck | The remote-and-nunchuk scheme, which steers by **stick** instead. A pair splits the halves across the hands, each index finger on the shoulder its controller keeps a trigger on; a lone Joy-Con plays both halves itself, its own stick standing in for the Nunchuk's and its rails carrying C and Z |
 
 > [!NOTE]
 > Auto setup needs Shizuku, and some devices block writing into another app's `Android/data` — use

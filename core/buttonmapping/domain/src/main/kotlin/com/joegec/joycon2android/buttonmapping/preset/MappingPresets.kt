@@ -2,10 +2,19 @@ package com.joegec.joycon2android.buttonmapping.preset
 
 import com.joegec.joycon2android.buttonmapping.Console
 
+internal const val MARIO_KART = "Mario Kart"
+
 /** Every layout the app ships, and which one a console falls back to. */
 object MappingPresets {
 
-    private val all = listOf(GameCubeMapping, WiiMapping, JoyconWiiMapping, MarioKartWiiMapping, SwitchProMapping)
+    private val all = listOf(
+        GameCubeMapping,
+        WiiMapping,
+        JoyconWiiMapping,
+        MarioKartWheelMapping,
+        MarioKartNunchukMapping,
+        SwitchProMapping,
+    )
 
     fun forConsole(console: Console): List<MappingPreset> = all.filter { it.console == console }
 

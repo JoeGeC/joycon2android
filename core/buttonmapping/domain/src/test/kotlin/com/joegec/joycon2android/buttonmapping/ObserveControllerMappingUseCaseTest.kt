@@ -1,6 +1,6 @@
 package com.joegec.joycon2android.buttonmapping
 
-import com.joegec.joycon2android.buttonmapping.preset.MarioKartWiiMapping
+import com.joegec.joycon2android.buttonmapping.preset.MarioKartWheelMapping
 import com.joegec.joycon2android.model.PlayerNumber
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -71,7 +71,7 @@ class ObserveControllerMappingUseCaseTest {
         val fixture = MappingFixture()
         val body = MappingFixture.right(PlayerNumber.P1)
 
-        fixture.applyLayout(fixture.console, body, MarioKartWiiMapping.id)
+        fixture.applyLayout(fixture.console, body, MarioKartWheelMapping.id)
 
         val mapping = fixture.playerMapping(body)
         assertEquals("X", mapping.entries["Two"])

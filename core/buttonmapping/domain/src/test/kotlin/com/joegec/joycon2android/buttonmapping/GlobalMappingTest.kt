@@ -2,7 +2,8 @@ package com.joegec.joycon2android.buttonmapping
 
 import com.joegec.joycon2android.buttonmapping.MappingFixture.Companion.left
 import com.joegec.joycon2android.buttonmapping.MappingFixture.Companion.right
-import com.joegec.joycon2android.buttonmapping.preset.MarioKartWiiMapping
+import com.joegec.joycon2android.buttonmapping.preset.MarioKartNunchukMapping
+import com.joegec.joycon2android.buttonmapping.preset.MarioKartWheelMapping
 import com.joegec.joycon2android.buttonmapping.preset.WiiMapping
 import com.joegec.joycon2android.model.PlayerNumber
 import kotlinx.coroutines.runBlocking
@@ -42,7 +43,7 @@ class GlobalMappingTest {
 
     @Test
     fun `players on different layouts leave the session with no name of its own`() = runBlocking {
-        fixture.applyLayout(fixture.console, first, MarioKartWiiMapping.id)
+        fixture.applyLayout(fixture.console, first, MarioKartWheelMapping.id)
         fixture.applyLayout(fixture.console, second, WiiMapping.id)
 
         assertNull(fixture.globalMapping(first, second).displayName)
@@ -58,6 +59,28 @@ class GlobalMappingTest {
 
         fixture.setMapping(fixture.console, second, "A", "Down")
         assertNull(fixture.globalMapping(first, second).displayName)
+    }
+
+    // A table rarely holds the same thing, so the grip each body can be held in is what it gets.
+    @Test
+    fun `setting a grip nobody but a lone Joy-Con has gives a pair the other grip of the same game`() = runBlocking {
+        val pair = PlayerBody(PlayerNumber.P3, JoyconSide.DUAL)
+        val mixed = bodies + pair
+
+        fixture.applyGlobalLayout(fixture.console, mixed, MarioKartWheelMapping.id)
+
+        assertEquals(MarioKartWheelMapping.id, fixture.playerMapping(first).layout?.id)
+        assertEquals(MarioKartNunchukMapping.id, fixture.playerMapping(pair).layout?.id)
+    }
+
+    @Test
+    fun `players on two grips of one game still name the session`() = runBlocking {
+        val pair = PlayerBody(PlayerNumber.P3, JoyconSide.DUAL)
+        val mixed = bodies + pair
+
+        fixture.applyGlobalLayout(fixture.console, mixed, MarioKartWheelMapping.id)
+
+        assertEquals("Mario Kart", fixture.globalMapping(first, second, pair).displayName)
     }
 
     @Test
@@ -81,7 +104,7 @@ class GlobalMappingTest {
 
     @Test
     fun `restoring a saved set gives every player back the bindings it froze`() = runBlocking {
-        fixture.applyLayout(fixture.console, first, MarioKartWiiMapping.id)
+        fixture.applyLayout(fixture.console, first, MarioKartWheelMapping.id)
         fixture.setMapping(fixture.console, first, "A", "Up")
         fixture.applyLayout(fixture.console, second, WiiMapping.id)
         fixture.saveGlobalLayout(fixture.console, bodies, "Party")
