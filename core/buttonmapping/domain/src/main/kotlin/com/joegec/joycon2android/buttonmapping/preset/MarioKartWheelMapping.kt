@@ -23,15 +23,7 @@ import com.joegec.joycon2android.model.JoyconButton.Up
 import com.joegec.joycon2android.model.JoyconButton.X
 import com.joegec.joycon2android.model.JoyconButton.Y
 
-/**
- * A lone Joy-Con held sideways as a wheel, laid out the way Mario Kart 8 uses one so the same thumb
- * does the same job in both games: accelerate on 2, brake on 1, hop on SR. Mario Kart Wii throws an
- * item with the d-pad, which a sideways body already steers from its stick, so SL fires it too —
- * the shoulder that throws in Mario Kart 8.
- *
- * It is the layout that plays as a sideways Wii Remote, which is what the wheel steers by, and a
- * pair has no such grip to match — so only a lone Joy-Con is offered it.
- */
+/** Mario Kart 8's sideways layout, so a thumb does the same job in both games; SL also throws an item. */
 object MarioKartWheelMapping : MappingPreset {
     override val id = "MARIO_KART_WHEEL"
     override val console = Console.WIIMOTE_NUNCHUK

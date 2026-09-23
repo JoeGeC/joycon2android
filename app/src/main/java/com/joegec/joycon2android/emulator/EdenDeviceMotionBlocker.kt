@@ -8,11 +8,6 @@ import com.joegec.joycon2android.gamepad.privileged.PrivilegedShell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/**
- * Marks Eden's uid idle in the sensor service, which withholds continuous sensors (gyro,
- * accelerometer) from it as if it were in the background. The override lives in system_server
- * until it is reset or the device reboots, so it outlives our process if we are killed.
- */
 class EdenDeviceMotionBlocker(
     private val readyShell: () -> PrivilegedShell?,
 ) : DeviceMotionBlocker {

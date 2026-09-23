@@ -25,7 +25,8 @@ Manufacturer data for ID `0x0553` carries:
 
 - **Bytes `[5..6]`** — little-endian product ID: `0x2067` left Joy-Con 2, `0x2066` right Joy-Con 2,
   `0x2069` Switch 2 Pro Controller. The advertisement has no local name, so this is the only type
-  signal before input starts.
+  signal before input starts. Left and right are confirmed on hardware; the Pro value is community
+  reverse-engineering.
 - **Bytes `[10..15]`** — the bonded host's MAC. Holding SYNC zeroes it; a button press on a synced
   controller wakes it into a short reconnect advertisement carrying the address. The scanner only
   accepts a zeroed field, so stray presses on nearby synced Joy-Cons don't flash into the list.
@@ -116,16 +117,34 @@ A left Joy-Con's right-stick bytes are garbage, and a right Joy-Con's left-stick
 0x01 GR                0x02 GL
 ```
 
+## Player LEDs
+
+```
+09 91 01 07 00 08 00 00 <mask> 00 00 00 00 00 00 00
+```
+
+The mask's low nibble lights P1–P4 solid (`0x01`, `0x02`, `0x04`, `0x08`), its high nibble flashes
+them (`0x10` … `0x80`). `0xF0`, all flashing, is the controller's default cycling animation.
+
 ## SPI reads
 
-The controller keeps its factory data in SPI flash, read back through the command-response
-characteristic. `SpiColorParser` wants one field out of it: the **shell accent colour**, 3 bytes
-RGB at `0x01301F`. Not the body colour at `0x013019` — that is the near-black shell, identical on
-both Switch 2 Joy-Cons, so it identifies nothing. The accent is the per-side colour (coral right,
-blue left) the UI paints each controller with. We request the surrounding DeviceInfo block and pull
-the field out of the reply.
+The controller keeps its factory data in SPI flash. The app wants one field: the **shell accent
+colour**, 3 bytes RGB at `0x01301F` — the per-side colour (coral right, blue left) the UI paints each
+controller with. Not the body colour at `0x013019`: that is the near-black shell, the same on both
+Joy-Cons.
 
-Reply layout, little-endian, confirmed against a live controller:
+The request reads the surrounding DeviceInfo block, `0x40` bytes from `0x013000`:
+
+```
+02 91 00 04 00 08 00 00  40 7E 00 00  00 30 01 00
+report cmd               len magic    address, LE
+```
+
+Byte 2 must be `0x00`, as HandHeldLegend's procon2tool sends it. The init commands carry `0x01`
+there, but an SPI read with `0x01` gets no reply.
+
+The reply arrives on the command-response characteristic. Layout, little-endian, confirmed on a live
+controller:
 
 | Offset | Meaning |
 |---|---|
@@ -135,8 +154,15 @@ Reply layout, little-endian, confirmed against a live controller:
 | `12..15` | source address, echoing the address requested |
 | `16..` | data bytes, starting at that source address |
 
-The echoed source address is what makes the read robust: the field's offset in the reply is
-`16 + (wanted address − echoed address)`, so the block can be requested at any alignment.
+`SpiColorParser` finds the field at `16 + (wanted address − echoed address)`, so the block can be
+requested at any alignment.
+
+## Battery
+
+The packet's voltage reads ~0.6 V below the cell's: ~3.30 V shows 75% on a Switch 2, ~3.60 V shows
+100%. `BatteryGauge` interpolates Nintendo's Joy-Con thresholds (3.3 / 3.6 / 3.76 / 3.9 / 4.2 V,
+from dekuNukem's docs) shifted down 0.6 V. Below ~3.0 V is extrapolated; no low readings have been
+captured yet.
 
 ## Stick range and centre
 
@@ -151,17 +177,21 @@ rest:    left Joy-Con  x 2080  y 2157        right Joy-Con  x 2014  y 2022
 Rest isn't the midpoint of travel (those extremes midpoint to 2150/2125), so it has to be sampled.
 Treating 2048 as centre and half-span leaves full deflection at ~60% with a 4–5% drift at rest.
 
-`StickCalibrator` learns each axis' centre from the first still window after connecting, then
-freezes it — a stick held at full deflection is perfectly still too. It scales each direction by
-its own span, the same centre/below/above triple the factory calibration stores. It runs where
-packets are parsed, so the live display, gamepad and DSU all see corrected values.
+`StickCalibrator` runs where packets are parsed, so the live display, gamepad and DSU all see
+corrected values:
+
+- **Centre** is learned from the first still window (30 samples), then frozen: a stick held at full
+  deflection is perfectly still too.
+- **Each direction scales by its own span**, the centre/below/above triple the factory calibration
+  stores. Spans are seeded just under the smallest travel measured (~1180 LSB), so full tilt works
+  from the first packet, and only ever widen.
 
 ## Android BLE gotchas
 
 1. **MTU first.** The default ATT MTU of 23 truncates 63-byte notifications: `requestMtu(247)`
    after connecting, wait for `onMtuChanged`, then discover services.
-2. **One GATT operation at a time.** Queue them and advance only on the matching callback
-   (`GattOpQueue`).
+2. **One GATT operation at a time.** A second issued before the callback is silently dropped.
+   `GattOpQueue` advances on the matching callback, or after a timeout if none comes.
 3. **Write the CCCD.** `setCharacteristicNotification(true)` alone delivers nothing; descriptor
    `0x2902` must be written too.
 4. **Pass `TRANSPORT_LE`** to `connectGatt`, or it may try classic Bluetooth.

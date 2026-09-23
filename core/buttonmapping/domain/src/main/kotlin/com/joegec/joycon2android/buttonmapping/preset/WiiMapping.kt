@@ -70,8 +70,7 @@ object WiiMapping : MappingPreset {
         )
     }
 
-    // A sideways Joy-Con has no d-pad left once its cluster becomes the face buttons, so its stick
-    // steers the Wii Remote's d-pad instead.
+    // Sideways, the cluster is the face buttons, so the stick drives the d-pad.
     internal fun dPadSticks(side: JoyconSide): Map<WiimoteButton, List<MappingSource>> {
         val stick = when (side) {
             JoyconSide.DUAL -> return emptyMap()

@@ -9,11 +9,7 @@ import com.joegec.joycon2android.model.Side
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/**
- * Pins the bit each button takes, because the bit *is* the Android keycode: Linux maps HID Button
- * n to BTN_GAMEPAD + n - 1 and the key layout names that. Move a button and every emulator config
- * the app writes points at the wrong control.
- */
+/** The bit is the Android keycode, so a moved button breaks every emulator config the app writes. */
 class ReportMapperTest {
 
     private fun report(vararg pressed: JoyconButton): ByteArray {

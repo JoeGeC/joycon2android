@@ -2,10 +2,7 @@ package com.joegec.joycon2android.buttonmapping
 
 private const val SOURCE_SEPARATOR = "|"
 
-/**
- * Several sources can drive one target — any of them fires it — so a stored value holds their ids
- * joined together. A value written by an older version is a single id, which reads back as one source.
- */
+/** Any of several sources fires a target, so a value joins their ids; an older single id reads as one. */
 fun sourceIdsOf(value: String): List<String> = value.split(SOURCE_SEPARATOR).filter { it.isNotEmpty() }
 
 fun sourceIdOf(ids: List<String>): String = ids.joinToString(SOURCE_SEPARATOR)

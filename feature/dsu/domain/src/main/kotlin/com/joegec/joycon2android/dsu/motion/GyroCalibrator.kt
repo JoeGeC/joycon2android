@@ -2,14 +2,7 @@ package com.joegec.joycon2android.dsu.motion
 
 import com.joegec.joycon2android.model.JoyconInput
 
-/**
- * Removes per-controller gyro bias. Joy-Con 2 gyros idle with a constant offset
- * (+0.2 dps yaw / +0.9 dps roll observed on hardware), which DSU clients integrate
- * into a steady pointer drift. Whenever a controller's gyro stays within
- * [maxSpreadLsb] (~2.4 dps) for [windowSize] consecutive samples (~2 s at 120 Hz —
- * true at rest; hand tremor exceeds it), the window mean becomes that controller's
- * bias. Mirrors the runtime recalibration the Switch itself performs.
- */
+/** docs/dsu-motion.md#gyro-bias */
 class GyroCalibrator(
     private val windowSize: Int = 240,
     private val maxSpreadLsb: Int = 40,

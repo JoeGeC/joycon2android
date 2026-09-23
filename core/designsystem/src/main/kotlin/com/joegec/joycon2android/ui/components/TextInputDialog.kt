@@ -19,11 +19,7 @@ import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.TextDim
 
-/**
- * Asks for one line of text in the app's card styling. [defaultValue] is offered already filled in
- * and stands if nothing is typed, but steps aside the moment the field is tapped — so accepting it
- * costs nothing and replacing it needs no deleting first.
- */
+/** [defaultValue] stands if nothing is typed, and clears when the field is tapped. */
 @Composable
 fun TextInputDialog(
     title: String,

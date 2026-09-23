@@ -45,7 +45,6 @@ import com.joegec.joycon2android.ui.theme.JoyconDefaultColor
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.joyconBorderColor
 
-/** One player's whole mapping: who they are and what layout they are on, opening onto its bindings. */
 @Composable
 fun PlayerMappingCard(
     console: Console,
@@ -157,12 +156,7 @@ private fun ControllerChip(textRes: Int, joycon: ConnectedJoycon) {
     )
 }
 
-/**
- * A lone Joy-Con stands in for a Wii Remote held sideways. A left Joy-Con's own body already is one
- * — a sideways remote's nose points left, just as its L/ZL edge does — so the switch only turns its
- * d-pad and amplifies its flicks. A right Joy-Con additionally gives up its own body to steer true,
- * and with it the R edge as the nose it aims down, which is what the warning is for.
- */
+/** A right Joy-Con aims from its tail: docs/dsu-motion.md#playing-as-a-sideways-wii-remote */
 @Composable
 private fun SidewaysRemoteSwitch(side: JoyconSide, enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
     val aimsFromItsTail = side == JoyconSide.RIGHT

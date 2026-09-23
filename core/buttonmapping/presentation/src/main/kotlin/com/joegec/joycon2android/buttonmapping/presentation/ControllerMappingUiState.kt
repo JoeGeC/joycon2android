@@ -8,7 +8,6 @@ import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.PlayerMapping
 import com.joegec.joycon2android.buttonmapping.SavedLayout
 
-/** A null [layout] is the editor's way of saying the bindings no longer match any of them. */
 data class ControllerMappingUiState(
     val console: Console,
     val global: GlobalMapping,
@@ -45,7 +44,6 @@ private fun PlayerMapping.uiState(console: Console, layouts: List<MappingLayout>
     mapping = entries,
 )
 
-/** Names already taken, so a suggested one is never a duplicate of what it sits beside. */
 internal fun ControllerMappingUiState.takenNames(session: Boolean): List<String> =
     if (session) global.savedLayouts.map { it.name }
     else players.flatMap { it.layouts }.filterIsInstance<SavedLayout>().map { it.name }.distinct()

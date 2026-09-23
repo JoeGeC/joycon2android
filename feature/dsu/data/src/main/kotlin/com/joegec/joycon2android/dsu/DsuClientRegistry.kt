@@ -3,13 +3,8 @@ package com.joegec.joycon2android.dsu
 import java.net.SocketAddress
 
 /**
- * Tracks pad-data subscribers and which slots each one wants. Routing per slot on the
- * server side matters: Dolphin's DSU devices overwrite their pad state with every
- * received packet without checking the slot, so a server that broadcasts all slots to
- * every client makes the last controller win. Clients are dropped after
- * [timeoutMillis] of silence (the spec's ~5 s liveness convention). Callers supply the
- * clock so the registry stays pure; register and recipientsFor run on different
- * coroutines.
+ * Routes each slot only to its subscribers: docs/dsu-motion.md#the-server. [timeoutMillis] is the
+ * spec's liveness convention. [register] and [recipientsFor] run on different coroutines.
  */
 class DsuClientRegistry(private val timeoutMillis: Long = 5_000) {
 

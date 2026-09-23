@@ -37,8 +37,7 @@ class DsuServer(
     private val sendBuffer = ByteArray(DsuPacketEncoder.PAD_DATA_PACKET_SIZE)
     private val packetCounters = LongArray(DsuPacketEncoder.SLOT_COUNT)
 
-    // Pad batches ride a buffered channel instead of a StateFlow: conflation would drop
-    // motion samples, and UDP sends can't run on the synchronous onState (main) thread
+    // Not a StateFlow: conflation drops motion samples, and sends can't run on the synchronous onState.
     private val batches = Channel<PadDataBatch>(BATCH_BUFFER, BufferOverflow.DROP_OLDEST)
 
     private var socket: DatagramSocket? = null
@@ -97,8 +96,7 @@ class DsuServer(
         batches.trySend(PadDataBatch(players, timestampMicros()))
     }
 
-    // Emulators dial the IPv4 address we advertise; getLoopbackAddress() resolves to
-    // IPv6 ::1 on Android, and a socket bound there never sees 127.0.0.1 datagrams
+    // Not getLoopbackAddress(), which is ::1 on Android: docs/dsu-motion.md#the-server
     private fun bindAddress(): InetAddress = InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))
 
     private fun currentAddress(): String = "127.0.0.1:$port"
@@ -111,8 +109,7 @@ class DsuServer(
         val datagram = DatagramPacket(ByteArray(RECEIVE_BUFFER_SIZE), RECEIVE_BUFFER_SIZE)
         while (!socket.isClosed) {
             try {
-                // receive() shrinks the packet to the last datagram's size; without a reset
-                // every following packet that is longer gets truncated and fails its CRC
+                // receive() shrinks the length to the last datagram, truncating any longer one after it.
                 datagram.setLength(RECEIVE_BUFFER_SIZE)
                 socket.receive(datagram)
                 handleRequest(socket, datagram)

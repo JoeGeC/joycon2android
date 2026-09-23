@@ -10,9 +10,7 @@ object PacketParser {
 
     private const val MIN_PACKET_SIZE = 0x3B
 
-    // Button bitmask → enum. Bits 0..31 come from the uint32 at packet offset 0x03; the Pro
-    // Controller's two back paddles live in the next byte (0x07), folded into bits 32..39 so the
-    // whole set decodes through one mask table. GR is bit 0 of byte 0x07, GL is bit 1.
+    // docs/protocol.md#packet-layout. The back-paddle byte (0x07) is folded into bits 32..39.
     private val buttonMasks: List<Pair<Long, JoyconButton>> = listOf(
         0x80000000L to JoyconButton.ZL, 0x40000000L to JoyconButton.L, 0x00010000L to JoyconButton.Minus,
         0x00080000L to JoyconButton.LS, 0x01000000L to JoyconButton.Down, 0x02000000L to JoyconButton.Up,

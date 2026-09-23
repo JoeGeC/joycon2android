@@ -11,13 +11,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.CRC32
 
-/**
- * Encodes DSU (cemuhook) server packets. Spec: https://v1993.github.io/cemuhook-protocol/
- *
- * All fields little-endian. 16-byte header: magic "DSUS", uint16 protocol version (1001),
- * uint16 payload length (counts the uint32 message type that follows), uint32 CRC32
- * (computed over the whole packet with this field zeroed), uint32 server ID.
- */
+/** Spec: https://v1993.github.io/cemuhook-protocol/ */
 class DsuPacketEncoder(
     private val serverId: Int,
     private val motion: (DsuStream) -> DsuMotion = { stream ->
@@ -121,8 +115,7 @@ class DsuPacketEncoder(
         return bits.toByte()
     }
 
-    // DSU sticks are uint8 centered at 128, Y up-positive — same polarity as the raw
-    // Joy-Con 0–4095 range, so scale only (unlike the HID report, which inverts Y)
+    // uint8 centred on 128, Y up like the raw Joy-Con range, so scale only.
     private fun putSticks(packet: ByteBuffer, gamepad: GamepadState) {
         packet.put(stickByte(gamepad.leftStickX))
         packet.put(stickByte(gamepad.leftStickY))

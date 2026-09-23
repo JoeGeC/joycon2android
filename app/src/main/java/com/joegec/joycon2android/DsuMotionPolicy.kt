@@ -9,11 +9,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-/**
- * Applies the DSU motion settings only while DSU runs, so neither the battery cost nor the
- * sensor block lingers once it stops. DSU starts off, so launch also clears a block left behind
- * by a process that was killed before it could lift it.
- */
+/** Motion settings apply only while DSU runs: docs/dsu-motion.md#eden-reads-the-devices-own-motion */
 class DsuMotionPolicy(
     private val scope: CoroutineScope,
     private val dsuEnabled: Flow<Boolean>,
@@ -30,7 +26,7 @@ class DsuMotionPolicy(
                 .collect { setHighConnectionPriority(it) }
         }
         scope.launch {
-            // Re-applied when the shell comes back, since the block can only be set through it.
+            // The block can only be set through the shell, so re-apply when it returns.
             combine(dsuEnabled, settings, privilegedShellAvailable) { dsuOn, current, shellUp ->
                 (dsuOn && current.blockDeviceMotion) to shellUp
             }

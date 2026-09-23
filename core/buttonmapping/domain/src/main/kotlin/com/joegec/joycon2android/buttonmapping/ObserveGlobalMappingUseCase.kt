@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-/** Every player's mapping alongside the saved sets they could be restored from. */
 class ObserveGlobalMappingUseCase(
     private val observePlayerMapping: ObservePlayerMappingUseCase,
     private val globalLayouts: GlobalLayoutRepository,

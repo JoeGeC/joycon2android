@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** State holder for the mapping editor: one console's layouts, per player. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ControllerMappingViewModel(
     private val observeGlobalMapping: ObserveGlobalMappingUseCase,
@@ -66,7 +65,7 @@ class ControllerMappingViewModel(
         setSidewaysRemote(it.console, body, enabled)
     }
 
-    /** A null body names the session as a whole rather than one player. */
+    /** Null means the whole session. */
     fun saveLayout(body: PlayerBody?, name: String) = onTarget { target ->
         if (body == null) saveGlobalLayout(target.console, target.bodies, name)
         else saveCustomLayout(target.console, body, name)

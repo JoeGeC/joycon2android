@@ -3,10 +3,6 @@ package com.joegec.joycon2android.update
 import org.json.JSONArray
 import org.json.JSONObject
 
-/**
- * Reads what the prompt needs out of a GitHub `releases/latest` payload: the tag as a version,
- * the body as highlights, and the APK asset's download URL.
- */
 class GitHubReleaseParser {
 
     fun parse(json: String): AvailableUpdate? {

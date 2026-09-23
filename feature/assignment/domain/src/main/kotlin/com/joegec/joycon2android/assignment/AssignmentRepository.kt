@@ -4,10 +4,7 @@ import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.Side
 import kotlinx.coroutines.flow.StateFlow
 
-/**
- * Holds which Joy-Con (by BLE address) is assigned to which player, enforcing one Left +
- * one Right (or one Pro) per player. Implemented in the data layer.
- */
+/** One Left and one Right, or one Pro, per player. */
 interface AssignmentRepository {
     val assignments: StateFlow<Map<String, PlayerNumber>>
 

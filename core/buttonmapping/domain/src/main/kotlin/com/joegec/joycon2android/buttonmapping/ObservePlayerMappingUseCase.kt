@@ -3,7 +3,6 @@ package com.joegec.joycon2android.buttonmapping
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-/** Everything the editor shows for one player: their bindings, their switch, and what those name. */
 class ObservePlayerMappingUseCase(
     private val observeControllerMapping: ObserveControllerMappingUseCase,
     private val observeSidewaysRemote: ObserveSidewaysRemoteUseCase,

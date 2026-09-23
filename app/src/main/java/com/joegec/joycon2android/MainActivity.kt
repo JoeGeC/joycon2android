@@ -113,8 +113,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // The UI is always dark, so force light bar icons rather than letting them follow the
-        // device's light/dark mode (which would render dark-on-dark on a light-mode device).
+        // The UI is always dark; following a light-mode device would draw bar icons dark-on-dark.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
@@ -241,8 +240,7 @@ class MainActivity : ComponentActivity() {
         val permissionDenied by viewModel.permissionDenied.collectAsState()
         val viewMode by viewModel.viewMode.collectAsState()
 
-        // A written emulator config is keyed to the current assignment; once it changes,
-        // the Done/Failed state is stale, so reset both setup buttons.
+        // A written config matches one assignment, so Done/Failed goes stale when it changes.
         val assignmentKey = state.players.map {
             Triple(it.player.index, it.left?.address, it.right?.address)
         }

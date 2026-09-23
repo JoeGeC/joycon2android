@@ -15,7 +15,6 @@ import com.joegec.joycon2android.ui.components.MultiSelectDropdown
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
-/** Every target this console offers, against the physical controls the player's body can produce. */
 @Composable
 fun MappingBindings(console: Console, state: PlayerMappingUiState, actions: MappingActions) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {

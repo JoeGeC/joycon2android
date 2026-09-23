@@ -28,7 +28,7 @@ import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
-/** Shown when Shizuku isn't running — the privileged backend the gamepad depends on. */
+/** Shown while Shizuku isn't running. */
 @Composable
 fun ShizukuSetupCard(modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current

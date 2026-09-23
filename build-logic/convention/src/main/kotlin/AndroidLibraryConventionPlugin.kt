@@ -4,11 +4,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 
-/**
- * Android library module targeting minSdk 24 / Java 11, matching the app. AGP 9 provides
- * Kotlin built-in, so the Kotlin plugin is not applied separately (doing so collides on
- * the `kotlin` extension).
- */
+/** AGP 9 has Kotlin built in; applying the Kotlin plugin as well collides on the `kotlin` extension. */
 class AndroidLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         pluginManager.apply("com.android.library")

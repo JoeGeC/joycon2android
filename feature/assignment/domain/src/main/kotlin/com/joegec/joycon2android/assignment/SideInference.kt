@@ -4,12 +4,7 @@ import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.Side
 
-/**
- * Infers Joy-Con side from observed input when BLE advertisement didn't identify it.
- *
- * Left-exclusive buttons: ZL, L, Minus, LS, DPad (Up/Down/Left/Right), Capture, SL(L), SR(L)
- * Right-exclusive buttons: ZR, R, Plus, RS, A, B, X, Y, Home, Chat, SL(R), SR(R)
- */
+/** For a Joy-Con whose advertisement didn't reveal its side. */
 object SideInference {
 
     private val leftButtons = setOf(

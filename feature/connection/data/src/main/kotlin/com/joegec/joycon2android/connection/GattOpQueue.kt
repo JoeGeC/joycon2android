@@ -5,14 +5,7 @@ import android.os.Looper
 import android.util.Log
 import java.util.ArrayDeque
 
-/**
- * Serializes GATT operations. Android's BluetoothGatt allows only one
- * outstanding write/descriptor-write at a time — issuing a second before
- * the callback fires silently drops it.
- *
- * Includes a safety timeout: if a callback never arrives (e.g. writeCharacteristic
- * returned false), the queue advances after [TIMEOUT_MS] to avoid permanent stalls.
- */
+/** Android silently drops a second outstanding GATT op. Advances after [TIMEOUT_MS] if a callback never comes. */
 class GattOpQueue {
 
     companion object {

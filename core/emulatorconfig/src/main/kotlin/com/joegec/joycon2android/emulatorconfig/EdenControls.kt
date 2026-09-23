@@ -5,11 +5,6 @@ import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
 import com.joegec.joycon2android.model.PlayerState
 
-/**
- * The vocabulary of Eden's `config.ini` `[Controls]` section, shared by the two features that can
- * bind a player there — the Virtual Gamepad as an Android HID pad, DSU as a cemuhook pad. Both
- * write the same keys for the same player; only the device half of each binding differs.
- */
 object EdenControls {
     const val SECTION = "[Controls]"
 

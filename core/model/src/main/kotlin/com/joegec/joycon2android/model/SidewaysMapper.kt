@@ -1,9 +1,6 @@
 package com.joegec.joycon2android.model
 
-/**
- * Turns a lone Joy-Con's input into its sideways grip — left 90° counter-clockwise, right 90°
- * clockwise, as on a Switch. Table and reasoning: docs/virtual-gamepad.md#sidewaysmapper.
- */
+/** docs/virtual-gamepad.md#sidewaysmapper */
 object SidewaysMapper {
 
     private const val STICK_MAX = 4096

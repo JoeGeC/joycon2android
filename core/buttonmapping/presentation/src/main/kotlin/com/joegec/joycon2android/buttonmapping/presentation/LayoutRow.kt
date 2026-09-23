@@ -22,11 +22,6 @@ import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
-/**
- * Picks the layout a body — or the whole session — follows, and offers to keep what it has become.
- * The name reads "Custom" the moment the bindings stop matching a layout, and reads a layout's own
- * name again the moment they match one.
- */
 @Composable
 fun LayoutRow(
     options: List<DropdownOption>,
@@ -65,10 +60,7 @@ fun LayoutRow(
     }
 }
 
-/**
- * Only a mapping with no name of its own is worth naming: one that already reads as a layout has
- * been saved once already, so the icon dims and says which layout it is rather than making a twin.
- */
+/** Dimmed once the mapping already reads as a layout, rather than saving a twin. */
 @Composable
 private fun SaveButton(layoutName: String?, onSave: () -> Unit) {
     val context = LocalContext.current

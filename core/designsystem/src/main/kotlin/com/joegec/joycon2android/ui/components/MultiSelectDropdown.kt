@@ -12,12 +12,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 
-/**
- * Id/label picker for a row that can hold several choices at once. The menu stays open while they
- * are ticked off; tapping outside closes it. With nothing selected it reads as the first option,
- * which callers put there as their "none" row — picking that one empties the row, so it closes
- * rather than waiting for a tick that cannot come.
- */
+/** Stays open while choices are ticked. The first option is the caller's "none", which empties the row and closes. */
 @Composable
 fun MultiSelectDropdown(
     options: List<Pair<String, String>>,

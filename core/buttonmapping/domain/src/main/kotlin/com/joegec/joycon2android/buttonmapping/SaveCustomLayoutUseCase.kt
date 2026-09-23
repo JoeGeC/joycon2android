@@ -2,10 +2,7 @@ package com.joegec.joycon2android.buttonmapping
 
 import kotlinx.coroutines.flow.first
 
-/**
- * Names what a player has built so any player on that body can pick it again. Nothing is applied:
- * the bindings already *are* the layout, so the card takes the new name as soon as it exists.
- */
+/** Applies nothing: the bindings already match, so the card picks up the name. */
 class SaveCustomLayoutUseCase(
     private val savedLayouts: SavedLayoutRepository,
     private val observePlayerMapping: ObservePlayerMappingUseCase,

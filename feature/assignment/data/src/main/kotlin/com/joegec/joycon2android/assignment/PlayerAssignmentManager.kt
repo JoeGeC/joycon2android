@@ -6,10 +6,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/**
- * Maps Joy-Con BLE addresses to player numbers.
- * Enforces that each player can have at most one Left and one Right controller.
- */
 class PlayerAssignmentManager : AssignmentRepository {
 
     private val _assignments = MutableStateFlow<Map<String, PlayerNumber>>(emptyMap())

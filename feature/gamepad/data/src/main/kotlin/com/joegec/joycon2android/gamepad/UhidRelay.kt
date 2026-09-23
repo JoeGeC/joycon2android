@@ -42,7 +42,6 @@ class UhidRelay(private val name: String, private val playerIndex: Int) {
                 read += n
             }
 
-            // Send UHID_CREATE2 event
             val createEvent = buildCreateEvent()
             val header = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
             header.putInt(createEvent.size)
@@ -217,10 +216,7 @@ class UhidRelay(private val name: String, private val playerIndex: Int) {
             0x09, 0x35,               //   Usage (Rz)
             0x81.toByte(), 0x02,      //   Input (Data, Var, Abs)
 
-            // Left Trigger. Brake is the left one and Accelerator the right one, never the other
-            // way round: Android aliases AXIS_LTRIGGER to AXIS_BRAKE and AXIS_RTRIGGER to AXIS_GAS,
-            // and firmware that re-publishes a pad (AYN's Odin/Thor) synthesises its L2/R2 buttons
-            // from those axes — inverted, it hands the emulator an L2 press for a ZR pull.
+            // Left Trigger. Never swap Brake and Accelerator: docs/virtual-gamepad.md#buttons-and-keycodes
             0x05, 0x02,               //   Usage Page (Simulation Controls)
             0x09, 0xC5.toByte(),      //   Usage (Brake)
             0x15, 0x00,               //   Logical Minimum (0)
@@ -235,11 +231,7 @@ class UhidRelay(private val name: String, private val playerIndex: Int) {
 
             0xC0.toByte(),            // End Collection
 
-            // The Switch 2 controllers have 17 buttons, two more than one Game Pad collection can
-            // carry. A second application collection outside the gamepad usages takes the overflow:
-            // Linux falls back to BTN_MISC + n - 1 for a Button usage whose application is neither
-            // pointer, joystick nor gamepad, and every Android key layout names that range
-            // BUTTON_1..BUTTON_16. Vendor-defined so nothing tries to interpret the collection.
+            // Overflow buttons GR and C: docs/virtual-gamepad.md#buttons-and-keycodes
             0x06, 0x00, 0xFF.toByte(), // Usage Page (Vendor Defined FF00)
             0x09, 0x01,               // Usage (Vendor 1)
             0xA1.toByte(), 0x01,      // Collection (Application)

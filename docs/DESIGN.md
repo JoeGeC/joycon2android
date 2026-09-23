@@ -1,24 +1,16 @@
 # Design
 
-> Compose-adapted design-system snapshot. This is a native Android (Jetpack Compose,
-> Material 3) app, so this doc captures the **theme in code** rather than web CSS tokens.
-> Source of truth: `core/designsystem/.../ui/theme/{Color,Type,Dimens,Theme,AppTextStyles}.kt`,
-> plus the connection-screen chrome and landscape layout in `app/.../ui/JoyconScreen.kt`.
-> Update this doc when those change.
+The theme as built in `core/designsystem/.../ui/theme/` and the screen layout in
+`app/.../ui/JoyconScreen.kt`. Update this doc when those change; who the app is for is in
+[PRODUCT.md](PRODUCT.md).
 
 ## Theme
 
-Dark-only. `Joycon2AndroidTheme` wraps Material 3 with a `darkColorScheme` that maps only
-`primary`, `surface`, and `background`; the rest of the palette lives as top-level `Color`
-vals consumed directly. Deep near-black blue-gray canvas, single teal accent, controller-color
-accents on cards. No light scheme currently exists.
-
-Physical scene: an enthusiast at a desk or on a couch, often in a dimly lit room, mid-setup,
-frequently holding a controller in the other hand. Dark is a deliberate fit, not a default.
+Dark-only, deliberately: the app is used mid-setup, often in a dim room. `Joycon2AndroidTheme` maps
+only `primary`, `surface` and `background` into a `darkColorScheme`; the rest of the palette is
+top-level `Color` vals used directly. One teal accent, plus each controller's own shell colour.
 
 ## Color
-
-Defined in `Color.kt`. Values are the real hex in code.
 
 **Surfaces & ink**
 - `Background` / `surface` — `#0E1116` (deep near-black blue-gray canvas)
@@ -39,28 +31,22 @@ Defined in `Color.kt`. Values are the real hex in code.
   (a lighter red than `ErrorText` so the low % clears AA on the `AccentDim` pill). Shown with a
   battery icon whose fill tracks the level, so it isn't colour-only.
 
-**Signature: controller shell color.** The controller's real shell accent is read from SPI flash
-(packed `0xRRGGBB`), converted to HSV, saturation-boosted ×1.4 (capped). It drives two things:
-- `joyconBorderColor()` — the card's hairline border (colour verbatim).
-- `controllerActiveColor()` — the same hue with a brightness floor (0.72) so it reads as "lit"
-  filling a control; every live input inside a `JoyconCard` glows in it (pressed d-pad / face /
-  shoulder / rail / special buttons, and the stick ring + dot). Delivered via the
-  `LocalControllerAccent` CompositionLocal, so a dual pair lights each side in its own colour.
-  `readableInkOn()` picks dark-ink-or-white by WCAG contrast for the label on that fill.
+**Signature: the controller's shell colour.** The UI wears the colour of the actual hardware — the
+app's identity move, so lean into it. The shell accent is read from SPI flash (`0xRRGGBB`) and
+saturation-boosted ×1.4 (capped) in HSV. It drives:
+- `joyconBorderColor()` — the card's hairline border, colour verbatim.
+- `controllerActiveColor()` — the fill of every live input in a `JoyconCard` (pressed buttons, stick
+  ring and dot), with a brightness floor of 0.72: a near-black shell would otherwise vanish on the
+  dark UI. `ControllerAccent` provides it per card, so a pair lights each side in its own colour, and
+  `readableInkOn()` picks dark ink or white for the label on it.
 
-This is the app's identity move — the UI, not just its border, wears the colour of the actual
-hardware. `JoyconBlue`/`JoyconRed` and the teal `Accent` are the fallbacks. Lean into this.
-
-**Color strategy:** Committed-dark — one teal accent doing most of the lifting, with the
-controller shell color as a per-item second accent. Not restrained (the hardware color is
-load-bearing), not full-palette.
+`JoyconBlue` / `JoyconRed` and the teal `Accent` are the fallbacks.
 
 ## Typography
 
-`Type.kt` defines a full Material 3 `Typography` — a fixed sp scale (product UI, not fluid),
-~1.2 ratio, with weight/tracking carrying hierarchy alongside size and a small line-height +
-tracking bump for light-on-dark. UI text is styled via `MaterialTheme.typography.*`; there are
-no scattered `fontSize` literals in the UI.
+`Type.kt` is a full Material 3 `Typography`: a fixed sp scale at ~1.2 ratio, with weight and
+tracking carrying hierarchy alongside size, and a small line-height and tracking bump for
+light-on-dark. UI text uses `MaterialTheme.typography.*`, never a `fontSize` literal.
 
 | Role | Size / LH | Weight | Use |
 |---|---|---|---|
@@ -97,37 +83,33 @@ From `Dimens.kt` (all dp unless noted):
   variants, IMU/legend/battery-icon sub-scales, plus stick sub-tokens (`stickValueGap`,
   `stickAxisGap`, `crosshairStroke`, `stickIdleRingAlpha`) — fully tokenised, no hard-coded values
 
-Card-based, but cards are the correct affordance here (each = one controller/feature). The
-controller-color border gives them identity beyond a plain card grid.
+Cards are the right affordance here — each is one controller or feature — and the shell-colour
+border gives them identity beyond a plain grid.
 
-### Connection-screen chrome (`app/.../ui/JoyconScreen.kt`)
+### Connection-screen chrome
 
-- **Edge-to-edge, top and bottom.** `contentWindowInsets` reserves only the horizontal insets, so
-  content passes under the transparent status bar and nav bar (`enableEdgeToEdge` in `MainActivity`).
-- **Overlaid, scroll-away app bar.** The top app bar is *not* in the Scaffold `topBar` slot (which
-  reserves space and blocks content going behind the status bar). It's overlaid on the content and
-  translated up in lockstep with the scroll offset (`graphicsLayer`), so it slides away with no gap
-  and the content — including the Ko-fi banner, now the first scroll item rather than pinned —
-  passes behind the status bar.
+In `JoyconScreen.kt`:
+
+- **Edge-to-edge.** `contentWindowInsets` reserves only the horizontal insets, so content passes
+  under the transparent status and nav bars; each screen adds its own clearance.
+- **Overlaid, scroll-away app bar.** Not in the Scaffold's `topBar` slot, which would reserve space.
+  It overlays the content and is translated up in lockstep with the scroll, so it slides away with
+  no gap and content (the Ko-fi banner included) passes behind the status bar. Screens add its
+  height plus the status-bar inset as top clearance.
 
 ### Landscape
 
-Landscape lays the whole connected screen out **two-up** to use the wide, short viewport; portrait
-keeps single full-width columns. All of it lives in `JoyconScreen.kt`:
+Two-up, to use the wide, short viewport; portrait keeps single columns.
 
-- **Players** — a two-column grid (both detailed and compact views). Detailed players are shrunk to
-  `LandscapePlayerScale` (`0.7`) by a `scaleLayout` modifier that measures the content at `1/scale`
-  space, draws it scaled down, and reports the smaller size — so the whole controller (buttons,
-  labels, spacing) shrinks uniformly *and* reflows, letting a full player fit the short height.
-  Compact rows aren't scaled (already short).
-- **Feature cards** — two columns: Virtual Gamepad with its Shizuku dependency stacked beneath it on
-  the left, DSU Motion Server on the right (so the Shizuku card always sits under the gamepad).
-- **Scanning graphics** — the "Looking for Joy-Con 2" card and the sync-button illustration sit side
-  by side (`ScanningGraphics`).
-- **Action buttons** — a row with Disconnect All on the left and Scan on the right; Disconnect keeps
-  its half (weighted spacer) while a scan is running and the Scan button drops out.
+- **Players** — a two-column grid. Detailed players are shrunk to `LandscapePlayerScale` (0.7) by
+  `scaleLayout`, which scales the whole controller uniformly and reflows, so a full player fits the
+  short height. Compact rows aren't scaled.
+- **Feature cards** — Virtual Gamepad with its Shizuku card beneath on the left, DSU on the right.
+- **Scanning graphics** — the "Looking for Joy-Con 2" card and sync-button illustration side by side.
+- **Action buttons** — Disconnect All left, Scan right; Disconnect keeps its half while Scan is hidden
+  during a scan.
 
-Odd trailing items take a half cell with a weighted `Spacer` filling the other half.
+An odd trailing item takes a half cell, a weighted `Spacer` filling the other half.
 
 ## Components
 
@@ -143,25 +125,12 @@ Shared in `core/designsystem/.../ui/components/`:
 
 ## Motion
 
-Mostly minimal and functional today: the top app bar sliding up in lockstep with the scroll (see
-chrome above), the portrait view-mode `AnimatedContent` crossfade, and expand/fade transitions on
-error boxes and feature-card content. Given the "playful gaming gear" personality, connect /
-assign moments still have room for more character (opportunity area). Any motion must honor system
-reduced-motion (see PRODUCT.md accessibility). Ease-out curves, no bounce/elastic.
+Minimal and functional: the scroll-away app bar, the portrait view-mode crossfade, and expand/fade
+on error boxes and feature-card content. Ease-out curves, no bounce or elastic, and always honour the
+system's reduced-motion setting.
 
-## Opportunity Areas (for future impeccable passes)
+## Open work
 
-1. ~~**Type hierarchy** — replace scattered `fontSize*` literals with a real Material type scale.~~
-   ✅ Done: full Material 3 `Typography` + `AppType` telemetry/overline roles (see Typography above).
-2. **Personality gap** — partly closed: each controller's live inputs now glow in its real shell
-   colour (see the controller-color signature above). Remaining: motion, and celebratory
-   connect/assign moments.
-3. ~~**Contrast** — reduced-alpha telemetry labels + battery-low failed WCAG AA.~~ ✅ Done:
-   telemetry now uses solid `TextBright` (values) / `TextDim` (labels) with no sub-threshold alpha,
-   and `BatteryLow` was lightened to `#FF8A8A`; all clear 4.5:1 (verified numerically).
-4. ~~**Color-only status** — pair battery/connection color with icon or text.~~ ✅ Largely addressed:
-   battery shows a level-filled icon + %, and the connection/Shizuku status pairs its dot with a
-   text label.
-5. **Motion system** — define purposeful, reduced-motion-aware transitions for connect / assign.
-6. **Responsive polish** — landscape grid + player scaling is in; a ≤320dp / 200%-font density
-   check on the dual layout is still open (needs a device).
+- **Motion with character** — purposeful, reduced-motion-aware transitions for connect and assign
+  moments, which the "playful gaming gear" personality still lacks.
+- **Density check** — the dual layout at ≤320dp and 200% font scale (needs a device).

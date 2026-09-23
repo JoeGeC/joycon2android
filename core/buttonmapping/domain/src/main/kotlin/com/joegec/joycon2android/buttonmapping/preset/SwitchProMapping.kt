@@ -58,9 +58,7 @@ object SwitchProMapping : MappingPreset {
             SwitchProButton.DPadLeft to Left,
             SwitchProButton.DPadRight to Right,
         )
-        // Held sideways, the rail buttons are the shoulder pair, as they are on a real Switch.
-        // ZL/ZR stay unbound: the body's own shoulders point away from the player in that grip, so
-        // there is nothing honest to put there — the user can bind them if they want them.
+        // Rails as shoulders, ZL/ZR unbound: docs/virtual-gamepad.md#sidewaysmapper
         JoyconSide.LEFT -> mapOf(
             SwitchProButton.A to Down,
             SwitchProButton.B to Left,

@@ -20,7 +20,6 @@ import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.ErrorText
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 
-/** Filled accent button (Scan-button styling) that runs a one-shot emulator config write. */
 @Composable
 fun DolphinSetupButton(
     phase: DolphinSetupPhase,

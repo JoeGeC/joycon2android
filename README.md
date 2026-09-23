@@ -87,37 +87,29 @@ the emulator afterwards — it only reads its config when it starts.
 | Virtual Gamepad | Eden, Eden Nightly, Dolphin (GameCube) | buttons and sticks |
 | DSU Motion Server | Eden, Eden Nightly, Dolphin (Wii) | buttons, sticks and motion |
 
-The gamepad button beside **Set up** opens the mapping editor. Every connected player gets a card —
+The gamepad button beside **Set up** opens the mapping editor, with a card per connected player —
 tap one to open its bindings. A single Joy-Con is set up as a Pro Controller held sideways, so every
-button works in every game
-([why](docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers)). A target can take **several
-sources at once** — tick as many as you like, and any of them fires it.
+button works in every game ([why](docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers)). A
+target can take **several sources** — tick as many as you like, and any of them fires it.
 
-Each player picks their own **layout** to start from, which resets that player's customizations. The
-name on the card reads **Custom** the moment you change a binding, and reads the layout's own name
-again as soon as you change it back. The **save** icon beside the name keeps what you have built as a
-layout of your own, offered to any player holding the same body — it suggests the next free
-**Custom N**, and dims once there is nothing new to save, since a mapping that already reads as a
-layout has a name. The bin in the dropdown deletes
-one: your buttons stay exactly as they are, the name just becomes **Custom** until you save it again.
-
-**All players** at the top sets everyone at once, and saves the same way. Picking a grip only some
-bodies can be held in — **Mario Kart Wheel**, say — gives every other body the same game's other
-grip, so a table of singles and pairs all end up on Mario Kart rather than half of them on the
-default. A saved set remembers which
-player held which body — the sub-label under its name says which ("P1 L, P2 R, P3 L/R") — so it stays
-greyed out until those players are back.
-
-A player holding a lone Joy-Con on the Wii console also gets a **Sideways Wii Remote** switch — play
-it as a Wii Remote held sideways, which is what a wheel game steers by. Each layout sets it (on for
-Mario Kart, off for the others) and you can override it; picking a layout hands it back.
+- **Layouts.** Each player picks a layout to start from, which resets their changes. The card reads
+  **Custom** once you change a binding, and the layout's name again if you change it back.
+- **Saving.** The save icon beside the name keeps your mapping as a layout for any player holding the
+  same body. It dims when the mapping already matches a layout. Deleting a layout (the bin in the
+  dropdown) keeps everyone's buttons; they just read **Custom** until you save again.
+- **All players** at the top sets and saves everyone at once. A grip only some bodies fit —
+  **Mario Kart Wheel**, say — gives the rest the same game's other grip. A saved set remembers who
+  held which body ("P1 L, P2 R, P3 L/R") and stays greyed out until those players are back.
+- **Sideways Wii Remote.** On the Wii console, a lone Joy-Con also gets this switch, for games that
+  steer by tilting a sideways remote. The layout sets it (on for Mario Kart) and you can override
+  it until you next pick a layout.
 
 The layouts the app ships:
 
 | Layout | For |
 |---|---|
 | Wii | The Wii Remote's own arrangement: the trigger under your finger is B, 1 and 2 under the thumb |
-| Joy-Con | The same, with B and 2 swapped so the Joy-Con's own B is the remote's B |
+| Joy-Con | The same, with the Joy-Con's own B as B, and 1 and 2 on the shoulders so your thumb stays on the stick |
 | Mario Kart Wheel | A lone Joy-Con held sideways as a wheel, laid out the way Mario Kart 8 uses one — 2 accelerates, 1 brakes, SR hops and tricks, and SL throws an item alongside the stick. Steers by **tilt**, so it plays as a sideways Wii Remote: the d-pad turns with it and a right Joy-Con aims from its tail |
 | Mario Kart Nunchuck | The remote-and-nunchuk scheme, which steers by **stick** instead. A pair splits the halves across the hands, each index finger on the shoulder its controller keeps a trigger on; a lone Joy-Con plays both halves itself, its own stick standing in for the Nunchuk's and its rails carrying C and Z |
 
@@ -189,8 +181,8 @@ shoulder buttons.
    shoulder edge, so aim R/ZR (or L/ZL) at the screen. Also set **Total Yaw** to around 60 —
    Dolphin's 25 clamps the cursor after ±12.5° of turn, which a hand-held aim overruns.
 
-   **For a game written for a sideways Wii Remote** (Mario Kart Wii and its Wii Wheel), two changes,
-   both of which the in-app **Mario Kart** layout writes for you:
+   **For a game written for a sideways Wii Remote** (Mario Kart Wii and its Wii Wheel) — both
+   **Mario Kart** layouts write these for you:
 
    - Give a **right** Joy-Con the *left* column. Sideways, its top edge points where a sideways
      remote's tail does, so without that half turn the wheel steers backwards; a left Joy-Con
@@ -201,15 +193,9 @@ shoulder buttons.
    - For **tricks and wheelies**, append
      ``+ pulse(<flick>, 0.6) * max(sin(timer(0.15) * 6.2832), 0) * 50`` to **IMUAccelerometer/Up**,
      where `<flick>` is ``(\`Gyro Pitch Up\` / 9) & not(pulse(\`Gyro Pitch Down\` / 9, 0.4))`` —
-     then the same on **/Down** with Up and Down swapped. A flick of a Joy-Con is nearly all
-     rotation, which the game can't read from an accelerometer alone
-     ([why](docs/dsu-motion.md#dolphin-wii-remote-mapping)). Steering is roll, never pitch, so it
-     can't set this off; the lock-out stops a flick's rebound cancelling the wheelie it just
-     started. Don't use Dolphin's **Shake** group — it doesn't land tricks. You can also bind
-     **Shake** to a button.
-
-   Leave Dolphin's own **Sideways Wii Remote** option off either way — it would turn the
-   accelerometer a second quarter.
+     then the same on **/Down** with Up and Down swapped
+     ([why](docs/dsu-motion.md#tricks-and-wheelies)). Dolphin's own **Shake** group doesn't land
+     tricks, but you can bind **Shake** to a button.
 
 5. Under **Swing**, set **Forward** to
    ``(`Accel Forward` - `Accel Backward`) - smooth((`Accel Forward` - `Accel Backward`), 0.03)``,

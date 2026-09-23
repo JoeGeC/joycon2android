@@ -10,7 +10,7 @@ data class PlayerState(
     val hasFullController: Boolean get() = left != null && right != null
     val isSideways: Boolean get() = hasController && !hasFullController && !hasPro
 
-    // Raw hardware button state (for UI display showing physical button activity)
+    // As the hardware reports it, before any sideways rotation ([gamepad]).
     val pressed: Set<String>
         get() = if (hasPro) left!!.input.pressed
                 else (left?.input?.pressed ?: emptySet()) + (right?.input?.pressed ?: emptySet())
@@ -23,11 +23,8 @@ data class PlayerState(
     val leftInput: JoyconInput get() = left?.input ?: JoyconInput()
     val rightInput: JoyconInput get() = right?.input ?: JoyconInput()
 
-    // IMU source for motion consumers: the right Joy-Con of a pair (the "Wiimote hand"),
-    // otherwise whichever controller is present
+    // A pair's right Joy-Con is the Wii Remote hand.
     val motionSource: ConnectedJoycon? get() = right ?: left
 
-    // Gamepad-oriented state (rotated sticks + remapped buttons for HID output and consumers
-    // that want standard gamepad semantics regardless of physical orientation)
     val gamepad: GamepadState get() = GamepadState.from(this)
 }

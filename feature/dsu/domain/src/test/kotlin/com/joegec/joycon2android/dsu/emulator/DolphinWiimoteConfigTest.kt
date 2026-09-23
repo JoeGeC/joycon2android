@@ -158,7 +158,6 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("IMUIR/Total Yaw = 60"))
     }
 
-    // Off, each Joy-Con is its own body: the nose is the shoulder edge the player aims down.
     @Test
     fun `a right Joy-Con keeps its own body until the layout plays sideways`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
@@ -169,7 +168,6 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("IMUGyroscope/Yaw Left = `Gyro Yaw Left`"))
     }
 
-    // A sideways remote's nose points left, which a left Joy-Con's own body already does.
     @Test
     fun `a left Joy-Con reads the same either way`() {
         val player = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT)))
@@ -194,7 +192,6 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("IMUGyroscope/Yaw Left = `Gyro Yaw Left`"))
     }
 
-    // The player's up is a sideways remote's right, so the four bindings turn with the body.
     @Test
     fun `playing sideways turns the d-pad a quarter, on both bodies`() {
         val right = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
@@ -219,8 +216,6 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("D-Pad/Up = `Pad N`"))
     }
 
-    // A flick is nearly all rotation, which the game cannot read, so it is fired from the gyroscope
-    // and delivered through the accelerometer, the path steering proves reaches the game.
     @Test
     fun `playing sideways turns a wrist flick into a jerk the way it was flicked`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
@@ -235,8 +230,6 @@ class DolphinWiimoteConfigTest {
         assertFalse(result.contains("Shake/")) // Dolphin's own group never landed one
     }
 
-    // Every flick rebounds the opposite way a quarter of a second later, and that rebound would
-    // otherwise answer the gesture — which is what made a wheelie chatter on and off.
     @Test
     fun `each flick direction locks the other out`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
@@ -245,7 +238,6 @@ class DolphinWiimoteConfigTest {
             "not(pulse(`Gyro Pitch Up` / 9, 0.4))"))
     }
 
-    // A wheelie is a state, so a full wave would cancel it four times a second.
     @Test
     fun `the jerks all go the way the flick did`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)

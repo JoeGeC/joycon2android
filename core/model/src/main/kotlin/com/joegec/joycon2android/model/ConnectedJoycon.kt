@@ -9,6 +9,5 @@ data class ConnectedJoycon(
     val assignedPlayer: PlayerNumber? = null,
     val ready: Boolean = false,
 ) {
-    /** Shell accent color (0xRRGGBB) read from the controller's SPI flash, or null if not yet known. */
     val accentColor: Int? get() = connectionState.accentColor
 }

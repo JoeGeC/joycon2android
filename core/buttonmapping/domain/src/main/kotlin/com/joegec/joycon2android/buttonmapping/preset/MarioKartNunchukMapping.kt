@@ -31,14 +31,8 @@ import com.joegec.joycon2android.model.JoyconButton.ZL
 import com.joegec.joycon2android.model.JoyconButton.ZR
 
 /**
- * Mario Kart's remote-and-nunchuk scheme, where a stick steers rather than the tilt of a wheel.
- *
- * A pair splits the two halves across the hands, so its four shoulders carry what each hand's
- * controller keeps under a finger: the remote's B and the Nunchuk's Z on the upper pair, 1 and 2 on
- * the lower. The hop also takes the Joy-Con's own B, and the trick rides its shoulder.
- *
- * A lone Joy-Con plays both halves at once, its own stick standing in for the Nunchuk's, with the
- * rails carrying the two buttons a second hand would have held.
+ * Steers by stick. A pair puts B and Z on the upper shoulders, 1 and 2 on the lower; a lone Joy-Con
+ * plays both halves, its stick as the Nunchuk's and its rails as Z and B.
  */
 object MarioKartNunchukMapping : MappingPreset {
     override val id = "MARIO_KART_NUNCHUK"
@@ -84,9 +78,7 @@ object MarioKartNunchukMapping : MappingPreset {
         )
     }
 
-    // Said rather than left out: a layout lies over the console's default, so a target it never
-    // mentions keeps whatever that default bound — the stick the Nunchuk now wants, and buttons
-    // that would otherwise double up with the ones named above.
+    // Listed rather than omitted, or they keep the console default's bindings ([MappingLayouts.entriesOf]).
     private val UNBOUND = listOf(
         WiimoteButton.DPadUp,
         WiimoteButton.DPadDown,

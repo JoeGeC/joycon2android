@@ -1,6 +1,5 @@
 package com.joegec.joycon2android.buttonmapping.target
 
-/** A Nintendo Switch Pro Controller's own buttons and d-pad directions. */
 enum class SwitchProButton {
     A,
     B,

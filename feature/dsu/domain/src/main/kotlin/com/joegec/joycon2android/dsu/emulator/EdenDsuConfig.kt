@@ -21,12 +21,7 @@ import com.joegec.joycon2android.emulatorconfig.defineEdenKey
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 
-/**
- * Binds Eden to our DSU server in `config.ini`'s `[Controls]`: the three server switches, then a
- * whole controller per assigned player — buttons, sticks and motion — driven by the user's own
- * Joy-Con → Pro Controller mapping. How Eden addresses a cemuhook pad, and why the button table
- * reads the way it does: docs/dsu-motion.md#edens-cemuhook-bindings.
- */
+/** How Eden addresses a cemuhook pad: docs/dsu-motion.md#edens-cemuhook-bindings */
 object EdenDsuConfig {
     private const val ENGINE = "cemuhookudp"
 
@@ -57,8 +52,6 @@ object EdenDsuConfig {
         players: List<PlayerState>,
         mappingFor: (PlayerBody) -> Map<String, String>,
     ): String {
-        // A reassignment leaves stale bindings on players who no longer hold a controller, and
-        // those would keep feeding an emulated pad from whoever now owns that slot.
         val cleared = IniEditor.removeKeys(existing, EdenControls.SECTION) { it.matches(EdenControls.PLAYER_KEY) }
         return IniEditor.setKeys(
             cleared,
@@ -72,7 +65,7 @@ object EdenDsuConfig {
         val keys = LinkedHashMap<String, String>()
         keys.defineEdenKey("motion_enabled", "true")
         keys.defineEdenKey("udp_input_servers", serverList(existing))
-        // What makes Eden offer the UDP pads at all — off, and none of the bindings below resolve.
+        // Off, none of the bindings below resolve.
         keys.defineEdenKey("enable_udp_controller", "true")
         return keys
     }
@@ -143,8 +136,6 @@ object EdenDsuConfig {
     private fun axesOf(stick: StickSource) =
         if (stick == StickSource.LEFT_STICK) LEFT_STICK_AXES else RIGHT_STICK_AXES
 
-    // Eden binds one input per key, so a target driven by several sources keeps the first that its
-    // body can actually emit; the rest are only reachable through Dolphin.
     private fun inputFor(side: JoyconSide, sources: List<MappingSource>): String? =
         sources.firstNotNullOfOrNull { inputFor(side, it) }
 

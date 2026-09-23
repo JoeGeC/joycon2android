@@ -3,10 +3,7 @@ package com.joegec.joycon2android.model
 import kotlin.math.roundToInt
 
 object BatteryGauge {
-    // The BLE packet reports a regulated/under-load voltage ~0.6 V below the true cell
-    // voltage (observed: ~3.30 V reads 75% on a Switch 2, ~3.60 V reads 100%). Anchors are
-    // Nintendo's Joy-Con level thresholds (dekuNukem docs: 3.3/3.6/3.76/3.9/4.2 V) shifted
-    // down 0.6 V to match. Below ~3.0 V is extrapolated — no low-battery readings observed yet.
+    // Anchors and the 0.6 V offset: docs/protocol.md#battery
     private val voltsToPercent = listOf(
         2.70f to 0,
         3.00f to 25,

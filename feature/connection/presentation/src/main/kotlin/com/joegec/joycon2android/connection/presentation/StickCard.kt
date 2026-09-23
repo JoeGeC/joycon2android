@@ -68,8 +68,7 @@ private fun StickCanvas(
     }
 }
 
-// Each axis is normalised against its own travel, so a full diagonal reaches 1 on both and lands
-// outside the ring. The stick's gate is round, so it's the magnitude that clamps, not each axis.
+// Each axis reaches 1 on its own, so a diagonal would leave the round gate: clamp the magnitude.
 private fun dotPosition(centre: Offset, nx: Float, ny: Float, travel: Float): Offset {
     val magnitude = hypot(nx, ny)
     val scale = if (magnitude > 1f) 1f / magnitude else 1f

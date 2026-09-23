@@ -12,13 +12,6 @@ import android.os.Looper
 import android.util.Log
 import com.joegec.joycon2android.model.Side
 
-/**
- * Handles BLE scanning for Nintendo Joy-Con 2 controllers.
- * Emits discovered devices via the [onDeviceFound] callback.
- *
- * All BLE operations require BLUETOOTH_SCAN and BLUETOOTH_CONNECT permissions,
- * which are verified by the permission launcher in MainActivity before any BLE code is reached.
- */
 @SuppressLint("MissingPermission")
 class BleScanner(context: Context) {
 
@@ -69,9 +62,7 @@ class BleScanner(context: Context) {
                 if (!isScanning) return
                 val manufacturerData = nintendoData(result) ?: return
                 logAdvertisement(result, manufacturerData)
-                // A button press wakes a synced Joy-Con into a short-lived reconnect
-                // advertisement that only its bonded host can connect to (foreign
-                // connects fail with status 133) — connecting just flashes the UI
+                // Only the bonded host can connect to a wake advert: docs/protocol.md#advertising
                 if (!JoyconAdvertisement.isPairing(manufacturerData)) return
                 if (isKnownAddress(result.device.address)) return
 
@@ -128,15 +119,7 @@ class BleScanner(context: Context) {
         else -> null
     }
 
-    /**
-     * Nintendo manufacturer data (company 0x0553) carries the little-endian USB/BLE product ID at
-     * bytes [5..6], so index 5 is its low byte: 0x67 = Left Joy-Con 2 (PID 0x2067), 0x66 = Right
-     * Joy-Con 2 (PID 0x2066), 0x69 = Switch 2 Pro Controller (PID 0x2069). Left/Right are confirmed
-     * on hardware and cross-checked against each controller's SPI accent colour (cyan left, coral
-     * right); the Pro value comes from community reverse-engineering of the same advertisement
-     * scheme. The pairing advertisement has no local name, so this byte is the only type signal
-     * available before the controller starts streaming input.
-     */
+    /** The product ID's low byte: docs/protocol.md#advertising */
     private fun sideFromManufacturerData(result: ScanResult): Side? {
         val mfgData = result.scanRecord
             ?.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) ?: return null

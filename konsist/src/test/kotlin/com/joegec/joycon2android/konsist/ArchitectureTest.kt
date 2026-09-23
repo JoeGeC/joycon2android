@@ -5,11 +5,7 @@ import com.lemonappdev.konsist.api.ext.list.withNameEndingWith
 import com.lemonappdev.konsist.api.verify.assertTrue
 import org.junit.Test
 
-/**
- * Layer conventions the Gradle module graph cannot enforce on its own — *where* a kind of class
- * is allowed to live. The graph already stops presentation from seeing data; these stop a
- * ViewModel, use case, or repository interface from landing in the wrong layer in the first place.
- */
+/** Placement rules the module graph can't enforce: docs/architecture.md#dependency-rules */
 class ArchitectureTest {
 
     @Test

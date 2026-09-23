@@ -27,9 +27,7 @@ object ShizukuPermissionHandler {
             false
         }
 
-    // Shizuku dispatches the result to a main-thread listener, so the request must be issued
-    // on the main thread — issuing it from a background thread drops the callback and the
-    // caller waits forever.
+    // Must be issued on the main thread: from any other, Shizuku drops the callback and the caller hangs.
     fun requestPermission(callback: (granted: Boolean) -> Unit) {
         if (isPermissionGranted) {
             callback(true)

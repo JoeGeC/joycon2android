@@ -23,7 +23,7 @@ class GlobalMappingTest {
     private suspend fun putBothOn(layoutId: String) =
         fixture.applyGlobalLayout(fixture.console, bodies, layoutId)
 
-    // The domain says what a session agrees on; naming it is presentation's, so this stands in.
+    // Stands in for presentation's naming.
     private fun GlobalMapping.agreedName(): String? =
         matchingSaved?.name ?: sharedLayout?.id ?: sharedFamily?.name
 
@@ -65,7 +65,6 @@ class GlobalMappingTest {
         assertNull(fixture.globalMapping(first, second).agreedName())
     }
 
-    // A table rarely holds the same thing, so the grip each body can be held in is what it gets.
     @Test
     fun `setting a grip nobody but a lone Joy-Con has gives a pair the other grip of the same game`() = runBlocking {
         val pair = PlayerBody(PlayerNumber.P3, JoyconSide.DUAL)
@@ -98,7 +97,6 @@ class GlobalMappingTest {
         assertFalse(saved.fits(listOf(first, PlayerBody(PlayerNumber.P2, JoyconSide.DUAL))))
     }
 
-    // Which bodies, in which order — what they are *called* is presentation's, so it is not here.
     @Test
     fun `a saved set records the bodies it wants, player by player`() = runBlocking {
         val three = bodies + PlayerBody(PlayerNumber.P3, JoyconSide.DUAL)

@@ -6,10 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 
-/**
- * Mapping used to be one setting per console, shared by every player. Each player now holds their
- * own, so a console-wide value already stored is handed to all of them — which is what it meant.
- */
+/** Hands an older build's console-wide value to every player, which is what it meant. */
 internal class PerPlayerMigration(
     private val perPlayerNames: (legacyName: String) -> List<String>?,
 ) : DataMigration<Preferences> {

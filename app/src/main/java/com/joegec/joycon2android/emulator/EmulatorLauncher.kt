@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 
-/** Starts an installed emulator so it reloads the config auto setup just wrote. */
 class EmulatorLauncher(context: Context) {
 
     private val appContext = context.applicationContext

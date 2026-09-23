@@ -9,10 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import rikka.shizuku.Shizuku
 
-/**
- * Grants the virtual gamepad and emulator-config writes shell-uid access to `/dev/uhid`
- * and app config files through Shizuku, the app's only privileged backend.
- */
 class PrivilegedAccess : PrivilegedAccessRepository {
 
     private val shizuku = ShizukuShell()

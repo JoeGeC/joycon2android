@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** A set of JSON documents in preference storage, one per key, keyed by the document's own id. */
 internal class JsonDocumentStore<T>(
     private val dataStore: DataStore<Preferences>,
     private val encode: (T) -> String,

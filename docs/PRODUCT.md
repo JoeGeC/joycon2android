@@ -6,15 +6,13 @@ product
 
 ## Users
 
-Android gaming and emulation enthusiasts who want to use Nintendo Switch 2 **Joy-Con 2**
-controllers as system-wide gamepads on their phone or tablet. They are comfortable with
-Developer Options, Shizuku, and per-emulator config — this is not a mainstream consumer
-audience. Their context is hands-on: often mid-setup at a desk or on a couch, frequently
-*holding a controller in one hand* while operating the app with the other, wanting to get
-connected and into a game (or emulator) with as little friction as possible and then have
-the app stay out of the way.
+Android gaming and emulation enthusiasts using Nintendo Switch 2 **Joy-Con 2** and Pro Controllers
+as gamepads on a phone or tablet. They are comfortable with Developer Options, Shizuku and
+per-emulator config. They use the app mid-setup, at a desk or on a couch, often in a dim room and
+*holding a controller in one hand*, and want to get into a game fast and then have the app stay out
+of the way.
 
-The primary jobs, screen by screen:
+The primary jobs:
 - **Connect** — pair one or more Joy-Con 2 over BLE and confirm they're live.
 - **Assign** — map controllers to player slots (P1–P8), single or dual (L+R) layouts.
 - **Enable output** — turn on the virtual gamepad and/or DSU motion server.
@@ -23,31 +21,24 @@ The primary jobs, screen by screen:
 
 ## Product Purpose
 
-Joy-Con 2 controllers speak BLE over a custom GATT service rather than standard
-HID-over-GATT, so Android cannot pair them through normal Bluetooth settings. Joycon2Android
-bridges that gap: it connects over GATT, sends the vendor init sequence, parses raw
-notification packets, and exposes each assigned player as its own standard virtual HID
-gamepad via UHID (through Shizuku's privileged path). It also runs a DSU motion server so
-emulators get gyro/accel, and can write emulator controller configs directly.
+The controllers speak a custom BLE GATT service rather than HID-over-GATT, so Android can't pair
+them from Bluetooth settings. The app connects itself, presents each player as a virtual HID gamepad
+through UHID, runs a DSU motion server, and writes emulator configs.
 
-Success is: a controller goes from SYNC-button to "working in my game/emulator" in well
-under a minute, multiplayer "just works" (one distinct device per player), and the app is
-trustworthy enough to leave running in the background without a second thought.
+Success: SYNC to "working in my game" in well under a minute, multiplayer that just works (one device
+per player), and an app trustworthy enough to leave running in the background.
 
 ## Brand Personality
 
 **Playful gaming gear** — energetic, characterful, unmistakably *about controllers and play*,
 not a generic system utility. Three words: **playful, precise, native-to-gaming**.
 
-The personality is carried by substance, not decoration: the standout identity move is that
-each controller's card border is drawn from the controller's **real shell color** read out of
-SPI flash (saturation-boosted so it reads on the dark UI). The design should lean into that —
-color, motion, and layout that celebrate the hardware — while staying tasteful and technically
-credible. Playful with restraint, never toy-like.
+Personality comes from substance, not decoration — above all each controller's **real shell
+colour** ([DESIGN.md](DESIGN.md#color)). Colour, motion and layout should celebrate the hardware while
+staying technically credible: playful with restraint, never toy-like.
 
-Voice: confident and direct, speaks the user's language (BLE, DSU, UHID, emulator names) without
-over-explaining. Copy is generic and self-explanatory — toggles describe their use case rather
-than giving app-specific step-by-step instructions.
+Voice: confident and direct, in the user's language (BLE, DSU, UHID, emulator names). Toggles
+describe their use case rather than giving step-by-step instructions.
 
 ## Anti-references
 
@@ -75,12 +66,10 @@ than giving app-specific step-by-step instructions.
 
 ## Accessibility & Inclusion
 
-- **Contrast (WCAG AA).** Body text ≥4.5:1, large/bold text ≥3:1 against its background — a real
-  risk on the dark theme with muted-gray text (`TextDim #8B98A5`); verify and bump toward ink
-  where borderline.
+- **Contrast (WCAG AA).** Body text ≥4.5:1, large/bold text ≥3:1 — watch muted text on the dark
+  theme.
 - **Reduced motion.** Any animation or live-readout motion honours the system reduced-motion
   setting with a calm fallback.
 - **Large touch targets.** ≥48dp for primary controls — the app is often operated one-handed
   while the other hand holds a controller.
-- **Don't rely on color alone.** Battery and connection state pair color with icon/text so
-  status survives color-blindness (currently battery is color-only via `batteryColor()`).
+- **Don't rely on colour alone.** Battery and connection state pair colour with an icon or text.

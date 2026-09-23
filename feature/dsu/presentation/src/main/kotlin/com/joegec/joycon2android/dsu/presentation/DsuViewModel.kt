@@ -12,7 +12,7 @@ import com.joegec.joycon2android.dsu.motion.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.dsu.motion.SetFastMotionUseCase
 import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.ui.components.DolphinSetupPhase // shared, in :core:designsystem
+import com.joegec.joycon2android.ui.components.DolphinSetupPhase
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,7 +22,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Feature-scoped state holder for the DSU card. Use cases are injected by the app. */
 class DsuViewModel(
     observeDsuStatus: ObserveDsuStatusUseCase,
     private val enableDsu: EnableDsuUseCase,
@@ -47,11 +46,9 @@ class DsuViewModel(
     private val _setupPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
     val setupPhase: StateFlow<DolphinSetupPhase> = _setupPhase.asStateFlow()
 
-    /** The emulator that has to be closed before its config can be written, once the user agrees. */
     private val _emulatorToClose = MutableStateFlow<EmulatorOption?>(null)
     val emulatorToClose: StateFlow<EmulatorOption?> = _emulatorToClose.asStateFlow()
 
-    /** The emulator to offer to start once its config has been written. */
     private val _emulatorToStart = MutableStateFlow<EmulatorOption?>(null)
     val emulatorToStart: StateFlow<EmulatorOption?> = _emulatorToStart.asStateFlow()
 
@@ -74,7 +71,6 @@ class DsuViewModel(
         resetSetupPhase()
     }
 
-    /** Clears a stale Done/Failed and its start prompt once the written config no longer matches the assignment. */
     fun resetSetupPhase() {
         if (_setupPhase.value == DolphinSetupPhase.WORKING) return
         _setupPhase.value = DolphinSetupPhase.IDLE
@@ -83,7 +79,6 @@ class DsuViewModel(
 
     fun configureDsu(players: List<PlayerState>) = write(players, closeEmulator = false)
 
-    /** The user accepted losing unsaved progress, so stop the emulator and write. */
     fun closeEmulatorAndConfigure(players: List<PlayerState>) {
         _emulatorToClose.value = null
         write(players, closeEmulator = true)

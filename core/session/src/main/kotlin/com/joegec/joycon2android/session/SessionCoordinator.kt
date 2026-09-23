@@ -15,16 +15,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
- * The cross-feature glue: joins connected controllers with player assignments into
- * [AppUiState], drives the per-packet output pipeline, and orchestrates assignment
- * (including its connection/gamepad side effects).
- *
- * Lives above the feature domains and depends only on their interfaces. The actual
- * gamepad/DSU effects are injected as callbacks ([onState], [onPlayerAssigned],
- * [onPlayerUnassigned]) so this module never depends on those features.
- *
- * [onState] fires synchronously on every emission — the controller list re-emits on each
- * input change, so per-packet consumers (gamepad, DSU motion) see every update.
+ * Gamepad and DSU effects arrive as callbacks, so this never depends on those features. [onState]
+ * is synchronous: a conflated flow would drop per-packet motion.
  */
 class SessionCoordinator(
     private val scope: CoroutineScope,

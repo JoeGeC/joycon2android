@@ -1,6 +1,5 @@
 package com.joegec.joycon2android.buttonmapping
 
-/** A layout the user saved from one player's body, offered back to any player holding that body. */
 data class SavedLayout(
     override val id: String,
     val name: String,
@@ -9,6 +8,6 @@ data class SavedLayout(
     val bindings: Map<String, String>,
     override val sidewaysRemote: Boolean = false,
 ) : MappingLayout {
-    /** Saved from one body and only ever offered back to it, so [side] is already the side asked for. */
+    /** Only ever offered back to the body it was saved from, so [side] is always that one. */
     override fun entries(side: JoyconSide) = bindings
 }
