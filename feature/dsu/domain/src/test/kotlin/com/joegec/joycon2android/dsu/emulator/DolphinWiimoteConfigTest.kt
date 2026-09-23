@@ -4,6 +4,7 @@ import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
+import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
@@ -114,6 +115,28 @@ class DolphinWiimoteConfigTest {
         val result = DolphinWiimoteConfig.merge(null, player, { false }) { mapping }
 
         assertTrue(result.contains("D-Pad/Up = `Left X+` | `L1`")) // SL rotates onto L held sideways
+    }
+
+    @Test
+    fun `a remote left on our server by an earlier setup is disconnected, so a pair's second hand isn't a player`() {
+        val earlier = "[Wiimote4]\nSource = 1\nDevice = DSUClient/3/Joycon2\n"
+        val pair = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        val result = merge(earlier, listOf(pair))
+
+        assertEquals("0", IniEditor.valueOf(result, "[Wiimote4]", "Source"))
+        assertEquals(null, IniEditor.valueOf(result, "[Wiimote4]", "Device"))
+    }
+
+    @Test
+    fun `a remote the player set up themselves is left alone`() {
+        val theirs = "[Wiimote2]\nSource = 2\n[Wiimote3]\nSource = 1\nDevice = Android/0/Pro Controller\n"
+
+        val result = merge(theirs, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+
+        assertEquals("2", IniEditor.valueOf(result, "[Wiimote2]", "Source"))
+        assertEquals("1", IniEditor.valueOf(result, "[Wiimote3]", "Source"))
+        assertEquals("Android/0/Pro Controller", IniEditor.valueOf(result, "[Wiimote3]", "Device"))
     }
 
     @Test

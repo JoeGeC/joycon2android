@@ -182,7 +182,10 @@ object DolphinWiimoteConfig {
         players: List<PlayerState>,
         sidewaysRemoteFor: (PlayerBody) -> Boolean,
         mappingFor: (PlayerBody) -> Map<String, String>,
-    ): String = IniEditor.mergeSections(existing, sections(players, sidewaysRemoteFor, mappingFor))
+    ): String {
+        val sections = sections(players, sidewaysRemoteFor, mappingFor)
+        return IniEditor.mergeSections(existing, StaleDolphinWiimotes.disconnected(existing, sections.keys) + sections)
+    }
 
     private fun sections(
         players: List<PlayerState>,
