@@ -87,6 +87,26 @@ class DolphinWiimoteConfigTest {
     }
 
     @Test
+    fun `recenter follows its mapping`() {
+        val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("Recenter" to "Plus")
+        val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
+
+        val result = DolphinWiimoteConfig.merge(null, player, { false }) { mapping }
+
+        assertTrue(result.contains("IMUIR/Recenter = `Options`"))
+    }
+
+    @Test
+    fun `an unbound recenter writes no binding`() {
+        val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("Recenter" to "")
+        val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
+
+        val result = DolphinWiimoteConfig.merge(null, player, { false }) { mapping }
+
+        assertFalse(result.contains("IMUIR/Recenter ="))
+    }
+
+    @Test
     fun `a target bound to several sources fires from any of them`() {
         val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("DPadUp" to "RIGHT_STICK_UP|SlRight")
         val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))

@@ -212,7 +212,7 @@ What `DolphinWiimoteConfig` writes, and why:
   puts a full lunge at ~1.5 g. The dead zone keeps a tilted grip's leak from nudging the remote.
 - **The Nunchuk reads another pad.** Dolphin splits a control on its last colon, so
   `DSUClient/<slot>/Joycon2:Accel Up` reads the second hand's slot. A real Nunchuk has no gyro.
-- **Recenter** is R1 (L1 on a lone left Joy-Con). Gyro pointing drifts, and pressing it while aiming
+- **Recenter** is a mapping target, R by default (L on a lone left Joy-Con). Gyro pointing drifts, and pressing it while aiming
   at the screen centre is what summons the pointer.
 - **`IMUIR/Total Yaw` is 60°.** Dolphin's 25° clamps the cursor after ±12.5° of turn, which a
   hand-held aim overruns; the clamp reads as the pointer sticking.

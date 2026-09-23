@@ -37,11 +37,13 @@ class WiiPresetsTest {
         assertEquals("R", dual.getValue(WiimoteButton.One.name))
         assertEquals("ZR", dual.getValue(WiimoteButton.Two.name))
         assertEquals("Minus", dual.getValue(WiimoteButton.Minus.name))
+        assertEquals("RS", dual.getValue(WiimoteButton.Recenter.name))
 
         val right = JoyconWiiMapping.entries(JoyconSide.RIGHT)
         assertEquals("B", right.getValue(WiimoteButton.B.name))
         assertEquals("R", right.getValue(WiimoteButton.One.name))
         assertEquals("ZR", right.getValue(WiimoteButton.Two.name))
+        assertEquals("RS", right.getValue(WiimoteButton.Recenter.name))
 
         val left = JoyconWiiMapping.entries(JoyconSide.LEFT)
         assertEquals("Right", left.getValue(WiimoteButton.A.name))
@@ -49,6 +51,7 @@ class WiiPresetsTest {
         assertEquals("L", left.getValue(WiimoteButton.One.name))
         assertEquals("ZL", left.getValue(WiimoteButton.Two.name))
         assertEquals("Up", left.getValue(WiimoteButton.Plus.name))
+        assertEquals("LS", left.getValue(WiimoteButton.Recenter.name))
     }
 
     @Test
@@ -194,9 +197,9 @@ class WiiPresetsTest {
 
     @Test
     fun `every Wii layout binds the whole remote on a lone Joy-Con`() {
-        // Shake is a motion, not a button.
+        // Shake and Recenter aren't buttons on the remote.
         val remote = (WiimoteButton.entries - WiimoteButton.NunchukC - WiimoteButton.NunchukZ -
-            WiimoteButton.Shake).map { it.name }
+            WiimoteButton.Shake - WiimoteButton.Recenter).map { it.name }
 
         MappingPresets.forConsole(Console.WIIMOTE_NUNCHUK)
             .filterNot { it == MarioKartNunchukMapping }

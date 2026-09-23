@@ -1,6 +1,6 @@
 package com.joegec.joycon2android.buttonmapping.target
 
-/** Includes [Shake], a motion rather than a button, because the editor binds it like one. */
+/** Includes [Shake] and [Recenter], which aren't buttons on the remote, because the editor binds them like one. */
 enum class WiimoteButton {
     A,
     B,
@@ -16,4 +16,5 @@ enum class WiimoteButton {
     NunchukC,
     NunchukZ,
     Shake,
+    Recenter,
 }

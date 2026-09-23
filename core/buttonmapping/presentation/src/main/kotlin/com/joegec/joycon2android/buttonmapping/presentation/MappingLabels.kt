@@ -87,6 +87,7 @@ internal fun WiimoteButton.label(): String = when (this) {
     WiimoteButton.NunchukC -> stringResource(R.string.button_nunchuk_c)
     WiimoteButton.NunchukZ -> stringResource(R.string.button_nunchuk_z)
     WiimoteButton.Shake -> stringResource(R.string.button_shake)
+    WiimoteButton.Recenter -> stringResource(R.string.button_recenter)
 }
 
 @Composable

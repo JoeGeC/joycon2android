@@ -45,6 +45,7 @@ object DolphinWiimoteConfig {
         WiimoteButton.DPadRight to "D-Pad/Right",
         WiimoteButton.NunchukC to "Nunchuk/Buttons/C",
         WiimoteButton.NunchukZ to "Nunchuk/Buttons/Z",
+        WiimoteButton.Recenter to "IMUIR/Recenter",
     )
 
     // DSU carries exactly the DS4 button set — these are protocol input names, not UI copy.
@@ -235,9 +236,8 @@ object DolphinWiimoteConfig {
                     ?.let { expression -> "${dolphinKey(target, sideways)} = $expression" }
             }
         val stickLines = nunchukStickLines(side, sidewaysRemote, mapping)
-        val recenterSpec = if (side == JoyconSide.LEFT) "L1" else "R1"
         val extension = if (usesNunchuk(side, buttonLines + stickLines)) "Nunchuk" else "None"
-        return buttonLines + listOf("IMUIR/Recenter = `$recenterSpec`", "Extension = $extension") + stickLines
+        return buttonLines + listOf("Extension = $extension") + stickLines
     }
 
     // A pair always plugs one in for its second hand; a lone Joy-Con only once a Nunchuk control is bound.

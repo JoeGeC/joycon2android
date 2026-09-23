@@ -52,6 +52,7 @@
     <string name="button_home">Home</string>
     <string name="button_capture">Capture</string>
     <string name="button_shake">Shake</string>
+    <string name="button_recenter">Recenter</string>
     <string name="button_nunchuk_c">Nunchuk C</string>
     <string name="button_nunchuk_z">Nunchuk Z</string>
     <string name="button_lstick_click">L-Stick Click</string>

@@ -34,8 +34,8 @@ internal object MappingOptions {
         Console.SWITCH_PRO -> SwitchProButton.entries.map { it.name to it.label() }
     }
 
-    // Shake is a motion, so it's listed after the sticks.
-    private val MOTION_TARGETS = setOf(WiimoteButton.Shake)
+    // Not buttons on the remote, so they're listed after the sticks.
+    private val MOTION_TARGETS = setOf(WiimoteButton.Shake, WiimoteButton.Recenter)
 
     @Composable
     private fun motionTargets(console: Console): List<Pair<String, String>> =

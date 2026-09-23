@@ -109,7 +109,7 @@ The layouts the app ships:
 | Layout | For |
 |---|---|
 | Wii | The Wii Remote's own arrangement: the trigger under your finger is B, 1 and 2 under the thumb |
-| Joy-Con | The same, with the Joy-Con's own B as B, and 1 and 2 on the shoulders so your thumb stays on the stick |
+| Joy-Con | The same, with the Joy-Con's own B as B, 1 and 2 on the shoulders so your thumb stays on the stick, and Recenter on the stick click |
 | Mario Kart Wheel | A lone Joy-Con held sideways as a wheel, laid out the way Mario Kart 8 uses one — 2 accelerates, 1 brakes, SR hops and tricks, and SL throws an item alongside the stick. Steers by **tilt**, so it plays as a sideways Wii Remote: the d-pad turns with it and a right Joy-Con aims from its tail |
 | Mario Kart Nunchuck | The remote-and-nunchuk scheme, which steers by **stick** instead. A pair splits the halves across the hands, each index finger on the shoulder its controller keeps a trigger on; a lone Joy-Con plays both halves itself, its own stick standing in for the Nunchuk's and its rails carrying C and Z |
 

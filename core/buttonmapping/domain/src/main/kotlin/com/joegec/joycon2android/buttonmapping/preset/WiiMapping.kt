@@ -19,6 +19,7 @@ import com.joegec.joycon2android.model.JoyconButton.L
 import com.joegec.joycon2android.model.JoyconButton.Left
 import com.joegec.joycon2android.model.JoyconButton.Minus
 import com.joegec.joycon2android.model.JoyconButton.Plus
+import com.joegec.joycon2android.model.JoyconButton.R
 import com.joegec.joycon2android.model.JoyconButton.Right
 import com.joegec.joycon2android.model.JoyconButton.Up
 import com.joegec.joycon2android.model.JoyconButton.X
@@ -49,6 +50,7 @@ object WiiMapping : MappingPreset {
             WiimoteButton.DPadRight to Right,
             WiimoteButton.NunchukC to L,
             WiimoteButton.NunchukZ to ZL,
+            WiimoteButton.Recenter to R,
         )
         JoyconSide.LEFT -> mapOf(
             WiimoteButton.A to Right,
@@ -58,6 +60,7 @@ object WiiMapping : MappingPreset {
             WiimoteButton.Home to Capture,
             WiimoteButton.Plus to Up,
             WiimoteButton.Minus to Minus,
+            WiimoteButton.Recenter to L,
         )
         JoyconSide.RIGHT -> mapOf(
             WiimoteButton.A to A,
@@ -67,6 +70,7 @@ object WiiMapping : MappingPreset {
             WiimoteButton.Home to Home,
             WiimoteButton.Plus to Plus,
             WiimoteButton.Minus to X,
+            WiimoteButton.Recenter to R,
         )
     }
 
