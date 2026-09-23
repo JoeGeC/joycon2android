@@ -13,8 +13,7 @@
     <string name="controller_mapping_delete">Delete</string>
     <string name="controller_mapping_no_players">Connect a controller to map it.</string>
     <string name="controller_mapping_sideways_remote">Sideways Wii Remote</string>
-    <string name="controller_mapping_sideways_remote_description_left">Rotates the d-pad and stick.</string>
-    <string name="controller_mapping_sideways_remote_description_right">Steering reads correctly, rotates the d-pad and stick.</string>
+    <string name="controller_mapping_sideways_remote_description">Fixes motion steering. Up is towards the rail.</string>
     <string name="controller_mapping_sideways_remote_warning">When enabled, a right Joy-Con points from its tail rather than its R edge.</string>
     <string name="player_label">P%1$d</string>
     <string name="controller_left">Left</string>

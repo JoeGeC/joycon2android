@@ -51,12 +51,12 @@ object WiiMapping : MappingPreset {
             WiimoteButton.NunchukZ to ZL,
         )
         JoyconSide.LEFT -> mapOf(
-            WiimoteButton.A to Down,
+            WiimoteButton.A to Right,
             WiimoteButton.B to ZL,
-            WiimoteButton.One to Up,
-            WiimoteButton.Two to Left,
+            WiimoteButton.One to Left,
+            WiimoteButton.Two to Down,
             WiimoteButton.Home to Capture,
-            WiimoteButton.Plus to Right,
+            WiimoteButton.Plus to Up,
             WiimoteButton.Minus to Minus,
         )
         JoyconSide.RIGHT -> mapOf(

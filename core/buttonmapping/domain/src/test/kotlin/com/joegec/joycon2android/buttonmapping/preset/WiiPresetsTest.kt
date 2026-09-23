@@ -21,6 +21,16 @@ class WiiPresetsTest {
     }
 
     @Test
+    fun `a left Joy-Con on the Wii layout keeps A and 1 and 2 where a right Joy-Con does, and + on top`() {
+        val left = WiiMapping.entries(JoyconSide.LEFT)
+
+        assertEquals("Right", left.getValue(WiimoteButton.A.name))
+        assertEquals("Left", left.getValue(WiimoteButton.One.name))
+        assertEquals("Down", left.getValue(WiimoteButton.Two.name))
+        assertEquals("Up", left.getValue(WiimoteButton.Plus.name))
+    }
+
+    @Test
     fun `the Joy-Con layout puts the remote's buttons where a Joy-Con keeps them`() {
         val dual = JoyconWiiMapping.entries(JoyconSide.DUAL)
         assertEquals("B", dual.getValue(WiimoteButton.B.name))

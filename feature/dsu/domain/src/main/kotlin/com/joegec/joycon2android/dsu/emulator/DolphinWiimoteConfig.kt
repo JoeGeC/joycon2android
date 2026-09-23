@@ -5,6 +5,7 @@ import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
+import com.joegec.joycon2android.buttonmapping.emittedDirection
 import com.joegec.joycon2android.buttonmapping.emittedFor
 import com.joegec.joycon2android.buttonmapping.emittedStick
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
@@ -137,7 +138,7 @@ object DolphinWiimoteConfig {
         } else {
             null
         }
-        val pressed = bound?.takeIf { control == UP }?.let { expressionFor(side, it) }
+        val pressed = bound?.takeIf { control == UP }?.let { expressionFor(side, sidewaysRemote, it) }
         return listOfNotNull(flick, pressed).takeIf { it.isNotEmpty() }?.joinToString(" | ")
     }
 
@@ -219,20 +220,21 @@ object DolphinWiimoteConfig {
         } else {
             emptyList()
         }
-        val sideways = sidewaysRemote && side != JoyconSide.DUAL
         val mapping = mappingFor(body)
         val shake = mapping.toSourceMap<WiimoteButton>()[WiimoteButton.Shake]
-        return (header + lines(side, sideways, mapping) + imuLines(side, sidewaysRemote, shake) +
+        return (header + lines(side, sidewaysRemote, mapping) + imuLines(side, sidewaysRemote, shake) +
             swingLines(side, sidewaysRemote) + nunchukImu)
             .joinToString("\n", postfix = "\n")
     }
 
-    private fun lines(side: JoyconSide, sideways: Boolean, mapping: Map<String, String>): List<String> {
+    private fun lines(side: JoyconSide, sidewaysRemote: Boolean, mapping: Map<String, String>): List<String> {
+        val sideways = sidewaysRemote && side != JoyconSide.DUAL
         val buttonLines = (mapping.toSourceMap<WiimoteButton>() - WiimoteButton.Shake)
             .mapNotNull { (target, sources) ->
-                expressionFor(side, sources)?.let { expression -> "${dolphinKey(target, sideways)} = $expression" }
+                expressionFor(side, sidewaysRemote, sources)
+                    ?.let { expression -> "${dolphinKey(target, sideways)} = $expression" }
             }
-        val stickLines = nunchukStickLines(side, mapping)
+        val stickLines = nunchukStickLines(side, sidewaysRemote, mapping)
         val recenterSpec = if (side == JoyconSide.LEFT) "L1" else "R1"
         val extension = if (usesNunchuk(side, buttonLines + stickLines)) "Nunchuk" else "None"
         return buttonLines + listOf("IMUIR/Recenter = `$recenterSpec`", "Extension = $extension") + stickLines
@@ -242,21 +244,21 @@ object DolphinWiimoteConfig {
     private fun usesNunchuk(side: JoyconSide, mappedLines: List<String>) =
         side == JoyconSide.DUAL || mappedLines.any { it.startsWith("Nunchuk/") }
 
-    private fun nunchukStickLines(side: JoyconSide, mapping: Map<String, String>): List<String> =
+    private fun nunchukStickLines(side: JoyconSide, sidewaysRemote: Boolean, mapping: Map<String, String>): List<String> =
         mapping.toStickDirectionMap<WiimoteStick>().values.flatMap { directions ->
             directions.mapNotNull { (direction, sources) ->
-                expressionFor(side, sources)?.let { expression -> "Nunchuk/Stick/${DolphinControls.DIRECTIONS.getValue(direction)} = $expression" }
+                expressionFor(side, sidewaysRemote, sources)?.let { expression -> "Nunchuk/Stick/${DolphinControls.DIRECTIONS.getValue(direction)} = $expression" }
             }
         }
 
-    private fun expressionFor(side: JoyconSide, sources: List<MappingSource>): String? =
-        sources.mapNotNull { specFor(side, it) }
+    private fun expressionFor(side: JoyconSide, sidewaysRemote: Boolean, sources: List<MappingSource>): String? =
+        sources.mapNotNull { specFor(side, sidewaysRemote, it) }
             .takeIf { it.isNotEmpty() }
             ?.joinToString(" | ") { "`$it`" }
 
-    private fun specFor(side: JoyconSide, source: MappingSource): String? = when (source) {
+    private fun specFor(side: JoyconSide, sidewaysRemote: Boolean, source: MappingSource): String? = when (source) {
         is MappingSource.Button -> source.button.emittedFor(side)?.let { DS4_NAMES[it] ?: PAD_NAMES[it] }
-        is MappingSource.Stick -> tiltSpec(source.emittedStick(side), source.direction)
+        is MappingSource.Stick -> tiltSpec(source.emittedStick(side), source.emittedDirection(side, sidewaysRemote))
     }
 
     // DSU sticks report up as a positive Y, unlike Android's axes.
