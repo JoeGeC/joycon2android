@@ -1,39 +1,25 @@
 # Contributing to Joycon2Android
 
-Thanks for your interest in improving Joycon2Android! This guide covers how to get set up, the
-standards your change is expected to meet, and how to get it merged.
+Thanks for helping improve Joycon2Android! This covers setup, the standards a change must meet, and
+how to get it merged.
 
 ## Coding standards
 
-**[`CLAUDE.md`](CLAUDE.md) is the project's coding-standards contract, and it applies to everyone —
-human or AI.** Read it before writing code. In short, it asks for:
+**[`CLAUDE.md`](CLAUDE.md) is the coding-standards contract for everyone, human or AI.** Read it
+before writing code. In short:
 
-- **Kotlin, Jetpack Compose, Material 3**, targeting Android API 24+.
-- **Clean, self-documenting code** — short, well-named methods; one class per file; reusable
-  composables. Prefer renaming or extracting over adding a comment.
-- **Minimal comments** — no KDoc that restates the signature. A comment earns its place only when
-  it captures a *why* the code can't express. Comments describing hardware/BLE protocol details
-  (byte layouts, timing, Switch conventions) are welcome and can be detailed.
-- **SOLID and clean architecture** — small focused classes, dependencies injected via constructors,
-  orchestrators that delegate rather than implement.
-- **No hard-coded strings** — use string resources. **No inline dimensions/colors** — use the
-  theme.
-- Immutable data classes for state; `@SuppressLint("MissingPermission")` only on permission-guarded
-  methods.
+- **Self-documenting code** — short, well-named methods, one class per file, reusable composables.
+- **Minimal, terse comments** — only what the code can't say. Protocol details, measurements and
+  emulator internals go in [`docs/`](docs/README.md), not in comments.
+- **SOLID and clean architecture** — small focused classes, constructor injection, orchestrators that
+  delegate.
+- **No hard-coded strings, dimensions or colours** — string resources and the theme.
 
 ## Architecture
 
-This is a **Gradle multi-module** app split by **feature × layer** (`domain` / `data` /
-`presentation`), and the module graph *enforces* the dependency rules at compile time. Before
-making structural changes:
-
-- Read [`docs/architecture.md`](docs/architecture.md) — the module graph, layers, and dependency
-  rules.
-- Follow [`docs/adding-a-feature.md`](docs/adding-a-feature.md) when adding or changing a feature —
-  it has step-by-step recipes and explains the convention plugins in `build-logic/`.
-
-Presentation reaches data **only through use cases** — never bypass it. Every module applies one of
-the convention plugins; don't hand-roll `android {}` blocks in a module.
+A Gradle multi-module app split by feature × layer, whose module graph enforces the dependency rules.
+Read [`docs/architecture.md`](docs/architecture.md) before structural changes, and follow
+[`docs/adding-a-feature.md`](docs/adding-a-feature.md) when adding or changing a feature.
 
 ## Development setup
 
@@ -58,13 +44,8 @@ Run the same checks CI runs, and make sure they pass:
 ./gradlew build :konsist:test
 ```
 
-This compiles every module, runs the unit tests, runs Android lint, and runs the **Konsist**
-architecture tests that enforce layer placement. If you moved classes between modules, `:konsist:test`
-is what catches a misplacement.
-
-- **Add tests** for new domain/data logic where practical — the layering exists so each class is
-  independently testable.
-- **Leave the code better than you found it** (the Boy Scout Rule).
+That compiles every module and runs the unit tests, Android lint and the Konsist architecture tests.
+Add tests for new domain and data logic, and update any doc your change makes stale.
 
 ## Pull requests
 

@@ -2,7 +2,6 @@ package com.joegec.joycon2android.buttonmapping
 
 import kotlinx.coroutines.flow.first
 
-/** Sets one player's body to a layout, taking a copy of everything it says. */
 class ApplyMappingLayoutUseCase(
     private val savedLayouts: SavedLayoutRepository,
     private val applyPlayerMapping: ApplyPlayerMappingUseCase,

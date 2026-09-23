@@ -28,12 +28,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 
-/**
- * Writes emulator config to match the current player assignment, through the privileged shell
- * (Shizuku / wireless debugging). Best-effort: returns false — and the UI falls back to manual
- * setup — when no shell is available or the write can't be verified, since some OEM builds deny
- * even the shell user access to another app's Android/data.
- */
+/** Best-effort: some OEM builds deny even the shell user another app's `Android/data`. */
 class EmulatorSetup(
     private val packageManager: PackageManager,
     private val acquireShell: (onResult: (PrivilegedShell?) -> Unit) -> Unit,
@@ -44,8 +39,7 @@ class EmulatorSetup(
     private val getSidewaysRemote: GetSidewaysRemoteUseCase,
 ) {
 
-    // Read up front, once per body in play: the generators are synchronous, and a player whose body
-    // was never stored falls back to the console's default layout rather than to nothing.
+    // Read up front: the generators are synchronous.
     private suspend fun mappingLookup(
         console: Console,
         players: List<PlayerState>,
@@ -64,7 +58,6 @@ class EmulatorSetup(
 
     private fun bodiesOf(players: List<PlayerState>) = players.mapNotNull { it.body() }.distinct()
 
-    /** Installed emulators whose controller mapping the Virtual Gamepad can configure. */
     fun gamepadEmulators(): List<EmulatorOption> = buildList {
         if (isInstalled(DolphinPaths.PACKAGE)) {
             add(EmulatorOption(DolphinPaths.PACKAGE, "Dolphin (GameCube)"))
@@ -72,7 +65,6 @@ class EmulatorSetup(
         addAll(edenOptions())
     }
 
-    /** Installed emulators whose motion input the DSU server can configure. */
     fun dsuEmulators(): List<EmulatorOption> = buildList {
         if (isInstalled(DolphinPaths.PACKAGE)) {
             add(EmulatorOption(DolphinPaths.PACKAGE, "Dolphin (Wii)"))
@@ -92,7 +84,6 @@ class EmulatorSetup(
     private fun isInstalled(pkg: String) =
         runCatching { packageManager.getPackageInfo(pkg, 0) }.isSuccess
 
-    /** Motion input for the selected emulator (DSU card). */
     suspend fun configureDsu(
         emulatorId: String,
         players: List<PlayerState>,
@@ -146,7 +137,6 @@ class EmulatorSetup(
         if (dsuOk && wiimoteOk) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
     }
 
-    /** Controller mapping for the selected emulator (Gamepad card). */
     suspend fun configureGamepad(
         emulatorId: String,
         players: List<PlayerState>,
@@ -175,7 +165,7 @@ class EmulatorSetup(
                     mappingLookup(Console.GAMECUBE, players),
                 )
                 val mappingsOk = shell.writeText(DolphinGcpadConfig.path, mappings)
-                // Dolphin GC ports default to "None"; set them to Standard Controller
+                // Dolphin's GameCube ports default to None.
                 val core = DolphinGcpadConfig.mergeCore(shell.readText(DolphinGcpadConfig.corePath), players)
                 val coreOk = shell.writeText(DolphinGcpadConfig.corePath, core)
                 mappingsOk && coreOk
@@ -183,9 +173,8 @@ class EmulatorSetup(
             if (written) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
         }
 
-    // Shell reads/writes block on native binder/socket calls that coroutine cancellation can't
-    // interrupt, so run them on a scope that outlives the wait and abandon it on timeout — that
-    // way the "Setting up…" spinner always resolves instead of pinning if a call never returns.
+    // Shell calls block in native code that cancellation can't interrupt, so they run on an outer
+    // scope that is abandoned on timeout; otherwise a hung call pins the spinner.
     private suspend fun bounded(tag: String, block: suspend () -> EmulatorSetupResult): EmulatorSetupResult {
         val work = scope.async(Dispatchers.IO) {
             runCatching { block() }
@@ -217,14 +206,8 @@ class EmulatorSetup(
 }
 
 /**
- * Clears the way for a write, or reports that the caller must ask first. An emulator flushes its
- * in-memory config over ours when it exits, so a write while one is loaded is lost with no error to
- * report — the only reliable fix is to stop it first, which costs unsaved progress and therefore
- * needs consent. Returns null once the way is clear.
- *
- * Android keeps a process cached long after the user leaves the app, and `pidof` cannot tell cached
- * from running, so this asks whenever a process exists at all. Stopping a cached one costs nothing,
- * and the confirmation covers the case where it is live.
+ * Null once the way is clear, else [EmulatorSetupResult.EMULATOR_RUNNING]. `pidof` can't tell a
+ * cached process from a live one, so any process at all asks first.
  */
 private fun PrivilegedShell.settle(packageName: String, closeIt: Boolean): EmulatorSetupResult? {
     if (!hasProcess(packageName)) return null

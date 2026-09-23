@@ -89,12 +89,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.map
 import java.io.File
 
-/**
- * Composition root: owns app-scoped repositories (data) and binds them to use cases
- * (domain). Presentation reaches data only through these use cases. Held by
- * [JoyconApplication] so the servers/connections outlive any single Activity or the
- * foreground service.
- */
+/** Composition root: docs/architecture.md#composition-root--appcontainer */
 class AppContainer(context: Context) {
 
     private val appContext = context.applicationContext
@@ -154,8 +149,6 @@ class AppContainer(context: Context) {
     val setBlockDeviceMotion = SetBlockDeviceMotionUseCase(dsuMotionSettings)
 
     // --- Assignment ---
-    // Cross-feature orchestration that reacts to assignment (gamepad/DSU lifecycle) lives in
-    // the SessionCoordinator below.
     val assignmentRepository: AssignmentRepository = PlayerAssignmentManager()
 
     // --- Gamepad + privileged access ---
@@ -225,7 +218,6 @@ class AppContainer(context: Context) {
     val assignController = AssignControllerUseCase(sessionCoordinator)
     val unassignController = UnassignControllerUseCase(sessionCoordinator)
 
-    /** Cross-feature shutdown: stop every output and clear assignments/connections. */
     fun disconnectAll() {
         disableGamepad()
         disableDsu()

@@ -19,13 +19,7 @@ import com.joegec.joycon2android.buttonmapping.preset.WiiMapping
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.ui.components.DropdownOption
 
-/**
- * What the shipped layouts are called, and the line under each saying what picking it does. A
- * layout the user saved answers with their own words instead, which are data rather than copy.
- *
- * Resolved once, up in composition, because that is the only place resources can be read — the
- * layouts themselves are domain and know nothing of what they are called.
- */
+/** Resolved in composition, the only place resources can be read. Saved layouts carry their own name. */
 class LayoutLabels internal constructor(
     private val names: Map<MappingPreset, String>,
     private val descriptions: Map<MappingPreset, String>,
@@ -51,7 +45,6 @@ internal fun rememberLayoutLabels(): LayoutLabels {
     )
 }
 
-// A `when` over the sealed type rather than a map, so a layout added without a name will not build.
 @Composable
 private fun nameOf(preset: MappingPreset): String = when (preset) {
     GameCubeMapping, SwitchProMapping -> stringResource(R.string.layout_standard)
@@ -75,7 +68,6 @@ private fun nameOf(family: LayoutFamily): String = when (family) {
     LayoutFamily.MARIO_KART -> stringResource(R.string.layout_family_mario_kart)
 }
 
-/** One layout as a row of a dropdown: its name, what it does, and whether it is the user's to delete. */
 internal fun LayoutLabels.option(layout: MappingLayout) = DropdownOption(
     id = layout.id,
     label = name(layout),
@@ -83,10 +75,6 @@ internal fun LayoutLabels.option(layout: MappingLayout) = DropdownOption(
     deletable = layout is SavedLayout,
 )
 
-/**
- * What the whole table is on: a saved set they all still match, the one layout they all read as, or
- * the family they are each on their own grip of. Null once any of them has gone its own way.
- */
 fun LayoutLabels.sessionName(global: GlobalMapping): String? =
     global.matchingSaved?.let(::name)
         ?: global.sharedLayout?.let(::name)

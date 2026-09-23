@@ -2,7 +2,6 @@ package com.joegec.joycon2android.buttonmapping.preset
 
 import com.joegec.joycon2android.buttonmapping.Console
 
-/** Every layout the app ships, and which one a console falls back to. */
 object MappingPresets {
 
     private val all = listOf(

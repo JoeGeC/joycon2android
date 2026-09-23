@@ -82,7 +82,6 @@ private fun ImuValue(text: String) {
     )
 }
 
-// Telemetry (mono, tabular figures, no font padding) pulled tight so the IMU grid stays compact.
 private val imuTextStyle = AppType.telemetry.copy(
     lineHeight = Dimens.fontSizeLabel * 1.1f,
 )

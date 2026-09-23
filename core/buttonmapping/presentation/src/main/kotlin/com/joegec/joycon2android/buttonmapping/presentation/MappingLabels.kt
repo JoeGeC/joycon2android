@@ -15,10 +15,6 @@ import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 
-/**
- * What the mapping vocabulary is called. The domain names none of it: a target is an identity there
- * and a word only here, and a `when` over each enum means one added without a word will not build.
- */
 @Composable
 internal fun Console.label(): String = when (this) {
     Console.GAMECUBE -> stringResource(R.string.console_gamecube)
@@ -34,7 +30,6 @@ internal fun JoyconSide.shortLabel(): String = when (this) {
     JoyconSide.DUAL -> stringResource(R.string.side_dual_short)
 }
 
-/** Which players a saved set wants, and in which hands. */
 @Composable
 internal fun GlobalLayout.playerSummary(): String = bodies
     .map { stringResource(R.string.player_body, it.body.player.index, it.body.side.shortLabel()) }

@@ -21,7 +21,6 @@ import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
-/** The accented current value every dropdown in the app opens from. */
 @Composable
 internal fun DropdownTrigger(label: String, subLabel: String?, onClick: () -> Unit) {
     Row(

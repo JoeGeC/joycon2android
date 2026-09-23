@@ -5,11 +5,7 @@ fun Enum<*>.directionKey(direction: StickDirection): String = stickDirectionKey(
 
 internal fun stickDirectionKey(targetName: String, direction: StickDirection) = "${targetName}_${direction.name}"
 
-/**
- * Recovers a typed target -> sources map from the repository's opaque string map, silently dropping
- * entries whose key isn't a [T] and sources that are no longer known — a stale or "None"-selected
- * entry simply produces no binding rather than a crash.
- */
+/** Drops unknown keys and stale sources, so a bad entry binds nothing rather than crashing. */
 inline fun <reified T : Enum<T>> Map<String, String>.toSourceMap(): Map<T, List<MappingSource>> =
     mapNotNull { (key, value) ->
         val target = enumValues<T>().firstOrNull { it.name == key } ?: return@mapNotNull null

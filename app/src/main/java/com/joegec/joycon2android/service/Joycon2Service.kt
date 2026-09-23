@@ -16,11 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-/**
- * Keeps the app's BLE connections and outputs alive past the Activity: holds a wake lock
- * and promotes to a foreground service (with notification) while a Joy-Con is connected.
- * All app state lives in [AppContainer]; the Activity binds this only for that lifetime.
- */
+/** Keeps BLE alive past the Activity. Holds no state: that lives in [AppContainer]. */
 class Joycon2Service : Service() {
 
     inner class LocalBinder : Binder() {
@@ -39,8 +35,7 @@ class Joycon2Service : Service() {
         super.onCreate()
         wakeLock = PartialWakeLock(this, WAKE_LOCK_TAG)
         wakeLock.acquire()
-        // Foreground (and its notification) only while a Joy-Con is actually connected;
-        // otherwise the bound Activity keeps us alive without a notification
+        // Foreground only while a Joy-Con is connected; otherwise the bound Activity keeps us alive.
         serviceScope.launch {
             container.observeSession().collect { updateForeground(it.anyConnected) }
         }

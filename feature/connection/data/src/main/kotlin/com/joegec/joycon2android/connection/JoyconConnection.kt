@@ -22,13 +22,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
-/**
- * Manages a single BLE GATT connection to one Joy-Con 2.
- * Each Joy-Con gets its own instance with independent state.
- *
- * All BLE operations require BLUETOOTH_CONNECT permission, which is verified
- * by the permission launcher in MainActivity before any BLE code is reached.
- */
 @SuppressLint("MissingPermission")
 class JoyconConnection(
     private val context: Context,
@@ -54,23 +47,13 @@ class JoyconConnection(
             0x00, 0x00, 0xFF.toByte(), 0x00, 0x00, 0x00
         )
 
-        // SPI read (report 0x02, cmd 0x04): read 0x40 bytes from the DeviceInfo block
-        // at 0x013000, which contains the shell colors (body color at 0x013019).
-        // Payload: read length (0x40), 0x7E magic, then the 4-byte LE source address.
-        // The reply arrives on the command-response characteristic and is decoded
-        // by [SpiColorParser].
-        // Byte [2] is 0x00 for SPI reads (matching HandHeldLegend procon2tool);
-        // the INIT_CMD_* feature commands use 0x01 there, but SPI reads only
-        // reply when this is 0x00.
+        // 0x40 bytes of the DeviceInfo block at 0x013000: docs/protocol.md#spi-reads
         private val SPI_READ_COLOR_CMD = byteArrayOf(
             0x02, 0x91.toByte(), 0x00, 0x04, 0x00, 0x08, 0x00, 0x00,
             0x40, 0x7E, 0x00, 0x00, 0x00, 0x30, 0x01, 0x00
         )
 
-        // Subcommand 0x07: set LED pattern via bitmask (16 bytes)
-        // Lower nibble = solid LEDs (0x01=P1, 0x02=P2, 0x04=P3, 0x08=P4)
-        // Upper nibble = flashing LEDs (0x10=P1, 0x20=P2, 0x40=P3, 0x80=P4)
-        // 0xF0 = all flashing = default cycling animation
+        // Bitmask layout: docs/protocol.md#player-leds
         private fun playerLedCmd(bitmask: Byte): ByteArray {
             return byteArrayOf(
                 0x09, 0x91.toByte(), 0x01, 0x07, 0x00, 0x08, 0x00, 0x00,
@@ -78,7 +61,7 @@ class JoyconConnection(
             )
         }
 
-        // All 4 player LEDs solid on (0x0F = P1+P2+P3+P4)
+        // All four solid.
         private val LED_ALL_ON_CMD = byteArrayOf(
             0x09, 0x91.toByte(), 0x01, 0x07, 0x00, 0x08, 0x00, 0x00,
             0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -185,7 +168,7 @@ class JoyconConnection(
             }
             writeChar!!.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
 
-            // Subscribe to command response notifications (required for LED commands)
+            // LED and SPI replies arrive here.
             if (cmdResponseChar != null) {
                 g.setCharacteristicNotification(cmdResponseChar, true)
                 val cmdCccd = cmdResponseChar!!.getDescriptor(CCCD)
@@ -199,7 +182,6 @@ class JoyconConnection(
                 }
             }
 
-            // Subscribe to input notifications
             g.setCharacteristicNotification(notifyChar, true)
             val notifyCccd = notifyChar!!.getDescriptor(CCCD)
             if (notifyCccd != null) {
@@ -259,8 +241,7 @@ class JoyconConnection(
         if (initComplete) gatt?.let(::requestPriority)
     }
 
-    // The default "balanced" connection interval lands on 30 ms on some phones, so the Joy-Con
-    // can only report ~33 times a second; high priority asks the stack for 7.5-15 ms.
+    // The connection interval is the report rate: docs/protocol.md#android-ble-gotchas
     private fun requestPriority(g: BluetoothGatt) {
         val priority = if (highPriority) {
             BluetoothGatt.CONNECTION_PRIORITY_HIGH

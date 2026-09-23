@@ -34,7 +34,6 @@ import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
-/** Emulator picker paired with its one-shot config button, framed as a self-explaining group. */
 @Composable
 fun EmulatorAutoSetup(
     emulators: List<EmulatorOption>,

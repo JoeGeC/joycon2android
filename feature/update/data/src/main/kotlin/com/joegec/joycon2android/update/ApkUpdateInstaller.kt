@@ -41,8 +41,7 @@ class ApkUpdateInstaller(
         emit(InstallProgress.HandedOff)
     }.flowOn(Dispatchers.IO)
 
-    // The previous attempt's APK is dead weight once a new one starts, and a half-written file
-    // from an interrupted download would install as a corrupt package.
+    // A half-written file from an interrupted download would install as a corrupt package.
     private fun emptyApkFile(update: AvailableUpdate): File {
         downloadDirectory.mkdirs()
         downloadDirectory.listFiles()?.forEach { it.delete() }

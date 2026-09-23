@@ -17,14 +17,17 @@ via adb:
   ```
 
 The third argument sets the motion print interval; it defaults to a readable 0.25 s, and
-`0` prints every packet (~90 Hz), which is what differentiating the gravity vector needs.
-
+`0` prints every packet, which is what differentiating the gravity vector needs.
 
 ## Flick measurement
 
-`flick_stats.py` reads a `dsu_client` capture and reports what a flick leaves behind after
-the slew limiter `DolphinWiimoteConfig` subtracts — the number that decides whether a trick
-fires. Use it to set `FLICK_RADIANS` from a hand rather than from an assumption.
+`flick_stats.py` lists each flick in a `dsu_client` capture with its signed pitch, yaw and roll,
+for setting `FLICK_RADIANS` from a hand rather than an assumption.
+
+> [!WARNING]
+> Its `residual` column still models the retired discriminator (summed `|pitch| + |yaw| + |roll|`
+> minus a slew limiter). `DolphinWiimoteConfig` reads raw pitch alone
+> ([why](../docs/dsu-motion.md#tricks-and-wheelies)), so go by the pitch figures.
 
 Enable DSU in the app with a single Joy-Con on P1 (slot 0), then capture twice:
 
@@ -45,19 +48,16 @@ Three things to read out of it:
 - **The spread across events.** Flicks of the same strength reading very different residuals
   means the stream is catching them at different points, not that the hand varied.
 - **The gap between the two captures.** `FLICK_RADIANS` has to sit under twice the weakest
-  flick and over twice the largest steering residual. If those cross, the limiter is the
-  wrong discriminator and no threshold will do.
+  flick and over twice the strongest steering. If those cross, no threshold will do.
 
-### Axis calibration workflow
+## Axis calibration
 
 1. Capture while performing slow single-axis motions with holds (still → yaw left →
    pitch up → roll right), or any rich motion if direction labels aren't trusted.
-2. Static holds anchor the accel frame (cemuhook: x=left, y=down, z=forward; flat at
-   rest reads (0,−1,0)).
+2. Static holds anchor the accel frame ([the frames](../docs/dsu-motion.md#motion-frame)).
 3. Gyro signs follow from the physics constraint `dv/dt = v × ω` applied to the
    normalized accel vector — fit the 16 sign combinations and break the mirror
-   degeneracy with one static-hold anchor. (Done for the right Joy-Con, 2026-06;
-   see `MotionConverter`.)
+   degeneracy with one static-hold anchor. (Done for the right Joy-Con, 2026-06.)
 
 ### Checking a gyro sign against gravity
 

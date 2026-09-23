@@ -105,19 +105,12 @@ import com.joegec.joycon2android.ui.theme.TextOnAccent
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-// Material 3 small top-app-bar container height; the app bar overlays the content, so screens add
-// this (plus the status-bar inset) as top clearance rather than the Scaffold reserving it.
+// Material 3 small top app bar's container height.
 private val AppBarHeight = 64.dp
 
-// Landscape packs two players per row, so each detailed controller is shrunk to help a full player
-// fit the short landscape height.
 private const val LandscapePlayerScale = 0.7f
 
-/**
- * Lays the content out as if it had 1/[scale] the space, then draws it scaled down and reports the
- * smaller size — shrinking the whole controller (buttons, labels, spacing) uniformly while still
- * reflowing siblings, unlike a plain graphicsLayer scale which leaves the original bounds behind.
- */
+/** Reports the scaled size, so siblings reflow — unlike graphicsLayer, which keeps the original bounds. */
 private fun Modifier.scaleLayout(scale: Float): Modifier = layout { measurable, constraints ->
     fun up(value: Int) = (value / scale).roundToInt()
     val placeable = measurable.measure(
@@ -176,8 +169,7 @@ fun JoyconScreen(
     val controllerRemovedMessage = stringResource(R.string.snackbar_controller_removed)
     val playerRemovedTemplate = stringResource(R.string.snackbar_player_removed)
 
-    // Unassigning is reachable by tapping the live display, so every removal is offered back as an
-    // undo (re-assigning the same controllers to the same player) rather than being silent.
+    // Unassigning is one tap on the live display, so every removal offers an undo.
     fun offerUndo(message: String, restore: List<Pair<String, PlayerNumber>>) {
         scope.launch {
             val result = snackbarHostState.showSnackbar(
@@ -226,9 +218,7 @@ fun JoyconScreen(
                 }
             }
         },
-        // Only reserve the horizontal insets: content passes under both the status bar (as the app
-        // bar collapses on scroll) and the nav bar. Each screen re-applies those where its own
-        // content must stay clear of the system bars.
+        // Edge-to-edge and the overlaid app bar: docs/DESIGN.md#connection-screen-chrome
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { innerPadding ->
         val screenState = when {
@@ -243,9 +233,6 @@ fun JoyconScreen(
             }
         }
 
-        // The app bar overlays the content instead of reserving space, so the scroll passes behind
-        // the transparent status bar; each screen adds the bar's height back as top clearance, and
-        // the bar itself is translated up in lockstep with the scroll so it slides away without a gap.
         val appBarSpace = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + AppBarHeight
         val appBarSpacePx = with(LocalDensity.current) { appBarSpace.toPx() }
 
@@ -284,13 +271,12 @@ fun JoyconScreen(
                             )
                             else -> ScanningContent(state)
                         }
-                        // Lets the last item scroll clear of the nav bar it now passes under
+                        // Content passes under the nav bar, so the last item needs clearance.
                         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
                     }
                 }
             }
 
-            // Overlaid so content scrolls behind it and the transparent status bar; collapses on scroll.
             TopAppBar(
                 title = { AppTitle(state, shizukuAvailable) },
                 actions = {
@@ -339,7 +325,6 @@ private fun AppTitle(state: AppUiState, shizukuAvailable: Boolean) {
     }
 }
 
-// Shizuku is the privileged backend for the /dev/uhid access the gamepad needs.
 @Composable
 private fun PrivilegedAccessStatus(shizukuAvailable: Boolean) {
     val color = if (shizukuAvailable) Accent else TextDim
@@ -415,8 +400,6 @@ private fun ScanningContent(state: AppUiState) {
     ErrorBox(text = state.error)
 }
 
-// The "Looking for Joy-Con 2" card and the sync-button illustration: side by side in landscape,
-// stacked in portrait.
 @Composable
 private fun ScanningGraphics(landscape: Boolean) {
     if (landscape) {
@@ -551,8 +534,6 @@ private fun ConnectedContent(
 
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     if (landscape) {
-        // Two players per row to use the wide landscape space; detailed players are shrunk so a
-        // full controller is more likely to fit the short height, compact rows fit as-is.
         state.activePlayers.chunked(2).forEach { rowPlayers ->
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
                 rowPlayers.forEach { playerState ->
@@ -646,8 +627,6 @@ private fun ConnectedContent(
         }
 
         if (landscape) {
-            // Two columns: the virtual gamepad and its Shizuku dependency on the left, DSU on the
-            // right — so the Shizuku card always sits directly under the gamepad it belongs to.
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
                 Column(
                     Modifier.weight(1f),
@@ -683,8 +662,6 @@ private fun ConnectedContent(
     ErrorBox(text = state.error)
 
     if (landscape) {
-        // Disconnect on the left, Scan on the right; Disconnect keeps its half when a scan is in
-        // progress and the Scan button drops out.
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
             DisconnectAllButton(onDisconnectAll, Modifier.weight(1f))
             if (!state.scanning) {

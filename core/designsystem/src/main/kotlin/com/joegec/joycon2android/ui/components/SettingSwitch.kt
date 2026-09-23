@@ -62,7 +62,6 @@ fun SettingSwitch(
     }
 }
 
-/** A caveat the setting carries, marked so it reads as one rather than as more description. */
 @Composable
 private fun SettingWarning(text: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.statusDotGap)) {

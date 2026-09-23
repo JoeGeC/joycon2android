@@ -1,10 +1,6 @@
 package com.joegec.joycon2android.emulatorconfig
 
-/**
- * Edits ini-format config text (read → transform → write), used to splice our settings into an
- * emulator's config files without disturbing the user's other keys. Emulator-agnostic: Dolphin's
- * `GCPadNew.ini`/`Dolphin.ini`, Eden's `config.ini`, etc. all share this section/key grammar.
- */
+/** Splices keys into an emulator's ini, leaving the user's other keys and sections intact. */
 object IniEditor {
     fun mergeSections(existing: String?, sections: Map<String, String>): String {
         val bodies = LinkedHashMap<String, String>()
@@ -28,7 +24,6 @@ object IniEditor {
         return out.toString()
     }
 
-    /** The value of `key` in a `[section]`, or null when either is absent. */
     fun valueOf(existing: String?, section: String, key: String): String? {
         val lines = existing?.lines() ?: return null
         val headerIndex = lines.indexOfFirst { it.trim() == section }
@@ -42,7 +37,6 @@ object IniEditor {
         return null
     }
 
-    /** Removes keys in a `[section]` whose name matches [keyMatches], leaving other keys and sections intact. */
     fun removeKeys(existing: String?, section: String, keyMatches: (String) -> Boolean): String {
         if (existing == null) return ""
         val lines = existing.lines()
@@ -64,11 +58,7 @@ object IniEditor {
         return (lines.subList(0, headerIndex + 1) + kept + lines.subList(end, lines.size)).joinToString("\n")
     }
 
-    /**
-     * Sets `key = value` entries inside a single `[section]`, replacing matching keys and appending
-     * the rest, while leaving every other key and section intact. Used for shared files like
-     * Dolphin.ini where wholesale section replacement would wipe unrelated settings.
-     */
+    /** Merges keys into one section rather than replacing it, for shared files like Dolphin.ini. */
     fun setKeys(
         existing: String?,
         section: String,

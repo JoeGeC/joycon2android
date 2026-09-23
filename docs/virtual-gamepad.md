@@ -17,12 +17,9 @@ The app creates gamepads through Linux's UHID (user-space HID) interface:
 The device uses `BUS_USB` with generic IDs `0x1234:0x5678` so the kernel's `hid-generic` driver
 binds it. Nintendo's IDs would let `hid-nintendo` claim it and reject it.
 
-### One device per player
-
-Each assigned player gets its own device, `Joy-Con Virtual Gamepad <N>`. The name carries the
-player number, but Android numbers input devices by enumeration order: with P1, P2 and P4 (no P3),
-P4 is the third pad, `Android/3/Joy-Con Virtual Gamepad 4`. That's why `DolphinGcpadConfig` keys
-`Device = Android/<id>/…` on enumeration rank while the port stays on the player number.
+Each assigned player gets its own device, `Joy-Con Virtual Gamepad <N>`, named by player number.
+Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the third pad,
+`Android/3/Joy-Con Virtual Gamepad 4` ([Device identity](#device-identity)).
 
 ## Report layout
 
@@ -59,7 +56,8 @@ shift:
 - **GR and C overflow.** One gamepad collection carries 15 buttons — a 16th lands on `0x13F`, which
   no key layout names — and the Switch 2 controllers have 17. For a Button usage outside a
   pointer/joystick/gamepad collection Linux falls back to `BTN_MISC + n - 1`, which key layouts name
-  `BUTTON_1..16`: GR is **188**, C is **189**. Firmware that re-publishes pads (see
+  `BUTTON_1..16`: GR is **188**, C is **189**. The collection is vendor-defined so nothing
+  interprets it. Firmware that re-publishes pads (see
   [Device identity](#device-identity)) forwards only keys it knows, so it may drop these two.
 - **Triggers are Brake (left) and Accelerator (right)**, never reversed. Android aliases
   `AXIS_LTRIGGER` to `AXIS_BRAKE` and `AXIS_RTRIGGER` to `AXIS_GAS`, and re-publishing firmware
@@ -102,29 +100,27 @@ Motion is turned too, but for DSU only — see [dsu-motion.md](dsu-motion.md#sid
 
 ## Emulator config
 
-- **Dolphin** sees each player's UHID pad as a distinct Android input device and qualifies its
-  bindings `Android/<controllerNumber>/Joy-Con Virtual Gamepad <player>`. `DolphinGcpadConfig`'s
-  name tables are Dolphin's own fixed names for each Android keycode and hat direction, captured
-  from a real mapping rather than derived.
+- **Dolphin's names** for each Android keycode and hat direction (`DolphinGcpadConfig`) are
+  captured from a real mapping, not derived.
 - **Every stick direction is its own Dolphin input**, so a stick target can mix tilts and buttons
   freely without the tilts losing their analog range.
 - **Eden nests whole bindings inside one value** for a stick assembled from digital inputs, so
   `EdenControls` escapes their `:`, `,` and `$` as `$0`, `$1` and `$2` — exactly as Eden's own
   `ParamPackage` serializes them.
-- **The relay remaps by orientation** before anything reaches an emulator (see
-  [`SidewaysMapper`](#sidewaysmapper)), so which physical button arrives at a given Android control
-  differs between a sideways single Joy-Con and a pair. Both Dolphin and Eden configs resolve a
-  customized source to what that body actually emits.
+- **Sources resolve to what the body emits.** The relay rotates a lone Joy-Con
+  ([`SidewaysMapper`](#sidewaysmapper)) before anything reaches an emulator, so both generators map a
+  chosen source through that rotation.
 
 ## Device identity
 
 An emulator addresses a pad by `port` — its enumeration rank, not the player number — plus, for
 Eden, a `guid` built from vendor/product IDs. Both are read from the live input-device list on every
-setup, never derived. A guessed number binds a config to the wrong device or to none, and any
-handheld with a built-in controller already occupies the low numbers.
+setup, never derived: a guessed number binds a config to the wrong device or to none, and a handheld's
+built-in controller already occupies the low numbers. A player whose pad isn't enumerated yet is
+skipped.
 
-**Every emulator picks its own quantity, and none of them is the player number.** Each rule below is
-read from that emulator's own source and mirrored in `VirtualGamepadIdentity`:
+Each emulator counts differently. Each rule below is read from that emulator's source and mirrored
+in `VirtualGamepadIdentity`:
 
 - **Dolphin** takes the id in its `Android/<id>/<name>` qualifier from
   `InputDevice.getControllerNumber()`, Android's gamepad enumeration counter.
@@ -133,13 +129,13 @@ read from that emulator's own source and mirrored in `VirtualGamepadIdentity`:
 - **Eden** (yuzu lineage) numbers `port` by walking `InputDevice.getDeviceIds()` and counting
   *every* physical game controller it passes, so any built-in pad shifts ours along. In
   `InputHandler.getDevices()` a controller number already registered is skipped but still consumes
-  a port, which `edenGamepadPorts` reproduces.
+  a port, which `edenGamepads` reproduces.
 
-The same goes for the vendor/product ids behind Eden's `guid`: some handheld firmware re-publishes
-an external gamepad under the built-in controller's ids (AYN's Odin/Thor line does), leaving two
-devices carrying our name, and a binding with the wrong guid is silently ignored. So every field of
-a player's identity is taken from one and the same `InputDevice` — the last match, which is the
-republished one where that happens.
+Eden's `guid` is product then vendor ID, each a 16-digit hex half. Some handheld firmware
+re-publishes an external gamepad under the built-in controller's IDs (AYN's Odin/Thor line does),
+leaving two devices with our name, and a binding with the wrong guid is silently ignored. So every
+field of a player's identity comes from one `InputDevice`: the last match, the republished one where
+that happens.
 
 Each setup also clears the player's old keys, so a layout or port change can't leave a stale
 binding firing on another player's port.

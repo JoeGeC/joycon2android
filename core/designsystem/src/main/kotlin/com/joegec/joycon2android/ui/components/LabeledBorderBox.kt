@@ -22,13 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.joegec.joycon2android.ui.theme.Dimens
 
-/**
- * Fieldset-style container: a rounded border with [label] straddling the top edge, its own
- * background masking the border line behind it — like an HTML `<legend>` or an outlined text
- * field's notched label. [labelBackground] must match the surface the box sits on for the mask
- * to read as a clean gap. When [onInfoClick] is set, an info icon joins the label and the whole
- * legend becomes its tap target.
- */
+/** Fieldset-style box with [label] notched into the top border; [labelBackground] must match the surface behind. */
 @Composable
 fun LabeledBorderBox(
     label: String,

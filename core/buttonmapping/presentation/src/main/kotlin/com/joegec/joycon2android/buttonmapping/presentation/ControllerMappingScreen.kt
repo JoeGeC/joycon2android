@@ -107,7 +107,6 @@ private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit) {
     }
 }
 
-/** The session read as one setting, so a whole table can be set — and kept — in a single move. */
 @Composable
 private fun AllPlayersRow(
     console: Console,
@@ -188,7 +187,7 @@ private fun MappingDialogs(
 }
 
 private sealed interface MappingDialog {
-    /** A null body names the session as a whole rather than one player. */
+    /** Null means the whole session. */
     data class Save(val body: PlayerBody?) : MappingDialog
 
     data class Delete(val id: String, val name: String, val global: Boolean) : MappingDialog

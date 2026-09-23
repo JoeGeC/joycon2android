@@ -2,10 +2,7 @@ package com.joegec.joycon2android.dsu
 
 import com.joegec.joycon2android.model.PlayerState
 
-/**
- * Maps players onto the protocol's four slots, and a pair's second hand onto a slot of its own
- * since one packet carries one IMU: docs/dsu-motion.md#slots.
- */
+/** docs/dsu-motion.md#slots */
 object DsuSlots {
     const val COUNT = 4
 

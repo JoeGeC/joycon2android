@@ -8,9 +8,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * The `releases/latest` endpoint never returns a prerelease, so the `-debug.N` builds cut for
- * sharing are invisible here. Unauthenticated calls are rate limited to 60 an hour per address;
- * exceeding it reads as "no update", like being offline.
+ * `releases/latest` never returns a prerelease, so `-debug.N` builds are invisible here. The
+ * unauthenticated limit is 60 calls an hour per address; past it reads as "no update".
  */
 class GitHubReleases(
     private val repository: String,

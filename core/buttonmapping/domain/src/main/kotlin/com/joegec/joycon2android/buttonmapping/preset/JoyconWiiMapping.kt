@@ -14,11 +14,7 @@ import com.joegec.joycon2android.model.JoyconButton.Up
 import com.joegec.joycon2android.model.JoyconButton.ZL
 import com.joegec.joycon2android.model.JoyconButton.ZR
 
-/**
- * The Wii layout moved onto the buttons a Joy-Con keeps under the same fingers: the remote's B is
- * the Joy-Con's own B, and 1 and 2 are the shoulders rather than face buttons a thumb has to leave
- * the stick for.
- */
+/** The Wii layout with B on the Joy-Con's B, and 1 and 2 on the shoulders so the thumb stays on the stick. */
 object JoyconWiiMapping : MappingPreset {
     override val id = "JOYCON"
     override val console = Console.WIIMOTE_NUNCHUK

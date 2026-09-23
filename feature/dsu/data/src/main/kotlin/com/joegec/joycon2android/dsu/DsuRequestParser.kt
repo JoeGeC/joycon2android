@@ -4,10 +4,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.CRC32
 
-/**
- * Parses client → server DSU packets: magic "DSUC", then the same header layout the
- * encoder writes. Packets with a bad magic, length, or CRC are dropped (returns null).
- */
+/** Null for a bad magic, length or CRC. */
 object DsuRequestParser {
 
     private const val HEADER_SIZE = 16

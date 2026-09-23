@@ -3,10 +3,7 @@ package com.joegec.joycon2android.buttonmapping
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.SidewaysMapper
 
-/**
- * The button the relay actually reports for this physical button. A lone Joy-Con is rotated
- * sideways by [SidewaysMapper] before its input leaves the app, so its d-pad arrives as face buttons.
- */
+/** What the relay reports for this button once [SidewaysMapper] has rotated a lone Joy-Con. */
 fun JoyconButton.emittedFor(side: JoyconSide): JoyconButton? {
     val emittedId = when (side) {
         JoyconSide.DUAL -> id
@@ -20,11 +17,7 @@ fun JoyconButton.emittedFor(side: JoyconSide): JoyconButton? {
 fun MappingSource.Stick.emittedStick(side: JoyconSide): StickSource =
     if (side == JoyconSide.DUAL) stick else StickSource.LEFT_STICK
 
-/**
- * The stick a target can read as a whole — keeping its analog range — when all four of its
- * directions follow the same emitted stick the natural way round; null when they're rearranged,
- * partly unbound, doubled up or mixed with buttons, which leaves each direction to be bound on its own.
- */
+/** Non-null only when all four directions follow one stick the natural way round, so it stays analog. */
 fun Map<StickDirection, List<MappingSource>>.wholeEmittedStick(side: JoyconSide): StickSource? {
     val sticks = StickDirection.entries.map { direction ->
         val source = this[direction]?.singleOrNull() as? MappingSource.Stick ?: return null

@@ -20,7 +20,6 @@ class WiiPresetsTest {
         assertEquals(WiiMapping, MappingPresets.default(Console.WIIMOTE_NUNCHUK))
     }
 
-    // 1 and 2 go on the shoulders, so a thumb never leaves the stick to reach them.
     @Test
     fun `the Joy-Con layout puts the remote's buttons where a Joy-Con keeps them`() {
         val dual = JoyconWiiMapping.entries(JoyconSide.DUAL)
@@ -91,7 +90,7 @@ class WiiPresetsTest {
 
             assertEquals("$side", rail, lone.getValue(WiimoteButton.NunchukZ.name))
             assertTrue("$side steers from its own stick", lone.keys.any { it.startsWith(WiimoteStick.NunchukStick.name) })
-            // Bound to nothing on purpose: left out, each would keep what the Wii layout bound.
+            // Unbound on purpose; omitted, each would keep the Wii layout's binding.
             listOf(
                 WiimoteButton.DPadUp, WiimoteButton.DPadDown, WiimoteButton.DPadLeft, WiimoteButton.DPadRight,
                 WiimoteButton.One, WiimoteButton.Two, WiimoteButton.Minus,
@@ -99,8 +98,6 @@ class WiiPresetsTest {
         }
     }
 
-    // Sideways, a left Joy-Con's cluster rotates onto the faces, so the same thumb position can do
-    // the same job on both bodies — which is only true if each names the button that gets it there.
     @Test
     fun `the Nunchuck layout puts the same job under the same thumb on both bodies`() {
         val left = MarioKartNunchukMapping.entries(JoyconSide.LEFT)
@@ -120,8 +117,6 @@ class WiiPresetsTest {
             ?.button
             ?.emittedFor(side)
 
-    // A layout lies over the console's default, so anything it leaves out keeps the default's
-    // binding and quietly doubles up with whatever it did name.
     @Test
     fun `no button on a lone Joy-Con fires two targets, bar the shoulder that hops and tricks`() {
         JoyconSide.entries.filterNot { it == JoyconSide.DUAL }.forEach { side ->
@@ -160,12 +155,11 @@ class WiiPresetsTest {
 
         assertEquals("ZL", pair.getValue(WiimoteButton.One.name))
         assertEquals("ZR", pair.getValue(WiimoteButton.Two.name))
-        // The remote's trigger hand, and the Joy-Con's own B so either finger can hop.
         assertEquals("R|B", pair.getValue(WiimoteButton.B.name))
-        assertEquals("L", pair.getValue(WiimoteButton.NunchukZ.name)) // the Nunchuk's
+        assertEquals("L", pair.getValue(WiimoteButton.NunchukZ.name))
         assertEquals("X", pair.getValue(WiimoteButton.NunchukC.name))
         assertEquals("Minus", pair.getValue(WiimoteButton.Minus.name))
-        assertEquals("R", pair.getValue(WiimoteButton.Shake.name)) // the finger that hops also tricks
+        assertEquals("R", pair.getValue(WiimoteButton.Shake.name))
     }
 
     @Test
@@ -190,7 +184,7 @@ class WiiPresetsTest {
 
     @Test
     fun `every Wii layout binds the whole remote on a lone Joy-Con`() {
-        // Shake is a motion of the remote rather than a button on it, so no layout owes it a source.
+        // Shake is a motion, not a button.
         val remote = (WiimoteButton.entries - WiimoteButton.NunchukC - WiimoteButton.NunchukZ -
             WiimoteButton.Shake).map { it.name }
 

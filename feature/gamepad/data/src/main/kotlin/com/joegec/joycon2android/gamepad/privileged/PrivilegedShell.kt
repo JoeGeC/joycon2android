@@ -3,11 +3,7 @@ package com.joegec.joycon2android.gamepad.privileged
 import java.io.InputStream
 import java.io.OutputStream
 
-/**
- * A source of shell-uid processes — the one privilege the UHID relay needs (to reach
- * `/dev/uhid`). Implemented over Shizuku and over an in-app ADB/wireless-debugging
- * connection, so the relay layer is unaware of which grants the privilege.
- */
+/** Shell-uid processes, for `/dev/uhid` and other apps' config files. */
 interface PrivilegedShell {
     val isReady: Boolean
     fun newProcess(argv: Array<String>): ShellProcess?

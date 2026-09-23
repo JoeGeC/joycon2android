@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.core.designsystem.R
 
-/** Consent for the one destructive step auto setup needs: closing the emulator before writing. */
 @Composable
 fun CloseEmulatorDialog(
     emulatorName: String,

@@ -1,9 +1,6 @@
 package com.joegec.joycon2android.update
 
-/**
- * Reduces a GitHub release body to the few lines the prompt shows: the bullets under its
- * "What's new" heading, stripped of markdown the dialog cannot render.
- */
+/** The bullets under "What's new", stripped of markdown the dialog can't render. */
 object ReleaseNotes {
 
     fun highlights(body: String): List<String> {
@@ -35,8 +32,7 @@ private fun String.asHighlight(): String {
     return (bullet.boldLead() ?: bullet).withoutMarkdown()
 }
 
-// Release bullets lead with a bolded summary and follow it with a sentence of consequence. The
-// prompt is a glance before an install, so it shows the summary and leaves the detail to the notes.
+// A bullet opens with a bold summary; the prompt shows only that.
 private fun String.boldLead(): String? {
     if (!startsWith(BOLD)) return null
     val close = indexOf(BOLD, startIndex = BOLD.length)

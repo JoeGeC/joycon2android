@@ -26,7 +26,6 @@ val CrosshairColor = Color(0xFF222C36)
 
 val BatteryHigh = Accent
 val BatteryMedium = Color(0xFFFBBF24)
-// A lighter red than ErrorText so the low-battery readout clears WCAG AA on the AccentDim pill.
 val BatteryLow = Color(0xFFFF8A8A)
 
 private const val BATTERY_LOW_PERCENT = 20
@@ -40,8 +39,7 @@ fun batteryColor(percent: Int): Color = when {
 
 private const val ACCENT_SATURATION_BOOST = 1.4f
 
-// A near-black shell would vanish when it fills a pressed control on the dark UI, so the active
-// variant floors brightness while the thin border keeps the colour verbatim.
+// Shell colour and its brightness floor: docs/DESIGN.md#color
 private const val ACTIVE_VALUE_FLOOR = 0.72f
 
 // accentColor is the controller's real shell accent read from SPI flash, packed as 0xRRGGBB.
@@ -60,15 +58,13 @@ private fun boostedShellColor(accentColor: Int, valueFloor: Float): Color {
     )
 }
 
-/** The controller's shell colour as a hairline border; falls back when the shell reports no colour. */
 fun joyconBorderColor(accentColor: Int?, fallback: Color): Color =
     if (accentColor == null) fallback else boostedShellColor(accentColor, valueFloor = 0f)
 
-/** The shell colour raised to a brightness floor so it still reads as "lit" filling a pressed control. */
 fun controllerActiveColor(accentColor: Int?, fallback: Color = JoyconDefaultColor): Color =
     if (accentColor == null) fallback else boostedShellColor(accentColor, ACTIVE_VALUE_FLOOR)
 
-/** Dark ink or white, whichever has the higher WCAG contrast against [background]. */
+/** Whichever of dark ink or white has the higher WCAG contrast. */
 fun readableInkOn(background: Color): Color =
     if (contrastRatio(TextOnAccent, background) >= contrastRatio(Color.White, background)) {
         TextOnAccent

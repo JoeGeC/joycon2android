@@ -11,7 +11,6 @@ import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.TextDim
 
-/** Two-button dialog in the app's card styling: an accented confirm and a dimmed way out. */
 @Composable
 fun ConfirmDialog(
     title: String,

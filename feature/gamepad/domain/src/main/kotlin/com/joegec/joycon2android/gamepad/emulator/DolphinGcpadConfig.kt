@@ -17,11 +17,7 @@ import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 
-/**
- * Generates Dolphin's `GCPadNew.ini` mappings for the Virtual Gamepad, one `[GCPadN]` section per
- * assigned player, driven by the user's own Joy-Con → GameCube mapping. The device qualifier, the
- * name tables and why each stick direction binds separately: docs/virtual-gamepad.md#emulator-config.
- */
+/** Device qualifier and name tables: docs/virtual-gamepad.md#emulator-config */
 object DolphinGcpadConfig {
     val path = DolphinPaths.config("GCPadNew.ini")
     val corePath = DolphinPaths.config("Dolphin.ini")
@@ -43,9 +39,7 @@ object DolphinGcpadConfig {
         GameCubeButton.DPadRight to "D-Pad/Right",
     )
 
-    // Dolphin's name for each Android keycode our virtual pad emits, fixed regardless of body.
-    // GR and Chat are absent: they land on BUTTON_1/BUTTON_2, and a GameCube pad has no target
-    // left for them anyway.
+    // GR and Chat are absent: a GameCube pad has no target left for them.
     private val ANDROID_NAMES = mapOf(
         JoyconButton.A to "Button A",
         JoyconButton.B to "Button B",
@@ -81,7 +75,6 @@ object DolphinGcpadConfig {
         mappingFor: (PlayerBody) -> Map<String, String>,
     ): String = IniEditor.mergeSections(existing, sections(players, controllerNumbers, mappingFor))
 
-    /** Sets each configured player's GameCube port to a Standard Controller in Dolphin.ini. */
     fun mergeCore(existing: String?, players: List<PlayerState>): String {
         val siDevices = players
             .filter { it.hasController && !it.hasPro && it.player.index in 1..4 }
@@ -89,10 +82,7 @@ object DolphinGcpadConfig {
         return IniEditor.setKeys(existing, "[Core]", siDevices)
     }
 
-    // Dolphin's device id comes from Android's own gamepad enumeration counter
-    // (InputDevice.getControllerNumber()), so it has to be read from the live device list rather
-    // than derived — any built-in controller already holds number 1. A player whose pad isn't
-    // enumerated yet is skipped: a guessed id binds the section to the wrong device, or to none.
+    // A player whose pad isn't enumerated yet is skipped: docs/virtual-gamepad.md#device-identity
     private fun sections(
         players: List<PlayerState>,
         controllerNumbers: Map<Int, Int>,
@@ -139,7 +129,6 @@ object DolphinGcpadConfig {
         return buttonLines + stickLines
     }
 
-    // Dolphin's expression language ORs its inputs, so every source bound to a target can fire it.
     private fun expressionFor(side: JoyconSide, sources: List<MappingSource>): String? =
         sources.mapNotNull { specFor(side, it) }
             .takeIf { it.isNotEmpty() }
@@ -150,8 +139,7 @@ object DolphinGcpadConfig {
         is MappingSource.Stick -> tiltSpec(source.emittedStick(side), source.direction)
     }
 
-    // Physical left stick lands on Android axes 0/1, physical right stick on axes 11/14 (see
-    // ReportMapper); Android's Y axis grows downward.
+    // Android's Y axis grows downward.
     private fun tiltSpec(stick: StickSource, direction: StickDirection): String {
         val (x, y) = if (stick == StickSource.LEFT_STICK) 0 to 1 else 11 to 14
         return when (direction) {

@@ -1,4 +1,4 @@
 package com.joegec.joycon2android.buttonmapping
 
-/** Which physical body a mapping applies to: a lone Joy-Con of one side, or a full controller. */
+/** A lone Joy-Con of one side, or a full controller (pair or Pro). */
 enum class JoyconSide { LEFT, RIGHT, DUAL }

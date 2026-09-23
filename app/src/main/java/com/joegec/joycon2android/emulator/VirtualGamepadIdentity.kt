@@ -7,11 +7,7 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import com.joegec.joycon2android.gamepad.emulator.EdenGamepad
 
-/*
- * Resolves how each emulator identifies our virtual gamepads, by reading the live input-device list
- * rather than deriving a number from the player index. Each emulator's rule, and why a guess breaks:
- * docs/virtual-gamepad.md#device-identity.
- */
+// Read from the live device list, never derived: docs/virtual-gamepad.md#device-identity
 
 private const val PREFIX = "Joy-Con Virtual Gamepad "
 

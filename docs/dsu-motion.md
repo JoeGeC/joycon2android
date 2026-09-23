@@ -7,9 +7,8 @@ How motion reaches emulators, and why the emulator bindings are shaped the way t
 `DsuServer` implements the [cemuhook protocol](https://v1993.github.io/cemuhook-protocol/) over UDP
 on port 26760.
 
-- **Bound to IPv4 `127.0.0.1`.** `getLoopbackAddress()` resolves to IPv6 `::1` on Android, and a
-  socket there never sees the `127.0.0.1` datagrams emulators send.
-- **Pad batches ride a buffered channel**, not a `StateFlow` — conflation would drop motion samples.
+**Bound to IPv4 `127.0.0.1`.** `getLoopbackAddress()` resolves to IPv6 `::1` on Android, and a
+socket there never sees the `127.0.0.1` datagrams emulators send.
 
 | Class | Job |
 |---|---|
@@ -53,112 +52,104 @@ separately. Its complementary filter makes the *accelerometer* the authority on 
 gyro signs cannot be judged from pointer direction alone; gyro shows up in the fast response, accel
 in the settled position.
 
-- **Raw x was documented as "left" until 2026-09**, when a rail-down static pose — SL/SR against the
-  table, so gravity points toward the controller's right — read +1 g on the wire's left axis.
-  Mirrored. Left/right tilt had been reaching games reversed, and because angular velocity is a
-  pseudovector, roll had to mirror with it to stay physically consistent, which is why both flipped
-  together.
-- **Yaw is the one sign no measurement here pins.** It turns about gravity, so a static pose cannot
-  see it and neither can the accel/gyro consistency check. It is kept as the pointer's horizontal
-  response reports it. Mirroring x strictly implies mirroring yaw too, so if horizontal pointing
-  ever reads backwards, flip yaw rather than re-deriving the frame.
+- **Raw x is the controller's right.** A rail-down pose (SL/SR on the table, gravity toward the
+  controller's right) reads +1 g on the wire's *left* axis (2026-09). Roll mirrors with x, since
+  angular velocity is a pseudovector.
+- **Yaw is the one sign no measurement pins.** It turns about gravity, so neither a static pose nor
+  the accel/gyro consistency check sees it; it follows the pointer's horizontal response. Mirroring x
+  strictly implies mirroring yaw too, so if horizontal pointing ever reads backwards, flip yaw rather
+  than re-deriving the frame.
 - **Left Joy-Con and Pro are assumed to share the raw frame** — unverified. Recalibrate with
   `tools/dsu_client` if their motion feels rotated.
 
-**Gyro bias.** Joy-Con 2 gyros idle with a constant offset (+0.2 °/s yaw, +0.9 °/s roll observed),
-which clients integrate into pointer drift. Whenever a controller stays within ~2.4 °/s for ~2 s,
-`GyroCalibrator` adopts the window mean as its bias, as the Switch does.
+### Gyro bias
+
+Joy-Con 2 gyros idle with a constant offset (+0.2 °/s yaw, +0.9 °/s roll observed), which clients
+integrate into pointer drift. Whenever a controller's gyro stays within ~2.4 °/s for 240 samples
+(hand tremor exceeds that), `GyroCalibrator` adopts the window mean as its bias, as the Switch does.
 
 ### Sideways Joy-Cons
 
-A lone Joy-Con's buttons and stick already arrive rotated into its sideways grip
-([virtual-gamepad.md](virtual-gamepad.md#sidewaysmapper)), and Eden presents it as a Pro
-Controller, so its motion is turned 90° about the button face to match. Without it, tilting read as
-if the Joy-Con's nose pointed at the screen.
+A lone Joy-Con's buttons and stick arrive already rotated into its sideways grip
+([virtual-gamepad.md](virtual-gamepad.md#sidewaysmapper)), and Eden presents it as a Pro Controller,
+so `SidewaysMotion` turns its motion 90° about the button face to match. Without that, tilt reads as
+if the nose pointed at the screen.
 
-- **The direction was measured**, in Eden's Mario Kart 8, and is the *opposite* of the stick's turn —
-  the IMU axes don't line up with the stick's.
-- **A pair's second hand isn't turned**, even though it streams alone on its slot (`DsuStream.heldSideways`).
-- **Dolphin maps it back.** Its emulated Wii Remote is the Joy-Con's own body, so
-  `DolphinWiimoteConfig` turns a lone Joy-Con's IMU inputs back about the button face (table in the
+- **The direction was measured** (Eden, Mario Kart 8) and is the *opposite* of the stick's turn: the
+  IMU axes don't line up with the stick's.
+- **A pair's second hand isn't turned**, though it streams alone on its slot (`DsuStream.heldSideways`).
+- **Dolphin turns it back.** Its emulated Wii Remote is the Joy-Con's own body, so
+  `DolphinWiimoteConfig` maps a lone Joy-Con's IMU inputs back about the button face (table in the
   [README](../README.md#manual-setup)), putting the nose on the shoulder edge the player aims. The
-  bodies rotate into their grips opposite ways, so their tables are each other half a turn.
-- **A player can play as a sideways Wii Remote** — a switch on their card in the mapping editor,
-  seeded by their layout (`MappingLayout.sidewaysRemote`, true only for **Mario Kart**) and
-  overridable per player (`SidewaysRemoteRepository`; applying a layout clears the override). A game written for that grip reads gravity against a remote whose nose points
-  left, which is where a *left* Joy-Con's L/ZL edge already points — so only a right Joy-Con turns,
-  giving up its own body (and with it R/ZR as the nose: aiming moves to the tail) to steer true.
-  Both bodies also turn their four D-pad bindings a quarter, since the player's up is a sideways
-  remote's right. That is Dolphin's own `dpad_sideways_bitmasks`, applied here so its *Sideways Wii
-  Remote* option can stay off — the option would also turn the accelerometer, which we have turned
-  already.
-- **A sideways body turns a flick into a trick.** Mario Kart Wii tricks off a flick, and a flick of
-  something Joy-Con sized is mostly rotation: captured ones peak past 1200 °/s summed while carrying
-  barely a g of linear jerk, where jerking a real Wii Wheel throws the whole thing. The game has no
-  MotionPlus and reads only the accelerometer, so the flick never reaches it — on hardware it
-  wouldn't either. The gyroscope therefore fires it, which hardware could not do: each axis summed
-  with its opposite input gives |rate| (Dolphin clamps one of a pair at zero), over `/15` and a half
-  dead zone, which fires above 11 rad/s and leaves the sharpest measured steering (6.5) and aiming
-  (4.1) a wide berth. `Shake` is a mapping target of its own too, so a pair — which has no sideways
-  flick to read — can trick from a button.
+  bodies rotate into their grips opposite ways, so their tables are half a turn apart.
+- **Measure the pointer, don't reason about it.** `tools/dsu_client` plus a replay of
+  `EmulateIMUCursor` settles in minutes what guessing costs days. Posed captures mislead: asked to
+  hold an "aim up", a player makes a different rotation from the one they make while playing, so
+  compare a captured session against candidate tables by how much cursor travel each yields.
 
-  **Two ways of delivering it do not work, and both were tried.** *Amplifying the accelerometer's
-  own transient* does nothing, because an emulated Wii Remote saturates around +3.9/−4.9 g
-  (`ACCEL_ZERO_G` 0x80, `ACCEL_ONE_G` 0x9A over 8 bits) and the push already passes that, so a
-  bigger number only clips sooner. *Dolphin's `Shake` group* does nothing either: bound straight to
-  a key in Dolphin's own config, a full 7 g oscillation of it never once landed a trick (tested
-  2026-09) — and not for want of reaching the game, since `m_shake_state.acceleration` is added to
-  the reported acceleration unconditionally, whether or not `IMUAccelerometer` is bound. Neither is
-  written any more.
+### Playing as a sideways Wii Remote
 
-  **What is written goes into the accelerometer**, the path that demonstrably reaches the game since
-  steering is read from it: `pulse(flick, 0.6) * sin(timer(0.15) * 2π) * 50` added to every
-  `IMUAccelerometer` input, the three opposites carrying a half-turn of phase. It is a *shake*, not
-  a push — an oscillation held for 0.6 s at about 6.7 Hz, each input of a pair swung half a cycle
-  apart so the remote is thrown back and forth rather than leaned on. That shape is what landed a
-  trick by hand, shaking a Joy-Con hard for about a second, where a single held push did not.
-  `pulse()` gives a flick and a held button the same shake however long either lasted.
+A per-player switch in the mapping editor, seeded by the layout (`MappingLayout.sidewaysRemote`, on
+for both Mario Kart layouts) and overridable (`SidewaysRemoteRepository`; applying a layout clears
+the override).
 
-  **The flick reads pitch, and only pitch.** Measured over three captures (2026-09-22, right
-  Joy-Con, 15 ms stream), a flick is 59–89% pitch on *both* bodies — a lone sideways Joy-Con and a
-  pair alike, despite a lone one being rotated into its grip before it reaches the wire — while
-  steering a wheel is roll and never exceeds 2.8 rad/s of pitch:
+- **Only a right Joy-Con turns.** A game written for that grip reads gravity against a remote whose
+  nose points left, where a left Joy-Con's L/ZL edge already points. A right Joy-Con gives up its own
+  body to steer true, and with it R/ZR as the nose: aiming moves to the tail.
+- **The D-pad turns a quarter on both bodies**, since the player's up is a sideways remote's right.
+  That is Dolphin's own `dpad_sideways_bitmasks`, written into the bindings so Dolphin's *Sideways
+  Wii Remote* option stays off — the option would turn the accelerometer a second time.
+- **Pointing and a wheel want a right Joy-Con's nose half a turn apart**, and no Dolphin option
+  bridges them: `GetOrientation()` turns a quarter (Sideways) or a quarter about the left axis
+  (Upright), and reaches only the accelerometer, never `GetTotalTransformation()` and so never the
+  pointer. Hence the choice lives in the layout.
 
-  | | raw pitch, per gesture |
+### Tricks and wheelies
+
+Mario Kart Wii tricks and pops wheelies off a flick, and reads only the accelerometer (no
+MotionPlus). A Joy-Con flick is mostly rotation — captures peak past 1200 °/s summed with barely a g
+of linear jerk, where jerking a real Wii Wheel throws the whole thing — so on its own it never
+reaches the game. Playing sideways, the flick is read from the gyroscope and delivered as a shake of
+the accelerometer, the path steering proves reaches the game. `Shake` is also a mapping target, so a
+button can trick too.
+
+`DolphinWiimoteConfig` appends this to `IMUAccelerometer/Up`, and to `/Down` with Up and Down
+swapped:
+
+```
++ pulse(<flick>, 0.6) * max(sin(timer(0.15) * 6.2832), 0) * 50
+<flick> = (`Gyro Pitch Up` / 9) & not(pulse(`Gyro Pitch Down` / 9, 0.4))
+```
+
+- **Pitch only.** Over three captures (2026-09-22, right Joy-Con, 15 ms stream) a flick is 59–89%
+  pitch on a lone sideways Joy-Con and a pair alike, while steering is roll:
+
+  | Gesture | Raw pitch |
   |---|---|
   | steering, hard, 25 s | ≤ 2.8 rad/s |
   | wheelie flicks | 7.0 – 10.7 |
   | trick flicks | 8.8 – 14.5 |
 
-  Reading pitch alone therefore separates a flick from a turn by axis rather than by rate, which no
-  slew limiter could: the wheelie's down-flick is a slow gesture, and a limiter fast enough to
-  reject a turn ate all but 0.9 rad/s of it. `pulse()` fires as its input crosses a half, so the
-  threshold is 4.5 rad/s — 1.6× above the worst steering, 1.6× below the weakest gesture.
+  `pulse()` fires as its input crosses a half, so the threshold is 4.5 rad/s: 1.6× above the worst
+  steering, 1.6× below the weakest flick. Separating by axis beats a slew limiter, which, fast enough
+  to reject a turn, ate all but 0.9 rad/s of the slow wheelie down-flick.
+- **Direction matters, because a wheelie is a state**: an up-flick starts one, a down-flick drops it.
+  The remote is jerked the way it was flicked (positive wire pitch is up on both bodies), and the wave
+  is half-rectified; a full one would cancel the wheelie four times a second.
+- **Each direction locks the other out for 0.4 s.** Every flick rebounds the opposite way
+  0.12–0.32 s later, often stronger than a genuine flick (8.5 against 7.0), so only order tells them
+  apart. Gating `pulse()`'s input rather than its output lets a running shake finish.
+- **A shake, not a push**: 0.6 s at ~6.7 Hz, 50 m/s² — past what an emulated remote reports. Shaking
+  a Joy-Con hard for about a second landed tricks by hand where a single held push didn't.
+- In Dolphin's expressions `|` is a max and binds looser than `/` (checked against its source, 2026-09).
 
-  **Direction matters, because a wheelie is a state.** An up-flick starts one and a down-flick drops
-  it, where a trick takes any direction and only one per jump. So the remote is jerked the way it was
-  flicked — positive wire pitch is up on both bodies — and the wave is *half* rectified
-  (`max(sin(…), 0)`), since a full one would cancel the wheelie it just started four times a second.
+Two approaches fail, so don't retry them:
 
-  **Each direction locks the other out for 0.4 s**, because every flick rebounds the opposite way
-  0.12–0.32 s later, and a rebound is often stronger than a genuine flick elsewhere in the same
-  capture — 8.5 against 7.0 — so only order can tell them apart. The gate sits on the pulse's input
-  rather than its output, so a jerk already running finishes.
-
-  One more thing verified against Dolphin's source (2026-09), since the expressions depend on it:
-  `|` is a max, and it binds looser than `/`.
-- **Pointing and a wheel want the nose half a turn apart on a right Joy-Con**, and no Dolphin option
-  bridges them: `GetOrientation()` turns a quarter (Sideways) or a quarter about the left axis
-  (Upright), and it reaches only the accelerometer the game reads, never
-  `GetTotalTransformation()` and so never the pointer. Hence the choice lives in the layout.
-- **Measure the pointer, don't reason about it.** `tools/dsu_client` plus a replay of
-  `EmulateIMUCursor` settles in minutes what guessing costs days. Posed captures mislead: asked to
-  hold an "aim up", a player produces a different rotation from the one they make while playing —
-  compare a captured session against candidate tables by how much cursor travel each yields.
-- **`IMUIR/Total Yaw` is widened to 60°.** Dolphin's 25° clamps the cursor after ±12.5° of turn,
-  which a hand-held aim overruns constantly; the clamp reads as the pointer sticking.
-- **Leave Dolphin's "Sideways Wii Remote" off.** A sideways layout already writes that quarter turn
-  itself, into both the motion and the D-pad; the option would apply it twice.
+- **Amplifying the accelerometer's own transient.** An emulated Wii Remote saturates around
+  +3.9/−4.9 g (`ACCEL_ZERO_G` 0x80, `ACCEL_ONE_G` 0x9A over 8 bits) and the push already exceeds it,
+  so a bigger number only clips sooner.
+- **Dolphin's `Shake` group.** A full 7 g oscillation bound to a key never landed a trick (2026-09),
+  though `m_shake_state.acceleration` does reach the reported acceleration.
 
 ## Report rate
 
@@ -221,6 +212,8 @@ What `DolphinWiimoteConfig` writes, and why:
   `DSUClient/<slot>/Joycon2:Accel Up` reads the second hand's slot. A real Nunchuk has no gyro.
 - **Recenter** is R1 (L1 on a lone left Joy-Con). Gyro pointing drifts, and pressing it while aiming
   at the screen centre is what summons the pointer.
+- **`IMUIR/Total Yaw` is 60°.** Dolphin's 25° clamps the cursor after ±12.5° of turn, which a
+  hand-held aim overruns; the clamp reads as the pointer sticking.
 
 ## MotionPlus tutorial replays
 

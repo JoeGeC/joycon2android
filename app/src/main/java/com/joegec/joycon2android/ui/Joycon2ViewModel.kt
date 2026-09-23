@@ -40,8 +40,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     val viewMode: StateFlow<ConnectionViewMode> = container.observeViewMode()
         .stateIn(viewModelScope, SharingStarted.Eagerly, ConnectionViewMode.DETAILED)
 
-    // Bound only to keep the service (foreground lifetime) alive; all state is read from
-    // the app-scoped container, not the binder.
+    // Bound only for the service's lifetime; state comes from the container, not the binder.
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             bound = true
@@ -56,7 +55,6 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         if (permissionHandler.isGranted()) {
             startAndBind()
         }
-        // All state comes from the app-scoped container via its use cases, not the binder
         viewModelScope.launch {
             container.observeSession().collect { _uiState.value = it }
         }
@@ -101,10 +99,6 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch { container.setViewMode(mode) }
     }
 
-    /**
-     * Stops the service entirely — disconnects all devices and removes the notification.
-     * Called when the user explicitly wants to shut everything down.
-     */
     fun stopService() {
         container.disconnectAll()
         val app = getApplication<Application>()
@@ -114,8 +108,6 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     private fun startAndBind() {
         val app = getApplication<Application>()
         val intent = Intent(app, Joycon2Service::class.java)
-        // Bind only — the service promotes itself to foreground once a Joy-Con connects,
-        // so there's no notification while idle
         app.bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 }

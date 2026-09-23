@@ -30,8 +30,6 @@ class DsuServerTest {
     private val server = DsuServer(scope, port) { 1_000_000L }
     private lateinit var client: DatagramSocket
 
-    // IPv4 throughout: the server must answer at the 127.0.0.1 address emulators dial,
-    // not just whatever getLoopbackAddress() resolves to (::1 on Android)
     private val loopback: InetAddress = InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1))
 
     @Before

@@ -19,7 +19,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Feature-scoped state holder for the virtual gamepad and its privileged-access setup. */
 class GamepadViewModel(
     observeGamepadStatus: ObserveGamepadStatusUseCase,
     observeShizukuAvailability: ObserveShizukuAvailabilityUseCase,
@@ -42,11 +41,9 @@ class GamepadViewModel(
     private val _setupPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
     val setupPhase: StateFlow<DolphinSetupPhase> = _setupPhase.asStateFlow()
 
-    /** The emulator that has to be closed before its config can be written, once the user agrees. */
     private val _emulatorToClose = MutableStateFlow<EmulatorOption?>(null)
     val emulatorToClose: StateFlow<EmulatorOption?> = _emulatorToClose.asStateFlow()
 
-    /** The emulator to offer to start once its config has been written. */
     private val _emulatorToStart = MutableStateFlow<EmulatorOption?>(null)
     val emulatorToStart: StateFlow<EmulatorOption?> = _emulatorToStart.asStateFlow()
 
@@ -61,7 +58,6 @@ class GamepadViewModel(
         resetSetupPhase()
     }
 
-    /** Clears a stale Done/Failed and its start prompt once the written config no longer matches the assignment. */
     fun resetSetupPhase() {
         if (_setupPhase.value == DolphinSetupPhase.WORKING) return
         _setupPhase.value = DolphinSetupPhase.IDLE
@@ -70,7 +66,6 @@ class GamepadViewModel(
 
     fun configureGamepad(players: List<PlayerState>) = write(players, closeEmulator = false)
 
-    /** The user accepted losing unsaved progress, so stop the emulator and write. */
     fun closeEmulatorAndConfigure(players: List<PlayerState>) {
         _emulatorToClose.value = null
         write(players, closeEmulator = true)

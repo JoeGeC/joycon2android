@@ -6,13 +6,7 @@ import android.content.Context
 import com.joegec.joycon2android.model.Side
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Manages all active Joy-Con BLE connections, keyed by device address.
- * Thread-safe: BLE callbacks arrive on binder threads.
- *
- * All BLE operations require BLUETOOTH_CONNECT permission, which is verified
- * by the permission launcher in MainActivity before any BLE code is reached.
- */
+/** Thread-safe: BLE callbacks arrive on binder threads. */
 @SuppressLint("MissingPermission")
 class ConnectionPool(private val context: Context) {
 
@@ -24,10 +18,7 @@ class ConnectionPool(private val context: Context) {
     val addresses: Set<String> get() = connections.keys.toSet()
     val size: Int get() = connections.size
 
-    /**
-     * Atomically creates and starts a connection for [result].
-     * Returns null if this address is already in the pool (duplicate scan result).
-     */
+    /** Null for an address already in the pool (a duplicate scan result). */
     fun connect(result: ScanResult, side: Side, name: String, highPriority: Boolean): JoyconConnection? {
         val address = result.device.address
         val connection = JoyconConnection(context, side, name) {

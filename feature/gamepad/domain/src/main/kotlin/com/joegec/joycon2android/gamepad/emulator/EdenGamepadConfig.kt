@@ -18,17 +18,9 @@ import com.joegec.joycon2android.emulatorconfig.defineEdenKey
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 
-/**
- * Generates Eden's `config.ini` `[Controls]` bindings for the Virtual Gamepad, driven by the user's
- * own Joy-Con → Pro Controller mapping. The relay exposes every player as one standard Android HID
- * gamepad; that fixed wiring, and why a single Joy-Con is presented as a Pro Controller and rotated
- * on our side, are in docs/virtual-gamepad.md#buttons-and-keycodes and
- * docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers.
- */
+/** Why a lone Joy-Con is a Pro Controller: docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers */
 object EdenGamepadConfig {
-    // Joy-Con button -> the Android keycode the relay's HID gamepad emits for it. ReportMapper
-    // places each one so the keycode carries its own name; Capture and GL take the two gamepad slots
-    // with no Switch equivalent, and GR/Chat the trailing vendor collection's BUTTON_1/BUTTON_2.
+    // Keycodes the relay emits: docs/virtual-gamepad.md#buttons-and-keycodes
     private const val A = 96
     private const val B = 97
     private const val CAPTURE = 98
@@ -75,8 +67,6 @@ object EdenGamepadConfig {
         gamepads: Map<Int, EdenGamepad>,
         mappingFor: (PlayerBody) -> Map<String, String>,
     ): String {
-        // Drop every player's prior bindings first: a layout or port change leaves stale keys that
-        // would otherwise linger and cross-fire onto another player's port.
         val cleared = IniEditor.removeKeys(existing, EdenControls.SECTION) { it.matches(PLAYER_KEY) }
         return IniEditor.setKeys(cleared, EdenControls.SECTION, controlKeys(players, gamepads, mappingFor), assign = "=")
     }
@@ -140,8 +130,6 @@ object EdenGamepadConfig {
         return inputs.takeIf { it.isNotEmpty() }?.let { DigitalStick(it.toMap()) }
     }
 
-    // Eden binds one input per key, so a target driven by several sources keeps the first that its
-    // body can actually emit; the rest are only reachable through Dolphin.
     private fun inputFor(side: JoyconSide, sources: List<MappingSource>): Input? =
         sources.firstNotNullOfOrNull { inputFor(side, it) }
 
@@ -150,8 +138,6 @@ object EdenGamepadConfig {
         is MappingSource.Stick -> tiltOf(source.emittedStick(side), source.direction)
     }
 
-    // Physical left stick lands on Android axes 0/1, physical right stick on axes 11/14 (see
-    // ReportMapper); Android's Y axis grows downward.
     private fun axesOf(stick: StickSource) = if (stick == StickSource.LEFT_STICK) 0 to 1 else 11 to 14
 
     private fun tiltOf(stick: StickSource, direction: StickDirection): Axis {

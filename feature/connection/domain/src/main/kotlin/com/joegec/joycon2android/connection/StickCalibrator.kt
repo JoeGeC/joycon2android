@@ -2,13 +2,7 @@ package com.joegec.joycon2android.connection
 
 import com.joegec.joycon2android.model.JoyconInput
 
-/**
- * Rescales one controller's raw sticks onto the full 0..4095 range, centred on 2048, that every
- * downstream consumer assumes. Measured travel and rest points: docs/protocol.md#stick-range-and-centre.
- *
- * Centre is learned from the first still window and then frozen, because a stick held at full
- * deflection is perfectly still too; spans only ever widen, so a stick tilts fully from packet one.
- */
+/** Onto 0..4095 centred on 2048, as everything downstream assumes: docs/protocol.md#stick-range-and-centre */
 class StickCalibrator(
     restWindowSize: Int = DEFAULT_REST_WINDOW,
     maxRestSpreadLsb: Int = DEFAULT_MAX_REST_SPREAD,
@@ -91,9 +85,7 @@ class StickCalibrator(
         private const val DEFAULT_REST_WINDOW = 30
         private const val DEFAULT_MAX_REST_SPREAD = 32
 
-        // Smallest travel measured across the user's two Joy-Cons was ~1180 LSB; seeding just
-        // under that means full tilt saturates slightly early rather than falling short, and
-        // the widening in [Axis.rescale] recovers the exact span once the stick is rolled.
+        // Just under the smallest measured travel (~1180), so full tilt saturates early rather than short.
         private const val DEFAULT_SEED_HALF_SPAN = 1150
     }
 }

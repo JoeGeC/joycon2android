@@ -14,12 +14,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Orchestrates BLE scanning and Joy-Con connection lifecycle, exposing connected
- * controllers as domain [ConnectedJoycon]s. Delegates scanning to [BleScanner] and
- * connection tracking to [ConnectionPool], and assembles the [controllers] list from each
- * connection's live input + state (re-emitting on every change).
- */
 class Joycon2Manager(
     private val context: Context,
     private val scope: CoroutineScope,
@@ -105,7 +99,6 @@ class Joycon2Manager(
         rebuildControllers()
     }
 
-    // Each connection's input + state drives a rebuild, so [controllers] reflects live data
     private fun syncCollectors() {
         (connectionJobs.keys - pool.addresses).forEach { connectionJobs.remove(it)?.cancel() }
         (pool.addresses - connectionJobs.keys).forEach { address ->

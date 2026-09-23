@@ -1,33 +1,28 @@
 # Adding or changing a feature
 
-A practical recipe for working within this app's [architecture](architecture.md). Read that
-first if you haven't — this guide assumes the layer/module rules.
+Assumes the layer and module rules in [architecture.md](architecture.md).
 
-Start by deciding which case you're in:
+- **Extending an existing feature** (new action, state or screen section) →
+  [Recipe A](#recipe-a--extend-an-existing-feature). The common case.
+- **A new capability nothing else owns** → [Recipe B](#recipe-b--add-a-new-feature).
 
-- **Extending an existing feature** (new action, new bit of state, new screen section) →
-  [Recipe A](#recipe-a--extend-an-existing-feature). This is the common one.
-- **A genuinely new feature** (a new capability nothing else owns) →
-  [Recipe B](#recipe-b--add-a-new-feature).
-
-If you're unsure whether something is its own feature, ask *"what changes for what reason?"* —
-if it changes for the same reason as `connection`/`assignment`/`gamepad`/`dsu`, it belongs in
-that feature.
+Unsure? Ask *"what changes for what reason?"* If it changes for the same reason as an existing
+feature, it belongs there.
 
 ## The convention plugins
 
-Every module's `build.gradle.kts` applies exactly one of these (defined in
-`build-logic/convention/`). Use them — never hand-roll `android {}`/`compileSdk` in a module.
+Every module's `build.gradle.kts` applies exactly one of these (`build-logic/convention/`). Never
+hand-roll `android {}` or `compileSdk` in a module.
 
 | Plugin id | For | Gives you |
 |---|---|---|
 | `joycon.kotlin.jvm` | `domain`, `:core:model`, `:core:session`, pure-Kotlin `data` | Kotlin/JVM, Java 11 |
-| `joycon.android.library` | Android `data` modules | `com.android.library`, compileSdk 36, minSdk 24, Java 11, JVM unit-test defaults. (AGP 9 has Kotlin built-in — do **not** also apply `org.jetbrains.kotlin.android`; it collides on the `kotlin` extension.) |
+| `joycon.android.library` | Android `data` modules | `com.android.library`, compileSdk 36, minSdk 24, Java 11, JVM unit-test defaults. Never also apply `org.jetbrains.kotlin.android`: AGP 9 has Kotlin built in. |
 | `joycon.android.library.compose` | `presentation`, `:core:designsystem` | the above + Compose |
 
 ## Recipe A — extend an existing feature
 
-Adding "do X" to a feature is four edits, following the existing pattern in that feature:
+Five edits, following the feature's existing pattern:
 
 1. **Domain — add the capability to the repository interface** (if the data layer needs to do
    something new). e.g. add `fun setFoo(enabled: Boolean)` to `DsuRepository`.
@@ -35,8 +30,8 @@ Adding "do X" to a feature is four edits, following the existing pattern in that
 2. **Data — implement it** in the repository impl (`DsuServer`, `Joycon2Manager`,
    `GamepadOutput`, …).
 
-3. **Domain — add a one-line use case.** Use cases are non-negotiable: presentation reaches data
-   *only* through them. Always an `operator fun invoke`:
+3. **Domain — add a one-line use case.** Presentation reaches data *only* through use cases, always
+   an `operator fun invoke`:
 
    ```kotlin
    class SetFooUseCase(private val repository: DsuRepository) {
@@ -54,14 +49,13 @@ Adding "do X" to a feature is four edits, following the existing pattern in that
    DsuViewModel(c.observeDsuStatus, c.enableDsu, c.disableDsu, c.setFoo)
    ```
 
-For new *state* to observe, the repository exposes a `StateFlow`/`Flow`, an
-`Observe…StatusUseCase` wraps it (often `combine`-ing several flows into a status data class),
-and the ViewModel `stateIn`s it. Mirror `ObserveDsuStatusUseCase` / `DsuViewModel`.
+For new *state*, the repository exposes a `Flow`, an `Observe…StatusUseCase` wraps it (often
+`combine`-ing several into a status data class), and the ViewModel `stateIn`s it. Mirror
+`ObserveDsuStatusUseCase` / `DsuViewModel`.
 
 ## Recipe B — add a new feature
 
-Say the feature is `foo`. Create three modules (drop `presentation` if it has no UI, or `data`
-if it's pure logic).
+For a feature `foo`, create three modules (drop `presentation` without UI, `data` for pure logic).
 
 ### 1. Register the modules
 
@@ -119,8 +113,8 @@ feature/foo/domain/src/main/kotlin/.../foo/
 
 ### 4. Data: the implementation
 
-`feature/foo/data/src/main/kotlin/.../foo/FooManager.kt` implements `FooRepository`. This is the
-only layer allowed to touch BLE, the relay, sockets, or framework APIs.
+`FooManager` implements `FooRepository`. Only this layer touches BLE, the relay, sockets or
+framework APIs.
 
 ### 5. Presentation: ViewModel + UI
 
@@ -147,32 +141,14 @@ Compose UI goes alongside it, built from `:core:designsystem` components.
 - If the feature reacts to player assignment (like gamepad/dsu), hook it into the
   `SessionCoordinator`'s `onState` in `AppContainer` rather than calling it from the UI.
 
-## Conventions & gotchas
+## Gotchas
 
-- **Packages are feature-rooted:** `com.joegec.joycon2android.<feature>` for a feature's domain +
-  data, and `com.joegec.joycon2android.<feature>.presentation` for its ViewModel + composables. A
-  module's `namespace` matches its package root (so generated `R`/`BuildConfig` land there). The
-  one exception is `:core:designsystem`, which owns `com.joegec.joycon2android.ui.components` /
-  `ui.theme` — features must not add to those packages.
-- **Split a crowded package by concern, not layer.** When one package accumulates unrelated
-  clusters, give each its own sub-package — e.g. gamepad is `gamepad` (the relay output),
-  `gamepad.privileged` (shell access), `gamepad.emulator`
-  (emulator config); dsu is `dsu` / `dsu.motion` / `dsu.emulator`. Concern sub-packages live in the
-  same module, so this is free of build-graph changes.
-- **Strings & `R` are per-namespace.** A composable moved into a feature module needs its strings
-  copied into that module's `res/values/strings.xml` and its `R` import set to the module's
-  namespace (`com.joegec.joycon2android.foo.presentation.R`). When you rename a package, update the
-  module's `namespace` to match or the `R` import will dangle.
-- **Repositories are app-scoped singletons** owned by `AppContainer` (held by `Application`), so
-  they outlive the Activity and the foreground service. **ViewModels are feature-scoped** and
-  depend only on their feature's use cases — never on `:app` or another feature.
-- **Cross-feature interactions go through `:core:session`**, not feature-to-feature deps. If two
-  features need to talk, the coordinator is where.
-- **Per-packet paths stay synchronous.** Motion/gamepad output rides `onState`, not a conflated
-  `StateFlow` — conflation drops samples.
-- **Run `:konsist:test` after moving classes.** It fails the build if a ViewModel/use
-  case/repository-interface lands in the wrong layer. The rules and what they catch are in
-  [architecture.md](architecture.md#dependency-rules).
+- **Strings and `R` are per-namespace.** A composable moved into a feature module needs its strings
+  copied into that module's `res/values/strings.xml` and its `R` import switched to the module's
+  namespace. Rename a package, and update the module's `namespace` to match.
+- Package layout, singleton scope, cross-feature coordination and the per-packet path are in
+  [architecture.md](architecture.md); `:konsist:test` fails the build if a class lands in the wrong
+  layer.
 
 ## Before you're done — checklist
 

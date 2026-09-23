@@ -40,10 +40,7 @@ class PlayerStateResolver(private val evictConflicting: (address: String) -> Uni
 
         return when (SideInference.inferSide(joycon.input)) {
             Side.RIGHT -> PlayerState(player = player, left = null, right = joycon)
-            // LEFT, or not yet determinable: keep it in the left slot rather than defaulting an
-            // undetermined lone Joy-Con to "right". A genuinely unknown one corrects to its real
-            // side once a side-exclusive button is pressed — though the scan now usually identifies
-            // it up front (see BleScanner.sideFromManufacturerData).
+            // An unknown side waits in the left slot until a side-exclusive button corrects it.
             else -> PlayerState(player = player, left = joycon, right = null)
         }
     }

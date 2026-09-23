@@ -17,15 +17,12 @@ import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.JoyconButton
 
-/** The (storage key, label) rows and (source id, label) choices the mapping editor offers. */
 internal object MappingOptions {
     const val NONE_ID = ""
 
-    /** Only a lone Joy-Con standing in for a Wii Remote can be held sideways in the sense the switch means. */
     fun offersSidewaysRemote(console: Console, side: JoyconSide) =
         console == Console.WIIMOTE_NUNCHUK && side != JoyconSide.DUAL
 
-    /** Every row the editor offers, in reading order: buttons, then sticks, then what is neither. */
     @Composable
     fun targets(console: Console): List<Pair<String, String>> =
         buttonTargets(console) + stickDirectionTargets(console) + motionTargets(console)
@@ -37,8 +34,7 @@ internal object MappingOptions {
         Console.SWITCH_PRO -> SwitchProButton.entries.map { it.name to it.label() }
     }
 
-    // Shaking the remote is a motion of it rather than a button on it, so it sits below the sticks
-    // instead of among the face buttons.
+    // Shake is a motion, so it's listed after the sticks.
     private val MOTION_TARGETS = setOf(WiimoteButton.Shake)
 
     @Composable
@@ -80,9 +76,7 @@ internal object MappingOptions {
         }
     }
 
-    // The buttons a real, lone Joy-Con of that side can actually produce — matches what the physical
-    // hardware has, so a mapping chosen here can always fire (see JoyconButton for the full set; SL/SR
-    // are split per side, A/B/X/Y/Home/C only exist on the right Joy-Con, the d-pad only on the left).
+    // Only what that side physically has, so every choice can fire.
     private fun physicalButtons(side: JoyconSide): List<JoyconButton> = when (side) {
         JoyconSide.DUAL -> JoyconButton.entries
         JoyconSide.LEFT -> listOf(

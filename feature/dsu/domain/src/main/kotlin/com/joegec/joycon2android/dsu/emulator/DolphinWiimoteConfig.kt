@@ -18,11 +18,7 @@ import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 
-/**
- * Generates Dolphin's `WiimoteNew.ini` bindings for the DSU device, one `[WiimoteN]` section per
- * assigned player, driven by the user's own Joy-Con → Wiimote/Nunchuk mapping. What it writes and
- * why, measurements included: docs/dsu-motion.md#dolphin-wii-remote-mapping.
- */
+/** What it writes and why: docs/dsu-motion.md#dolphin-wii-remote-mapping */
 object DolphinWiimoteConfig {
     val path = DolphinPaths.config("WiimoteNew.ini")
 
@@ -84,9 +80,7 @@ object DolphinWiimoteConfig {
     private val IMU_CONTROLS = ACCEL_DIRECTIONS.map { "IMUAccelerometer/$it" to "Accel $it" } +
         GYRO_DIRECTIONS.map { "IMUGyroscope/$it" to "Gyro $it" }
 
-    // A lone Joy-Con streams in its sideways grip (SidewaysMotion); these turn it back about the
-    // button face onto the body the player actually aims. Two tables because the bodies rotate into
-    // their grips opposite ways: docs/dsu-motion.md#sideways-joy-cons.
+    // Turn a lone Joy-Con's sideways stream back onto the body it aims: docs/dsu-motion.md#sideways-joy-cons
     private val SIDEWAYS_REMOTE_INPUTS = mapOf(
         "Accel Left" to "Accel Backward", "Accel Right" to "Accel Forward",
         "Accel Forward" to "Accel Left", "Accel Backward" to "Accel Right",
@@ -100,8 +94,7 @@ object DolphinWiimoteConfig {
         "Gyro Roll Left" to "Gyro Pitch Down", "Gyro Roll Right" to "Gyro Pitch Up",
     )
 
-    // Only a right Joy-Con gives up its own body to steer true; a left one already is a sideways
-    // remote, its nose and its L/ZL edge pointing the same way, so it needs no turn either way.
+    // A left Joy-Con's L/ZL edge is already a sideways remote's nose, so only a right one differs.
     private fun bodyInputs(side: JoyconSide, sidewaysRemote: Boolean): Map<String, String> = when (side) {
         JoyconSide.DUAL -> emptyMap()
         JoyconSide.LEFT -> SIDEWAYS_REMOTE_INPUTS
@@ -120,9 +113,7 @@ object DolphinWiimoteConfig {
     private fun dolphinKey(target: WiimoteButton, sideways: Boolean): String =
         (if (sideways) SIDEWAYS_DPAD_KEYS[target] else null) ?: DOLPHIN_KEYS.getValue(target)
 
-    // A flick is fired from the gyroscope and delivered as a jerk of the accelerometer, because a
-    // Joy-Con flick carries almost no linear jerk and Mario Kart Wii reads only the accelerometer.
-    // Every constant is measured: docs/dsu-motion.md#sideways-joy-cons.
+    // Measured: docs/dsu-motion.md#tricks-and-wheelies
     private const val FLICK_RADIANS = 9
     private const val FLICK_LOCKOUT_SECONDS = 0.4
     private const val TRICK_ACCELERATION = 50 // m/s^2, past what an emulated remote can report
@@ -130,17 +121,10 @@ object DolphinWiimoteConfig {
     private const val TRICK_PERIOD_SECONDS = 0.15
     private const val FULL_TURN = 6.2832
 
-    // A wheelie is a state an up-flick starts and a down-flick drops, so unlike a trick it needs the
-    // direction the player flicked. Pitch carries it on both bodies; the remote is jerked the same
-    // way it was flicked.
     private const val UP = "IMUAccelerometer/Up"
     private val TRICK_AXES = mapOf(UP to ("Pitch Up" to "Pitch Down"), "IMUAccelerometer/Down" to ("Pitch Down" to "Pitch Up"))
 
-    /**
-     * Each direction locks the other out: every flick rebounds the opposite way about a quarter of a
-     * second later, and that rebound would otherwise answer the gesture and cancel the wheelie.
-     * Gating the pulse's input rather than its output lets a jerk already running finish.
-     */
+    // Each direction locks out the other, so a flick's rebound can't cancel the wheelie.
     private fun trickTrigger(
         side: JoyconSide,
         control: String,
@@ -157,8 +141,7 @@ object DolphinWiimoteConfig {
         return listOfNotNull(flick, pressed).takeIf { it.isNotEmpty() }?.joinToString(" | ")
     }
 
-    // Half a wave, so the jerks all go the way the flick did — a full one would cancel the wheelie
-    // it just started, four times a second.
+    // Half-rectified, so every jerk goes the way the flick did.
     private fun trickShake(trigger: String?): String? = trigger?.let {
         "pulse($it, $TRICK_SECONDS) * max(sin(timer($TRICK_PERIOD_SECONDS) * $FULL_TURN), 0) * $TRICK_ACCELERATION"
     }
@@ -176,12 +159,8 @@ object DolphinWiimoteConfig {
         } + listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
     }
 
-    // Swing is the only way a thrust toward the sensor bar reaches a game, and it is signed and
-    // high-passed because an accelerometer cannot tell one from a tilted grip:
-    // docs/dsu-motion.md#dolphin-wii-remote-mapping.
     private fun swingLines(side: JoyconSide, sidewaysRemote: Boolean): List<String> {
-        // A push toward the screen runs along the remote's nose, whichever input that body reads it from.
-        val body = bodyInputs(side, sidewaysRemote)
+            val body = bodyInputs(side, sidewaysRemote)
         val thrust = body["Accel Forward"] ?: "Accel Forward"
         val pull = body["Accel Backward"] ?: "Accel Backward"
         val signed = "(`$thrust` - `$pull`)"
@@ -192,8 +171,7 @@ object DolphinWiimoteConfig {
         )
     }
 
-    // Dolphin splits a control on its last colon, so `<device>:<input>` reaches the second hand's
-    // slot. A real Nunchuk has no gyroscope, only this accel.
+    // Dolphin splits on the last colon, so `<device>:<input>` reads the second hand's slot.
     private fun nunchukImuLines(slot: Int): List<String> =
         ACCEL_DIRECTIONS.map { "Nunchuk/IMUAccelerometer/$it = `DSUClient/$slot/Joycon2:Accel $it`" }
 
@@ -271,7 +249,6 @@ object DolphinWiimoteConfig {
             }
         }
 
-    // Dolphin's expression language ORs its inputs, so every source bound to a target can fire it.
     private fun expressionFor(side: JoyconSide, sources: List<MappingSource>): String? =
         sources.mapNotNull { specFor(side, it) }
             .takeIf { it.isNotEmpty() }

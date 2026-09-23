@@ -1,16 +1,12 @@
 # Architecture
 
-The living reference for how this app is structured. For *how to add or change* a feature,
-see [adding-a-feature.md](adding-a-feature.md).
+How the app is structured. To add or change a feature, follow [adding-a-feature.md](adding-a-feature.md).
 
-## Shape in one paragraph
-
-A single-activity Compose app built as a **Gradle multi-module** project, split by **feature ×
-layer**. Each feature (`connection`, `assignment`, `gamepad`, `dsu`, `update`) has up to three modules —
-`domain`, `data`, `presentation` — plus shared `:core` modules and a thin `:app` that wires
-everything together. The split exists to *enforce* the dependency rules at compile time: a
-ViewModel physically cannot reach a repository implementation, because presentation and data
-live in separate modules that share only domain.
+A single-activity Compose app, split into Gradle modules by **feature × layer**. Each feature
+(`connection`, `assignment`, `gamepad`, `dsu`, `update`) has up to three modules — `domain`, `data`,
+`presentation` — over shared `:core` modules and a thin `:app` that wires them together. The split
+*enforces* the dependency rules at compile time: presentation and data share only domain, so a
+ViewModel cannot reach a repository implementation.
 
 ## Module graph
 
@@ -23,9 +19,9 @@ live in separate modules that share only domain.
 | `:core:buttonmapping:domain` | `joycon.kotlin.jvm` | `:core:model` |
 | `:core:buttonmapping:data` | `joycon.android.library` | `:core:buttonmapping:domain`, `:core:model` |
 | `:core:buttonmapping:presentation` | `joycon.android.library.compose` | `:core:buttonmapping:domain`, `:core:designsystem`, `:core:model` |
-| `:feature:<f>:domain` | `joycon.kotlin.jvm` | `:core:model` ² |
-| `:feature:<f>:data` | `joycon.android.library`¹ | `:feature:<f>:domain`, `:core:model` |
-| `:feature:<f>:presentation` | `joycon.android.library.compose` | `:feature:<f>:domain`, `:core:designsystem`, `:core:model` |
+| `:feature:<f>:domain` | `joycon.kotlin.jvm` | `:core:model` ²³ |
+| `:feature:<f>:data` | `joycon.android.library`¹ | `:feature:<f>:domain`, `:core:model` ³ |
+| `:feature:<f>:presentation` | `joycon.android.library.compose` | `:feature:<f>:domain`, `:core:designsystem`, `:core:model` ³ |
 | `:app` | `com.android.application` | every feature module + all `:core` |
 | `:konsist` | `joycon.kotlin.jvm` (test-only) | — (scans the whole project) |
 
@@ -34,17 +30,13 @@ live in separate modules that share only domain.
 ¹ `assignment:data` is pure Kotlin (`joycon.kotlin.jvm`) — it has no Android dependencies.
 
 ² `gamepad:domain` and `dsu:domain` also depend on `:core:emulatorconfig` and
-`:core:buttonmapping:domain` for the one-tap emulator setup (shared ini editing, emulator paths, and
-the user's button mapping). Each feature owns its own emulator-config
-*generators* — gamepad mapping in `gamepad:domain`, DSU/motion mapping in `dsu:domain` — over that
-shared leaf; no feature depends on another feature.
+`:core:buttonmapping:domain` for one-tap emulator setup. Each owns its own config *generators* over
+that shared leaf; no feature depends on another.
 
-³ `update` needs neither `:core:model` nor `:core:emulatorconfig` — it only reads GitHub's
-releases API and hands an APK to the system installer.
+³ Not `update`, which only reads GitHub's releases API and hands an APK to the system installer.
 
-The three convention plugins live in `build-logic/convention/` and dedupe all the per-module
-Gradle config (compileSdk, Java 11, Compose, test options) so each `build.gradle.kts` is a few
-lines. See [adding-a-feature.md](adding-a-feature.md) for what each plugin sets up.
+Per-module Gradle config (compileSdk, Java 11, Compose, test options) lives in three convention
+plugins in `build-logic/convention/` ([which to use](adding-a-feature.md#the-convention-plugins)).
 
 ## The layers
 
@@ -71,28 +63,28 @@ app-specific lives in a feature's presentation, not here.
 cases. It's the one place that depends on more than one feature's domain, because assembling the
 app's `AppUiState` *is* the cross-feature concern (connection + assignment → player state).
 
-**`:core:emulatorconfig`** — shared primitives for the one-tap setup: `IniEditor` (splices keys
-into ini text, leaving the user's others intact), `DolphinPaths` / `EdenPaths` (package and config
-locations), and `EdenControls` (the `[Controls]` vocabulary both features write). Shared because the
-gamepad and DSU features both write to Dolphin and Eden. Holds *mechanism*, not feature logic — the
-per-emulator config generators live in their owning feature's `domain`.
+**`:core:emulatorconfig`** — mechanism shared by the gamepad and DSU setup, which both write to
+Dolphin and Eden: `IniEditor`, `DolphinPaths` / `EdenPaths`, and `EdenControls` (the `[Controls]`
+keys both features write; each setup first clears every player's old keys). The generators
+themselves live in their feature's `domain`. The config files sit in the emulator's `Android/data`,
+writable by a shell-uid process (Shizuku), not by the app.
 
-**`:core:buttonmapping`** — the user-editable Joy-Con → emulator button mapping: the mapping model,
-the layouts a body can start from and the sideways-remote switch they seed (`domain`, shipped
-layouts in `preset/`), their persistence (`data`), and the mapping editor (`presentation`). Both the
-gamepad and DSU config generators read it. A target holds *every* source bound to it, so Dolphin ORs
-them into one expression while Eden, which binds one input per key, keeps the first.
+**`:core:buttonmapping`** — the user's Joy-Con → emulator mapping: model and layouts (`domain`,
+shipped layouts in `preset/`), persistence (`data`) and the editor (`presentation`). See
+[Button mapping](#button-mapping).
 
-Everything is keyed by `PlayerBody` — a player plus the body they hold — so each player maps
-independently. **A layout is never a stored reference, only a name for a set of bindings**: applying
-one copies out everything it says (`ApplyPlayerMappingUseCase`), and `MappingLayouts.matching` reads
-the name back by comparing what a body is bound to against every layout the app ships and every one
-the user saved (`SavedLayout`, scoped to the body it came from). No match is the editor's "Custom".
-That is what lets a deleted layout take away its name and nothing else, and lets the same bindings
-answer to it again the day an identical layout is saved back. `GlobalLayout` freezes the whole
-session the same way — every player's bindings in full, not a layout id — so it restores what it
-saved whatever has happened to the layouts since; it carries the bodies it was saved from, which is
-why it can only be restored onto those players.
+## Button mapping
+
+- **Keyed by `PlayerBody`** — a player plus the body they hold — so each player maps independently.
+- **A target holds every source bound to it.** Dolphin ORs them into one expression; Eden binds one
+  input per key, so it keeps the first the body can emit.
+- **A layout is a name for a set of bindings, never a stored reference.** Applying one copies out
+  everything it says, layered over the console default so a target it omits is still bound.
+  `MappingLayouts.matching` reads the name back by comparing a body's bindings with every shipped
+  layout and every one the user saved for that body; no match is "Custom". So deleting a layout
+  removes only its name, and the same bindings answer to it again if an identical one is saved.
+- **`GlobalLayout` freezes the whole session** — every player's bindings in full, and the bodies they
+  held — so it restores exactly what it saved, but only onto those players.
 
 ## Dependency rules
 
@@ -125,7 +117,7 @@ lands there. `:core:designsystem` solely owns `com.joegec.joycon2android.ui.comp
 
 ## Composition root — `AppContainer`
 
-`app/.../AppContainer.kt` is the only place the abstractions and implementations meet. It:
+The only place abstractions and implementations meet. It:
 
 - constructs each **repository implementation** (`Joycon2Manager`, `DsuServer`,
   `PlayerAssignmentManager`, `GamepadOutput`, `PrivilegedAccess`) as **app-scoped singletons**,
@@ -139,10 +131,8 @@ no state of its own.
 
 ## ViewModels and the UI
 
-One **ViewModel per feature**, each in its own presentation module, constructed in
-`MainActivity` via `viewModelFactory { initializer { … } }` that pulls the relevant use cases
-off `AppContainer`. This keeps the ViewModel class dependent only on its domain — never on
-`:app`.
+One **ViewModel per feature**, in its presentation module, built in `MainActivity` by a
+`viewModelFactory` that pulls use cases off `AppContainer` — so it depends only on its domain.
 
 - `DsuViewModel` — DSU status, enable toggle, motion settings and emulator auto setup.
 - `GamepadViewModel` — gamepad status, Shizuku availability and emulator auto setup.
@@ -167,9 +157,9 @@ BLE notify ─→ Joycon2Manager (connection/data, ControllerRepository)
                    └─→ ObserveSessionUseCase   ─→ Joycon2ViewModel ─→ AppUiState ─→ Compose
 ```
 
-The gamepad and DSU outputs ride a **synchronous per-packet path** off the coordinator's
-`onState` callback, not a conflated `StateFlow` — conflation would drop motion samples. The
-hardware-level detail is in [virtual-gamepad.md](virtual-gamepad.md) and [dsu-motion.md](dsu-motion.md).
+The gamepad and DSU outputs ride the coordinator's **synchronous** `onState` callback, not a
+conflated `StateFlow`, which would drop motion samples. Hardware detail:
+[virtual-gamepad.md](virtual-gamepad.md), [dsu-motion.md](dsu-motion.md).
 
 ## Build & test
 
@@ -179,6 +169,3 @@ hardware-level detail is in [virtual-gamepad.md](virtual-gamepad.md) and [dsu-mo
 ./gradlew :konsist:test               # architecture-rule tests only
 ./gradlew :feature:dsu:data:test      # one module's tests
 ```
-
-`:konsist` enforces the layer-placement rules described above; run it after moving classes
-between modules.

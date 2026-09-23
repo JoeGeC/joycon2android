@@ -5,9 +5,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Fixed sp scale (product UI, not fluid), ~1.2 ratio between steps. Weight, colour, and tracking
-// carry the hierarchy alongside size so adjacent steps never lean on size alone. Light-on-dark
-// text gets a small line-height and tracking bump versus the Material defaults.
+// Scale and rationale: docs/DESIGN.md#typography
 private val SemiBold = FontWeight.SemiBold
 
 val Typography = Typography(

@@ -13,10 +13,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.ui.theme.Dimens
 
-/**
- * The app's picker: an accented current value that opens a panel of alternatives. [label] is shown
- * rather than derived, so a caller whose state has drifted off the list can say so in its own words.
- */
+/** [label] is passed in rather than derived, so a caller whose value is off the list can say so. */
 @Composable
 fun OptionDropdown(
     options: List<DropdownOption>,

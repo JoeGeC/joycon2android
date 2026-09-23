@@ -88,9 +88,7 @@ object Dimens {
     val statusDotSize = 7.dp
     val statusDotGap = 6.dp
 
-    // Glyph and telemetry sizes, tuned to the controller graphics they sit on rather than to a
-    // text-hierarchy step. UI text goes through MaterialTheme.typography; telemetry readouts through
-    // AppType.telemetry, which these size.
+    // Sized to the controller graphics, outside the type scale: docs/DESIGN.md#typography
     val fontSizeButton = 14.sp // on-controller button label (SmallButton)
     val fontSizeSmall = 10.sp // on-controller rail label + code/table telemetry
     val fontSizeLabel = 9.sp // IMU / stick coordinate telemetry
