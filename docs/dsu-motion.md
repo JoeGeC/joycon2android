@@ -96,6 +96,8 @@ the override).
 - **Only a right Joy-Con turns.** A game written for that grip reads gravity against a remote whose
   nose points left, where a left Joy-Con's L/ZL edge already points. A right Joy-Con gives up its own
   body to steer true, and with it R/ZR as the nose: aiming moves to the tail.
+- **Up follows the grip.** Off, a lone Joy-Con's stick reads up toward its L/R edge; on, toward its
+  rail, where the relay already puts it (`emittedDirection`).
 - **The D-pad turns a quarter on both bodies**, since the player's up is a sideways remote's right.
   That is Dolphin's own `dpad_sideways_bitmasks`, written into the bindings so Dolphin's *Sideways
   Wii Remote* option stays off — the option would turn the accelerometer a second time.

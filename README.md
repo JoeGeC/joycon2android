@@ -101,8 +101,8 @@ target can take **several sources** — tick as many as you like, and any of the
   **Mario Kart Wheel**, say — gives the rest the same game's other grip. A saved set remembers who
   held which body ("P1 L, P2 R, P3 L/R") and stays greyed out until those players are back.
 - **Sideways Wii Remote.** On the Wii console, a lone Joy-Con also gets this switch, for games that
-  steer by tilting a sideways remote. The layout sets it (on for Mario Kart) and you can override
-  it until you next pick a layout.
+  steer by tilting a sideways remote. On, up on the stick is towards the rail; off, towards L or R.
+  The layout sets it (on for Mario Kart) and you can override it until you next pick a layout.
 
 The layouts the app ships:
 

@@ -34,7 +34,7 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("Source = 1"))
         assertTrue(result.contains("Device = DSUClient/0/Joycon2"))
         assertTrue(result.contains("Buttons/A = `Cross`")) // physical A rotates onto B
-        assertTrue(result.contains("D-Pad/Up = `Left Y+`"))
+        assertTrue(result.contains("D-Pad/Up = `Left X+`"))
         assertTrue(result.contains("IMUIR/Recenter = `R1`"))
         assertTrue(result.contains("Extension = None"))
     }
@@ -43,7 +43,7 @@ class DolphinWiimoteConfigTest {
     fun `left-only player maps its directions onto faces and recenters on L`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))))
 
-        assertTrue(result.contains("Buttons/A = `Circle`")) // Down rotates onto A
+        assertTrue(result.contains("Buttons/A = `Triangle`")) // Right rotates onto X
         assertTrue(result.contains("Buttons/Home = `Touch Button`"))
         assertTrue(result.contains("IMUIR/Recenter = `L1`"))
     }
@@ -82,7 +82,7 @@ class DolphinWiimoteConfigTest {
 
         assertTrue(result.contains("Extension = Nunchuk"))
         assertTrue(result.contains("Nunchuk/Stick/Up = `Circle`")) // physical X rotates onto A
-        assertTrue(result.contains("D-Pad/Up = `Left Y+`")) // its own stick still steers the d-pad
+        assertTrue(result.contains("D-Pad/Up = `Left X+`")) // its own stick still steers the d-pad
         assertFalse(result.contains("Nunchuk/IMUAccelerometer")) // no second hand to stream one
     }
 
@@ -93,7 +93,7 @@ class DolphinWiimoteConfigTest {
 
         val result = DolphinWiimoteConfig.merge(null, player, { false }) { mapping }
 
-        assertTrue(result.contains("D-Pad/Up = `Left Y+` | `L1`")) // SL rotates onto L held sideways
+        assertTrue(result.contains("D-Pad/Up = `Left X+` | `L1`")) // SL rotates onto L held sideways
     }
 
     @Test
@@ -190,6 +190,17 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left`"))
         assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`"))
         assertTrue(result.contains("IMUGyroscope/Yaw Left = `Gyro Yaw Left`"))
+    }
+
+    @Test
+    fun `off a sideways remote, a lone Joy-Con's stick points up toward its L or R`() {
+        val right = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+        val left = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))))
+
+        assertTrue(right.contains("D-Pad/Up = `Left X+`"))
+        assertTrue(right.contains("D-Pad/Left = `Left Y+`")) // the rail
+        assertTrue(left.contains("D-Pad/Up = `Left X-`"))
+        assertTrue(left.contains("D-Pad/Right = `Left Y+`")) // the rail
     }
 
     @Test

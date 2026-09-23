@@ -162,10 +162,7 @@ private fun SidewaysRemoteSwitch(side: JoyconSide, enabled: Boolean, onSetEnable
     val aimsFromItsTail = side == JoyconSide.RIGHT
     SettingSwitch(
         title = stringResource(R.string.controller_mapping_sideways_remote),
-        description = stringResource(
-            if (aimsFromItsTail) R.string.controller_mapping_sideways_remote_description_right
-            else R.string.controller_mapping_sideways_remote_description_left,
-        ),
+        description = stringResource(R.string.controller_mapping_sideways_remote_description),
         warning = stringResource(R.string.controller_mapping_sideways_remote_warning)
             .takeIf { aimsFromItsTail },
         checked = enabled,
