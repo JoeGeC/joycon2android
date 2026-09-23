@@ -21,6 +21,9 @@ chosen at the moment something is published, from what is in it.
 Mixed content takes the highest level present. `versionCode` increments by one on
 every bump, whatever the level — Play rejects a repeat.
 
+If `versionName` already names an unreleased version (bumped for a prerelease),
+release that version as it is — don't bump twice.
+
 ## 1. Work out what is in it
 
 ```sh
@@ -68,8 +71,12 @@ never over a release build.
 CI cannot do this. Release signing needs `release.jks` and
 `keystore.properties`, both gitignored and local only.
 
+Build only what the tag will hold: the working tree clean and local `main` equal
+to `origin/main`. Confirm CI passed on that commit (`gh run list --branch main -L1`).
+
 ```sh
 ./gradlew :app:assembleRelease
+cp app/build/outputs/apk/release/app-release.apk joycon2android-X.Y.Z.apk
 ```
 
 Verify before publishing, not after:
@@ -81,10 +88,10 @@ Verify before publishing, not after:
 - `aapt2 dump badging` — `versionName` and `versionCode` must be the ones
   intended. Both tools live in `~/Library/Android/sdk/build-tools/*/`.
 
-Then publish, with the asset named `joycon2android-X.Y.Z.apk`:
+Then publish:
 
 ```sh
-gh release create vX.Y.Z <apk> \
+gh release create vX.Y.Z joycon2android-X.Y.Z.apk \
   --title "Joycon2Android X.Y.Z" --notes-file notes.md --target main --latest
 ```
 
@@ -108,6 +115,8 @@ behaved. A fix reads as the thing working, not as the story of it breaking.
   consequence. Leave out tooling, CI and doc-only changes unless a user would
   feel them. The installed app shows the bolded leads of the first six bullets
   in its update prompt, so each lead has to read as a complete statement alone.
+  If a change only reaches an emulator after **Set up** runs again, end that
+  bullet saying so.
 - `## Install` — download `joycon2android-X.Y.Z.apk`, installs over an existing
   copy, link the README setup guide.
 - `## Notes` — SYNC is needed for every connection, and the Nintendo
@@ -117,7 +126,3 @@ behaved. A fix reads as the thing working, not as the story of it breaking.
 
 - `gh release view` with no tag shows the latest **stable** release, so a
   prerelease has to be named explicitly.
-- An asset's `size_in_bytes` reads `null` for a moment after upload. Not a
-  failure.
-- Prerelease tags carry the workflow's run number, which is monotonic across the
-  workflow's whole life and cannot be reset.
