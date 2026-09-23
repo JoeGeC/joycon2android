@@ -186,6 +186,82 @@ corrected values:
   stores. Spans are seeded just under the smallest travel measured (~1180 LSB), so full tilt works
   from the first packet, and only ever widen.
 
+## Console-protocol controllers
+
+Some third-party Joy-Con 2 clones (measured on a NYXI Hyperion 3, left and right, 2026-09) copy the
+GATT table above but ignore the write characteristic and never notify on `...fd2`. They implement
+only the side-specific channel a Switch 2 console uses, driven by `connection/console/`.
+
+| Thing | Left | Right |
+|---|---|---|
+| Command write (no response) | `ce49a830-dced-48ae-931e-c8cf88aadbea` | `65a724b3-f1e7-4a61-8078-a342376b27ff` |
+| Input notify | `cc1bbbb5-7354-4d32-a716-a81cb241a32a` | `d5a9e01e-2ffc-4cca-b20c-8b67142bf442` |
+| Extended responses | `63a3810f-aec7-474b-9010-3d52403cb996` | `640ca58e-0e88-410c-a7f3-426faf2b690b` |
+| Responses | `c765a961-d9d8-4d36-a20a-5315b111836a` | same |
+| Session start | `00c5af5d-1964-4e30-8f51-1956f96bd282`, write `01 00` | same |
+| Report rate descriptor | `679d5510-5a24-4dee-9557-95df80486ecb`, write `85 00` | same |
+
+Commands take the same 8-byte header as above, behind 17 zero bytes. `ConsoleSession` replays the
+console's order: hello (`07/01`), the DeviceInfo SPI read, firmware info (`10/01`), `16/01`,
+pairing, a rumble sample, the player LED, feature mask `0x37`, four more SPI reads, `11/03`,
+`11/01`, then the report-rate descriptor and the input CCCD.
+
+### Pairing
+
+Report `0x15` stores the host on the controller, which is what a console does instead of SMP:
+
+1. `15/01` — the host address, byte-reversed, then the same with its lowest byte minus one.
+2. `15/04` + A1 → the controller answers B1 (`5CF6EE79 2CDF05E1 BA2B6325 C41A5F10` on every unit
+   seen). The long-term key is `A1 xor B1`.
+3. `15/02` + A2 → the controller answers `AES-128-ECB(key = reversed LTK, block = reversed A2)`,
+   which proves the key.
+4. `15/03`, then `03/07` with the second address and the reversed LTK, then `03/09` to store it.
+
+A1 and A2 are arbitrary; the app sends the values the console was observed to send. The host address
+comes from `settings get secure bluetooth_address` through Shizuku, since apps are handed
+`02:00:00:00:00:00`. Without it the app skips pairing and the controller still streams input.
+
+### Input report
+
+63 bytes on the input characteristic, report `0x07` left / `0x08` right:
+
+| Offset | Size | Field |
+|---|---|---|
+| `0` | 1 | counter, +1 per report |
+| `1` | 1 | power — bit 0 external, bit 1 charging, bits 2..5 battery level 0–9 |
+| `2..3` | 2 | buttons, little-endian |
+| `4` | 1 | always `0x07` |
+| `5..7` | 3 | stick, packed 12-bit as above |
+| `0x0F` (left) / `0x10` (right) | 0x28 | motion, undocumented packed format — not decoded |
+
+Buttons, by bit: right `[2]` B A Y X R ZR + RS, `[3]` Home `0x01`, C `0x10`, SR `0x40`, SL `0x80`;
+left `[2]` Down Right Left Up L ZL − LS, `[3]` Capture `0x01`, SR `0x40`, SL `0x80`.
+`ConsolePacketParser` translates them into the bitmask above, so everything downstream is unchanged.
+
+### Android workarounds
+
+These controllers send an SMP Security Request on every connection, which a genuine Joy-Con 2 never
+does — that request is what identifies them. Android pairs one device at a time, so a second clone
+connecting while the first one's pairing is pending sends none; silence on the common channel 1.5 s
+after init switches it over instead.
+
+The pairing itself can never succeed (Confirm Value Failed, or a 30 s timeout), so:
+
+- `SecurityRequestReceiver` aborts the ordered `ACTION_PAIRING_REQUEST` broadcast, and no system
+  dialog appears.
+- `l2cu_start_post_bond_timer` then drops the link 3 s later unless it carries a dynamic L2CAP
+  channel. The controller never answers LE credit-based connection requests, so `LinkHolder` keeps a
+  pending `createInsecureL2capChannel(0x80).connect()` on the link — each attempt pends ~20 s.
+
+Both depend on AOSP Bluetooth internals and may break on a future release.
+
+High priority settles at 15 ms for these controllers (~67 reports/s). `ConnectionInterval` instead
+asks the hidden `BluetoothGatt.requestLeConnectionUpdate` for 7.5 ms, the LE minimum, reached
+through HiddenApiBypass because the method is on the blocked list; at 7.5 ms both controllers
+deliver ~200 reports/s with no lost reports (RedMagic Astra, Android 16, 2026-09). It falls back to
+`CONNECTION_PRIORITY_HIGH`, and every console session asks again when another controller joins,
+since Android can slow an existing connection down when one does.
+
 ## Android BLE gotchas
 
 1. **MTU first.** The default ATT MTU of 23 truncates 63-byte notifications: `requestMtu(247)`

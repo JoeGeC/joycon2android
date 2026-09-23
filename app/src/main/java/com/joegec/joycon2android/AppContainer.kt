@@ -1,6 +1,7 @@
 package com.joegec.joycon2android
 
 import android.content.Context
+import com.joegec.joycon2android.ble.HostBluetoothAddress
 import com.joegec.joycon2android.connection.ConnectionPriorityRepository
 import com.joegec.joycon2android.connection.ControllerRepository
 import com.joegec.joycon2android.connection.DisconnectControllerUseCase
@@ -95,8 +96,12 @@ class AppContainer(context: Context) {
     private val appContext = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    // --- Privileged access (Shizuku), shared by the gamepad and console-protocol pairing ---
+    private val privilegedAccess = PrivilegedAccess()
+    private val hostBluetoothAddress = HostBluetoothAddress(privilegedAccess::acquire)
+
     // --- Connection (BLE) ---
-    private val joycon2Manager = Joycon2Manager(appContext, scope)
+    private val joycon2Manager = Joycon2Manager(appContext, scope, hostBluetoothAddress::read)
     val controllerRepository: ControllerRepository = joycon2Manager
     private val connectionPriorityRepository: ConnectionPriorityRepository = joycon2Manager
     private val setHighConnectionPriority = SetHighConnectionPriorityUseCase(connectionPriorityRepository)
@@ -151,8 +156,7 @@ class AppContainer(context: Context) {
     // --- Assignment ---
     val assignmentRepository: AssignmentRepository = PlayerAssignmentManager()
 
-    // --- Gamepad + privileged access ---
-    private val privilegedAccess = PrivilegedAccess()
+    // --- Gamepad ---
     private val gamepadRepository: GamepadRepository =
         GamepadOutput(scope, GamepadManager(scope, appContext), privilegedAccess::acquire)
 

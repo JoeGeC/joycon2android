@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 class Joycon2Manager(
     private val context: Context,
     private val scope: CoroutineScope,
+    hostAddress: () -> String? = { null },
 ) : ControllerRepository, ConnectionPriorityRepository {
 
     companion object {
@@ -24,7 +25,7 @@ class Joycon2Manager(
     }
 
     private val scanner = BleScanner(context)
-    private val pool = ConnectionPool(context)
+    private val pool = ConnectionPool(context, hostAddress)
     private val connectionJobs = mutableMapOf<String, Job>()
 
     @Volatile

@@ -11,3 +11,8 @@
 # wiping every saved mapping on upgrade. Pin the names so the on-disk contract is stable.
 -keepnames enum com.joegec.joycon2android.buttonmapping.** { *; }
 -keepnames enum com.joegec.joycon2android.model.JoyconButton { *; }
+
+# BluetoothGattCallback.onConnectionUpdated is hidden, so the platform calls it by name.
+-keepclassmembers class * extends android.bluetooth.BluetoothGattCallback {
+    public void onConnectionUpdated(android.bluetooth.BluetoothGatt, int, int, int, int);
+}

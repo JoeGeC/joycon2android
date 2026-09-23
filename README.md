@@ -25,6 +25,8 @@ as an ordinary gamepad.
 - **Custom button mapping** — choose which button drives which emulator button, per console.
 - **Live readout** of buttons, sticks, motion and battery, with each card in the controller's real
   shell colour.
+- **Third-party clones** — controllers that speak the console's protocol instead, tested with the
+  NYXI Hyperion 3 (see [protocol.md](docs/protocol.md#console-protocol-controllers)).
 
 ## Setup guide
 
@@ -242,6 +244,7 @@ Start with [CONTRIBUTING.md](CONTRIBUTING.md), then the [docs](docs/README.md):
 - [Virtual gamepad](docs/virtual-gamepad.md) — UHID, keycodes, sideways Joy-Cons
 - [DSU motion](docs/dsu-motion.md) — slots, motion frames, emulator mapping details
 - [Debug tools](tools/README.md) — a DSU client for inspecting the stream
+| Controllers drop when a game starts | Some phones clear background apps when a game launches. Set this app's battery use to unrestricted, and exclude it from the game launcher's cleanup |
 
 ## Credits
 

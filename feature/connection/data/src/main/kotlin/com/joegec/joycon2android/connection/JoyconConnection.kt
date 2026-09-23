@@ -13,6 +13,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.joegec.joycon2android.connection.console.ConsoleChannel
+import com.joegec.joycon2android.connection.console.ConsoleCommands
+import com.joegec.joycon2android.connection.console.ConsoleSession
 import com.joegec.joycon2android.model.JoyconConnectionState
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerNumber
@@ -27,6 +30,8 @@ class JoyconConnection(
     private val context: Context,
     val side: Side,
     val deviceName: String,
+    private val hostAddress: () -> String? = { null },
+    private val onReady: (() -> Unit)? = null,
     private val onDisconnected: (() -> Unit)? = null,
 ) {
     companion object {
@@ -69,6 +74,10 @@ class JoyconConnection(
 
         private const val DESIRED_MTU = 247
         private const val INIT_GAP_MS = 500L
+
+        // A genuine Joy-Con 2 replies to the SPI read and starts streaming well within this
+        // window after init; console-protocol clones ignore the common channel entirely.
+        private const val CONSOLE_FALLBACK_MS = 1_500L
     }
 
     private val _connectionState = MutableStateFlow(
@@ -91,12 +100,41 @@ class JoyconConnection(
         private set
     @Volatile private var highPriority = false
     private var ledSentAfterFirstPacket = false
+    @Volatile private var securityRequested = false
+    @Volatile private var servicesDiscovered = false
+    @Volatile private var commonReportSeen = false
+    @Volatile private var commandReplySeen = false
+    @Volatile private var assignedPlayer: PlayerNumber? = null
+    @Volatile private var console: ConsoleSession? = null
 
     fun connect(device: BluetoothDevice) {
         gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
     }
 
+    /**
+     * The controller sent an SMP Security Request, which a genuine Joy-Con 2 never does: it is a
+     * clone that only speaks the console protocol. Usually arrives before service discovery, but
+     * Android pairs one device at a time, so a second clone connecting while the first one's
+     * pairing is still pending sends none; [fallBackToConsoleIfSilent] catches that case.
+     */
+    fun onSecurityRequested() {
+        if (securityRequested) return
+        securityRequested = true
+        Log.i(TAG, "[$side] SMP security request received")
+        val g = gatt ?: return
+        if (servicesDiscovered && !commonChannelAnswered()) mainHandler.post { startConsoleSession(g) }
+    }
+
+    fun onPairingFailed() {
+        console?.holdLinkNow()
+    }
+
+    fun reassertPriority() {
+        if (console != null && initComplete) gatt?.let(::requestPriority)
+    }
+
     fun disconnect() {
+        stopConsoleSession()
         mainHandler.removeCallbacksAndMessages(null)
         gatt?.disconnect()
         gatt?.close()
@@ -118,6 +156,7 @@ class JoyconConnection(
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.w(TAG, "[$side] Disconnected (status=$status)")
+                    stopConsoleSession()
                     opQueue.clear()
                     g.close()
                     gatt = null
@@ -146,6 +185,12 @@ class JoyconConnection(
                 _connectionState.value = JoyconConnectionState(
                     error = "Service discovery failed", deviceName = deviceName
                 )
+                return
+            }
+
+            servicesDiscovered = true
+            if (securityRequested) {
+                startConsoleSession(g)
                 return
             }
 
@@ -203,6 +248,7 @@ class JoyconConnection(
                 )
                 Log.i(TAG, "[$side] Init sequence complete")
                 if (highPriority) requestPriority(g)
+                mainHandler.postDelayed({ fallBackToConsoleIfSilent(g) }, CONSOLE_FALLBACK_MS)
                 false // no GATT op — advance immediately
             }
         }
@@ -210,6 +256,10 @@ class JoyconConnection(
         override fun onDescriptorWrite(
             g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int
         ) {
+            console?.let {
+                it.onOperationComplete(status)
+                return
+            }
             Log.i(TAG, "[$side] CCCD write status=$status")
             mainHandler.post { opQueue.complete() }
         }
@@ -217,6 +267,10 @@ class JoyconConnection(
         override fun onCharacteristicWrite(
             g: BluetoothGatt, ch: BluetoothGattCharacteristic, status: Int
         ) {
+            console?.let {
+                it.onOperationComplete(status)
+                return
+            }
             Log.d(TAG, "[$side] Char write status=$status initComplete=$initComplete")
             val delay = if (initComplete) 0L else INIT_GAP_MS
             mainHandler.postDelayed({ opQueue.complete() }, delay)
@@ -234,6 +288,58 @@ class JoyconConnection(
         ) {
             handleCharacteristicChanged(g, ch.uuid, value)
         }
+
+        // Hidden BluetoothGattCallback method; the platform invokes it by signature.
+        @Suppress("unused")
+        fun onConnectionUpdated(g: BluetoothGatt, interval: Int, latency: Int, timeout: Int, status: Int) {
+            Log.i(TAG, "[$side] Connection interval ${interval * 1.25} ms, latency $latency, status $status")
+        }
+    }
+
+    private fun commonChannelAnswered() = commonReportSeen || commandReplySeen
+
+    private fun fallBackToConsoleIfSilent(g: BluetoothGatt) {
+        if (commonChannelAnswered()) return
+        Log.i(TAG, "[$side] No reply on the common channel; switching to the console protocol")
+        startConsoleSession(g)
+    }
+
+    @Synchronized
+    private fun startConsoleSession(g: BluetoothGatt) {
+        if (console != null || gatt !== g) return
+        val channel = ConsoleChannel.find(g)
+        if (channel == null) {
+            _connectionState.value = JoyconConnectionState(
+                error = "Not a compatible Joy-Con 2", deviceName = deviceName
+            )
+            return
+        }
+        opQueue.clear()
+        initComplete = false
+        _connectionState.value = _connectionState.value.copy(ready = false)
+        console = ConsoleSession(
+            gatt = g,
+            channel = channel,
+            hostAddress = hostAddress,
+            initialLedBitmask = assignedPlayer?.ledBitmask ?: ConsoleCommands.LED_ALL_ON,
+            onInput = { _input.value = stickCalibrator.calibrate(it) },
+            onAccentColor = { color -> _connectionState.value = _connectionState.value.copy(accentColor = color) },
+            onReady = ::onConsoleReady,
+        ).also { it.start() }
+    }
+
+    private fun onConsoleReady() {
+        initComplete = true
+        _connectionState.value = _connectionState.value.copy(
+            connected = true, ready = true, deviceName = deviceName
+        )
+        if (highPriority) gatt?.let(::requestPriority)
+        onReady?.invoke()
+    }
+
+    private fun stopConsoleSession() {
+        console?.stop()
+        console = null
     }
 
     fun setHighPriority(enabled: Boolean) {
@@ -243,6 +349,11 @@ class JoyconConnection(
 
     // The connection interval is the report rate: docs/protocol.md#android-ble-gotchas
     private fun requestPriority(g: BluetoothGatt) {
+        val session = console
+        if (highPriority && session != null) {
+            session.requestFastestInterval()
+            return
+        }
         val priority = if (highPriority) {
             BluetoothGatt.CONNECTION_PRIORITY_HIGH
         } else {
@@ -253,6 +364,11 @@ class JoyconConnection(
 
     fun setPlayerLed(player: PlayerNumber) {
         pendingPlayerLed = player
+        assignedPlayer = player
+        console?.let {
+            it.setPlayerLed(player.ledBitmask)
+            return
+        }
         if (!initComplete) return
         val g = gatt ?: return
         opQueue.enqueue { sendLedCommand(g) }
@@ -260,6 +376,11 @@ class JoyconConnection(
 
     fun clearPlayerLed() {
         pendingPlayerLed = null
+        assignedPlayer = null
+        console?.let {
+            it.setPlayerLed(ConsoleCommands.LED_ALL_ON)
+            return
+        }
         if (!initComplete) return
         val g = gatt ?: return
         opQueue.enqueue { sendLedCommand(g) }
@@ -278,8 +399,13 @@ class JoyconConnection(
     }
 
     private fun handleCharacteristicChanged(g: BluetoothGatt, uuid: UUID, data: ByteArray) {
+        console?.let {
+            it.onCharacteristicChanged(uuid, data)
+            return
+        }
         when (uuid) {
             NOTIFY_CHAR -> {
+                commonReportSeen = true
                 PacketParser.parse(data, side)?.let { _input.value = stickCalibrator.calibrate(it) }
                 if (!ledSentAfterFirstPacket && initComplete) {
                     ledSentAfterFirstPacket = true
@@ -287,6 +413,7 @@ class JoyconConnection(
                 }
             }
             CMD_RESPONSE_CHAR -> {
+                commandReplySeen = true
                 Log.d(TAG, "[$side] Cmd response: ${data.joinToString(" ") { "%02X".format(it) }}")
                 SpiColorParser.parseAccentColor(data)?.let { color ->
                     Log.i(TAG, "[$side] Accent color: #${"%06X".format(color)}")

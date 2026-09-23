@@ -21,4 +21,15 @@ object BatteryGauge {
         val fraction = (volts - lowVolts) / (highVolts - lowVolts)
         return (lowPercent + fraction * (highPercent - lowPercent)).roundToInt()
     }
+
+    /** Inverse of [percentFromVolts], for controllers that report a charge level instead of a voltage. */
+    fun voltsFromPercent(percent: Int): Float {
+        if (percent <= voltsToPercent.first().second) return voltsToPercent.first().first
+        if (percent >= voltsToPercent.last().second) return voltsToPercent.last().first
+        val upperIndex = voltsToPercent.indexOfFirst { (_, anchorPercent) -> percent < anchorPercent }
+        val (lowVolts, lowPercent) = voltsToPercent[upperIndex - 1]
+        val (highVolts, highPercent) = voltsToPercent[upperIndex]
+        val fraction = (percent - lowPercent).toFloat() / (highPercent - lowPercent)
+        return lowVolts + fraction * (highVolts - lowVolts)
+    }
 }
