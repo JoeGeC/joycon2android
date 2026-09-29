@@ -38,16 +38,37 @@ wake:     01 00 03 7E 05 66 20 00 01 00 [09 A7 9A 55 E2 98] 0F ...   <- host MAC
 
 ### Why SYNC is needed every time
 
-Reconnect-on-button-press is console-exclusive (investigated 2026-06):
+A button press only reconnects to the host the controller stored, and Android can't connect as that
+host. Measured on genuine Joy-Con 2s (left and right) with an AYN Thor, Android 13, 2026-09-29:
 
-- During a wake advertisement the controller refuses GATT connections from anyone but its bonded
-  host (immediate status 133), and rejects standard SMP bonding (drops the link, status 22).
-- The console pairs at the application layer instead. Report `0x15` cmd `0x01`
-  "PairingSetAddress" exists, but a lone SetAddress write doesn't change the stored host (the reply
-  echoes the controller's own MAC). The rest of the handshake (cmds `0x02`–`0x04`, presumably the
-  LTK exchange behind the `ConsoleMacA/B` / `LtkA/B` SPI slots) is undocumented.
-- Even documented, reconnecting likely needs link-layer encryption with that LTK, which Android's
-  BLE API cannot inject.
+- **The controller accepts the phone as its host.** The [console pairing
+  handshake](#console-pairing-handshake) stores it, and the wake advertisement then carries the
+  phone's address.
+- **It still ignores the phone's connection.** Android starts LE connections from a resolvable
+  private address, not the stored one. The controller never answers, and the link drops with `0x3E`
+  (GATT status 62), the same as a Joy-Con stored to another host.
+- **Android won't connect from its public address.** Setting `bluetooth.core.gap.le.privacy.enabled`
+  to `false` from the shell is accepted but ignored on the Thor. A Galaxy S25 (Android 16) refuses it.
+- Standard SMP bonding is rejected (drops the link, status 22). Whether a public-address connection
+  would also need link-layer encryption with the LTK is untested.
+
+#### Console pairing handshake
+
+This is how a Switch 2 stores itself on the controller. Commands go to the side-specific command
+characteristic (`ce49a830-dced-48ae-931e-c8cf88aadbea` left, `65a724b3-f1e7-4a61-8078-a342376b27ff`
+right, write without response) as `id 91 01 sub 00 len 00 00` + data, behind 17 zero bytes, after
+writing `01 00` to `00c5af5d-1964-4e30-8f51-1956f96bd282`. Replies notify on
+`c765a961-d9d8-4d36-a20a-5315b111836a`, echoing `id` and `sub`.
+
+1. `15/01`: `00 02`, the host address byte-reversed, then the same address with its lowest byte
+   minus one.
+2. `15/04`: `00` + A1 (any 16 bytes). The reply data is a status byte + B1. The LTK is `A1 xor B1`.
+3. `15/02`: `00` + A2 (any 16 bytes). The reply is `AES-128-ECB(key = reversed LTK, block = reversed
+   A2)`, which proves the key.
+4. `15/03` `00`, then `03/07` with the second address + the reversed LTK, then `03/09` to store it.
+
+A lone `15/01` doesn't change the stored host. Pairing replaces the console's entry: SYNC on the
+Switch 2 restores it.
 
 ## Connection sequence
 
