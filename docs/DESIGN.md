@@ -121,6 +121,7 @@ Shared in `core/designsystem/.../ui/components/`:
 - `DolphinSetupButton` / `DolphinSetupPhase` / `CloseEmulatorDialog` — staged setup flow
 - `SettingsRow` · `SettingSwitch` — settings surfaces (e.g. Motion settings)
 - `ConfirmDialog` · `TextInputDialog` — ask before a change lands, or ask it for a name
+- `InfoSheet` — help behind an info icon, as a bottom sheet (auto setup, DSU mapping)
 - `ErrorBox` · `WarningBox` · `LabeledBorderBox` · `ExpandableInfoSection` · `CopyableCode`
 
 ## Motion

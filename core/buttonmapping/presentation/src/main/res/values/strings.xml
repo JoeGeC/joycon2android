@@ -1,5 +1,6 @@
 <resources>
     <string name="controller_mapping_back">Back</string>
+    <string name="controller_mapping_info">Setup help</string>
     <string name="controller_mapping_all_players">All players</string>
     <string name="controller_mapping_layout_custom">Custom</string>
     <string name="controller_mapping_layout_name">Name</string>

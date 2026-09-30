@@ -39,6 +39,7 @@ import com.joegec.joycon2android.ui.components.CloseEmulatorDialog
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.StartEmulatorDialog
 import com.joegec.joycon2android.dsu.presentation.DsuCardState
+import com.joegec.joycon2android.dsu.presentation.DsuMappingHelpSheet
 import com.joegec.joycon2android.update.presentation.UpdateDialog
 import com.joegec.joycon2android.update.presentation.UpdateViewModel
 import com.joegec.joycon2android.ui.theme.Background
@@ -136,22 +137,22 @@ class MainActivity : ComponentActivity() {
         setContent {
             Joycon2AndroidTheme {
                 Surface(Modifier.fillMaxSize(), color = Background) {
-                    var mappingConsole by rememberSaveable { mutableStateOf<Console?>(null) }
+                    var mappingRoute by rememberSaveable { mutableStateOf<MappingRoute?>(null) }
 
                     UpdatePrompt()
 
                     AnimatedContent(
-                        targetState = mappingConsole,
+                        targetState = mappingRoute,
                         transitionSpec = { pushTransition(forward = targetState != null) },
                         label = "mappingScreen",
-                    ) { console ->
+                    ) { route ->
                         Box(Modifier.fillMaxSize().background(Background)) {
-                            if (console != null) {
-                                ControllerMappingRoute(console, onBack = { mappingConsole = null })
+                            if (route != null) {
+                                ControllerMappingRoute(route, onBack = { mappingRoute = null })
                             } else {
                                 MainRoute(
                                     onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
-                                    onOpenMapping = { mappingConsole = it },
+                                    onOpenMapping = { mappingRoute = it },
                                 )
                             }
                         }
@@ -191,11 +192,13 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun ControllerMappingRoute(console: Console, onBack: () -> Unit) {
+    private fun ControllerMappingRoute(route: MappingRoute, onBack: () -> Unit) {
+        val console = route.console
         val session by viewModel.uiState.collectAsState()
         val players = session.activePlayers
         val bodies = players.mapNotNull { it.body() }
         val state by controllerMappingViewModel.uiState.collectAsState()
+        var showDsuHelp by rememberSaveable { mutableStateOf(false) }
 
         LaunchedEffect(console, bodies) { controllerMappingViewModel.edit(console, bodies) }
 
@@ -205,7 +208,12 @@ class MainActivity : ComponentActivity() {
                 players = players,
                 actions = mappingActions,
                 onBack = onBack,
+                onInfoClick = if (route.fromDsu) ({ showDsuHelp = true }) else null,
             )
+        }
+        if (showDsuHelp) {
+            val dsuStatus by dsuViewModel.status.collectAsState()
+            DsuMappingHelpSheet(address = dsuStatus.address, onDismiss = { showDsuHelp = false })
         }
     }
 
@@ -223,7 +231,7 @@ class MainActivity : ComponentActivity() {
     )
 
     @Composable
-    private fun MainRoute(onScan: () -> Unit, onOpenMapping: (Console) -> Unit) {
+    private fun MainRoute(onScan: () -> Unit, onOpenMapping: (MappingRoute) -> Unit) {
         val state by viewModel.uiState.collectAsState()
         val gamepadStatus by gamepadViewModel.status.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
@@ -274,7 +282,6 @@ class MainActivity : ComponentActivity() {
                 enabled = dsuStatus.enabled,
                 error = dsuStatus.error,
                 clientCount = dsuStatus.clientCount,
-                address = dsuStatus.address,
                 coverage = DsuSlots.coverage(state.activePlayers),
                 emulators = dsuViewModel.dsuEmulators,
                 selectedEmulator = selectedDsuEmulator,
@@ -297,13 +304,15 @@ class MainActivity : ComponentActivity() {
             gamepadSetupPhase = gamepadSetupPhase,
             onConfigureGamepad = { gamepadViewModel.configureGamepad(state.activePlayers) },
             onOpenGamepadMapping = {
-                onOpenMapping(if (selectedEmulator in EdenPaths.PACKAGES) Console.SWITCH_PRO else Console.GAMECUBE)
+                val console = if (selectedEmulator in EdenPaths.PACKAGES) Console.SWITCH_PRO else Console.GAMECUBE
+                onOpenMapping(MappingRoute(console, fromDsu = false))
             },
             onDsuToggle = dsuViewModel::toggle,
             onSelectDsuEmulator = dsuViewModel::selectEmulator,
             onConfigureDsu = { dsuViewModel.configureDsu(state.activePlayers) },
             onOpenDsuMapping = {
-                onOpenMapping(if (selectedDsuEmulator in EdenPaths.PACKAGES) Console.SWITCH_PRO else Console.WIIMOTE_NUNCHUK)
+                val console = if (selectedDsuEmulator in EdenPaths.PACKAGES) Console.SWITCH_PRO else Console.WIIMOTE_NUNCHUK
+                onOpenMapping(MappingRoute(console, fromDsu = true))
             },
             onFastMotionToggle = dsuViewModel::toggleFastMotion,
             onBlockDeviceMotionToggle = dsuViewModel::toggleBlockDeviceMotion,

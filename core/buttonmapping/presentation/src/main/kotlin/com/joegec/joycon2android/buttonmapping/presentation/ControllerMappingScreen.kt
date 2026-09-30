@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +50,7 @@ fun ControllerMappingScreen(
     actions: MappingActions,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onInfoClick: (() -> Unit)? = null,
 ) {
     BackHandler(onBack = onBack)
     var dialog by remember { mutableStateOf<MappingDialog?>(null) }
@@ -60,7 +62,7 @@ fun ControllerMappingScreen(
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = Dimens.screenPaddingHorizontal),
     ) {
-        ScreenHeader(state, onBack)
+        ScreenHeader(state, onBack, onInfoClick)
         Spacer(Modifier.height(Dimens.sectionSpacing))
         Column(
             Modifier
@@ -95,15 +97,29 @@ fun ControllerMappingScreen(
 }
 
 @Composable
-private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit, onInfoClick: (() -> Unit)?) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = stringResource(R.string.controller_mapping_back),
             )
         }
-        Text(state.console.label(), style = MaterialTheme.typography.headlineSmall, color = Color.White)
+        Text(
+            state.console.label(),
+            style = MaterialTheme.typography.headlineSmall,
+            color = Color.White,
+            modifier = Modifier.weight(1f),
+        )
+        if (onInfoClick != null) {
+            IconButton(onClick = onInfoClick) {
+                Icon(
+                    Icons.Outlined.Info,
+                    contentDescription = stringResource(R.string.controller_mapping_info),
+                    tint = TextDim,
+                )
+            }
+        }
     }
 }
 
