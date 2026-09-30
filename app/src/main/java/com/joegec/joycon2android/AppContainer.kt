@@ -54,12 +54,12 @@ import com.joegec.joycon2android.dsu.DsuServer
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
 import com.joegec.joycon2android.dsu.PushDsuPadDataUseCase
-import com.joegec.joycon2android.dsu.DsuMotionSettingsDataStore
-import com.joegec.joycon2android.dsu.motion.DsuMotionSettingsRepository
-import com.joegec.joycon2android.dsu.motion.ObserveDsuMotionSettingsUseCase
-import com.joegec.joycon2android.dsu.motion.SetBlockDeviceMotionUseCase
-import com.joegec.joycon2android.dsu.motion.SetDeviceMotionBlockedUseCase
-import com.joegec.joycon2android.dsu.motion.SetFastMotionUseCase
+import com.joegec.joycon2android.settings.ObserveOutputSettingsUseCase
+import com.joegec.joycon2android.settings.OutputSettingsDataStore
+import com.joegec.joycon2android.settings.OutputSettingsRepository
+import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
+import com.joegec.joycon2android.settings.SetDeviceMotionBlockedUseCase
+import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
 import com.joegec.joycon2android.emulator.EdenDeviceMotionBlocker
 import com.joegec.joycon2android.gamepad.DisableGamepadUseCase
 import com.joegec.joycon2android.gamepad.EnableGamepadUseCase
@@ -86,6 +86,7 @@ import com.joegec.joycon2android.update.installedAppVersion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import java.io.File
 
@@ -143,10 +144,12 @@ class AppContainer(context: Context) {
     val pushDsuPadData = PushDsuPadDataUseCase(dsuRepository)
     val observeDsuStatus = ObserveDsuStatusUseCase(dsuRepository)
 
-    private val dsuMotionSettings: DsuMotionSettingsRepository = DsuMotionSettingsDataStore(appContext)
-    val observeDsuMotionSettings = ObserveDsuMotionSettingsUseCase(dsuMotionSettings)
-    val setFastMotion = SetFastMotionUseCase(dsuMotionSettings)
-    val setBlockDeviceMotion = SetBlockDeviceMotionUseCase(dsuMotionSettings)
+
+    // --- Settings (apply to whichever output runs) ---
+    private val outputSettings: OutputSettingsRepository = OutputSettingsDataStore(appContext)
+    val observeOutputSettings = ObserveOutputSettingsUseCase(outputSettings)
+    val setFasterUpdates = SetFasterUpdatesUseCase(outputSettings)
+    val setBlockDeviceMotion = SetBlockDeviceMotionUseCase(outputSettings)
 
     // --- Assignment ---
     val assignmentRepository: AssignmentRepository = PlayerAssignmentManager()
@@ -205,12 +208,22 @@ class AppContainer(context: Context) {
         onPlayerUnassigned = { onPlayerUnassigned(it) },
     ).also { it.start() }
 
-    private val dsuMotionPolicy = DsuMotionPolicy(
+    private val outputActive = combine(observeDsuStatus(), observeGamepadStatus()) { dsu, gamepad ->
+        dsu.enabled || gamepad.enabled
+    }
+
+    private val fasterUpdatesPolicy = FasterUpdatesPolicy(
         scope = scope,
-        dsuEnabled = observeDsuStatus().map { it.enabled },
-        settings = observeDsuMotionSettings(),
-        privilegedShellAvailable = observeShizukuAvailability(),
+        outputActive = outputActive,
+        fasterUpdates = observeOutputSettings().map { it.fasterUpdates },
         setHighConnectionPriority = setHighConnectionPriority,
+    ).also { it.start() }
+
+    private val deviceMotionBlockPolicy = DeviceMotionBlockPolicy(
+        scope = scope,
+        outputActive = outputActive,
+        blockDeviceMotion = observeOutputSettings().map { it.blockDeviceMotion },
+        privilegedShellAvailable = observeShizukuAvailability(),
         setDeviceMotionBlocked = SetDeviceMotionBlockedUseCase(EdenDeviceMotionBlocker(privilegedAccess::readyShell)),
     ).also { it.start() }
 

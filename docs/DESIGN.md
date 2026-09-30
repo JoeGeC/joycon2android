@@ -96,6 +96,8 @@ In `JoyconScreen.kt`:
   It overlays the content and is translated up in lockstep with the scroll, so it slides away with
   no gap and content (the Ko-fi banner included) passes behind the status bar. Screens add its
   height plus the status-bar inset as top clearance.
+- **Settings behind a gear.** The app bar's only action opens the settings panel, an `EndDrawer`
+  from the right so it sits under the icon that opened it.
 
 ### Landscape
 
@@ -119,7 +121,8 @@ Shared in `core/designsystem/.../ui/components/`:
   value over a panel of alternatives, each row optionally sub-labelled, dimmed or deletable
 - `EmulatorDropdown` / `EmulatorOption` / `EmulatorAutoSetup` — emulator picker + one-tap setup
 - `DolphinSetupButton` / `DolphinSetupPhase` / `CloseEmulatorDialog` — staged setup flow
-- `SettingsRow` · `SettingSwitch` — settings surfaces (e.g. Motion settings)
+- `SettingSwitch` — a titled, described switch (the settings panel)
+- `EndDrawer` — a modal drawer from the end edge (the settings panel)
 - `ConfirmDialog` · `TextInputDialog` — ask before a change lands, or ask it for a name
 - `InfoSheet` — help behind an info icon, as a bottom sheet (auto setup, DSU mapping)
 - `ErrorBox` · `WarningBox` · `LabeledBorderBox` · `ExpandableInfoSection` · `CopyableCode`

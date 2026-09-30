@@ -18,6 +18,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -36,16 +37,23 @@ fun SettingSwitch(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     descriptionColor: Color = TextDim,
+    titleStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     warning: String? = null,
 ) {
     Row(
         modifier
             .fillMaxWidth()
-            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
+            .toggleable(
+                value = checked,
+                interactionSource = null,
+                indication = null,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+            Text(title, color = Color.White, style = titleStyle)
             Spacer(Modifier.height(Dimens.featureCardTitleGap))
             Text(description, color = descriptionColor, style = MaterialTheme.typography.bodySmall)
             warning?.let {
@@ -64,7 +72,10 @@ fun SettingSwitch(
 
 @Composable
 private fun SettingWarning(text: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.statusDotGap)) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Dimens.statusDotGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Icon(
             Icons.Filled.WarningAmber,
             contentDescription = stringResource(R.string.setting_warning),

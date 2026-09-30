@@ -1,6 +1,5 @@
 package com.joegec.joycon2android.dsu.presentation
 import com.joegec.joycon2android.dsu.DsuCoverage
-import com.joegec.joycon2android.dsu.motion.DsuMotionSettings
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
 import com.joegec.joycon2android.ui.components.EmulatorOption
 
@@ -12,6 +11,4 @@ data class DsuCardState(
     val emulators: List<EmulatorOption> = emptyList(),
     val selectedEmulator: String = "",
     val setupPhase: DolphinSetupPhase = DolphinSetupPhase.IDLE,
-    val motionSettings: DsuMotionSettings = DsuMotionSettings(),
-    val deviceMotionBlockAvailable: Boolean = false,
 )

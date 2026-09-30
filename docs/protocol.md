@@ -218,8 +218,10 @@ corrected values:
 4. **Pass `TRANSPORT_LE`** to `connectGatt`, or it may try classic Bluetooth.
 5. **Connect cooldown.** Rapid repeated connects make the controller stop responding. Press SYNC to
    re-advertise, and wait if it stays unresponsive.
-6. **Connection interval is the report rate.** Balanced priority can settle on 30 ms (~33 Hz,
-   measured on an AYN Thor); high priority brought it to 15 ms (~67 Hz). See
-   [dsu-motion.md](dsu-motion.md#report-rate).
+6. **Connection interval is the report rate.** Each report carries buttons, sticks and motion.
+   Balanced priority settled on 30 ms (~33 Hz), which reads as motion stutter at 60 fps; high
+   priority brought it to 15 ms (~67 Hz) (AYN Thor, 2026-09). **Faster controller updates**
+   requests high priority while the virtual gamepad or DSU is on (`FasterUpdatesPolicy`), at a
+   battery cost on both ends.
 7. **Deprecated write APIs are deliberate.** The `.value =` pattern keeps API 24 support; the API
    33+ overloads behave the same.

@@ -1,0 +1,12 @@
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_layout_title">Layout</string>
+    <string name="settings_layout_detailed">Detailed</string>
+    <string name="settings_layout_compact">Compact</string>
+    <string name="settings_faster_updates_title">Faster controller updates</string>
+    <string name="settings_faster_updates_description">Joy-Cons send input about twice as often, for smoother motion and quicker buttons.</string>
+    <string name="settings_faster_updates_warning">Uses more battery on the Joy-Cons and this device.</string>
+    <string name="settings_block_device_motion_title">Ignore this device\'s motion in Eden</string>
+    <string name="settings_block_device_motion_description">Eden adds this device\'s gyro to Player 1, which makes controller motion stutter. Lifted when the Virtual Gamepad and DSU are both off.</string>
+    <string name="settings_block_device_motion_needs_shizuku">Needs Shizuku running.</string>
+</resources>

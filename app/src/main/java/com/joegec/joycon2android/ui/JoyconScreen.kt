@@ -40,8 +40,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -92,7 +94,6 @@ import com.joegec.joycon2android.dsu.presentation.DsuCardState
 import com.joegec.joycon2android.ui.components.ErrorBox
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
 import com.joegec.joycon2android.connection.presentation.PlayerView
-import com.joegec.joycon2android.connection.presentation.ViewModeToggle
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Background
@@ -155,11 +156,9 @@ fun JoyconScreen(
     onSelectDsuEmulator: (String) -> Unit,
     onConfigureDsu: () -> Unit,
     onOpenDsuMapping: () -> Unit,
-    onFastMotionToggle: (Boolean) -> Unit,
-    onBlockDeviceMotionToggle: (Boolean) -> Unit,
+    onOpenSystemSettings: () -> Unit,
     onOpenSettings: () -> Unit,
     viewMode: ConnectionViewMode,
-    onViewModeChange: (ConnectionViewMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
@@ -244,7 +243,7 @@ fun JoyconScreen(
             Crossfade(targetState = screenState, modifier = Modifier.fillMaxSize(), label = "screen") { target ->
                 when (target) {
                     ScreenState.IDLE -> IdleContent(
-                        state, permissionDenied, onScan, onOpenSettings,
+                        state, permissionDenied, onScan, onOpenSystemSettings,
                         Modifier
                             .fillMaxSize()
                             .padding(horizontal = Dimens.screenPaddingHorizontal)
@@ -267,7 +266,6 @@ fun JoyconScreen(
                                 gamepadSetupPhase, onConfigureGamepad, onOpenGamepadMapping,
                                 onScan, onDisconnectAll, onAssign, unassignController, removePlayer, onDisconnect,
                                 onGamepadToggle, onDsuToggle, onSelectDsuEmulator, onConfigureDsu, onOpenDsuMapping,
-                                onFastMotionToggle, onBlockDeviceMotionToggle,
                             )
                             else -> ScanningContent(state)
                         }
@@ -280,11 +278,11 @@ fun JoyconScreen(
             TopAppBar(
                 title = { AppTitle(state, shizukuAvailable) },
                 actions = {
-                    if (state.activePlayers.isNotEmpty()) {
-                        ViewModeToggle(
-                            mode = viewMode,
-                            onModeChange = onViewModeChange,
-                            modifier = Modifier.padding(end = Dimens.elementSpacing),
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.action_open_settings),
+                            tint = TextDim,
                         )
                     }
                 },
@@ -362,7 +360,7 @@ private fun IdleContent(
     state: AppUiState,
     permissionDenied: Boolean,
     onScan: () -> Unit,
-    onOpenSettings: () -> Unit,
+    onOpenSystemSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -373,7 +371,7 @@ private fun IdleContent(
         ErrorBox(text = state.error)
         ErrorBox(
             text = if (permissionDenied) stringResource(R.string.error_permissions_denied) else null,
-            onClick = onOpenSettings,
+            onClick = onOpenSystemSettings,
         )
 
         Spacer(Modifier.weight(1f))
@@ -516,8 +514,6 @@ private fun ConnectedContent(
     onSelectDsuEmulator: (String) -> Unit,
     onConfigureDsu: () -> Unit,
     onOpenDsuMapping: () -> Unit,
-    onFastMotionToggle: (Boolean) -> Unit,
-    onBlockDeviceMotionToggle: (Boolean) -> Unit,
 ) {
     AnimatedVisibility(
         visible = state.unassignedJoycons.isNotEmpty(),
@@ -621,8 +617,6 @@ private fun ConnectedContent(
                 onSelectEmulator = onSelectDsuEmulator,
                 onSetUp = onConfigureDsu,
                 onConfigureMapping = onOpenDsuMapping,
-                onFastMotionToggle = onFastMotionToggle,
-                onBlockDeviceMotionToggle = onBlockDeviceMotionToggle,
             )
         }
 

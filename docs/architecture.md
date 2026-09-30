@@ -3,7 +3,7 @@
 How the app is structured. To add or change a feature, follow [adding-a-feature.md](adding-a-feature.md).
 
 A single-activity Compose app, split into Gradle modules by **feature × layer**. Each feature
-(`connection`, `assignment`, `gamepad`, `dsu`, `update`) has up to three modules — `domain`, `data`,
+(`connection`, `assignment`, `gamepad`, `dsu`, `update`, `settings`) has up to three modules — `domain`, `data`,
 `presentation` — over shared `:core` modules and a thin `:app` that wires them together. The split
 *enforces* the dependency rules at compile time: presentation and data share only domain, so a
 ViewModel cannot reach a repository implementation.
@@ -25,7 +25,7 @@ ViewModel cannot reach a repository implementation.
 | `:app` | `com.android.application` | every feature module + all `:core` |
 | `:konsist` | `joycon.kotlin.jvm` (test-only) | — (scans the whole project) |
 
-…for each feature `<f>` ∈ { `connection`, `assignment`, `gamepad`, `dsu`, `update` }.
+…for each feature `<f>` ∈ { `connection`, `assignment`, `gamepad`, `dsu`, `update`, `settings` }.
 
 ¹ `assignment:data` is pure Kotlin (`joycon.kotlin.jvm`) — it has no Android dependencies.
 
@@ -134,9 +134,11 @@ no state of its own.
 One **ViewModel per feature**, in its presentation module, built in `MainActivity` by a
 `viewModelFactory` that pulls use cases off `AppContainer` — so it depends only on its domain.
 
-- `DsuViewModel` — DSU status, enable toggle, motion settings and emulator auto setup.
+- `DsuViewModel` — DSU status, enable toggle and emulator auto setup.
 - `GamepadViewModel` — gamepad status, Shizuku availability and emulator auto setup.
 - `UpdateViewModel` — the once-per-launch release check and the update prompt.
+- `SettingsViewModel` — the settings that apply to whichever output runs (faster updates, the Eden
+  motion block). The panel's layout choice stays with `Joycon2ViewModel`, which renders it.
 - `ControllerMappingViewModel` (in `:core:buttonmapping:presentation`) — the button-mapping editor.
 - `Joycon2ViewModel` (in `:app`) — the app-level host: the coordinator's session `uiState`
   (genuinely cross-feature), BLE permissions, scan/assign/disconnect, and the service binding.

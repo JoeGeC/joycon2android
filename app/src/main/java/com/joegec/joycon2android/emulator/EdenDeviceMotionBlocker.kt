@@ -2,7 +2,7 @@ package com.joegec.joycon2android.emulator
 
 import android.os.Build
 import android.util.Log
-import com.joegec.joycon2android.dsu.motion.DeviceMotionBlocker
+import com.joegec.joycon2android.settings.DeviceMotionBlocker
 import com.joegec.joycon2android.emulatorconfig.EdenPaths
 import com.joegec.joycon2android.gamepad.privileged.PrivilegedShell
 import kotlinx.coroutines.Dispatchers

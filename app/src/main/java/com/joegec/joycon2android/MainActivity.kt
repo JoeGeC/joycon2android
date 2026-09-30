@@ -13,6 +13,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.rememberCoroutineScope
+import com.joegec.joycon2android.settings.presentation.SettingsPanel
+import com.joegec.joycon2android.settings.presentation.SettingsPanelState
+import com.joegec.joycon2android.settings.presentation.SettingsViewModel
+import com.joegec.joycon2android.ui.components.EndDrawer
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,9 +65,6 @@ class MainActivity : ComponentActivity() {
                     c.observeDsuStatus,
                     c.enableDsu,
                     c.disableDsu,
-                    c.observeDsuMotionSettings,
-                    c.setFastMotion,
-                    c.setBlockDeviceMotion,
                     dsuEmulators = c.emulatorSetup.dsuEmulators(),
                     configureDsu = c.emulatorSetup::configureDsu,
                 )
@@ -77,6 +83,14 @@ class MainActivity : ComponentActivity() {
                     gamepadEmulators = c.emulatorSetup.gamepadEmulators(),
                     configureGamepad = c.emulatorSetup::configureGamepad,
                 )
+            }
+        }
+    }
+    private val settingsViewModel: SettingsViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val c = (application as JoyconApplication).container
+                SettingsViewModel(c.observeOutputSettings, c.setFasterUpdates, c.setBlockDeviceMotion)
             }
         }
     }
@@ -232,13 +246,41 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun MainRoute(onScan: () -> Unit, onOpenMapping: (MappingRoute) -> Unit) {
+        val drawerState = rememberDrawerState(DrawerValue.Closed)
+        val scope = rememberCoroutineScope()
+        SettingsDrawer(drawerState) {
+            MainScreen(onScan, onOpenMapping, onOpenSettings = { scope.launch { drawerState.open() } })
+        }
+    }
+
+    @Composable
+    private fun SettingsDrawer(drawerState: DrawerState, content: @Composable () -> Unit) {
+        val outputSettings by settingsViewModel.outputSettings.collectAsState()
+        val viewMode by viewModel.viewMode.collectAsState()
+        val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
+        EndDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                SettingsPanel(
+                    state = SettingsPanelState(viewMode, outputSettings, deviceMotionBlockAvailable = shizukuAvailable),
+                    onViewModeChange = viewModel::setViewMode,
+                    onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
+                    onBlockDeviceMotionToggle = settingsViewModel::toggleBlockDeviceMotion,
+                )
+            },
+            containerColor = Background,
+            content = content,
+        )
+    }
+
+    @Composable
+    private fun MainScreen(onScan: () -> Unit, onOpenMapping: (MappingRoute) -> Unit, onOpenSettings: () -> Unit) {
         val state by viewModel.uiState.collectAsState()
         val gamepadStatus by gamepadViewModel.status.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
         val dsuStatus by dsuViewModel.status.collectAsState()
         val dsuSetupPhase by dsuViewModel.setupPhase.collectAsState()
         val selectedDsuEmulator by dsuViewModel.selectedEmulator.collectAsState()
-        val dsuMotionSettings by dsuViewModel.motionSettings.collectAsState()
         val dsuEmulatorToClose by dsuViewModel.emulatorToClose.collectAsState()
         val gamepadEmulatorToClose by gamepadViewModel.emulatorToClose.collectAsState()
         val dsuEmulatorToStart by dsuViewModel.emulatorToStart.collectAsState()
@@ -286,8 +328,6 @@ class MainActivity : ComponentActivity() {
                 emulators = dsuViewModel.dsuEmulators,
                 selectedEmulator = selectedDsuEmulator,
                 setupPhase = dsuSetupPhase,
-                motionSettings = dsuMotionSettings,
-                deviceMotionBlockAvailable = shizukuAvailable,
             ),
             permissionDenied = permissionDenied,
             onScan = onScan,
@@ -314,12 +354,10 @@ class MainActivity : ComponentActivity() {
                 val console = if (selectedDsuEmulator in EdenPaths.PACKAGES) Console.SWITCH_PRO else Console.WIIMOTE_NUNCHUK
                 onOpenMapping(MappingRoute(console, fromDsu = true))
             },
-            onFastMotionToggle = dsuViewModel::toggleFastMotion,
-            onBlockDeviceMotionToggle = dsuViewModel::toggleBlockDeviceMotion,
-            onOpenSettings = { startActivity(viewModel.permissionHandler.buildSettingsIntent()) },
+            onOpenSystemSettings = { startActivity(viewModel.permissionHandler.buildSettingsIntent()) },
+            onOpenSettings = onOpenSettings,
             shizukuAvailable = shizukuAvailable,
             viewMode = viewMode,
-            onViewModeChange = viewModel::setViewMode,
         )
     }
 }

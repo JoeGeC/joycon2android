@@ -70,12 +70,20 @@ same device connect to `127.0.0.1:26760`.
 - Players 1–4 get motion. A pair streams from its right Joy-Con, and its left one too when a slot is
   free.
 - Rest each controller for ~2 s at the start; the gyro recalibrates whenever it's still.
-- **Motion settings** on the DSU card has two options: **Ignore this device's motion in Eden** (on by
-  default, needs Shizuku), and **Faster motion updates** for smoother aiming at a battery cost.
 
 > [!TIP]
 > DSU and the virtual gamepad are independent. With both on, an emulator sees each controller twice —
 > map from one, and turn the gamepad off while mapping DSU inputs so detection doesn't grab it.
+
+### Settings
+
+The gear at the top right opens the settings panel:
+
+- **Layout** — detailed controller graphics or compact rows.
+- **Faster controller updates** — Joy-Cons send input about twice as often, for smoother motion and
+  quicker buttons, at a battery cost. Applies while the virtual gamepad or DSU is on.
+- **Ignore this device's motion in Eden** (on by default, needs Shizuku) — stops Eden mixing this
+  device's gyro into Player 1. Lifted when the virtual gamepad and DSU are both off.
 
 ### 5. Set up your emulator
 
@@ -223,7 +231,7 @@ shoulder buttons.
 | Gamepad doesn't show up in games | Check `adb shell getevent -p` lists "Joy-Con Virtual Gamepad" |
 | No DSUClient device in the emulator | Check the server address, restart the emulator and open a mapping screen; `adb logcat -s DsuServer` shows whether it's connecting |
 | Emulator won't detect DSU presses | Pick inputs from the list — detection never sees DSU — with the virtual gamepad off |
-| Motion aiming stutters | DSU card → **Motion settings**: keep **Ignore this device's motion in Eden** on, and try **Faster motion updates** |
+| Motion aiming stutters | Settings (gear, top right): keep **Ignore this device's motion in Eden** on, and try **Faster controller updates** |
 | Tilting the device moves the aim in Eden | Turn on **Ignore this device's motion in Eden** |
 | Pointer drifts or starts off-screen | Rest the controller for ~2 s, then press Recenter |
 | MotionPlus tutorial replays every boot (Dolphin) | Set `MPLS.MOVIE` in `Wii/shared2/sys/SYSCONF` with Dolphin closed ([why](docs/dsu-motion.md#motionplus-tutorial-replays)) |

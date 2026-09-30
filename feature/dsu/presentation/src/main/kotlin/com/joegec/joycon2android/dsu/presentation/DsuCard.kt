@@ -1,8 +1,6 @@
 package com.joegec.joycon2android.dsu.presentation
 import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
-import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
-import com.joegec.joycon2android.ui.components.SettingsRow
 import com.joegec.joycon2android.ui.components.WarningBox
 
 import androidx.compose.animation.AnimatedVisibility
@@ -12,13 +10,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -34,20 +27,8 @@ fun DsuCard(
     onSelectEmulator: (String) -> Unit,
     onSetUp: () -> Unit,
     onConfigureMapping: () -> Unit,
-    onFastMotionToggle: (Boolean) -> Unit,
-    onBlockDeviceMotionToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showMotionSettings by rememberSaveable { mutableStateOf(false) }
-    if (showMotionSettings) {
-        DsuMotionSettingsDialog(
-            settings = state.motionSettings,
-            deviceMotionBlockAvailable = state.deviceMotionBlockAvailable,
-            onFastMotionToggle = onFastMotionToggle,
-            onBlockDeviceMotionToggle = onBlockDeviceMotionToggle,
-            onDismiss = { showMotionSettings = false },
-        )
-    }
     FeatureToggleCard(
         title = stringResource(R.string.dsu_title),
         subtitle = subtitleFor(state),
@@ -55,7 +36,6 @@ fun DsuCard(
         error = state.error,
         onToggle = onToggle,
         modifier = modifier,
-        contentPadding = cardPadding(state.enabled),
     ) {
         AnimatedVisibility(
             visible = state.enabled,
@@ -77,23 +57,11 @@ fun DsuCard(
                         onConfigureMapping = onConfigureMapping,
                     )
                 }
-                SettingsRow(
-                    title = stringResource(R.string.dsu_motion_settings_title),
-                    onClick = { showMotionSettings = true },
-                )
                 slotLimitText(state.coverage)?.let { WarningBox(it) }
             }
         }
     }
 }
-
-// The Motion settings row's 48dp touch target already leaves space below it.
-private fun cardPadding(enabled: Boolean) = PaddingValues(
-    start = Dimens.cardPadding,
-    top = Dimens.cardPadding,
-    end = Dimens.cardPadding,
-    bottom = if (enabled) Dimens.elementSpacing else Dimens.cardPadding,
-)
 
 @Composable
 private fun subtitleFor(state: DsuCardState): String = when {

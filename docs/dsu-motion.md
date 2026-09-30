@@ -18,7 +18,6 @@ socket there never sees the `127.0.0.1` datagrams emulators send.
 | `GyroCalibrator` | learns and subtracts each controller's gyro bias |
 | `MotionConverter` | raw IMU → cemuhook's DS4 frame |
 | `SidewaysMotion` | turns a lone Joy-Con's IMU into its sideways grip |
-| `DsuMotionPolicy` (`:app`) | applies the motion settings only while DSU runs |
 
 Routing matters: DSU clients, Dolphin included, overwrite their pad state with every packet without
 checking its slot, so server-side routing is what keeps players independent.
@@ -153,13 +152,6 @@ Two approaches fail, so don't retry them:
 - **Dolphin's `Shake` group.** A full 7 g oscillation bound to a key never landed a trick (2026-09),
   though `m_shake_state.acceleration` does reach the reported acceleration.
 
-## Report rate
-
-The Joy-Con reports once per BLE connection interval. Android's balanced priority settled on 30 ms
-(~33 Hz) on an AYN Thor, which reads as stutter at 60 fps. **Faster motion updates** requests
-`CONNECTION_PRIORITY_HIGH` while DSU runs — 15 ms (~67 Hz) on the same Thor — at a battery cost on
-both ends.
-
 ## Eden's cemuhook bindings
 
 Eden's cemuhook engine addresses a pad by `guid`, `port` and `pad`, and nothing else:
@@ -193,8 +185,10 @@ Moving the pad to another player doesn't escape it: games that open the controll
 
 **Ignore this device's motion in Eden** (on by default) runs
 `cmd sensorservice set-uid-state <eden package> idle` through Shizuku, which withholds continuous
-sensors from Eden. The override lives in `system_server` until reset or reboot, so it is lifted when
-DSU stops, and again at launch in case the app was killed.
+sensors from Eden. `DeviceMotionBlockPolicy` (`:app`) holds it while the virtual gamepad or DSU is on.
+The override lives in `system_server` until reset or reboot, so it is lifted when both turn off
+(Disconnect All and the service stopping included), and again at launch in case the app was killed.
+With only the virtual gamepad, Eden then has no motion source at all.
 
 ## Dolphin Wii Remote mapping
 

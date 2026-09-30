@@ -9,6 +9,5 @@ android {
 dependencies {
     implementation(project(":feature:dsu:domain"))
     implementation(project(":core:model"))
-    implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
 }
