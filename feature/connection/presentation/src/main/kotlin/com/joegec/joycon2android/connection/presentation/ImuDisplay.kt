@@ -20,12 +20,28 @@ import com.joegec.joycon2android.ui.theme.TextDim
 @Composable
 internal fun ImuDisplay(input: JoyconInput, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dimens.imuSectionSpacing)) {
-        SensorRow(stringResource(R.string.imu_accel), "X" to input.accelX, "Y" to input.accelY, "Z" to input.accelZ)
-        SensorRow(stringResource(R.string.imu_gyro), "X" to input.gyroX, "Y" to input.gyroY, "Z" to input.gyroZ)
+        if (input.motionSupport.measuresAcceleration) {
+            SensorRow(stringResource(R.string.imu_accel), "X" to input.accelX, "Y" to input.accelY, "Z" to input.accelZ)
+        } else {
+            AbsentRow(stringResource(R.string.imu_accel))
+        }
+        if (input.motionSupport.measuresRotation) {
+            SensorRow(stringResource(R.string.imu_gyro), "X" to input.gyroX, "Y" to input.gyroY, "Z" to input.gyroZ)
+        } else {
+            AbsentRow(stringResource(R.string.imu_gyro))
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             ImuLabel(stringResource(R.string.imu_packet))
             ImuValue(input.packetId.toString())
         }
+    }
+}
+
+@Composable
+private fun AbsentRow(title: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        ImuLabel(title)
+        ImuValue(stringResource(R.string.imu_sensor_absent))
     }
 }
 

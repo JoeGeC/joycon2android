@@ -10,5 +10,6 @@ dependencies {
     implementation(project(":feature:connection:domain"))
     implementation(project(":core:model"))
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.hiddenapibypass)
     testImplementation(libs.junit)
 }

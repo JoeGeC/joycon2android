@@ -98,7 +98,7 @@ private fun ControllerChip(
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
     ) {
         val battery = @Composable {
-            if (joycon.input.batteryVolts > 0f) BatteryGlyph(joycon.input.batteryVolts)
+            joycon.input.battery?.let { BatteryGlyph(it) }
         }
 
         if (batteryFirst) battery()
