@@ -3,8 +3,8 @@ import com.joegec.joycon2android.dsu.motion.DsuMotion
 import com.joegec.joycon2android.dsu.motion.MotionConverter
 import com.joegec.joycon2android.dsu.motion.SidewaysMotion
 
-import com.joegec.joycon2android.model.BatteryGauge
 import com.joegec.joycon2android.model.GamepadState
+import com.joegec.joycon2android.model.MotionSupport
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 import java.nio.ByteBuffer
@@ -76,7 +76,7 @@ class DsuPacketEncoder(
         val connected = player?.hasController == true
         packet.put(slot.toByte())
         packet.put(if (connected) SLOT_STATE_CONNECTED else 0)
-        packet.put(if (connected) MODEL_FULL_GYRO else 0)
+        packet.put(if (connected) model(player) else 0)
         packet.put(if (connected) CONNECTION_BLUETOOTH else 0)
         packet.put(macBytes(player))
         packet.put(batteryByte(player))
@@ -88,10 +88,14 @@ class DsuPacketEncoder(
         return ByteArray(MAC_SIZE) { (parts[it].toIntOrNull(16) ?: 0).toByte() }
     }
 
+    private fun model(player: PlayerState?): Byte =
+        when (player?.motionSource?.input?.motionSupport) {
+            MotionSupport.AccelerometerOnly, MotionSupport.None -> MODEL_NO_GYRO
+            else -> MODEL_FULL_GYRO
+        }
+
     private fun batteryByte(player: PlayerState?): Byte {
-        val volts = player?.motionSource?.input?.batteryVolts ?: 0f
-        if (volts <= 0f) return BATTERY_NA
-        val percent = BatteryGauge.percentFromVolts(volts)
+        val percent = player?.motionSource?.input?.battery?.percent ?: return BATTERY_NA
         return when {
             percent >= 90 -> BATTERY_FULL
             percent >= 70 -> BATTERY_HIGH
@@ -160,6 +164,7 @@ class DsuPacketEncoder(
         private const val TYPE_PAD_DATA = 0x100002
 
         private const val SLOT_STATE_CONNECTED: Byte = 2
+        private const val MODEL_NO_GYRO: Byte = 1
         private const val MODEL_FULL_GYRO: Byte = 2
         private const val CONNECTION_BLUETOOTH: Byte = 2
 

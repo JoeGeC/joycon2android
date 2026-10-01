@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.dsu
 
+import com.joegec.joycon2android.model.BatteryCharge
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerNumber
@@ -159,7 +160,7 @@ class DsuServerTest {
             address = "AA:BB:CC:DD:EE:02",
             side = Side.RIGHT,
             deviceName = "Joy-Con (R)",
-            input = JoyconInput(accelX = 4096, batteryVolts = 3.6f),
+            input = JoyconInput(accelX = 4096, battery = BatteryCharge(100)),
         ),
     )
 
@@ -169,7 +170,7 @@ class DsuServerTest {
             address = "AA:BB:CC:DD:EE:01",
             side = Side.LEFT,
             deviceName = "Joy-Con (L)",
-            input = JoyconInput(accelZ = 4096, batteryVolts = 3.5f),
+            input = JoyconInput(accelZ = 4096, battery = BatteryCharge(92)),
         ),
     )
 

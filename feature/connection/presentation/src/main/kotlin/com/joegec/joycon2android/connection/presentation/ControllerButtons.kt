@@ -29,11 +29,11 @@ internal fun MinusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier:
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AnimatedVisibility(
-            visible = input.batteryVolts > 0f,
+            visible = input.battery != null,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            BatteryPill(input.batteryVolts)
+            input.battery?.let { BatteryPill(it) }
         }
         SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in pressed)
     }
@@ -48,11 +48,11 @@ internal fun PlusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier: 
     ) {
         SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in pressed)
         AnimatedVisibility(
-            visible = input.batteryVolts > 0f,
+            visible = input.battery != null,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            BatteryPill(input.batteryVolts)
+            input.battery?.let { BatteryPill(it) }
         }
     }
 }

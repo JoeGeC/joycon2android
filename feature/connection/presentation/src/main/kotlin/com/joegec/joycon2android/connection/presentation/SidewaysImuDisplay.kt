@@ -33,8 +33,16 @@ private fun SensorRow(input: JoyconInput) {
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Dimens.cardPadding),
     ) {
-        SensorColumn(stringResource(R.string.imu_accel), input.accelX, input.accelY, input.accelZ, Modifier.weight(1f))
-        SensorColumn(stringResource(R.string.imu_gyro), input.gyroX, input.gyroY, input.gyroZ, Modifier.weight(1f))
+        if (input.motionSupport.measuresAcceleration) {
+            SensorColumn(stringResource(R.string.imu_accel), input.accelX, input.accelY, input.accelZ, Modifier.weight(1f))
+        } else {
+            AbsentColumn(stringResource(R.string.imu_accel), Modifier.weight(1f))
+        }
+        if (input.motionSupport.measuresRotation) {
+            SensorColumn(stringResource(R.string.imu_gyro), input.gyroX, input.gyroY, input.gyroZ, Modifier.weight(1f))
+        } else {
+            AbsentColumn(stringResource(R.string.imu_gyro), Modifier.weight(1f))
+        }
     }
 }
 
@@ -49,6 +57,14 @@ private fun PacketRow(input: JoyconInput) {
             ImuText(stringResource(R.string.imu_packet), bold = true)
             ImuText(input.packetId.toString())
         }
+    }
+}
+
+@Composable
+private fun AbsentColumn(title: String, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.imuTitleGap)) {
+        ImuText(title, bold = true)
+        ImuText(stringResource(R.string.imu_sensor_absent))
     }
 }
 

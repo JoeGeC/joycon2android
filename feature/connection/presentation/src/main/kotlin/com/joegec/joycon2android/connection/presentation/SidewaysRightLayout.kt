@@ -85,11 +85,11 @@ private fun TopRow(state: PlayerState) {
             HomeButton(pressed)
         }
         AnimatedVisibility(
-            visible = state.rightInput.batteryVolts > 0f,
+            visible = state.rightInput.battery != null,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            BatteryPill(state.rightInput.batteryVolts)
+            state.rightInput.battery?.let { BatteryPill(it) }
         }
         SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in pressed)
     }

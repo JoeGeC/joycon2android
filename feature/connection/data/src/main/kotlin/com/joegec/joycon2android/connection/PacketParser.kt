@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.connection
 
+import com.joegec.joycon2android.model.BatteryCharge
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.Side
@@ -46,7 +47,7 @@ object PacketParser {
             gyroX = bb.getShort(0x36).toInt(),
             gyroY = bb.getShort(0x38).toInt(),
             gyroZ = bb.getShort(0x3A).toInt(),
-            batteryVolts = (bb.getShort(0x1F).toInt() and 0xFFFF) / 1000f,
+            battery = BatteryCharge.fromVolts((bb.getShort(0x1F).toInt() and 0xFFFF) / 1000f),
         )
     }
 
@@ -85,6 +86,6 @@ object PacketParser {
             ((data[offset + 1].toInt() and 0xFF) shl 8) or
             ((data[offset + 2].toInt() and 0xFF) shl 16)
 
-    private fun decodeButtons(buttons: Long): Set<String> =
+    internal fun decodeButtons(buttons: Long): Set<String> =
         buttonMasks.filter { (mask, _) -> buttons and mask != 0L }.map { it.second.id }.toSet()
 }
