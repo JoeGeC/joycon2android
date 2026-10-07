@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.gamepad
 
+import com.joegec.joycon2android.model.BatteryCharge
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
@@ -23,7 +24,7 @@ class ReportMapperTest {
             rightStickY = 2048,
             accelX = 0, accelY = 0, accelZ = 0,
             gyroX = 0, gyroY = 0, gyroZ = 0,
-            batteryVolts = 4f,
+            battery = BatteryCharge(100),
         )
         val pro = ConnectedJoycon(address = "pro", side = Side.PRO, deviceName = "Pro", input = input)
         return ReportMapper.buildReport(PlayerState(PlayerNumber.P1, left = pro))
