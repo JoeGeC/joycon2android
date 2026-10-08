@@ -38,7 +38,7 @@ object SwitchProMapping : MappingPreset {
     override fun entries(side: JoyconSide) = buttons(side).buttonEntries() + sticks(side).stickEntries()
 
     private fun buttons(side: JoyconSide): Map<SwitchProButton, JoyconButton> = when (side) {
-        JoyconSide.DUAL -> mapOf(
+        JoyconSide.DUAL, JoyconSide.GAMECUBE -> mapOf(
             SwitchProButton.A to A,
             SwitchProButton.B to B,
             SwitchProButton.X to X,
@@ -84,7 +84,7 @@ object SwitchProMapping : MappingPreset {
     }
 
     private fun sticks(side: JoyconSide): Map<SwitchProStick, StickSource> = when (side) {
-        JoyconSide.DUAL -> mapOf(
+        JoyconSide.DUAL, JoyconSide.GAMECUBE -> mapOf(
             SwitchProStick.LStick to LEFT_STICK,
             SwitchProStick.RStick to RIGHT_STICK,
         )

@@ -25,6 +25,7 @@ import com.joegec.joycon2android.model.JoyconButton.SrLeft
 import com.joegec.joycon2android.model.JoyconButton.SrRight
 import com.joegec.joycon2android.model.JoyconButton.Up
 import com.joegec.joycon2android.model.JoyconButton.X
+import com.joegec.joycon2android.model.JoyconButton.ZR
 import com.joegec.joycon2android.model.JoyconButton.Y
 
 object GameCubeMapping : MappingPreset {
@@ -40,6 +41,21 @@ object GameCubeMapping : MappingPreset {
             GameCubeButton.X to X,
             GameCubeButton.Y to Y,
             GameCubeButton.Z to R,
+            GameCubeButton.Start to Plus,
+            GameCubeButton.TriggerL to L,
+            GameCubeButton.TriggerR to R,
+            GameCubeButton.DPadUp to Up,
+            GameCubeButton.DPadDown to Down,
+            GameCubeButton.DPadLeft to Left,
+            GameCubeButton.DPadRight to Right,
+        )
+        // Its Z button reports as ZR.
+        JoyconSide.GAMECUBE -> mapOf(
+            GameCubeButton.A to A,
+            GameCubeButton.B to B,
+            GameCubeButton.X to X,
+            GameCubeButton.Y to Y,
+            GameCubeButton.Z to ZR,
             GameCubeButton.Start to Plus,
             GameCubeButton.TriggerL to L,
             GameCubeButton.TriggerR to R,
@@ -71,7 +87,7 @@ object GameCubeMapping : MappingPreset {
     }
 
     private fun sticks(side: JoyconSide): Map<GameCubeStick, StickSource> = when (side) {
-        JoyconSide.DUAL -> mapOf(
+        JoyconSide.DUAL, JoyconSide.GAMECUBE -> mapOf(
             GameCubeStick.MainStick to LEFT_STICK,
             GameCubeStick.CStick to RIGHT_STICK,
         )

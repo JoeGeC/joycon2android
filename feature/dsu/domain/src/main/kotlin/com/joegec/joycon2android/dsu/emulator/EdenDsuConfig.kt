@@ -157,6 +157,7 @@ object EdenDsuConfig {
     }
 
     private fun sideFor(player: PlayerState): JoyconSide? = when {
+        player.hasGameCube -> JoyconSide.GAMECUBE
         player.hasPro || player.hasFullController -> JoyconSide.DUAL
         player.left != null -> JoyconSide.LEFT
         player.right != null -> JoyconSide.RIGHT

@@ -41,6 +41,7 @@
     <string name="side_left_short">L</string>
     <string name="side_right_short">R</string>
     <string name="side_dual_short">L/R</string>
+    <string name="side_gamecube_short">GC</string>
     <string name="player_body">P%1$d %2$s</string>
     <string name="direction_up">Up</string>
     <string name="direction_down">Down</string>

@@ -13,6 +13,7 @@ import android.os.Looper
 import android.util.Log
 import com.joegec.joycon2android.connection.console.ConsoleChannel
 import com.joegec.joycon2android.connection.console.ConsoleSession
+import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.JoyconConnectionState
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerNumber
@@ -25,7 +26,8 @@ import java.util.UUID
 @SuppressLint("MissingPermission")
 class JoyconConnection(
     private val context: Context,
-    val side: Side,
+    val model: ControllerModel,
+    typeOverride: Side?,
     val deviceName: String,
     private val onReady: () -> Unit,
     private val onDisconnected: (() -> Unit)? = null,
@@ -41,6 +43,11 @@ class JoyconConnection(
         private const val RETURN_WINDOW_MS = 120_000L
     }
 
+    @Volatile var typeOverride: Side? = typeOverride
+        private set
+    @Volatile var side: Side = typeOverride ?: model.defaultSide
+        private set
+
     private val _connectionState = MutableStateFlow(
         JoyconConnectionState(connecting = true, deviceName = deviceName)
     )
@@ -52,7 +59,8 @@ class JoyconConnection(
     private val mainHandler = Handler(Looper.getMainLooper())
     private val ops = GattOpQueue()
     private val returnWindow = ReturnWindow(RETURN_WINDOW_MS, MainThreadScheduler(), ::giveUpOnReturn)
-    private val stickCalibrator = StickCalibrator()
+    @Volatile private var calibrator = InputCalibrator(model)
+    private var factory = FactoryCalibration()
     private var gatt: BluetoothGatt? = null
     private var device: BluetoothDevice? = null
     private var common: CommonSession? = null
@@ -99,6 +107,13 @@ class JoyconConnection(
     fun setHighPriority(enabled: Boolean) {
         highPriority = enabled
         if (initComplete) protocol?.setHighPriority(enabled)
+    }
+
+    // A new side reads the sticks from other offsets, so their learned centres no longer apply.
+    fun overrideType(side: Side?) {
+        typeOverride = side
+        this.side = side ?: model.defaultSide
+        calibrator = InputCalibrator(model).apply { useFactory(factory) }
     }
 
     fun setPlayerLed(player: PlayerNumber) {
@@ -188,11 +203,13 @@ class JoyconConnection(
             common = CommonSession(
                 gatt = g,
                 channel = channel,
-                side = side,
+                side = { side },
                 ops = ops,
+                calibrationReads = FactoryCalibrationReads.commands(model),
                 initialLedBitmask = assignedPlayer?.ledBitmask ?: ControllerCommands.LED_ALL_ON,
                 onInput = ::publishInput,
                 onAccentColor = ::publishAccentColor,
+                onCommandReply = ::applyFactoryCalibration,
                 onReady = {
                     onProtocolReady()
                     mainHandler.postDelayed({ fallBackToConsoleIfSilent(g) }, CONSOLE_FALLBACK_MS)
@@ -336,7 +353,14 @@ class JoyconConnection(
     }
 
     private fun publishInput(input: JoyconInput) {
-        _input.value = stickCalibrator.calibrate(input)
+        _input.value = calibrator.calibrate(input)
+    }
+
+    private fun applyFactoryCalibration(reply: ByteArray) {
+        FactoryCalibrationReads.update(factory, reply)?.let {
+            factory = it
+            calibrator.useFactory(it)
+        }
     }
 
     private fun publishAccentColor(color: Int) {

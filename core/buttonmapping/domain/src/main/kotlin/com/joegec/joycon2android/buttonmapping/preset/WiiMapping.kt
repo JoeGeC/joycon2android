@@ -36,7 +36,7 @@ object WiiMapping : MappingPreset {
         buttons(side).buttonEntries() + dPadSticks(side).sourceEntries() + nunchukStick(side).stickEntries()
 
     internal fun buttons(side: JoyconSide): Map<WiimoteButton, JoyconButton> = when (side) {
-        JoyconSide.DUAL -> mapOf(
+        JoyconSide.DUAL, JoyconSide.GAMECUBE -> mapOf(
             WiimoteButton.A to A,
             WiimoteButton.B to ZR,
             WiimoteButton.One to Y,
@@ -77,7 +77,7 @@ object WiiMapping : MappingPreset {
     // Sideways, the cluster is the face buttons, so the stick drives the d-pad.
     internal fun dPadSticks(side: JoyconSide): Map<WiimoteButton, List<MappingSource>> {
         val stick = when (side) {
-            JoyconSide.DUAL -> return emptyMap()
+            JoyconSide.DUAL, JoyconSide.GAMECUBE -> return emptyMap()
             JoyconSide.LEFT -> LEFT_STICK
             JoyconSide.RIGHT -> RIGHT_STICK
         }
@@ -90,7 +90,7 @@ object WiiMapping : MappingPreset {
     }
 
     internal fun nunchukStick(side: JoyconSide): Map<WiimoteStick, StickSource> = when (side) {
-        JoyconSide.DUAL -> mapOf(WiimoteStick.NunchukStick to LEFT_STICK)
+        JoyconSide.DUAL, JoyconSide.GAMECUBE -> mapOf(WiimoteStick.NunchukStick to LEFT_STICK)
         else -> emptyMap()
     }
 

@@ -62,10 +62,8 @@ object ReportMapper {
         // Bytes 9-10: right stick Y (inverted)
         putInt16LE(report, 9, mapStick(4096 - gamepad.rightStickY))
 
-        // Byte 11: left trigger / brake (digital: 0 or 255)
-        report[11] = if (JoyconButton.ZL.id in pressed) 0xFF.toByte() else 0x00
-        // Byte 12: right trigger / accelerator (digital: 0 or 255)
-        report[12] = if (JoyconButton.ZR.id in pressed) 0xFF.toByte() else 0x00
+        report[11] = gamepad.leftTrigger.toByte()
+        report[12] = gamepad.rightTrigger.toByte()
 
         report[13] = bits(pressed, OVERFLOW_MAP).toByte()
 

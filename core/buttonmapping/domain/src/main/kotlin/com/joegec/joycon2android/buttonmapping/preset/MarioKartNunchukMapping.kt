@@ -41,7 +41,7 @@ object MarioKartNunchukMapping : MappingPreset {
     override val sidewaysRemote = true
 
     override fun entries(side: JoyconSide) = when (side) {
-        JoyconSide.DUAL -> WiiMapping.entries(side) + pairButtons()
+        JoyconSide.DUAL, JoyconSide.GAMECUBE -> WiiMapping.entries(side) + pairButtons()
         else -> loneButtons(side) + nunchukStick(side).stickEntries()
     }
 

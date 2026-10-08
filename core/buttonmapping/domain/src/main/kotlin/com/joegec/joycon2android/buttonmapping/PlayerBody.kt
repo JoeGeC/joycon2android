@@ -10,6 +10,7 @@ data class PlayerBody(val player: PlayerNumber, val side: JoyconSide)
 fun PlayerState.body(): PlayerBody? = joyconSide()?.let { PlayerBody(player, it) }
 
 fun PlayerState.joyconSide(): JoyconSide? = when {
+    hasGameCube -> JoyconSide.GAMECUBE
     hasPro || hasFullController -> JoyconSide.DUAL
     left != null -> JoyconSide.LEFT
     right != null -> JoyconSide.RIGHT

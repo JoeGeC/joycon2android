@@ -16,11 +16,13 @@ import java.util.UUID
 internal class CommonSession(
     private val gatt: BluetoothGatt,
     private val channel: CommonChannel,
-    private val side: Side,
+    private val side: () -> Side,
     private val ops: GattOpQueue,
+    private val calibrationReads: List<ByteArray>,
     initialLedBitmask: Byte,
     private val onInput: (JoyconInput) -> Unit,
     private val onAccentColor: (Int) -> Unit,
+    private val onCommandReply: (ByteArray) -> Unit,
     private val onReady: () -> Unit,
 ) : ControllerProtocol {
     companion object {
@@ -51,9 +53,10 @@ internal class CommonSession(
         ops.enqueue(INIT_GAP_MS) { write(FEATURES_INIT) }
         ops.enqueue(INIT_GAP_MS) { write(FEATURES_ENABLE) }
         ops.enqueue(INIT_GAP_MS) { write(SPI_READ_COLOR) }
+        calibrationReads.forEach { read -> ops.enqueue(INIT_GAP_MS) { write(read) } }
         ops.enqueue {
             ready = true
-            Log.i(TAG, "[$side] Init sequence complete")
+            Log.i(TAG, "[${side()}] Init sequence complete")
             onReady()
             false // no GATT op — advance immediately
         }
@@ -86,11 +89,11 @@ internal class CommonSession(
         } else {
             BluetoothGatt.CONNECTION_PRIORITY_BALANCED
         }
-        Log.i(TAG, "[$side] Connection priority high=$enabled accepted=${gatt.requestConnectionPriority(priority)}")
+        Log.i(TAG, "[${side()}] Connection priority high=$enabled accepted=${gatt.requestConnectionPriority(priority)}")
     }
 
     private fun onReport(report: ByteArray) {
-        PacketParser.parse(report, side)?.let(onInput)
+        PacketParser.parse(report, side())?.let(onInput)
         if (!ledSentAfterFirstPacket && ready) {
             ledSentAfterFirstPacket = true
             sendPlayerLed()
@@ -98,9 +101,10 @@ internal class CommonSession(
     }
 
     private fun onCommandResponse(value: ByteArray) {
-        Log.d(TAG, "[$side] Cmd response: ${value.joinToString(" ") { "%02X".format(it) }}")
+        Log.d(TAG, "[${side()}] Cmd response: ${value.joinToString(" ") { "%02X".format(it) }}")
+        onCommandReply(value)
         SpiColorParser.parseAccentColor(value)?.let { color ->
-            Log.i(TAG, "[$side] Accent color: #${"%06X".format(color)}")
+            Log.i(TAG, "[${side()}] Accent color: #${"%06X".format(color)}")
             onAccentColor(color)
         }
     }
@@ -108,7 +112,7 @@ internal class CommonSession(
     private fun sendPlayerLed() {
         ops.enqueue {
             val cmd = ControllerCommands.playerLed(ledBitmask)
-            Log.i(TAG, "[$side] Sending LED cmd: ${cmd.joinToString(" ") { "%02X".format(it) }}")
+            Log.i(TAG, "[${side()}] Sending LED cmd: ${cmd.joinToString(" ") { "%02X".format(it) }}")
             write(cmd)
         }
     }
@@ -118,11 +122,11 @@ internal class CommonSession(
         gatt.setCharacteristicNotification(characteristic, true)
         val cccd = characteristic.getDescriptor(CommonChannel.CCCD)
         if (cccd == null) {
-            Log.w(TAG, "[$side] CMD_RESPONSE char has no CCCD descriptor")
+            Log.w(TAG, "[${side()}] CMD_RESPONSE char has no CCCD descriptor")
             return
         }
         ops.enqueue {
-            Log.d(TAG, "[$side] Writing CMD_RESPONSE CCCD")
+            Log.d(TAG, "[${side()}] Writing CMD_RESPONSE CCCD")
             writeDescriptor(cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
         }
     }
@@ -131,11 +135,11 @@ internal class CommonSession(
         gatt.setCharacteristicNotification(channel.input, true)
         val cccd = channel.input.getDescriptor(CommonChannel.CCCD)
         if (cccd == null) {
-            Log.e(TAG, "[$side] NOTIFY char has no CCCD descriptor — notifications won't work!")
+            Log.e(TAG, "[${side()}] NOTIFY char has no CCCD descriptor — notifications won't work!")
             return
         }
         ops.enqueue {
-            Log.d(TAG, "[$side] Writing NOTIFY CCCD")
+            Log.d(TAG, "[${side()}] Writing NOTIFY CCCD")
             writeDescriptor(cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
         }
     }

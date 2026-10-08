@@ -23,7 +23,7 @@ internal object MappingOptions {
     const val NONE_ID = ""
 
     fun offersSidewaysRemote(console: Console, side: JoyconSide) =
-        console == Console.WIIMOTE_NUNCHUK && side != JoyconSide.DUAL
+        console == Console.WIIMOTE_NUNCHUK && side.isLone
 
     fun offersRemoteMotion(console: Console) = console == Console.WIIMOTE_NUNCHUK
 
@@ -67,20 +67,20 @@ internal object MappingOptions {
     @Composable
     fun sources(side: JoyconSide, section: MappingSection): List<Pair<String, String>> =
         listOf(NONE_ID to stringResource(R.string.source_none)) +
-            physicalButtons(side).map { it.name to it.id } +
+            physicalButtons(side).map { it.name to it.markingOn(side) } +
             if (section == MappingSection.ANDROID) emptyList() else stickDirections(side)
 
     // A lone Joy-Con has one stick, so its directions need no "Left"/"Right" to tell them apart.
     @Composable
     private fun stickDirections(side: JoyconSide): List<Pair<String, String>> {
         val sticks = when (side) {
-            JoyconSide.DUAL -> StickSource.entries
+            JoyconSide.DUAL, JoyconSide.GAMECUBE -> StickSource.entries
             JoyconSide.LEFT -> listOf(StickSource.LEFT_STICK)
             JoyconSide.RIGHT -> listOf(StickSource.RIGHT_STICK)
         }
         return sticks.flatMap(MappingSource::directionsOf).map { source ->
             val stick =
-                if (side == JoyconSide.DUAL) source.stick.label() else stringResource(R.string.stick_lone)
+                if (side.isLone) stringResource(R.string.stick_lone) else source.stick.label()
             source.id to stringResource(R.string.source_direction, stick, source.direction.label())
         }
     }
@@ -88,6 +88,12 @@ internal object MappingOptions {
     // Only what that side physically has, so every choice can fire.
     private fun physicalButtons(side: JoyconSide): List<JoyconButton> = when (side) {
         JoyconSide.DUAL -> JoyconButton.entries
+        JoyconSide.GAMECUBE -> listOf(
+            JoyconButton.A, JoyconButton.B, JoyconButton.X, JoyconButton.Y,
+            JoyconButton.L, JoyconButton.R, JoyconButton.ZL, JoyconButton.ZR, JoyconButton.Plus,
+            JoyconButton.Up, JoyconButton.Down, JoyconButton.Left, JoyconButton.Right,
+            JoyconButton.Home, JoyconButton.Capture, JoyconButton.Chat,
+        )
         JoyconSide.LEFT -> listOf(
             JoyconButton.L, JoyconButton.ZL, JoyconButton.Minus, JoyconButton.LS,
             JoyconButton.Up, JoyconButton.Down, JoyconButton.Left, JoyconButton.Right,
@@ -99,4 +105,8 @@ internal object MappingOptions {
             JoyconButton.Home, JoyconButton.Chat, JoyconButton.SrRight, JoyconButton.SlRight,
         )
     }
+
+    // The GameCube controller's Z reports as ZR.
+    private fun JoyconButton.markingOn(side: JoyconSide): String =
+        if (side == JoyconSide.GAMECUBE && this == JoyconButton.ZR) "Z" else id
 }

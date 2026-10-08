@@ -103,4 +103,14 @@ class StickCalibratorTest {
         assertEquals(2048, rescale(restX))
         assertEquals(2048, other.calibrate(JoyconInput(stickX = 2014)).stickX)
     }
+
+    @Test
+    fun `factory calibration applies at once, without waiting to learn the centre`() {
+        val factory = StickCalibration(centreX = 2073, centreY = 2060, aboveX = 1224, aboveY = 1198, belowX = 1238, belowY = 1249)
+        val calibrated = StickCalibrator().apply { useFactory(factory, null) }
+
+        assertEquals(2048, calibrated.calibrate(JoyconInput(stickX = 2073)).stickX)
+        assertEquals(4095, calibrated.calibrate(JoyconInput(stickX = 2073 + 1224)).stickX)
+        assertEquals(0, calibrated.calibrate(JoyconInput(stickY = 2060 - 1249)).stickY)
+    }
 }

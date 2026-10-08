@@ -8,4 +8,5 @@ dependencies {
     api(project(":feature:connection:domain"))
     api(project(":feature:assignment:domain"))
     api(libs.kotlinx.coroutines.core)
+    testImplementation(libs.junit)
 }

@@ -10,7 +10,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.joegec.joycon2android.model.Side
+import com.joegec.joycon2android.model.ControllerModel
 
 @SuppressLint("MissingPermission")
 class BleScanner(context: Context) {
@@ -18,11 +18,10 @@ class BleScanner(context: Context) {
     companion object {
         private const val TAG = "Joycon2"
         private const val NINTENDO_MANUFACTURER_ID = 0x0553
-        private const val SIDE_TYPE_INDEX = 5
         private const val SCAN_TIMEOUT_MS = 15_000L
     }
 
-    var onDeviceFound: ((ScanResult, Side, String) -> Unit)? = null
+    var onDeviceFound: ((ScanResult, ControllerModel, String) -> Unit)? = null
     var onScanFailed: ((Int) -> Unit)? = null
     var onTimeout: (() -> Unit)? = null
 
@@ -69,8 +68,10 @@ class BleScanner(context: Context) {
                 val name = result.device.name
                     ?: result.scanRecord?.deviceName
                     ?: "Joy-Con 2"
-                val side = detectSide(result, name)
-                onDeviceFound?.invoke(result, side, name)
+                val model = modelFromName(name)
+                    ?: JoyconAdvertisement.model(manufacturerData)
+                    ?: ControllerModel.UNKNOWN
+                onDeviceFound?.invoke(result, model, name)
             }
 
             override fun onScanFailed(errorCode: Int) {
@@ -106,29 +107,10 @@ class BleScanner(context: Context) {
         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
         .build()
 
-    private fun detectSide(result: ScanResult, name: String): Side {
-        sideFromName(name)?.let { return it }
-        sideFromManufacturerData(result)?.let { return it }
-        return Side.UNKNOWN
-    }
-
-    private fun sideFromName(name: String): Side? = when {
-        name.contains("(L)") || name.contains("Left") -> Side.LEFT
-        name.contains("(R)") || name.contains("Right") -> Side.RIGHT
-        name.contains("Pro") -> Side.PRO
+    private fun modelFromName(name: String): ControllerModel? = when {
+        name.contains("(L)") || name.contains("Left") -> ControllerModel.JOYCON_LEFT
+        name.contains("(R)") || name.contains("Right") -> ControllerModel.JOYCON_RIGHT
+        name.contains("Pro") -> ControllerModel.PRO_CONTROLLER
         else -> null
-    }
-
-    /** The product ID's low byte: docs/protocol.md#advertising */
-    private fun sideFromManufacturerData(result: ScanResult): Side? {
-        val mfgData = result.scanRecord
-            ?.getManufacturerSpecificData(NINTENDO_MANUFACTURER_ID) ?: return null
-        if (mfgData.size <= SIDE_TYPE_INDEX) return null
-        return when (mfgData[SIDE_TYPE_INDEX].toInt() and 0xFF) {
-            0x67 -> Side.LEFT
-            0x66 -> Side.RIGHT
-            0x69 -> Side.PRO
-            else -> null
-        }
     }
 }

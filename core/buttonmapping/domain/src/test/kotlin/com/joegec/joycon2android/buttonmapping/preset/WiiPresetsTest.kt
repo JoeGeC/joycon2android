@@ -97,7 +97,7 @@ class WiiPresetsTest {
 
     @Test
     fun `a lone Joy-Con on the Nunchuck layout plays both halves itself`() {
-        JoyconSide.entries.filterNot { it == JoyconSide.DUAL }.forEach { side ->
+        JoyconSide.entries.filter { it.isLone }.forEach { side ->
             val lone = MarioKartNunchukMapping.entries(side)
             val rail = if (side == JoyconSide.LEFT) "SlLeft" else "SlRight"
 
@@ -132,7 +132,7 @@ class WiiPresetsTest {
 
     @Test
     fun `no button on a lone Joy-Con fires two targets, bar the shoulder that hops and tricks`() {
-        JoyconSide.entries.filterNot { it == JoyconSide.DUAL }.forEach { side ->
+        JoyconSide.entries.filter { it.isLone }.forEach { side ->
             val entries = MappingLayouts.entriesOf(Console.WIIMOTE_NUNCHUK, side, MarioKartNunchukMapping)
             val fired = mutableMapOf<String, MutableSet<String>>()
             entries.forEach { (target, value) ->
@@ -188,7 +188,7 @@ class WiiPresetsTest {
 
     @Test
     fun `Mario Kart Wheel tricks off SR on a lone Joy-Con, the shoulder that already hops`() {
-        JoyconSide.entries.filterNot { it == JoyconSide.DUAL }.forEach { side ->
+        JoyconSide.entries.filter { it.isLone }.forEach { side ->
             val lone = MarioKartWheelMapping.entries(side)
 
             assertEquals("$side", lone.getValue(WiimoteButton.B.name), lone.getValue(WiimoteButton.Shake.name))

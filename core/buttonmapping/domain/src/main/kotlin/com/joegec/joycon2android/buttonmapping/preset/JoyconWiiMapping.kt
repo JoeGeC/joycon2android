@@ -24,7 +24,7 @@ object JoyconWiiMapping : MappingPreset {
     override fun entries(side: JoyconSide) = WiiMapping.entries(side) + buttons(side).buttonEntries()
 
     private fun buttons(side: JoyconSide): Map<WiimoteButton, JoyconButton> = when (side) {
-        JoyconSide.DUAL -> mapOf(
+        JoyconSide.DUAL, JoyconSide.GAMECUBE -> mapOf(
             WiimoteButton.B to B,
             WiimoteButton.One to R,
             WiimoteButton.Two to ZR,

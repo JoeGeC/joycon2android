@@ -29,6 +29,7 @@ internal fun JoyconSide.shortLabel(): String = when (this) {
     JoyconSide.LEFT -> stringResource(R.string.side_left_short)
     JoyconSide.RIGHT -> stringResource(R.string.side_right_short)
     JoyconSide.DUAL -> stringResource(R.string.side_dual_short)
+    JoyconSide.GAMECUBE -> stringResource(R.string.side_gamecube_short)
 }
 
 @Composable

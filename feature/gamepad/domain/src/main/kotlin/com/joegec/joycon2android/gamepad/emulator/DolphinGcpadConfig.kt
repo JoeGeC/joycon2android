@@ -68,6 +68,12 @@ object DolphinGcpadConfig {
 
     private val STICK_PREFIXES = mapOf(GameCubeStick.MainStick to "Main Stick", GameCubeStick.CStick to "C-Stick")
 
+    // AXIS_BRAKE (23) and AXIS_GAS (22): docs/virtual-gamepad.md#analog-triggers
+    private val ANALOG_TRIGGER_LINES = listOf(
+        "Triggers/L-Analog = `Axis 23+`",
+        "Triggers/R-Analog = `Axis 22+`",
+    )
+
     fun merge(
         existing: String?,
         players: List<PlayerState>,
@@ -77,7 +83,7 @@ object DolphinGcpadConfig {
 
     fun mergeCore(existing: String?, players: List<PlayerState>): String {
         val siDevices = players
-            .filter { it.hasController && !it.hasPro && it.player.index in 1..4 }
+            .filter { it.hasController && (!it.hasPro || it.hasGameCube) && it.player.index in 1..4 }
             .associate { "SIDevice${it.player.index - 1}" to STANDARD_CONTROLLER }
         return IniEditor.setKeys(existing, "[Core]", siDevices)
     }
@@ -104,6 +110,7 @@ object DolphinGcpadConfig {
         mappingFor: (PlayerBody) -> Map<String, String>,
     ): String? {
         val side = when {
+            player.hasGameCube -> JoyconSide.GAMECUBE
             player.hasPro -> return null
             player.hasFullController -> JoyconSide.DUAL
             player.right != null -> JoyconSide.RIGHT
@@ -111,7 +118,8 @@ object DolphinGcpadConfig {
             else -> return null
         }
         val device = "Device = Android/$deviceId/Joy-Con Virtual Gamepad $index"
-        return (listOf(device) + lines(side, mappingFor(PlayerBody(player.player, side))))
+        val analogTriggers = if (player.hasAnalogTriggers) ANALOG_TRIGGER_LINES else emptyList()
+        return (listOf(device) + lines(side, mappingFor(PlayerBody(player.player, side))) + analogTriggers)
             .joinToString("\n", postfix = "\n")
     }
 

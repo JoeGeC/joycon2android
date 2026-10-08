@@ -30,8 +30,8 @@ Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the 
 | 0–1 | 15 button bits, then one padding bit |
 | 2 | hat switch (low nibble: 0 = N … 7 = NW, `0xF` = centre), padding |
 | 3–10 | left X, left Y, right X, right Y — int16, −32767..32767, Y inverted (up is negative) |
-| 11 | left trigger / brake — digital, 0 or 255 |
-| 12 | right trigger / accelerator — digital, 0 or 255 |
+| 11 | left trigger / brake — ZL as 0 or 255, or analog L travel ([below](#analog-triggers)) |
+| 12 | right trigger / accelerator — ZR as 0 or 255, or analog R travel |
 | 13 | overflow buttons, in a trailing vendor-defined collection: bit 0 GR, bit 1 C |
 | 14 | Android keys, in a trailing Consumer Control collection: bit 0 Home, bit 1 Back ([below](#android-keys)) |
 
@@ -54,15 +54,17 @@ shift:
 | R | 7 | 103 `BUTTON_R1` | | | |
 
 - **Capture and GL** take `BUTTON_C` / `BUTTON_Z`, the two slots with no Switch equivalent.
+- **ZL and ZR take the stick clicks** on a controller with analog triggers ([below](#analog-triggers)).
 - **GR and C overflow.** One gamepad collection carries 15 buttons — a 16th lands on `0x13F`, which
   no key layout names — and the Switch 2 controllers have 17. For a Button usage outside a
   pointer/joystick/gamepad collection Linux falls back to `BTN_MISC + n - 1`, which key layouts name
   `BUTTON_1..16`: GR is **188**, C is **189**. The collection is vendor-defined so nothing
   interprets it. Firmware that re-publishes pads (see
   [Device identity](#device-identity)) forwards only keys it knows, so it may drop these two.
-- **Triggers are Brake (left) and Accelerator (right)**, never reversed. Android aliases
-  `AXIS_LTRIGGER` to `AXIS_BRAKE` and `AXIS_RTRIGGER` to `AXIS_GAS`, and re-publishing firmware
-  synthesises `L2`/`R2` from those axes — reversed, a ZR pull arrives as L2.
+- **Triggers are Brake (left) and Accelerator (right)**, never reversed. On Android 14+ these arrive
+  as `AXIS_LTRIGGER`/`AXIS_RTRIGGER` with compat copies as `AXIS_BRAKE` (23) and `AXIS_GAS` (22);
+  Android 7–13 report only 23 and 22. Re-publishing firmware synthesises `L2`/`R2` from those axes —
+  reversed, a ZR pull arrives as L2.
 - **D-pad** is the hat (`AXIS_HAT_X` 15, `AXIS_HAT_Y` 16). Sticks are axes 0/1 (left) and 11/14
   (right). Eden's config uses numeric keycodes; Dolphin's uses names (`Button L2` = ZL,
   `Select` = −, …).
@@ -123,6 +125,23 @@ Left Joy-Con turned 90° counter-clockwise, right 90° clockwise, as on a Switch
   the body's own shoulders point away from the player.
 
 Motion is turned too, but for DSU only — see [dsu-motion.md](dsu-motion.md#sideways-joy-cons).
+
+### Analog triggers
+
+A controller with analog triggers (`ControllerModel.hasAnalogTriggers`, the NSO GameCube controller)
+drives bytes 11/12 with its calibrated L/R travel instead of ZL/ZR
+([calibration](protocol.md#analog-triggers)). The click at the bottom stays on L/R
+(`BUTTON_L1`/`BUTTON_R1`).
+
+ZL and Z (the ZR bit) move to the stick-click bits, `BUTTON_THUMBL`/`BUTTON_THUMBR`, which this
+controller has no use for (`AnalogTriggerMapper`). They can't stay on `BUTTON_L2`/`BUTTON_R2`, which
+can follow the trigger axes instead. Retroid Pocket Nova, Android 13, 2026-10-08: pulling R fired
+Dolphin's `Button R2`, and pressing Z fired nothing. The Nova's L2/R2 setting wasn't the cause.
+
+For such a player, Dolphin setup adds ``Triggers/L-Analog = `Axis 23+` `` and
+``Triggers/R-Analog = `Axis 22+` ``. Dolphin names Android axes by number, and a trigger has only a `+`
+half. Those two ids exist on every Android version the app supports. `Triggers/L`/`R` stay on the
+click: while it is held, Dolphin reports the analog value as full.
 
 ## Emulator config
 
