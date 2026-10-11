@@ -91,7 +91,12 @@ class MainActivity : ComponentActivity() {
         viewModelFactory {
             initializer {
                 val c = (application as JoyconApplication).container
-                SettingsViewModel(c.observeOutputSettings, c.setFasterUpdates, c.setBlockDeviceMotion)
+                SettingsViewModel(
+                    c.observeOutputSettings,
+                    c.setFasterUpdates,
+                    c.setBlockDeviceMotion,
+                    c.setCalibrateDolphinSticks,
+                )
             }
         }
     }
@@ -274,6 +279,7 @@ class MainActivity : ComponentActivity() {
                     onViewModeChange = viewModel::setViewMode,
                     onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
                     onBlockDeviceMotionToggle = settingsViewModel::toggleBlockDeviceMotion,
+                    onCalibrateDolphinSticksToggle = settingsViewModel::toggleCalibrateDolphinSticks,
                 )
             },
             containerColor = Background,

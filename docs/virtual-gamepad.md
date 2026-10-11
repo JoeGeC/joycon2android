@@ -95,6 +95,23 @@ mapping of the console each output's card is set to, while that output runs.
 - **Android handles `HOME` itself** and never passes it to the app in front, so a bound Home always
   leaves the game.
 
+## Dolphin stick calibration
+
+Dolphin setup writes `Main Stick/Calibration = 100.00` and `C-Stick/Calibration = 100.00` for each
+stick it binds, unless Settings → Dolphin → **Calibrate sticks** is off. Setup leaves a Pro
+Controller player's section to the player, so there it only adds both calibration keys, and only
+to a section that already exists.
+
+- **Uncalibrated, Dolphin passes the stick straight through:** a full ±1.0 tilt becomes GameCube ±127.
+  A real pad's gate stops near ±101 (main) and ±92 (C-stick), so every push lands about a quarter
+  further than on hardware, and walking or fine aiming is hard.
+- **Calibrated to a full circle,** Dolphin maps the rim onto its `Gate Size` octagon: 79.37 (main)
+  and 72.21 (C-stick) by default, averaged from genuine controllers.
+- Dolphin for Android has no Calibrate button, and nothing else sets it. Sources: Dolphin's
+  `GCPadEmu.h` and `StickGate.cpp`, and Dolphin PR #8963.
+- Confirmed on a Retroid Pocket Nova with NSO GameCube controllers, 2026-10-11: walking and scope
+  aiming feel like an original controller.
+
 ## Sideways Joy-Cons
 
 ### Why they're set up as Pro Controllers

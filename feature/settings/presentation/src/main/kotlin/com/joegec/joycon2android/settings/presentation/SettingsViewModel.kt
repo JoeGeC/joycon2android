@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.settings.ObserveOutputSettingsUseCase
 import com.joegec.joycon2android.settings.OutputSettings
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
+import com.joegec.joycon2android.settings.SetCalibrateDolphinSticksUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +16,7 @@ class SettingsViewModel(
     observeOutputSettings: ObserveOutputSettingsUseCase,
     private val setFasterUpdates: SetFasterUpdatesUseCase,
     private val setBlockDeviceMotion: SetBlockDeviceMotionUseCase,
+    private val setCalibrateDolphinSticks: SetCalibrateDolphinSticksUseCase,
 ) : ViewModel() {
 
     val outputSettings: StateFlow<OutputSettings> = observeOutputSettings()
@@ -26,6 +28,10 @@ class SettingsViewModel(
 
     fun toggleBlockDeviceMotion(enabled: Boolean) {
         viewModelScope.launch { setBlockDeviceMotion(enabled) }
+    }
+
+    fun toggleCalibrateDolphinSticks(enabled: Boolean) {
+        viewModelScope.launch { setCalibrateDolphinSticks(enabled) }
     }
 
     private companion object {

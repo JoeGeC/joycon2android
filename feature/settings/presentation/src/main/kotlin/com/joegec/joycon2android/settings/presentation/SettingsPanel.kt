@@ -21,6 +21,7 @@ fun SettingsPanel(
     onViewModeChange: (ConnectionViewMode) -> Unit,
     onFasterUpdatesToggle: (Boolean) -> Unit,
     onBlockDeviceMotionToggle: (Boolean) -> Unit,
+    onCalibrateDolphinSticksToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -55,6 +56,9 @@ fun SettingsPanel(
                 warning = if (state.deviceMotionBlockAvailable) null
                 else stringResource(R.string.settings_block_device_motion_needs_shizuku),
             )
+        }
+        SettingsSection {
+            DolphinSetting(state.outputSettings.calibrateDolphinSticks, onCalibrateDolphinSticksToggle)
         }
     }
 }

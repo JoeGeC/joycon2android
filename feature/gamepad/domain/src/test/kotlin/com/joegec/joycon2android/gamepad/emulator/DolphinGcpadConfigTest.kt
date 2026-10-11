@@ -102,6 +102,45 @@ class DolphinGcpadConfigTest {
     }
 
     @Test
+    fun `each bound stick is calibrated to a full circle, so Dolphin applies the GameCube gate`() {
+        val pair = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
+        val lone = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
+
+        val pairResult = merge(null, pair)
+        assertTrue(pairResult.contains("Main Stick/Calibration = 100.00"))
+        assertTrue(pairResult.contains("C-Stick/Calibration = 100.00"))
+        assertFalse(merge(null, lone).contains("C-Stick/")) // no C-stick to calibrate
+    }
+
+    @Test
+    fun `turning calibration off leaves the sticks uncalibrated`() {
+        val pair = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
+        val result = DolphinGcpadConfig.merge(null, pair, mapOf(1 to 7), calibrateSticks = false) { body ->
+            MappingPresets.default(Console.GAMECUBE).entries(body.side)
+        }
+
+        assertFalse(result.contains("Calibration"))
+    }
+
+    @Test
+    fun `a pro controller's hand-made section keeps its bindings and gains only the calibration`() {
+        val handMade = "[GCPad1]\nDevice = Android/5/Pro\nButtons/A = `Button A`\n"
+        val result = merge(handMade, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
+
+        assertTrue(result.contains("Device = Android/5/Pro"))
+        assertTrue(result.contains("Buttons/A = `Button A`"))
+        assertTrue(result.contains("Main Stick/Calibration = 100.00"))
+        assertTrue(result.contains("C-Stick/Calibration = 100.00"))
+    }
+
+    @Test
+    fun `a pro controller with no section of its own gets none`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
+
+        assertFalse(result.contains("[GCPad1]"))
+    }
+
+    @Test
     fun `pro controllers are skipped`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
 

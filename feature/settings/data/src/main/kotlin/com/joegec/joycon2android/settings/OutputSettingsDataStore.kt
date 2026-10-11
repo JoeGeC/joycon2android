@@ -21,6 +21,7 @@ class OutputSettingsDataStore(context: Context) : OutputSettingsRepository {
         OutputSettings(
             fasterUpdates = prefs[FASTER_UPDATES] ?: defaults.fasterUpdates,
             blockDeviceMotion = prefs[BLOCK_DEVICE_MOTION] ?: defaults.blockDeviceMotion,
+            calibrateDolphinSticks = prefs[CALIBRATE_DOLPHIN_STICKS] ?: defaults.calibrateDolphinSticks,
         )
     }
 
@@ -32,8 +33,13 @@ class OutputSettingsDataStore(context: Context) : OutputSettingsRepository {
         dataStore.edit { it[BLOCK_DEVICE_MOTION] = enabled }
     }
 
+    override suspend fun setCalibrateDolphinSticks(enabled: Boolean) {
+        dataStore.edit { it[CALIBRATE_DOLPHIN_STICKS] = enabled }
+    }
+
     private companion object {
         val FASTER_UPDATES = booleanPreferencesKey("fast_motion")
         val BLOCK_DEVICE_MOTION = booleanPreferencesKey("block_device_motion")
+        val CALIBRATE_DOLPHIN_STICKS = booleanPreferencesKey("calibrate_dolphin_sticks")
     }
 }

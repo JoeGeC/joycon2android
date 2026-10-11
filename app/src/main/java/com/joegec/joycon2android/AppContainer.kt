@@ -77,6 +77,7 @@ import com.joegec.joycon2android.settings.ObserveOutputSettingsUseCase
 import com.joegec.joycon2android.settings.OutputSettingsDataStore
 import com.joegec.joycon2android.settings.OutputSettingsRepository
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
+import com.joegec.joycon2android.settings.SetCalibrateDolphinSticksUseCase
 import com.joegec.joycon2android.settings.SetDeviceMotionBlockedUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
 import com.joegec.joycon2android.emulator.EdenDeviceMotionBlocker
@@ -111,6 +112,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.io.File
@@ -188,6 +190,7 @@ class AppContainer(context: Context) {
     val observeOutputSettings = ObserveOutputSettingsUseCase(outputSettings)
     val setFasterUpdates = SetFasterUpdatesUseCase(outputSettings)
     val setBlockDeviceMotion = SetBlockDeviceMotionUseCase(outputSettings)
+    val setCalibrateDolphinSticks = SetCalibrateDolphinSticksUseCase(outputSettings)
 
     // --- Assignment ---
     val assignmentRepository: AssignmentRepository = PlayerAssignmentManager()
@@ -214,6 +217,7 @@ class AppContainer(context: Context) {
         gamepadControllerNumbers = { dolphinGamepadIds(appContext) },
         getControllerMapping = getControllerMapping,
         getRemoteMotion = getRemoteMotion,
+        calibrateDolphinSticks = { observeOutputSettings().first().calibrateDolphinSticks },
     )
 
     val emulatorLauncher = EmulatorLauncher(appContext)

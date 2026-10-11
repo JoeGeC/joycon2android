@@ -24,6 +24,9 @@ object IniEditor {
         return out.toString()
     }
 
+    fun hasSection(existing: String?, section: String): Boolean =
+        existing?.lines()?.any { it.trim() == section } == true
+
     fun valueOf(existing: String?, section: String, key: String): String? {
         val lines = existing?.lines() ?: return null
         val headerIndex = lines.indexOfFirst { it.trim() == section }
