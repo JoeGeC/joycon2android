@@ -42,7 +42,6 @@ fun SettingsPanel(
                 checked = state.outputSettings.fasterUpdates,
                 onCheckedChange = onFasterUpdatesToggle,
                 titleStyle = MaterialTheme.typography.titleMedium,
-                warning = stringResource(R.string.settings_faster_updates_warning),
             )
         }
         SettingsSection {
