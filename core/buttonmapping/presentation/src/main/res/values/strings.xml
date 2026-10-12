@@ -17,6 +17,9 @@
     <string name="controller_mapping_sideways_remote_description">Fixes motion steering. Up is towards the rail.</string>
     <string name="controller_mapping_sideways_remote_warning">When enabled, a right Joy-Con points from its tail rather than its R edge.</string>
     <string name="controller_mapping_thrust">Thrusts</string>
+    <string name="controller_mapping_sensitivity">Motion sensitivity</string>
+    <string name="controller_mapping_sensitivity_description">Scales swings and shakes without changing tilt. 100% reads as the Joy-Con moves.</string>
+    <string name="controller_mapping_sensitivity_value">%1$d%%</string>
     <string name="controller_mapping_thrust_description">For games that measure a push, like Wii Play Billiards. Leave off for swings, such as Wii Sports Golf and Bowling.</string>
     <string name="player_label">P%1$d</string>
     <string name="controller_left">Left</string>

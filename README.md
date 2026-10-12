@@ -122,6 +122,9 @@ target can take **several sources** — tick as many as you like, and any of the
 - **Thrusts.** On the Wii console, turn this on for games that measure a push, like Wii Play
   Billiards' cue. Leave it off for swings: with it on, Wii Sports Golf putts too hard and Bowling
   misses your swing. Every layout starts with it off; saved layouts remember it.
+- **Motion sensitivity.** On the Wii console, a slider from 50% to 200% scales swings and shakes
+  without changing tilt. Every layout starts at 110%, which suits Wii Sports; 100% passes motion
+  through unscaled. Saved layouts remember it.
 
 The layouts the app ships:
 

@@ -10,7 +10,10 @@ interface MappingLayout {
     /** docs/dsu-motion.md#thrusts */
     val thrust: Boolean get() = false
 
-    val motion: RemoteMotion get() = RemoteMotion(sidewaysRemote, thrust)
+    /** docs/dsu-motion.md#motion-sensitivity */
+    val sensitivityPercent: Int get() = RemoteMotion.DEFAULT_SENSITIVITY_PERCENT
+
+    val motion: RemoteMotion get() = RemoteMotion(sidewaysRemote, thrust, sensitivityPercent)
 
     fun entries(side: JoyconSide): Map<String, String>
 }

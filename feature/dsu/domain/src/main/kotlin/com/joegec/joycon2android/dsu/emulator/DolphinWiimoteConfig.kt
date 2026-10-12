@@ -19,6 +19,8 @@ import com.joegec.joycon2android.emulatorconfig.DolphinPaths
 import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
+import java.math.BigDecimal
+import kotlin.math.abs
 
 /** What it writes and why: docs/dsu-motion.md#dolphin-wii-remote-mapping */
 object DolphinWiimoteConfig {
@@ -30,7 +32,8 @@ object DolphinWiimoteConfig {
     // Keeps a tilted grip's gravity leak from nudging the virtual remote off its neutral position.
     private const val SWING_DEAD_ZONE_PERCENT = 20
     private const val SWING_RANGE_PERCENT = 7
-    private const val SWING_SETTLE_SECONDS = 0.03
+    // A slew limit no tilt outruns but a swing does, so subtracting it leaves the motion and drops gravity.
+    private const val TILT_SETTLE_SECONDS = 0.03
 
     private val DOLPHIN_KEYS = mapOf(
         WiimoteButton.A to "Buttons/A",
@@ -151,15 +154,32 @@ object DolphinWiimoteConfig {
 
     private fun imuLines(
         side: JoyconSide,
-        sidewaysRemote: Boolean,
+        motion: RemoteMotion,
         bound: List<MappingSource>?,
     ): List<String> {
-        val bodyInputs = bodyInputs(side, sidewaysRemote)
+        val bodyInputs = bodyInputs(side, motion.sideways)
         return IMU_CONTROLS.map { (control, input) ->
             val read = "`${bodyInputs[input] ?: input}`"
-            val shake = trickShake(trickTrigger(side, control, sidewaysRemote, bound))
-            "$control = " + (shake?.let { "$read + $it" } ?: read)
+            val boost = sensitivityBoost(control, bodyInputs, motion.sensitivityPercent)
+            val shake = trickShake(trickTrigger(side, control, motion.sideways, bound))?.let { "+ $it" }
+            "$control = " + listOfNotNull(read, boost, shake).joinToString(" ")
         } + listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
+    }
+
+    // Dolphin reads each axis as one control minus its opposite, so boosting one control scales the axis.
+    private val BOOSTED_ACCEL_AXES = mapOf("Up" to "Down", "Left" to "Right", "Forward" to "Backward")
+
+    /** Scales motion and leaves gravity alone: docs/dsu-motion.md#motion-sensitivity */
+    private fun sensitivityBoost(control: String, bodyInputs: Map<String, String>, percent: Int): String? {
+        val direction = control.removePrefix("IMUAccelerometer/")
+        val opposite = BOOSTED_ACCEL_AXES[direction] ?: return null
+        val gain = percent - RemoteMotion.UNSCALED_SENSITIVITY_PERCENT
+        if (gain == 0) return null
+        fun read(it: String) = "`${bodyInputs["Accel $it"] ?: "Accel $it"}`"
+        val signed = "(${read(direction)} - ${read(opposite)})"
+        val sign = if (gain > 0) "+" else "-"
+        val fraction = BigDecimal(abs(gain)).movePointLeft(2).stripTrailingZeros().toPlainString()
+        return "$sign $fraction * ($signed - smooth($signed, $TILT_SETTLE_SECONDS))"
     }
 
     // Dolphin adds the swing it emulates to the accelerometer, so only a game that wants thrusts gets one.
@@ -170,7 +190,7 @@ object DolphinWiimoteConfig {
         val pull = body["Accel Backward"] ?: "Accel Backward"
         val signed = "(`$thrust` - `$pull`)"
         return listOf(
-            "Swing/Forward = $signed - smooth($signed, $SWING_SETTLE_SECONDS)",
+            "Swing/Forward = $signed - smooth($signed, $TILT_SETTLE_SECONDS)",
             "Swing/Forward/Range = $SWING_RANGE_PERCENT",
             "Swing/Dead Zone = $SWING_DEAD_ZONE_PERCENT",
         )
@@ -230,7 +250,7 @@ object DolphinWiimoteConfig {
         }
         val mapping = mappingFor(body)
         val shake = mapping.toSourceMap<WiimoteButton>()[WiimoteButton.Shake]
-        return (header + lines(side, sidewaysRemote, mapping) + imuLines(side, sidewaysRemote, shake) +
+        return (header + lines(side, sidewaysRemote, mapping) + imuLines(side, motion, shake) +
             swingLines(side, motion) + nunchukImu)
             .joinToString("\n", postfix = "\n")
     }

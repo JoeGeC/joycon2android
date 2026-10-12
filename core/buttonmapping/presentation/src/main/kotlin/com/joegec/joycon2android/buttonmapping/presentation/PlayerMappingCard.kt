@@ -22,6 +22,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -31,12 +33,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import kotlin.math.roundToInt
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.RemoteMotion
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.components.DropdownOption
+import com.joegec.joycon2android.ui.components.SettingSlider
 import com.joegec.joycon2android.ui.components.SettingSwitch
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
@@ -93,8 +98,9 @@ fun PlayerMappingCard(
                         actions.setSidewaysRemote(state.body, it)
                     }
                 }
-                if (state.offersThrust) {
+                if (state.offersRemoteMotion) {
                     ThrustSwitch(state.thrust) { actions.setThrust(state.body, it) }
+                    SensitivitySlider(state.sensitivityPercent) { actions.setSensitivity(state.body, it) }
                 }
                 MappingBindings(console, state, actions, androidKeysNeedShizuku)
             }
@@ -183,6 +189,24 @@ private fun ThrustSwitch(enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
         description = stringResource(R.string.controller_mapping_thrust_description),
         checked = enabled,
         onCheckedChange = onSetEnabled,
+        modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
+    )
+}
+
+/** Held locally while dragging, so the thumb doesn't wait on storage. docs/dsu-motion.md#motion-sensitivity */
+@Composable
+private fun SensitivitySlider(percent: Int, onSetPercent: (Int) -> Unit) {
+    var dragged by remember(percent) { mutableFloatStateOf(percent.toFloat()) }
+    val range = RemoteMotion.SENSITIVITY_PERCENT_RANGE
+    SettingSlider(
+        title = stringResource(R.string.controller_mapping_sensitivity),
+        description = stringResource(R.string.controller_mapping_sensitivity_description),
+        valueLabel = stringResource(R.string.controller_mapping_sensitivity_value, dragged.roundToInt()),
+        value = dragged,
+        valueRange = range.first.toFloat()..range.last.toFloat(),
+        steps = (range.last - range.first) / RemoteMotion.SENSITIVITY_PERCENT_STEP - 1,
+        onValueChange = { dragged = it },
+        onValueChangeFinished = { onSetPercent(dragged.roundToInt()) },
         modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
     )
 }

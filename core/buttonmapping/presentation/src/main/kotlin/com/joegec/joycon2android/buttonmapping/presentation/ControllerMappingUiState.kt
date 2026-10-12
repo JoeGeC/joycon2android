@@ -21,7 +21,8 @@ data class PlayerMappingUiState(
     val sidewaysRemote: Boolean,
     val offersSidewaysRemote: Boolean,
     val thrust: Boolean,
-    val offersThrust: Boolean,
+    val offersRemoteMotion: Boolean,
+    val sensitivityPercent: Int,
     val mapping: Map<String, String>,
 )
 
@@ -44,7 +45,8 @@ private fun PlayerMapping.uiState(console: Console, layouts: List<MappingLayout>
     sidewaysRemote = motion.sideways,
     offersSidewaysRemote = MappingOptions.offersSidewaysRemote(console, body.side),
     thrust = motion.thrust,
-    offersThrust = MappingOptions.offersThrust(console),
+    sensitivityPercent = motion.sensitivityPercent,
+    offersRemoteMotion = MappingOptions.offersRemoteMotion(console),
     mapping = entries,
 )
 

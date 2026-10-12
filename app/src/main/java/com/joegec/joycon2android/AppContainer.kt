@@ -35,6 +35,7 @@ import com.joegec.joycon2android.buttonmapping.ObserveGlobalMappingUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveSavedLayoutsUseCase
 import com.joegec.joycon2android.buttonmapping.ObservePlayerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveRemoteMotionUseCase
+import com.joegec.joycon2android.buttonmapping.ObserveSensitivityUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveSidewaysRemoteUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveThrustUseCase
 import com.joegec.joycon2android.buttonmapping.SaveCustomLayoutUseCase
@@ -42,6 +43,9 @@ import com.joegec.joycon2android.buttonmapping.SaveGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SavedLayoutDataStore
 import com.joegec.joycon2android.buttonmapping.SavedLayoutRepository
 import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.SensitivityDataStore
+import com.joegec.joycon2android.buttonmapping.SensitivityRepository
+import com.joegec.joycon2android.buttonmapping.SetSensitivityUseCase
 import com.joegec.joycon2android.buttonmapping.SetSidewaysRemoteUseCase
 import com.joegec.joycon2android.buttonmapping.SetThrustUseCase
 import com.joegec.joycon2android.buttonmapping.SidewaysRemoteDataStore
@@ -134,22 +138,30 @@ class AppContainer(context: Context) {
     private val globalLayoutRepository: GlobalLayoutRepository = GlobalLayoutDataStore(appContext)
     private val sidewaysRemoteRepository: SidewaysRemoteRepository = SidewaysRemoteDataStore(appContext)
     private val thrustRepository: ThrustRepository = ThrustDataStore(appContext)
+    private val sensitivityRepository: SensitivityRepository = SensitivityDataStore(appContext)
 
     private val observeControllerMapping = ObserveControllerMappingUseCase(controllerMappingRepository)
     private val observeRemoteMotion = ObserveRemoteMotionUseCase(
         ObserveSidewaysRemoteUseCase(sidewaysRemoteRepository),
         ObserveThrustUseCase(thrustRepository),
+        ObserveSensitivityUseCase(sensitivityRepository),
     )
     private val observePlayerMapping =
         ObservePlayerMappingUseCase(observeControllerMapping, observeRemoteMotion, savedLayoutRepository)
     private val applyPlayerMapping =
-        ApplyPlayerMappingUseCase(controllerMappingRepository, sidewaysRemoteRepository, thrustRepository)
+        ApplyPlayerMappingUseCase(
+            controllerMappingRepository,
+            sidewaysRemoteRepository,
+            thrustRepository,
+            sensitivityRepository,
+        )
 
     val observeGlobalMapping = ObserveGlobalMappingUseCase(observePlayerMapping, globalLayoutRepository)
     val observeSavedLayouts = ObserveSavedLayoutsUseCase(savedLayoutRepository)
     val setControllerMapping = SetControllerMappingUseCase(controllerMappingRepository)
     val setSidewaysRemote = SetSidewaysRemoteUseCase(sidewaysRemoteRepository)
     val setThrust = SetThrustUseCase(thrustRepository)
+    val setSensitivity = SetSensitivityUseCase(sensitivityRepository)
     val applyMappingLayout = ApplyMappingLayoutUseCase(savedLayoutRepository, applyPlayerMapping)
     val applyGlobalLayout =
         ApplyGlobalLayoutUseCase(globalLayoutRepository, applyMappingLayout, applyPlayerMapping)

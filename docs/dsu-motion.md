@@ -227,6 +227,28 @@ Dolphin's Swing to the thrust axis.
 - **Range 7%, dead zone 20%.** Inputs arrive at 9.8 per g, so full range saturates on a twitch; 7%
   puts a full lunge at ~1.5 g. The dead zone keeps a tilted grip's leak from nudging the remote.
 
+### Motion sensitivity
+
+A per-player slider in the mapping editor, 50–200% in steps of 5 (`RemoteMotion.sensitivityPercent`,
+`SensitivityRepository`), 110% in every shipped layout and saved with custom ones. Below or above
+100%, `DolphinWiimoteConfig` adds a high-passed copy of each accelerometer axis to that axis:
+
+```
+IMUAccelerometer/Up = `Accel Up` + 0.25 * (<axis> - smooth(<axis>, 0.03))
+<axis> = (`Accel Up` - `Accel Down`)
+```
+
+- **Why not a gain.** `Accel Up * 1.25` also makes gravity read 1.25 g at rest, which bends tilt.
+  The same 0.03 s slew limit as the [thrust](#thrusts) input passes swings and drops held tilt, so
+  only motion is scaled.
+- **One control per axis.** Dolphin reads each axis as one control minus its opposite and clamps
+  neither, so the term goes on Up, Left and Forward only; on both it would count twice.
+- **Why it exists.** Wii Sports Golf and Bowling read swings slightly soft (2026-10, right Joy-Con).
+  Likely causes: one sample per 15 ms report against the Wii Remote's 100 Hz clips swing peaks, and a
+  Joy-Con is shorter and lighter than a Wii Remote. A flat 1.25 gain felt slightly too strong; 110%
+  felt right, hence the default.
+- **The Nunchuk is not scaled.**
+
 ## MotionPlus tutorial replays
 
 A MotionPlus game replaying its tutorial video every boot isn't a mapping problem. The game records

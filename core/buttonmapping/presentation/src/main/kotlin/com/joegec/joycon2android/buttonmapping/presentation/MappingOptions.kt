@@ -25,7 +25,7 @@ internal object MappingOptions {
     fun offersSidewaysRemote(console: Console, side: JoyconSide) =
         console == Console.WIIMOTE_NUNCHUK && side != JoyconSide.DUAL
 
-    fun offersThrust(console: Console) = console == Console.WIIMOTE_NUNCHUK
+    fun offersRemoteMotion(console: Console) = console == Console.WIIMOTE_NUNCHUK
 
     @Composable
     fun targets(console: Console, section: MappingSection): List<Pair<String, String>> = when (section) {

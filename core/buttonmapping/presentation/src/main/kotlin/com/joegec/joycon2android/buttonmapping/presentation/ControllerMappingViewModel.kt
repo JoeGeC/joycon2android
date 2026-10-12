@@ -14,6 +14,7 @@ import com.joegec.joycon2android.buttonmapping.SaveCustomLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SaveGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.SetSidewaysRemoteUseCase
+import com.joegec.joycon2android.buttonmapping.SetSensitivityUseCase
 import com.joegec.joycon2android.buttonmapping.SetThrustUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +36,7 @@ class ControllerMappingViewModel(
     private val setControllerMapping: SetControllerMappingUseCase,
     private val setSidewaysRemote: SetSidewaysRemoteUseCase,
     private val setThrust: SetThrustUseCase,
+    private val setSensitivity: SetSensitivityUseCase,
     private val saveCustomLayout: SaveCustomLayoutUseCase,
     private val saveGlobalLayout: SaveGlobalLayoutUseCase,
     private val deleteCustomLayout: DeleteCustomLayoutUseCase,
@@ -69,6 +71,10 @@ class ControllerMappingViewModel(
 
     fun setThrustEnabled(body: PlayerBody, enabled: Boolean) = onTarget {
         setThrust(it.console, body, enabled)
+    }
+
+    fun setSensitivityPercent(body: PlayerBody, percent: Int) = onTarget {
+        setSensitivity(it.console, body, percent)
     }
 
     /** Null means the whole session. */

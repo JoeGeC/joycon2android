@@ -9,6 +9,7 @@ private const val CONSOLE = "console"
 private const val SIDE = "side"
 private const val SIDEWAYS_REMOTE = "sidewaysRemote"
 private const val THRUST = "thrust"
+private const val SENSITIVITY_PERCENT = "sensitivityPercent"
 private const val BINDINGS = "bindings"
 private const val BODIES = "bodies"
 private const val PLAYER = "player"
@@ -20,6 +21,7 @@ internal fun SavedLayout.toJson(): String = JSONObject()
     .put(SIDE, side.name)
     .put(SIDEWAYS_REMOTE, sidewaysRemote)
     .put(THRUST, thrust)
+    .put(SENSITIVITY_PERCENT, sensitivityPercent)
     .put(BINDINGS, JSONObject(bindings))
     .toString()
 
@@ -34,6 +36,7 @@ internal fun savedLayoutOf(id: String, json: String): SavedLayout? = runCatching
         bindings = document.getJSONObject(BINDINGS).toStringMap(),
         sidewaysRemote = document.optBoolean(SIDEWAYS_REMOTE),
         thrust = document.optBoolean(THRUST),
+        sensitivityPercent = document.optInt(SENSITIVITY_PERCENT, RemoteMotion.DEFAULT_SENSITIVITY_PERCENT),
     )
 }.getOrNull()
 
@@ -58,12 +61,17 @@ private fun PlayerLayoutSnapshot.toJson() = JSONObject()
     .put(SIDE, body.side.name)
     .put(SIDEWAYS_REMOTE, motion.sideways)
     .put(THRUST, motion.thrust)
+    .put(SENSITIVITY_PERCENT, motion.sensitivityPercent)
     .put(ENTRIES, JSONObject(entries))
 
 private fun JSONObject.toSnapshot() = PlayerLayoutSnapshot(
     body = PlayerBody(PlayerNumber.valueOf(getString(PLAYER)), JoyconSide.valueOf(getString(SIDE))),
     entries = getJSONObject(ENTRIES).toStringMap(),
-    motion = RemoteMotion(sideways = optBoolean(SIDEWAYS_REMOTE), thrust = optBoolean(THRUST)),
+    motion = RemoteMotion(
+        sideways = optBoolean(SIDEWAYS_REMOTE),
+        thrust = optBoolean(THRUST),
+        sensitivityPercent = optInt(SENSITIVITY_PERCENT, RemoteMotion.DEFAULT_SENSITIVITY_PERCENT),
+    ),
 )
 
 private fun JSONObject.toStringMap(): Map<String, String> =

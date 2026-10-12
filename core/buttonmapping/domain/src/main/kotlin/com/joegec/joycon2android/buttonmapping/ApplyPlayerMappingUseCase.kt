@@ -4,6 +4,7 @@ class ApplyPlayerMappingUseCase(
     private val mappingRepository: ControllerMappingRepository,
     private val sidewaysRemoteRepository: SidewaysRemoteRepository,
     private val thrustRepository: ThrustRepository,
+    private val sensitivityRepository: SensitivityRepository,
 ) {
     suspend operator fun invoke(
         console: Console,
@@ -14,5 +15,6 @@ class ApplyPlayerMappingUseCase(
         mappingRepository.replace(console, body, entries)
         sidewaysRemoteRepository.set(console, body, motion.sideways)
         thrustRepository.set(console, body, motion.thrust)
+        sensitivityRepository.set(console, body, motion.sensitivityPercent)
     }
 }

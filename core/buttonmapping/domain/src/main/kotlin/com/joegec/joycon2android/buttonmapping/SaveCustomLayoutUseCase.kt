@@ -18,6 +18,7 @@ class SaveCustomLayoutUseCase(
                 bindings = current.entries,
                 sidewaysRemote = current.motion.sideways,
                 thrust = current.motion.thrust,
+                sensitivityPercent = current.motion.sensitivityPercent,
             ),
         )
     }

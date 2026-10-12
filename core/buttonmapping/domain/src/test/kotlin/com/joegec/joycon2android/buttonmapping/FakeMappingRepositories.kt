@@ -42,6 +42,16 @@ internal class FakeThrusts : ThrustRepository {
     }
 }
 
+internal class FakeSensitivities : SensitivityRepository {
+    private val stored = MutableStateFlow(emptyMap<BodyKey, Int>())
+
+    override fun observe(console: Console, body: PlayerBody): Flow<Int?> = stored.map { it[console to body] }
+
+    override suspend fun set(console: Console, body: PlayerBody, percent: Int) {
+        stored.update { it + ((console to body) to percent) }
+    }
+}
+
 internal class FakeSavedLayouts(vararg initial: SavedLayout) : SavedLayoutRepository {
     private val stored = MutableStateFlow(initial.associateBy { it.id })
 

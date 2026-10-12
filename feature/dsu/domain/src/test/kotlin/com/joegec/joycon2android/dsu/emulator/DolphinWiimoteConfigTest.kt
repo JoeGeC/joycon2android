@@ -21,6 +21,8 @@ private val wiimoteMapping: (PlayerBody) -> Map<String, String> = { defaultWiimo
 
 private fun wiimoteMappingFor(body: PlayerBody) = defaultWiimoteMapping(body.side)
 
+private val unscaled = RemoteMotion(sensitivityPercent = RemoteMotion.UNSCALED_SENSITIVITY_PERCENT)
+
 class DolphinWiimoteConfigTest {
 
     private fun joycon(side: Side) = ConnectedJoycon(address = side.name, side = side, deviceName = "Joy-Con")
@@ -30,7 +32,13 @@ class DolphinWiimoteConfigTest {
         players: List<PlayerState>,
         sidewaysRemote: Boolean = false,
         thrust: Boolean = false,
-    ) = DolphinWiimoteConfig.merge(existing, players, { RemoteMotion(sidewaysRemote, thrust) }, wiimoteMapping)
+        sensitivityPercent: Int = RemoteMotion.UNSCALED_SENSITIVITY_PERCENT,
+    ) = DolphinWiimoteConfig.merge(
+        existing,
+        players,
+        { RemoteMotion(sidewaysRemote, thrust, sensitivityPercent) },
+        wiimoteMapping,
+    )
 
     @Test
     fun `right-only player maps the stick to the d-pad and uses no extension`() {
@@ -73,7 +81,7 @@ class DolphinWiimoteConfigTest {
         val pair = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
         val mapping = defaultWiimoteMapping(JoyconSide.DUAL) + mapOf("NunchukStick_UP" to "Up")
 
-        val result = DolphinWiimoteConfig.merge(null, listOf(pair), { RemoteMotion() }) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, listOf(pair), { unscaled }) { mapping }
 
         assertTrue(result.contains("Nunchuk/Stick/Up = `Pad N`"))
         assertTrue(result.contains("Nunchuk/Stick/Down = `Left Y-`"))
@@ -84,7 +92,7 @@ class DolphinWiimoteConfigTest {
         val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("NunchukStick_UP" to "X", "NunchukStick_DOWN" to "B")
         val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
 
-        val result = DolphinWiimoteConfig.merge(null, player, { RemoteMotion() }) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, player, { unscaled }) { mapping }
 
         assertTrue(result.contains("Extension = Nunchuk"))
         assertTrue(result.contains("Nunchuk/Stick/Up = `Circle`")) // physical X rotates onto A
@@ -97,7 +105,7 @@ class DolphinWiimoteConfigTest {
         val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("Recenter" to "Plus")
         val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
 
-        val result = DolphinWiimoteConfig.merge(null, player, { RemoteMotion() }) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, player, { unscaled }) { mapping }
 
         assertTrue(result.contains("IMUIR/Recenter = `Options`"))
     }
@@ -107,7 +115,7 @@ class DolphinWiimoteConfigTest {
         val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("Recenter" to "")
         val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
 
-        val result = DolphinWiimoteConfig.merge(null, player, { RemoteMotion() }) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, player, { unscaled }) { mapping }
 
         assertFalse(result.contains("IMUIR/Recenter ="))
     }
@@ -117,7 +125,7 @@ class DolphinWiimoteConfigTest {
         val mapping = defaultWiimoteMapping(JoyconSide.RIGHT) + mapOf("DPadUp" to "RIGHT_STICK_UP|SlRight")
         val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
 
-        val result = DolphinWiimoteConfig.merge(null, player, { RemoteMotion() }) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, player, { unscaled }) { mapping }
 
         assertTrue(result.contains("D-Pad/Up = `Left X+` | `L1`")) // SL rotates onto L held sideways
     }
@@ -197,6 +205,40 @@ class DolphinWiimoteConfigTest {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), thrust = true)
 
         assertTrue(result.contains("Swing/Forward = (`Accel Right` - `Accel Left`) - smooth("))
+    }
+
+    @Test
+    fun `sensitivity boosts each accelerometer axis by its high-passed motion`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        val result = merge(null, listOf(both), sensitivityPercent = 125)
+
+        val up = "(`Accel Up` - `Accel Down`)"
+        assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up` + 0.25 * ($up - smooth($up, 0.03))"))
+        assertTrue(result.contains("IMUAccelerometer/Down = `Accel Down`\n"))
+        assertTrue(result.contains("IMUAccelerometer/Left = `Accel Left` + 0.25 * ("))
+        assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Forward` + 0.25 * ("))
+    }
+
+    @Test
+    fun `a sensitivity under 100 takes motion away`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sensitivityPercent = 80)
+
+        assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up` - 0.2 * ("))
+    }
+
+    @Test
+    fun `a lone Joy-Con's boost follows its body's axes`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sensitivityPercent = 150)
+
+        assertTrue(result.contains("IMUAccelerometer/Left = `Accel Forward` + 0.5 * ((`Accel Forward` - `Accel Backward`) - smooth("))
+    }
+
+    @Test
+    fun `at 100 percent the accelerometer reads straight through`() {
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+
+        assertFalse(result.contains("IMUAccelerometer/Up = `Accel Up` +"))
     }
 
     @Test
@@ -319,7 +361,7 @@ class DolphinWiimoteConfigTest {
         val pair = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
         val mapping = defaultWiimoteMapping(JoyconSide.DUAL) + mapOf("Shake" to "R")
 
-        val result = DolphinWiimoteConfig.merge(null, pair, { RemoteMotion() }) { mapping }
+        val result = DolphinWiimoteConfig.merge(null, pair, { unscaled }) { mapping }
 
         assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up` + pulse(`R1`, 0.6)"))
         assertFalse(result.contains("IMUAccelerometer/Down = `Accel Down` + pulse")) // a button has no direction
