@@ -22,7 +22,7 @@ internal fun ProControllerLayout(
 ) {
     val pressed = state.pressed
     JoyconCard(
-        accentColor = state.left?.accentColor,
+        controller = state.left,
         onClick = { onUnassign(state.left!!.address) },
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -67,7 +67,7 @@ private fun ButtonRow(state: PlayerState, pressed: Set<String>) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in pressed)
-        BatteryPill(state.leftInput.batteryVolts)
+        state.leftInput.battery?.let { BatteryPill(it) }
         SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in pressed)
     }
 }

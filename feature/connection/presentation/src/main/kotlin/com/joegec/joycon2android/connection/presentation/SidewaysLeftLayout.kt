@@ -27,7 +27,7 @@ internal fun LeftSidewaysLayout(
     modifier: Modifier = Modifier,
 ) {
     JoyconCard(
-        accentColor = state.left?.accentColor,
+        controller = state.left,
         onClick = { onUnassign(state.left!!.address) },
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -79,11 +79,11 @@ private fun TopRow(state: PlayerState) {
     ) {
         SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in pressed)
         AnimatedVisibility(
-            visible = state.leftInput.batteryVolts > 0f,
+            visible = state.leftInput.battery != null,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            BatteryPill(state.leftInput.batteryVolts)
+            state.leftInput.battery?.let { BatteryPill(it) }
         }
         CaptureButton(pressed)
     }

@@ -10,4 +10,5 @@ data class ConnectedJoycon(
     val ready: Boolean = false,
 ) {
     val accentColor: Int? get() = connectionState.accentColor
+    val connectionLost: Boolean get() = connectionState.connectionLost
 }

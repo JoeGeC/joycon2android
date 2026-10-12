@@ -14,5 +14,6 @@ data class JoyconInput(
     val gyroX: Int = 0,
     val gyroY: Int = 0,
     val gyroZ: Int = 0,
-    val batteryVolts: Float = 0f,
+    val battery: BatteryCharge? = null,
+    val motionSupport: MotionSupport = MotionSupport.Full,
 )

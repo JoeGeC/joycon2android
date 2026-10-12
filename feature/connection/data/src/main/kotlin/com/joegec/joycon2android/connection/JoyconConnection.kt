@@ -7,12 +7,12 @@ import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothProfile
-import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.joegec.joycon2android.connection.console.ConsoleChannel
+import com.joegec.joycon2android.connection.console.ConsoleSession
 import com.joegec.joycon2android.model.JoyconConnectionState
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerNumber
@@ -27,48 +27,18 @@ class JoyconConnection(
     private val context: Context,
     val side: Side,
     val deviceName: String,
+    private val onReady: () -> Unit,
     private val onDisconnected: (() -> Unit)? = null,
 ) {
     companion object {
         private const val TAG = "Joycon2"
-
-        private val INPUT_SERVICE = UUID.fromString("ab7de9be-89fe-49ad-828f-118f09df7fd0")
-        private val NOTIFY_CHAR = UUID.fromString("ab7de9be-89fe-49ad-828f-118f09df7fd2")
-        private val WRITE_CHAR = UUID.fromString("649d4ac9-8eb7-4e6c-af44-1ea54fe5f005")
-        private val CMD_RESPONSE_CHAR = UUID.fromString("c765a961-d9d8-4d36-a20a-5315b111836a")
-        private val CCCD = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
-
-        private val INIT_CMD_1 = byteArrayOf(
-            0x0C, 0x91.toByte(), 0x01, 0x02, 0x00, 0x04,
-            0x00, 0x00, 0xFF.toByte(), 0x00, 0x00, 0x00
-        )
-        private val INIT_CMD_2 = byteArrayOf(
-            0x0C, 0x91.toByte(), 0x01, 0x04, 0x00, 0x04,
-            0x00, 0x00, 0xFF.toByte(), 0x00, 0x00, 0x00
-        )
-
-        // 0x40 bytes of the DeviceInfo block at 0x013000: docs/protocol.md#spi-reads
-        private val SPI_READ_COLOR_CMD = byteArrayOf(
-            0x02, 0x91.toByte(), 0x00, 0x04, 0x00, 0x08, 0x00, 0x00,
-            0x40, 0x7E, 0x00, 0x00, 0x00, 0x30, 0x01, 0x00
-        )
-
-        // Bitmask layout: docs/protocol.md#player-leds
-        private fun playerLedCmd(bitmask: Byte): ByteArray {
-            return byteArrayOf(
-                0x09, 0x91.toByte(), 0x01, 0x07, 0x00, 0x08, 0x00, 0x00,
-                bitmask, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-            )
-        }
-
-        // All four solid.
-        private val LED_ALL_ON_CMD = byteArrayOf(
-            0x09, 0x91.toByte(), 0x01, 0x07, 0x00, 0x08, 0x00, 0x00,
-            0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-        )
-
         private const val DESIRED_MTU = 247
-        private const val INIT_GAP_MS = 500L
+
+        // A controller that speaks the common protocol answers the SPI read or starts streaming
+        // well within this window; one that answers later is moved back by its first report.
+        private const val CONSOLE_FALLBACK_MS = 1_500L
+
+        private const val RETURN_WINDOW_MS = 120_000L
     }
 
     private val _connectionState = MutableStateFlow(
@@ -80,28 +50,84 @@ class JoyconConnection(
     val input: StateFlow<JoyconInput> = _input.asStateFlow()
 
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val opQueue = GattOpQueue()
+    private val ops = GattOpQueue()
+    private val returnWindow = ReturnWindow(RETURN_WINDOW_MS, MainThreadScheduler(), ::giveUpOnReturn)
     private val stickCalibrator = StickCalibrator()
     private var gatt: BluetoothGatt? = null
-    private var writeChar: BluetoothGattCharacteristic? = null
-    private var notifyChar: BluetoothGattCharacteristic? = null
-    private var cmdResponseChar: BluetoothGattCharacteristic? = null
-    private var pendingPlayerLed: PlayerNumber? = null
+    private var device: BluetoothDevice? = null
+    private var common: CommonSession? = null
+    @Volatile private var console: ConsoleSession? = null
+
+    // The console protocol takes over for as long as it runs; everything else goes through here.
+    private val protocol: ControllerProtocol? get() = console ?: common
+
     @Volatile var initComplete = false
         private set
     @Volatile private var highPriority = false
-    private var ledSentAfterFirstPacket = false
+    @Volatile private var securityRequested = false
+    @Volatile private var servicesDiscovered = false
+    @Volatile private var commonReportSeen = false
+    @Volatile private var commandReplySeen = false
+    @Volatile private var assignedPlayer: PlayerNumber? = null
+    @Volatile private var everReady = false
+    @Volatile private var released = false
+
+    val awaitingReturn: Boolean get() = returnWindow.isOpen
 
     fun connect(device: BluetoothDevice) {
+        this.device = device
+        gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+    }
+
+    /** docs/protocol.md#android-workarounds */
+    fun onSecurityRequested() {
+        if (securityRequested) return
+        securityRequested = true
+        Log.i(TAG, "[$side] SMP security request received")
+        val g = gatt ?: return
+        if (servicesDiscovered && !commonChannelAnswered()) mainHandler.post { startConsoleSession(g) }
+    }
+
+    fun onPairingFailed() {
+        protocol?.onPairingFailed()
+    }
+
+    fun reassertPriority() {
+        if (initComplete) protocol?.setHighPriority(highPriority)
+    }
+
+    fun setHighPriority(enabled: Boolean) {
+        highPriority = enabled
+        if (initComplete) protocol?.setHighPriority(enabled)
+    }
+
+    fun setPlayerLed(player: PlayerNumber) {
+        assignedPlayer = player
+        protocol?.setPlayerLed(player.ledBitmask)
+    }
+
+    fun clearPlayerLed() {
+        assignedPlayer = null
+        protocol?.setPlayerLed(ControllerCommands.LED_ALL_ON)
+    }
+
+    /** A scan found this controller while it was awaited, so connect now rather than on its own time. */
+    fun reconnect(device: BluetoothDevice) {
+        if (!awaitingReturn) return
+        Log.i(TAG, "[$side] Found by a scan while awaited; connecting directly")
+        gatt?.close()
         gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
     }
 
     fun disconnect() {
+        released = true
+        returnWindow.close()
+        stopProtocols()
         mainHandler.removeCallbacksAndMessages(null)
         gatt?.disconnect()
         gatt?.close()
         gatt = null
-        opQueue.clear()
+        ops.reset()
         _connectionState.value = JoyconConnectionState()
         _input.value = JoyconInput()
     }
@@ -111,6 +137,7 @@ class JoyconConnection(
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     Log.i(TAG, "[$side] Connected. Requesting MTU $DESIRED_MTU")
+                    returnWindow.close()
                     _connectionState.value = JoyconConnectionState(
                         connected = true, deviceName = deviceName
                     )
@@ -118,18 +145,15 @@ class JoyconConnection(
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.w(TAG, "[$side] Disconnected (status=$status)")
-                    opQueue.clear()
-                    g.close()
-                    gatt = null
-                    initComplete = false
-                    ledSentAfterFirstPacket = false
+                    endSession(g)
+                    _input.value = JoyconInput()
+                    if (!released && (everReady || awaitingReturn) && awaitReturn(status)) return
                     _connectionState.value = JoyconConnectionState(
                         deviceName = deviceName,
                         error = if (status != BluetoothGatt.GATT_SUCCESS) {
                             "Connection lost (status $status)"
                         } else null
                     )
-                    _input.value = JoyconInput()
                     onDisconnected?.invoke()
                 }
             }
@@ -143,188 +167,183 @@ class JoyconConnection(
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
             Log.i(TAG, "[$side] Services discovered (status=$status)")
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                _connectionState.value = JoyconConnectionState(
-                    error = "Service discovery failed", deviceName = deviceName
-                )
+                fail("Service discovery failed")
                 return
             }
 
-            val svc = g.getService(INPUT_SERVICE)
-            if (svc == null) {
-                _connectionState.value = JoyconConnectionState(
-                    error = "Not a compatible Joy-Con 2", deviceName = deviceName
-                )
+            servicesDiscovered = true
+            if (securityRequested) {
+                startConsoleSession(g)
                 return
             }
-
-            writeChar = svc.getCharacteristic(WRITE_CHAR)
-            notifyChar = svc.getCharacteristic(NOTIFY_CHAR)
-            cmdResponseChar = svc.getCharacteristic(CMD_RESPONSE_CHAR)
-            if (writeChar == null || notifyChar == null) {
-                _connectionState.value = JoyconConnectionState(
-                    error = "Missing BLE characteristics", deviceName = deviceName
-                )
+            if (!CommonChannel.hasService(g)) {
+                fail("Not a compatible Joy-Con 2")
                 return
             }
-            writeChar!!.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-
-            // LED and SPI replies arrive here.
-            if (cmdResponseChar != null) {
-                g.setCharacteristicNotification(cmdResponseChar, true)
-                val cmdCccd = cmdResponseChar!!.getDescriptor(CCCD)
-                if (cmdCccd != null) {
-                    opQueue.enqueue {
-                        Log.d(TAG, "[$side] Writing CMD_RESPONSE CCCD")
-                        writeDescriptor(g, cmdCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-                    }
-                } else {
-                    Log.w(TAG, "[$side] CMD_RESPONSE char has no CCCD descriptor")
-                }
+            val channel = CommonChannel.find(g)
+            if (channel == null) {
+                fail("Missing BLE characteristics")
+                return
             }
-
-            g.setCharacteristicNotification(notifyChar, true)
-            val notifyCccd = notifyChar!!.getDescriptor(CCCD)
-            if (notifyCccd != null) {
-                opQueue.enqueue {
-                    Log.d(TAG, "[$side] Writing NOTIFY CCCD")
-                    writeDescriptor(g, notifyCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-                }
-            } else {
-                Log.e(TAG, "[$side] NOTIFY char has no CCCD descriptor — notifications won't work!")
-            }
-            enqueueInitWrite(g, INIT_CMD_1)
-            enqueueInitWrite(g, INIT_CMD_2)
-            enqueueInitWrite(g, SPI_READ_COLOR_CMD)
-
-            opQueue.enqueue {
-                initComplete = true
-                _connectionState.value = _connectionState.value.copy(
-                    connected = true, ready = true, deviceName = deviceName
-                )
-                Log.i(TAG, "[$side] Init sequence complete")
-                if (highPriority) requestPriority(g)
-                false // no GATT op — advance immediately
-            }
+            common = CommonSession(
+                gatt = g,
+                channel = channel,
+                side = side,
+                ops = ops,
+                initialLedBitmask = assignedPlayer?.ledBitmask ?: ControllerCommands.LED_ALL_ON,
+                onInput = ::publishInput,
+                onAccentColor = ::publishAccentColor,
+                onReady = {
+                    onProtocolReady()
+                    mainHandler.postDelayed({ fallBackToConsoleIfSilent(g) }, CONSOLE_FALLBACK_MS)
+                },
+            ).also { it.start() }
         }
 
         override fun onDescriptorWrite(
             g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int
         ) {
             Log.i(TAG, "[$side] CCCD write status=$status")
-            mainHandler.post { opQueue.complete() }
+            ops.complete(status)
         }
 
         override fun onCharacteristicWrite(
             g: BluetoothGatt, ch: BluetoothGattCharacteristic, status: Int
         ) {
             Log.d(TAG, "[$side] Char write status=$status initComplete=$initComplete")
-            val delay = if (initComplete) 0L else INIT_GAP_MS
-            mainHandler.postDelayed({ opQueue.complete() }, delay)
+            ops.complete(status)
         }
 
         @Deprecated("Deprecated in Java - used for API < 33")
         override fun onCharacteristicChanged(
             g: BluetoothGatt, ch: BluetoothGattCharacteristic
         ) {
-            handleCharacteristicChanged(g, ch.uuid, ch.value ?: return)
+            handleCharacteristicChanged(ch.uuid, ch.value ?: return)
         }
 
         override fun onCharacteristicChanged(
             g: BluetoothGatt, ch: BluetoothGattCharacteristic, value: ByteArray
         ) {
-            handleCharacteristicChanged(g, ch.uuid, value)
+            handleCharacteristicChanged(ch.uuid, value)
         }
     }
 
-    fun setHighPriority(enabled: Boolean) {
-        highPriority = enabled
-        if (initComplete) gatt?.let(::requestPriority)
-    }
-
-    // The connection interval is the report rate: docs/protocol.md#android-ble-gotchas
-    private fun requestPriority(g: BluetoothGatt) {
-        val priority = if (highPriority) {
-            BluetoothGatt.CONNECTION_PRIORITY_HIGH
-        } else {
-            BluetoothGatt.CONNECTION_PRIORITY_BALANCED
+    private fun handleCharacteristicChanged(uuid: UUID, data: ByteArray) {
+        if (uuid == CommonChannel.INPUT) {
+            commonReportSeen = true
+            // Only a controller that speaks the common protocol notifies here, so the fallback misfired.
+            if (console != null && common != null) returnToCommonChannel()
+        } else if (console == null && uuid == CommonChannel.COMMAND_RESPONSE) {
+            commandReplySeen = true
         }
-        Log.i(TAG, "[$side] Connection priority high=$highPriority accepted=${g.requestConnectionPriority(priority)}")
+        protocol?.onCharacteristicChanged(uuid, data)
     }
 
-    fun setPlayerLed(player: PlayerNumber) {
-        pendingPlayerLed = player
-        if (!initComplete) return
-        val g = gatt ?: return
-        opQueue.enqueue { sendLedCommand(g) }
+    private fun commonChannelAnswered() = commonReportSeen || commandReplySeen
+
+    private fun fallBackToConsoleIfSilent(g: BluetoothGatt) {
+        if (commonChannelAnswered()) return
+        Log.i(TAG, "[$side] No reply on the common channel; switching to the console protocol")
+        startConsoleSession(g)
     }
 
-    fun clearPlayerLed() {
-        pendingPlayerLed = null
-        if (!initComplete) return
-        val g = gatt ?: return
-        opQueue.enqueue { sendLedCommand(g) }
-    }
-
-    private fun sendLedCommand(g: BluetoothGatt): Boolean {
-        val pending = pendingPlayerLed
-        pendingPlayerLed = null
-        val cmd = if (pending != null) playerLedCmd(pending.ledBitmask) else LED_ALL_ON_CMD
-        Log.i(TAG, "[$side] Sending LED cmd: ${cmd.joinToString(" ") { "%02X".format(it) }}")
-        return writeCharacteristic(g, writeChar!!, cmd)
-    }
-
-    private fun enqueueInitWrite(g: BluetoothGatt, bytes: ByteArray) {
-        opQueue.enqueue { writeCharacteristic(g, writeChar!!, bytes) }
-    }
-
-    private fun handleCharacteristicChanged(g: BluetoothGatt, uuid: UUID, data: ByteArray) {
-        when (uuid) {
-            NOTIFY_CHAR -> {
-                PacketParser.parse(data, side)?.let { _input.value = stickCalibrator.calibrate(it) }
-                if (!ledSentAfterFirstPacket && initComplete) {
-                    ledSentAfterFirstPacket = true
-                    mainHandler.post { opQueue.enqueue { sendLedCommand(g) } }
-                }
-            }
-            CMD_RESPONSE_CHAR -> {
-                Log.d(TAG, "[$side] Cmd response: ${data.joinToString(" ") { "%02X".format(it) }}")
-                SpiColorParser.parseAccentColor(data)?.let { color ->
-                    Log.i(TAG, "[$side] Accent color: #${"%06X".format(color)}")
-                    _connectionState.value = _connectionState.value.copy(accentColor = color)
-                }
-            }
+    @Synchronized
+    private fun startConsoleSession(g: BluetoothGatt) {
+        if (console != null || commonReportSeen || gatt !== g) return
+        val channel = ConsoleChannel.find(g)
+        if (channel == null) {
+            fail("Not a compatible Joy-Con 2")
+            return
         }
+        ops.clear()
+        initComplete = false
+        _connectionState.value = _connectionState.value.copy(ready = false)
+        console = ConsoleSession(
+            gatt = g,
+            channel = channel,
+            ops = ops,
+            initialLedBitmask = assignedPlayer?.ledBitmask ?: ControllerCommands.LED_ALL_ON,
+            onInput = ::publishInput,
+            onAccentColor = ::publishAccentColor,
+            onReady = ::onProtocolReady,
+        ).also { it.start() }
     }
 
-    private fun writeCharacteristic(
-        g: BluetoothGatt,
-        ch: BluetoothGattCharacteristic,
-        value: ByteArray,
-    ): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            g.writeCharacteristic(ch, value, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE) ==
-                BluetoothStatusCodes.SUCCESS
-        } else {
-            @Suppress("DEPRECATION")
-            ch.value = value
-            @Suppress("DEPRECATION")
-            g.writeCharacteristic(ch)
-        }
+    private fun returnToCommonChannel() {
+        Log.i(TAG, "[$side] Common-channel report arrived; leaving the console protocol")
+        stopConsoleSession()
+        common?.resume()
+        initComplete = true
+        _connectionState.value = _connectionState.value.copy(
+            connected = true, ready = true, deviceName = deviceName
+        )
+        protocol?.setHighPriority(highPriority)
     }
 
-    private fun writeDescriptor(
-        g: BluetoothGatt,
-        descriptor: BluetoothGattDescriptor,
-        value: ByteArray,
-    ): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            g.writeDescriptor(descriptor, value) == BluetoothStatusCodes.SUCCESS
-        } else {
-            @Suppress("DEPRECATION")
-            descriptor.value = value
-            @Suppress("DEPRECATION")
-            g.writeDescriptor(descriptor)
-        }
+    private fun onProtocolReady() {
+        initComplete = true
+        everReady = true
+        _connectionState.value = _connectionState.value.copy(
+            connected = true, ready = true, deviceName = deviceName
+        )
+        if (highPriority) protocol?.setHighPriority(true)
+        onReady()
     }
 
+    // Everything that belongs to one link, so the next one starts its own detection over.
+    private fun endSession(g: BluetoothGatt) {
+        stopProtocols()
+        ops.reset()
+        g.close()
+        gatt = null
+        initComplete = false
+        securityRequested = false
+        servicesDiscovered = false
+        commonReportSeen = false
+        commandReplySeen = false
+    }
+
+    // Android keeps a pending connect armed after a drop: docs/protocol.md#coming-back-after-a-drop
+    private fun awaitReturn(status: Int): Boolean {
+        val target = device ?: return false
+        val reopened = target.connectGatt(context, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
+            ?: return false
+        Log.i(TAG, "[$side] Connection lost (status $status); waiting for the controller to come back")
+        gatt = reopened
+        returnWindow.open()
+        _connectionState.value = JoyconConnectionState(deviceName = deviceName, connectionLost = true)
+        return true
+    }
+
+    private fun giveUpOnReturn() {
+        Log.i(TAG, "[$side] Gave up waiting for the controller")
+        gatt?.disconnect()
+        gatt?.close()
+        gatt = null
+        _connectionState.value = JoyconConnectionState(deviceName = deviceName)
+        onDisconnected?.invoke()
+    }
+
+    private fun stopConsoleSession() {
+        console?.stop()
+        console = null
+    }
+
+    private fun stopProtocols() {
+        stopConsoleSession()
+        common?.stop()
+        common = null
+    }
+
+    private fun publishInput(input: JoyconInput) {
+        _input.value = stickCalibrator.calibrate(input)
+    }
+
+    private fun publishAccentColor(color: Int) {
+        _connectionState.value = _connectionState.value.copy(accentColor = color)
+    }
+
+    private fun fail(message: String) {
+        _connectionState.value = JoyconConnectionState(error = message, deviceName = deviceName)
+    }
 }

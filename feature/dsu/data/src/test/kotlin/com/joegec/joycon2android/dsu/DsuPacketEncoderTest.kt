@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.dsu
 import com.joegec.joycon2android.dsu.motion.MotionConverter
 
+import com.joegec.joycon2android.model.BatteryCharge
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
@@ -69,7 +70,7 @@ class DsuPacketEncoderTest {
         assertEquals(2, packet[23].toInt())  // bluetooth
         val expectedMac = byteArrayOf(0xAA.toByte(), 0xBB.toByte(), 0xCC.toByte(), 0xDD.toByte(), 0xEE.toByte(), 0x02)
         assertArrayEquals(expectedMac, packet.copyOfRange(24, 30))
-        assertEquals(0x05, packet[30].toInt()) // 3.6 V → 100% → full
+        assertEquals(0x05, packet[30].toInt()) // 100% → full
         assertEquals(1, packet[31].toInt())    // is-connected flag
     }
 
@@ -152,7 +153,7 @@ class DsuPacketEncoderTest {
                 pressed = setOf(JoyconButton.A.id, JoyconButton.ZR.id),
                 accelX = 4096,
                 gyroZ = 1000,
-                batteryVolts = 3.6f,
+                battery = BatteryCharge(100),
             ),
         ),
     )

@@ -1,6 +1,8 @@
 <resources>
     <string name="imu_accel">Accel</string>
     <string name="imu_gyro">Gyro</string>
+    <string name="imu_sensor_absent">none</string>
+    <string name="imu_no_gyro">This controller has no gyroscope, so motion aiming and tilt will not work.</string>
     <string name="imu_packet">Packet</string>
     <string name="battery_percent_format">%d%%</string>
     <string name="player_label">P%1$d</string>
@@ -8,4 +10,6 @@
     <string name="controller_right">Right</string>
     <string name="controller_pro">Pro</string>
     <string name="remove_player">Remove player</string>
+    <string name="connection_lost">Connection lost</string>
+    <string name="connection_lost_press_sync">Connection lost. Press SYNC on the controller to bring it back.</string>
 </resources>

@@ -13,6 +13,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.joegec.joycon2android.connection.presentation.R
+import com.joegec.joycon2android.model.ConnectedJoycon
+import com.joegec.joycon2android.ui.components.WarningBox
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.JoyconDefaultColor
@@ -22,12 +26,13 @@ import com.joegec.joycon2android.ui.theme.readableInkOn
 
 @Composable
 internal fun JoyconCard(
-    accentColor: Int?,
+    controller: ConnectedJoycon?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val accentColor = controller?.accentColor
     val shape = RoundedCornerShape(Dimens.cardCorner)
     val borderColor = joyconBorderColor(accentColor, JoyconDefaultColor)
     val active = controllerActiveColor(accentColor)
@@ -43,7 +48,11 @@ internal fun JoyconCard(
                 .padding(Dimens.cardPadding),
             horizontalAlignment = horizontalAlignment,
             verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
-            content = content,
-        )
+        ) {
+            if (controller?.connectionLost == true) {
+                WarningBox(stringResource(R.string.connection_lost_press_sync))
+            }
+            content()
+        }
     }
 }
