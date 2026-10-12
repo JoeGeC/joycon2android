@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,12 +19,14 @@ import com.joegec.joycon2android.ui.theme.WarningText
 fun WarningBox(
     text: String,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     Box(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.buttonCorner))
             .background(WarningBg)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(Dimens.cardPadding)
     ) {
         Text(text, color = WarningText, style = MaterialTheme.typography.bodySmall)

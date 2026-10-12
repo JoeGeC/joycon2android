@@ -140,6 +140,8 @@ fun JoyconScreen(
     dsuState: DsuCardState,
     shizukuAvailable: Boolean,
     permissionDenied: Boolean,
+    batteryRestricted: Boolean,
+    onAllowBackgroundRunning: () -> Unit,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
@@ -243,7 +245,8 @@ fun JoyconScreen(
             Crossfade(targetState = screenState, modifier = Modifier.fillMaxSize(), label = "screen") { target ->
                 when (target) {
                     ScreenState.IDLE -> IdleContent(
-                        state, permissionDenied, onScan, onOpenSystemSettings,
+                        state, permissionDenied, batteryRestricted, onAllowBackgroundRunning,
+                        onScan, onOpenSystemSettings,
                         Modifier
                             .fillMaxSize()
                             .padding(horizontal = Dimens.screenPaddingHorizontal)
@@ -259,6 +262,7 @@ fun JoyconScreen(
                         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
                     ) {
                         KofiBanner()
+                        BatteryRestrictedBanner(batteryRestricted, onAllowBackgroundRunning)
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
                                 state, viewMode, gamepadEnabled, gamepadError, dsuState, shizukuAvailable,
@@ -359,6 +363,8 @@ private fun statusText(state: AppUiState): String {
 private fun IdleContent(
     state: AppUiState,
     permissionDenied: Boolean,
+    batteryRestricted: Boolean,
+    onAllowBackgroundRunning: () -> Unit,
     onScan: () -> Unit,
     onOpenSystemSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -368,6 +374,7 @@ private fun IdleContent(
         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
     ) {
         KofiBanner()
+        BatteryRestrictedBanner(batteryRestricted, onAllowBackgroundRunning)
         ErrorBox(text = state.error)
         ErrorBox(
             text = if (permissionDenied) stringResource(R.string.error_permissions_denied) else null,

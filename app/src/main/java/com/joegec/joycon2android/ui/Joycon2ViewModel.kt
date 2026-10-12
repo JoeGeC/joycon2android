@@ -14,6 +14,7 @@ import com.joegec.joycon2android.ble.BlePermissionHandler
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.ConnectionViewMode
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.power.BatteryOptimizationExemption
 import com.joegec.joycon2android.service.Joycon2Service
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,6 +26,7 @@ import kotlinx.coroutines.launch
 class Joycon2ViewModel(application: Application) : AndroidViewModel(application) {
 
     val permissionHandler = BlePermissionHandler(application)
+    val batteryOptimizationExemption = BatteryOptimizationExemption(application)
 
     private var bound = false
 
@@ -36,6 +38,9 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     private val _permissionDenied = MutableStateFlow(false)
     val permissionDenied: StateFlow<Boolean> = _permissionDenied.asStateFlow()
+
+    private val _batteryRestricted = MutableStateFlow(!batteryOptimizationExemption.isGranted())
+    val batteryRestricted: StateFlow<Boolean> = _batteryRestricted.asStateFlow()
 
     val viewMode: StateFlow<ConnectionViewMode> = container.observeViewMode()
         .stateIn(viewModelScope, SharingStarted.Eagerly, ConnectionViewMode.DETAILED)
@@ -77,6 +82,10 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         if (_permissionDenied.value && permissionHandler.isGranted()) {
             onPermissionsGranted()
         }
+    }
+
+    fun recheckBatteryOptimization() {
+        _batteryRestricted.value = !batteryOptimizationExemption.isGranted()
     }
 
     fun startScan() = container.startScan()

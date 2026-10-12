@@ -21,6 +21,8 @@
         tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Ask to run unrestricted, so a game launch doesn't clear the app -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- DSU (cemuhook) UDP server -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Foreground-service notification while a Joy-Con is connected -->

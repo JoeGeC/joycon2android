@@ -237,7 +237,7 @@ shoulder buttons.
 | Controller not found | Hold SYNC again and move closer |
 | Controller stops responding | Press SYNC and reconnect; wait a moment if it stays silent |
 | Controller shows "Connection lost" | Press SYNC on it and it reconnects to the same player by itself, or tap Scan. After two minutes it's removed |
-| Controllers drop when a game starts | Some phones clear background apps when a game launches. Set this app's battery use to unrestricted, and exclude it from the game launcher's cleanup |
+| Controllers drop when a game starts | Some phones clear background apps when a game launches. Tap the yellow banner at the top to let the app run in the background (or set its battery use to unrestricted), and exclude it from the game launcher's cleanup |
 | Gamepad doesn't show up in games | Check `adb shell getevent -p` lists "Joy-Con Virtual Gamepad" |
 | No DSUClient device in the emulator | Check the server address, restart the emulator and open a mapping screen; `adb logcat -s DsuServer` shows whether it's connecting |
 | Emulator won't detect DSU presses | Pick inputs from the list — detection never sees DSU — with the virtual gamepad off |

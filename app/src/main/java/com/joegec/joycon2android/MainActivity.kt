@@ -126,6 +126,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.recheckPermissions()
+        viewModel.recheckBatteryOptimization()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -291,6 +292,7 @@ class MainActivity : ComponentActivity() {
         val gamepadSetupPhase by gamepadViewModel.setupPhase.collectAsState()
         val selectedEmulator by gamepadViewModel.selectedEmulator.collectAsState()
         val permissionDenied by viewModel.permissionDenied.collectAsState()
+        val batteryRestricted by viewModel.batteryRestricted.collectAsState()
         val viewMode by viewModel.viewMode.collectAsState()
 
         // A written config matches one assignment, so Done/Failed goes stale when it changes.
@@ -333,6 +335,10 @@ class MainActivity : ComponentActivity() {
                 setupPhase = dsuSetupPhase,
             ),
             permissionDenied = permissionDenied,
+            batteryRestricted = batteryRestricted,
+            onAllowBackgroundRunning = {
+                startActivity(viewModel.batteryOptimizationExemption.buildRequestIntent())
+            },
             onScan = onScan,
             onDisconnectAll = viewModel::disconnectAll,
             onAssign = viewModel::assignToPlayer,
