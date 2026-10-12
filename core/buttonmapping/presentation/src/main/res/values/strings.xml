@@ -71,6 +71,5 @@
     <string name="android_key_home">Home</string>
     <string name="android_key_back">Back</string>
     <string name="android_key_screenshot">Screenshot</string>
-    <string name="android_keys_description">Work as this device\'s own buttons, and never reach the game.</string>
     <string name="android_keys_need_shizuku">Over DSU, these need Shizuku running.</string>
 </resources>

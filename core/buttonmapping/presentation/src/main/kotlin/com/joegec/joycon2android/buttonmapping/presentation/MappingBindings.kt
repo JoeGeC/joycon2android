@@ -47,9 +47,8 @@ private fun BindingSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
         Text(section.label(), color = Color.White, style = MaterialTheme.typography.titleSmall)
-        if (section == MappingSection.ANDROID) {
-            Text(stringResource(R.string.android_keys_description), color = TextDim, style = MaterialTheme.typography.bodySmall)
-            if (androidKeysNeedShizuku) SettingWarning(stringResource(R.string.android_keys_need_shizuku))
+        if (section == MappingSection.ANDROID && androidKeysNeedShizuku) {
+            SettingWarning(stringResource(R.string.android_keys_need_shizuku))
         }
         val sourceOptions = MappingOptions.sources(state.body.side, section)
         targets.forEach { (key, label) ->
