@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,7 +34,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -61,11 +59,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
@@ -92,10 +87,7 @@ import com.joegec.joycon2android.connection.presentation.PlayerCard
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Background
-import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.JoyconBlue
-import com.joegec.joycon2android.ui.theme.JoyconRed
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
 import kotlinx.coroutines.launch
@@ -256,7 +248,6 @@ fun JoyconScreen(
                             .padding(top = appBarSpace),
                         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
                     ) {
-                        KofiBanner()
                         BatteryRestrictedBanner(batteryRestricted, onAllowBackgroundRunning)
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
@@ -368,7 +359,6 @@ private fun IdleContent(
         modifier = modifier.padding(bottom = Dimens.screenPaddingVertical),
         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
     ) {
-        KofiBanner()
         BatteryRestrictedBanner(batteryRestricted, onAllowBackgroundRunning)
         ErrorBox(text = state.error)
         ErrorBox(
@@ -451,44 +441,6 @@ private fun SyncButtonGraphic(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.cardCorner)),
     )
-}
-
-
-@Composable
-private fun KofiBanner(modifier: Modifier = Modifier) {
-    val uriHandler = LocalUriHandler.current
-    val shape = RoundedCornerShape(Dimens.cardCorner)
-    val gradientBorder = Brush.linearGradient(listOf(JoyconBlue, JoyconRed))
-
-    Row(
-        modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .border(Dimens.cardBorderWidth, gradientBorder, shape)
-            .background(CardBg)
-            .clickable { uriHandler.openUri("https://ko-fi.com/joestechprojects") }
-            .padding(Dimens.cardPadding),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            painter = painterResource(R.drawable.kofi),
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-        )
-        Text(
-            stringResource(R.string.kofi_banner),
-            color = Color.White,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-        )
-        Icon(
-            Icons.AutoMirrored.Filled.OpenInNew,
-            contentDescription = null,
-            modifier = Modifier.size(16.dp),
-            tint = TextDim,
-        )
-    }
 }
 
 @Composable

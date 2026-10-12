@@ -34,6 +34,7 @@ fun SettingsPanel(
             color = Color.White,
             style = MaterialTheme.typography.headlineSmall,
         )
+        KofiBanner()
         SettingsSection { LayoutSetting(state.viewMode, onViewModeChange) }
         SettingsSection {
             SettingSwitch(

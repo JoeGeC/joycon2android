@@ -8,4 +8,5 @@
     <string name="settings_block_device_motion_title">Ignore this device\'s motion in Eden</string>
     <string name="settings_block_device_motion_description">Eden adds this device\'s gyro to Player 1, which makes controller motion stutter. Lifted when the Virtual Gamepad and DSU are both off.</string>
     <string name="settings_block_device_motion_needs_shizuku">Needs Shizuku running.</string>
+    <string name="kofi_banner">Support on Ko-fi - tips go towards controllers and devices for development and testing (and coffee!)</string>
 </resources>

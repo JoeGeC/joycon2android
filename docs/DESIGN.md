@@ -30,7 +30,7 @@ top-level `Color` vals used directly. One teal accent, plus each controller's ow
 - `WarningText` — `#FFB454` / `WarningBg` — `#2D2113`: a limit or a recoverable state, not a fault —
   the no-gyroscope note, and a dropped controller's **Connection lost** (a `WarningBox` at the top
   of its player card, a link-off glyph in the compact row, a label in the unassigned card), and the
-  tappable battery-restriction banner under the Ko-fi banner, shown until the app runs unrestricted
+  tappable battery-restriction banner at the top of the connection screen, shown until the app runs unrestricted
 - Battery ramp (`batteryColor()`): high `Accent` · medium `#FBBF24` · low `BatteryLow #FF8A8A`
   (a lighter red than `ErrorText` so the low % clears AA on the `AccentDim` pill). Shown with a
   battery icon whose fill tracks the level, so it isn't colour-only.
@@ -98,10 +98,10 @@ In `JoyconScreen.kt`:
   under the transparent status and nav bars; each screen adds its own clearance.
 - **Overlaid, scroll-away app bar.** Not in the Scaffold's `topBar` slot, which would reserve space.
   It overlays the content and is translated up in lockstep with the scroll, so it slides away with
-  no gap and content (the Ko-fi banner included) passes behind the status bar. Screens add its
-  height plus the status-bar inset as top clearance.
+  no gap and content passes behind the status bar. Screens add its height plus the status-bar
+  inset as top clearance.
 - **Settings behind a gear.** The app bar's only action opens the settings panel, an `EndDrawer`
-  from the right so it sits under the icon that opened it.
+  from the right so it sits under the icon that opened it. The Ko-fi banner sits under the panel title.
 
 ### Landscape
 
