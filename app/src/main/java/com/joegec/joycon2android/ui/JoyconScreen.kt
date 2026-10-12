@@ -1,16 +1,12 @@
 package com.joegec.joycon2android.ui
 
 import android.content.res.Configuration
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -84,7 +80,6 @@ import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.gamepad.presentation.ShizukuSetupCard
 import com.joegec.joycon2android.assignment.presentation.AssignmentPanel
-import com.joegec.joycon2android.connection.presentation.CompactPlayerRow
 import com.joegec.joycon2android.model.ConnectionViewMode
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
 import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
@@ -93,7 +88,7 @@ import com.joegec.joycon2android.dsu.presentation.DsuCard
 import com.joegec.joycon2android.dsu.presentation.DsuCardState
 import com.joegec.joycon2android.ui.components.ErrorBox
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
-import com.joegec.joycon2android.connection.presentation.PlayerView
+import com.joegec.joycon2android.connection.presentation.PlayerCard
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AppType
 import com.joegec.joycon2android.ui.theme.Background
@@ -540,49 +535,26 @@ private fun ConnectedContent(
         state.activePlayers.chunked(2).forEach { rowPlayers ->
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
                 rowPlayers.forEach { playerState ->
-                    when (viewMode) {
-                        ConnectionViewMode.DETAILED -> PlayerView(
-                            playerState = playerState,
-                            onUnassign = onUnassign,
-                            onRemovePlayer = { onRemovePlayer(playerState) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .scaleLayout(LandscapePlayerScale),
-                        )
-                        ConnectionViewMode.COMPACT -> CompactPlayerRow(
-                            playerState = playerState,
-                            onUnassign = onUnassign,
-                            onRemovePlayer = { onRemovePlayer(playerState) },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
+                    PlayerCard(
+                        playerState = playerState,
+                        viewMode = viewMode,
+                        onUnassign = onUnassign,
+                        onRemovePlayer = { onRemovePlayer(playerState) },
+                        modifier = Modifier.weight(1f),
+                        detailedModifier = Modifier.scaleLayout(LandscapePlayerScale),
+                    )
                 }
                 if (rowPlayers.size == 1) Spacer(Modifier.weight(1f))
             }
         }
     } else {
         state.activePlayers.forEach { playerState ->
-            AnimatedContent(
-                targetState = viewMode,
-                transitionSpec = {
-                    (fadeIn(tween(220)) togetherWith fadeOut(tween(220)))
-                        .using(SizeTransform(clip = false))
-                },
-                label = "viewMode",
-            ) { mode ->
-                when (mode) {
-                    ConnectionViewMode.DETAILED -> PlayerView(
-                        playerState = playerState,
-                        onUnassign = onUnassign,
-                        onRemovePlayer = { onRemovePlayer(playerState) },
-                    )
-                    ConnectionViewMode.COMPACT -> CompactPlayerRow(
-                        playerState = playerState,
-                        onUnassign = onUnassign,
-                        onRemovePlayer = { onRemovePlayer(playerState) },
-                    )
-                }
-            }
+            PlayerCard(
+                playerState = playerState,
+                viewMode = viewMode,
+                onUnassign = onUnassign,
+                onRemovePlayer = { onRemovePlayer(playerState) },
+            )
         }
     }
 

@@ -133,7 +133,7 @@ Shared in `core/designsystem/.../ui/components/`:
 
 ## Motion
 
-Minimal and functional: the scroll-away app bar, the portrait view-mode crossfade, and expand/fade
+Minimal and functional: the scroll-away app bar, a fade-through between detailed and compact player cards, and expand/fade
 on error boxes and feature-card content. Ease-out curves, no bounce or elastic, and always honour the
 system's reduced-motion setting.
 
