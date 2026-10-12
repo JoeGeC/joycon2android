@@ -56,7 +56,7 @@ class Joycon2Manager(
         }
 
         _error.value = null
-        scanner.start { address -> address in pool.addresses }
+        scanner.start(pool::isLive)
         _scanning.value = true
     }
 

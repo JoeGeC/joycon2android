@@ -36,12 +36,12 @@ class BleScanner(context: Context) {
 
     val isAvailable: Boolean get() = adapter?.bluetoothLeScanner != null
 
-    fun start(isKnownAddress: (String) -> Boolean) {
+    fun start(isConnected: (String) -> Boolean) {
         if (isScanning) return
         val scanner = adapter?.bluetoothLeScanner ?: return
 
         isScanning = true
-        scanner.startScan(null, lowLatencySettings(), createCallback(isKnownAddress))
+        scanner.startScan(null, lowLatencySettings(), createCallback(isConnected))
         Log.i(TAG, "Scanning for Joy-Con 2 controllers...")
         scheduleTimeout()
     }
@@ -56,7 +56,7 @@ class BleScanner(context: Context) {
 
     private var activeCallback: ScanCallback? = null
 
-    private fun createCallback(isKnownAddress: (String) -> Boolean): ScanCallback {
+    private fun createCallback(isConnected: (String) -> Boolean): ScanCallback {
         val callback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 if (!isScanning) return
@@ -64,7 +64,7 @@ class BleScanner(context: Context) {
                 logAdvertisement(result, manufacturerData)
                 // Only the bonded host can connect to a wake advert: docs/protocol.md#advertising
                 if (!JoyconAdvertisement.isPairing(manufacturerData)) return
-                if (isKnownAddress(result.device.address)) return
+                if (isConnected(result.device.address)) return
 
                 val name = result.device.name
                     ?: result.scanRecord?.deviceName

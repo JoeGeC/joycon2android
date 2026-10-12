@@ -42,6 +42,7 @@ import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.JoyconDefaultColor
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
+import com.joegec.joycon2android.ui.theme.WarningText
 import com.joegec.joycon2android.ui.theme.joyconBorderColor
 
 @Composable
@@ -113,7 +114,18 @@ private fun JoyconAssignmentRow(
                     style = MaterialTheme.typography.titleSmall,
                 )
                 AnimatedVisibility(
-                    visible = !joycon.ready,
+                    visible = joycon.connectionLost,
+                    enter = fadeIn() + expandHorizontally(),
+                    exit = fadeOut() + shrinkHorizontally(),
+                ) {
+                    Text(
+                        stringResource(R.string.status_connection_lost),
+                        color = WarningText,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                AnimatedVisibility(
+                    visible = !joycon.ready && !joycon.connectionLost,
                     enter = fadeIn() + expandHorizontally(),
                     exit = fadeOut() + shrinkHorizontally(),
                 ) {

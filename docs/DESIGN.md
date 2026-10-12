@@ -27,6 +27,9 @@ top-level `Color` vals used directly. One teal accent, plus each controller's ow
 
 **Status**
 - `ErrorText` — `#FF6B6B` / `ErrorBg` — `#2D1B1B`
+- `WarningText` — `#FFB454` / `WarningBg` — `#2D2113`: a limit or a recoverable state, not a fault —
+  the no-gyroscope note, and a dropped controller's **Connection lost** (a `WarningBox` at the top
+  of its player card, a link-off glyph in the compact row, a label in the unassigned card)
 - Battery ramp (`batteryColor()`): high `Accent` · medium `#FBBF24` · low `BatteryLow #FF8A8A`
   (a lighter red than `ErrorText` so the low % clears AA on the `AccentDim` pill). Shown with a
   battery icon whose fill tracks the level, so it isn't colour-only.

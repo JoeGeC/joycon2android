@@ -34,7 +34,7 @@ private fun LeftJoyconVertical(
 ) {
     val pressed = state.pressed
     JoyconCard(
-        accentColor = state.left?.accentColor,
+        controller = state.left,
         onClick = { onUnassign(state.left!!.address) },
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -60,7 +60,7 @@ private fun RightJoyconVertical(
 ) {
     val pressed = state.pressed
     JoyconCard(
-        accentColor = state.right?.accentColor,
+        controller = state.right,
         onClick = { onUnassign(state.right!!.address) },
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,

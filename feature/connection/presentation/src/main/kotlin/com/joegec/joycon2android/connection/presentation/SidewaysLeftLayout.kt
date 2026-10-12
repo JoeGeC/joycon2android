@@ -27,7 +27,7 @@ internal fun LeftSidewaysLayout(
     modifier: Modifier = Modifier,
 ) {
     JoyconCard(
-        accentColor = state.left?.accentColor,
+        controller = state.left,
         onClick = { onUnassign(state.left!!.address) },
         modifier = modifier.fillMaxWidth(),
     ) {
