@@ -23,9 +23,13 @@ class ConnectionPool(private val context: Context) {
     val addresses: Set<String> get() = connections.keys.toSet()
     val size: Int get() = connections.size
 
-    /** Null for an address already in the pool (a duplicate scan result). */
+    /** Null for an address already in the pool; one awaiting its controller's return reconnects instead. */
     fun connect(result: ScanResult, side: Side, name: String, highPriority: Boolean): JoyconConnection? {
         val address = result.device.address
+        connections[address]?.let {
+            it.reconnect(result.device)
+            return null
+        }
         val connection = JoyconConnection(
             context,
             side,
@@ -43,6 +47,8 @@ class ConnectionPool(private val context: Context) {
     }
 
     fun get(address: String): JoyconConnection? = connections[address]
+
+    fun isLive(address: String): Boolean = connections[address]?.awaitingReturn == false
 
     fun setHighPriority(enabled: Boolean) {
         connections.values.forEach { it.setHighPriority(enabled) }

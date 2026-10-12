@@ -22,7 +22,7 @@ internal fun ProControllerLayout(
 ) {
     val pressed = state.pressed
     JoyconCard(
-        accentColor = state.left?.accentColor,
+        controller = state.left,
         onClick = { onUnassign(state.left!!.address) },
         modifier = modifier.fillMaxWidth(),
     ) {

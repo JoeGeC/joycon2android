@@ -10,4 +10,6 @@
     <string name="controller_right">Right</string>
     <string name="controller_pro">Pro</string>
     <string name="remove_player">Remove player</string>
+    <string name="connection_lost">Connection lost</string>
+    <string name="connection_lost_press_sync">Connection lost. Press SYNC on the controller to bring it back.</string>
 </resources>

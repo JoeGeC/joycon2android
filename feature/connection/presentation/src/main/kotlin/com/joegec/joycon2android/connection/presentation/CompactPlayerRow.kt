@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +28,7 @@ import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.JoyconDefaultColor
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.WarningText
 import com.joegec.joycon2android.ui.theme.joyconBorderColor
 
 @Composable
@@ -98,7 +100,16 @@ private fun ControllerChip(
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
     ) {
         val battery = @Composable {
-            joycon.input.battery?.let { BatteryGlyph(it) }
+            if (joycon.connectionLost) {
+                Icon(
+                    Icons.Filled.LinkOff,
+                    contentDescription = stringResource(R.string.connection_lost),
+                    tint = WarningText,
+                    modifier = Modifier.size(Dimens.iconSizeSmall),
+                )
+            } else {
+                joycon.input.battery?.let { BatteryGlyph(it) }
+            }
         }
 
         if (batteryFirst) battery()

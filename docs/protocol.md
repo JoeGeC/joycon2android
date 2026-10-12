@@ -299,51 +299,61 @@ left `[2]` Down Right Left Up L ZL − LS, `[3]` Capture `0x01`, SR `0x40`, SL `
 
 ### Android workarounds
 
-These controllers send an SMP Security Request on every connection, which a genuine Joy-Con 2 never
-does — that request is what identifies them. Android pairs one device at a time, so a second clone
-connecting while the first one's pairing is pending sends none; silence on the common channel 1.5 s
-after init switches it over instead. Genuine Joy-Con 2s answer the console channel too, so that
-silence is the only thing separating them: a controller moved over by the timeout goes back to the
-common path as soon as a report arrives on `...fd2`, which only a controller speaking that protocol
-sends.
+**Detection.** These controllers send an SMP Security Request on every connection; a genuine
+Joy-Con 2 never does. Android pairs one device at a time, so a second clone connecting while the
+first one's pairing is pending sends none, and silence on the common channel 1.5 s after init
+switches it over instead. Genuine Joy-Con 2s answer the console channel too, so a controller moved
+over by that timeout returns to the common path on its first report on `...fd2`, which only a
+controller speaking that protocol sends.
 
-The pairing itself can never succeed (Confirm Value Failed, or a 30 s timeout), so:
+**Holding the link.** The pairing never succeeds (Confirm Value Failed, or a 30 s timeout):
 
-- `SecurityRequestReceiver` aborts the ordered `ACTION_PAIRING_REQUEST` broadcast, and no system
-  dialog appears.
-- `l2cu_start_post_bond_timer` then drops the link 3 s later unless it carries a dynamic L2CAP
-  channel. The controller never answers LE credit-based connection requests, so `LinkHolder` keeps a
-  pending `createInsecureL2capChannel(0x80).connect()` on the link — each attempt pends ~20 s.
+| Problem | Workaround |
+|---|---|
+| A system pairing dialog appears | `SecurityRequestReceiver` aborts the ordered `ACTION_PAIRING_REQUEST` broadcast |
+| `l2cu_start_post_bond_timer` drops the link 3 s after the pairing fails, unless it carries a dynamic L2CAP channel | `LinkHolder` keeps a pending `createInsecureL2capChannel(0x80).connect()` on the link. The controller never answers LE credit-based connection requests, so each attempt pends ~20 s and is replaced when it ends |
 
-Both depend on AOSP Bluetooth internals and may break on a future release.
+- `createInsecureL2capChannel` is API 29+. Below Android 10 nothing holds the link, and a clone
+  drops ~33 s after connecting.
+- An attempt that fails at once (a stack that rejects the request) backs off from 200 ms to 5 s.
+- Both workarounds depend on AOSP Bluetooth internals and may break on a future release.
+- The pending channel outlives a drop: see [Coming back after a drop](#coming-back-after-a-drop).
 
-That pending channel has a side effect. When the controller drops, the stack turns the in-flight
-`connect()` into a pending direct connection and keeps it armed; closing the socket does not remove
-it. The tablet then connects to the controller the moment it is switched back on — `initiator:local`,
-this app's own process — which consumes the advertisement, so no scan ever sees it, and brings the
-link up with no GATT client and no pool entry behind it. Nothing aborts the pairing broadcast, the
-dialog appears, and the failed pairing powers the controller off; restarting the app was the only
-cure, because process death cancels the pending connect. So `JoyconConnection` keeps its pool entry
-after a drop and arms `connectGatt(autoConnect = true)` for two minutes, which makes that connection
-its own: the dialog is aborted and the start-up sequence runs. A dropped controller returns on its
-next SYNC with no rescan — 5.9 s and 6.8 s on a RedMagic Astra, 2026-10-05 — and keeps its player
-slot. The wait is not console-specific: any controller is held for those two minutes, then released
-to the pool as before.
+**Connection interval.** High priority settles at 15 ms for these controllers (~67 reports/s).
+`ConnectionInterval` asks the hidden `BluetoothGatt.requestLeConnectionUpdate` for 7.5 ms, the LE
+minimum, through HiddenApiBypass because the method is on the blocked list. At 7.5 ms both
+controllers deliver ~200 reports/s with no lost reports (RedMagic Astra, Android 16, 2026-09). It
+falls back to `CONNECTION_PRIORITY_HIGH`, and every controller asks again when another one joins,
+since Android can slow an existing connection when one does.
 
-High priority settles at 15 ms for these controllers (~67 reports/s). `ConnectionInterval` instead
-asks the hidden `BluetoothGatt.requestLeConnectionUpdate` for 7.5 ms, the LE minimum, reached
-through HiddenApiBypass because the method is on the blocked list; at 7.5 ms both controllers
-deliver ~200 reports/s with no lost reports (RedMagic Astra, Android 16, 2026-09). It falls back to
-`CONNECTION_PRIORITY_HIGH`, and every console session asks again when another controller joins,
-since Android can slow an existing connection down when one does.
+## Coming back after a drop
+
+Every controller, genuine or clone, is held for two minutes after it drops (`ReturnWindow`):
+
+- `JoyconConnection` keeps its pool entry, player slot and LEDs, and arms
+  `connectGatt(autoConnect = true)`.
+- The UI marks it **Connection lost** and asks for SYNC, on the player card and the unassigned card.
+- A scan that finds it hands it to the waiting connection (`ConnectionPool.connect` →
+  `reconnect`), which connects directly instead of skipping a known address.
+- After two minutes, or a tap on Disconnect, it leaves the pool as any dropped controller did.
+- Only a controller that reached ready is held. One that never finished connecting leaves at once.
+
+The hold exists for clones. When a clone drops, the stack turns `LinkHolder`'s in-flight `connect()`
+into a pending direct connection, and closing the socket does not remove it; only process death
+does. The phone then connects to the controller as soon as it advertises (`initiator:local` in the
+HCI log), which consumes the advertisement, so a scan never sees it. Without a GATT client of ours on
+that link, nothing aborts the pairing broadcast, and the failed pairing powers the controller off.
+Holding the pool entry and arming `autoConnect` makes that link ours. A clone returns on its next
+SYNC in ~6 s (5.9 s and 6.8 s, RedMagic Astra, 2026-10-05).
 
 ## Android BLE gotchas
 
 1. **MTU first.** The default ATT MTU of 23 truncates 63-byte notifications: `requestMtu(247)`
    after connecting, wait for `onMtuChanged`, then discover services.
 2. **One GATT operation at a time.** A second issued before the callback is silently dropped.
-   `GattOpQueue` carries every operation on a connection, whichever protocol issues it, and advances
-   on the callback of the operation in flight, or after a timeout if none comes.
+   `GattOpQueue` carries every operation on a connection, whichever protocol issues it. A callback
+   doesn't say which operation it answers, so a sent operation holds the queue until its callback or
+   its own timeout, even after the queue is cleared for a protocol switch.
 3. **Write the CCCD.** `setCharacteristicNotification(true)` alone delivers nothing; descriptor
    `0x2902` must be written too.
 4. **Pass `TRANSPORT_LE`** to `connectGatt`, or it may try classic Bluetooth.

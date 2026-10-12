@@ -38,8 +38,7 @@ class JoyconConnection(
         // well within this window; one that answers later is moved back by its first report.
         private const val CONSOLE_FALLBACK_MS = 1_500L
 
-        // How long a dropped controller is waited for before the player loses it.
-        private const val RECONNECT_WINDOW_MS = 120_000L
+        private const val RETURN_WINDOW_MS = 120_000L
     }
 
     private val _connectionState = MutableStateFlow(
@@ -52,6 +51,7 @@ class JoyconConnection(
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private val ops = GattOpQueue()
+    private val returnWindow = ReturnWindow(RETURN_WINDOW_MS, MainThreadScheduler(), ::giveUpOnReturn)
     private val stickCalibrator = StickCalibrator()
     private var gatt: BluetoothGatt? = null
     private var device: BluetoothDevice? = null
@@ -69,8 +69,10 @@ class JoyconConnection(
     @Volatile private var commonReportSeen = false
     @Volatile private var commandReplySeen = false
     @Volatile private var assignedPlayer: PlayerNumber? = null
-    @Volatile private var reconnecting = false
+    @Volatile private var everReady = false
     @Volatile private var released = false
+
+    val awaitingReturn: Boolean get() = returnWindow.isOpen
 
     fun connect(device: BluetoothDevice) {
         this.device = device
@@ -109,15 +111,23 @@ class JoyconConnection(
         protocol?.setPlayerLed(ControllerCommands.LED_ALL_ON)
     }
 
+    /** A scan found this controller while it was awaited, so connect now rather than on its own time. */
+    fun reconnect(device: BluetoothDevice) {
+        if (!awaitingReturn) return
+        Log.i(TAG, "[$side] Found by a scan while awaited; connecting directly")
+        gatt?.close()
+        gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+    }
+
     fun disconnect() {
         released = true
-        reconnecting = false
+        returnWindow.close()
         stopProtocols()
         mainHandler.removeCallbacksAndMessages(null)
         gatt?.disconnect()
         gatt?.close()
         gatt = null
-        ops.clear()
+        ops.reset()
         _connectionState.value = JoyconConnectionState()
         _input.value = JoyconInput()
     }
@@ -127,7 +137,7 @@ class JoyconConnection(
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     Log.i(TAG, "[$side] Connected. Requesting MTU $DESIRED_MTU")
-                    reconnecting = false
+                    returnWindow.close()
                     _connectionState.value = JoyconConnectionState(
                         connected = true, deviceName = deviceName
                     )
@@ -137,7 +147,7 @@ class JoyconConnection(
                     Log.w(TAG, "[$side] Disconnected (status=$status)")
                     endSession(g)
                     _input.value = JoyconInput()
-                    if (!released && awaitReturn()) return
+                    if (!released && (everReady || awaitingReturn) && awaitReturn(status)) return
                     _connectionState.value = JoyconConnectionState(
                         deviceName = deviceName,
                         error = if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -272,6 +282,7 @@ class JoyconConnection(
 
     private fun onProtocolReady() {
         initComplete = true
+        everReady = true
         _connectionState.value = _connectionState.value.copy(
             connected = true, ready = true, deviceName = deviceName
         )
@@ -282,7 +293,7 @@ class JoyconConnection(
     // Everything that belongs to one link, so the next one starts its own detection over.
     private fun endSession(g: BluetoothGatt) {
         stopProtocols()
-        ops.clear()
+        ops.reset()
         g.close()
         gatt = null
         initComplete = false
@@ -292,26 +303,19 @@ class JoyconConnection(
         commandReplySeen = false
     }
 
-    /**
-     * Android keeps this app's pending L2CAP connect armed after a drop, so the controller is
-     * reconnected to on its next SYNC whatever we do: docs/protocol.md#android-workarounds. Holding
-     * the pool entry and asking for that connection makes it ours, dialog suppression included.
-     */
-    private fun awaitReturn(): Boolean {
+    // Android keeps a pending connect armed after a drop: docs/protocol.md#coming-back-after-a-drop
+    private fun awaitReturn(status: Int): Boolean {
         val target = device ?: return false
         val reopened = target.connectGatt(context, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
             ?: return false
-        Log.i(TAG, "[$side] Waiting for the controller to come back")
+        Log.i(TAG, "[$side] Connection lost (status $status); waiting for the controller to come back")
         gatt = reopened
-        reconnecting = true
-        _connectionState.value = JoyconConnectionState(connecting = true, deviceName = deviceName)
-        mainHandler.postDelayed(::stopAwaitingReturn, RECONNECT_WINDOW_MS)
+        returnWindow.open()
+        _connectionState.value = JoyconConnectionState(deviceName = deviceName, connectionLost = true)
         return true
     }
 
-    private fun stopAwaitingReturn() {
-        if (!reconnecting) return
-        reconnecting = false
+    private fun giveUpOnReturn() {
         Log.i(TAG, "[$side] Gave up waiting for the controller")
         gatt?.disconnect()
         gatt?.close()
