@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,7 +47,12 @@ private fun BindingSection(
     androidKeysNeedShizuku: Boolean,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
-        Text(section.label(), color = Color.White, style = MaterialTheme.typography.titleSmall)
+        Text(
+            section.label(),
+            color = Color.White,
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(top = Dimens.mappingHeaderTopPadding),
+        )
         if (section == MappingSection.ANDROID && androidKeysNeedShizuku) {
             SettingWarning(stringResource(R.string.android_keys_need_shizuku))
         }

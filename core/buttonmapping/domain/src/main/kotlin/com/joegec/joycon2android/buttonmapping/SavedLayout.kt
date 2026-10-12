@@ -7,6 +7,7 @@ data class SavedLayout(
     val side: JoyconSide,
     val bindings: Map<String, String>,
     override val sidewaysRemote: Boolean = false,
+    override val thrust: Boolean = false,
 ) : MappingLayout {
     /** Only ever offered back to the body it was saved from, so [side] is always that one. */
     override fun entries(side: JoyconSide) = bindings

@@ -7,5 +7,10 @@ interface MappingLayout {
     /** docs/dsu-motion.md#playing-as-a-sideways-wii-remote */
     val sidewaysRemote: Boolean get() = false
 
+    /** docs/dsu-motion.md#thrusts */
+    val thrust: Boolean get() = false
+
+    val motion: RemoteMotion get() = RemoteMotion(sidewaysRemote, thrust)
+
     fun entries(side: JoyconSide): Map<String, String>
 }

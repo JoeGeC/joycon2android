@@ -7,17 +7,20 @@ import kotlinx.coroutines.flow.first
 internal class MappingFixture(val console: Console = Console.WIIMOTE_NUNCHUK) {
     private val mappings = FakeControllerMappings()
     private val sidewaysRemotes = FakeSidewaysRemotes()
+    private val thrusts = FakeThrusts()
     private val savedLayouts = FakeSavedLayouts()
     private val globalLayouts = FakeGlobalLayouts()
 
     private val observeMapping = ObserveControllerMappingUseCase(mappings)
-    private val observeSideways = ObserveSidewaysRemoteUseCase(sidewaysRemotes)
-    private val applyPlayerMapping = ApplyPlayerMappingUseCase(mappings, sidewaysRemotes)
+    private val observeMotion =
+        ObserveRemoteMotionUseCase(ObserveSidewaysRemoteUseCase(sidewaysRemotes), ObserveThrustUseCase(thrusts))
+    private val applyPlayerMapping = ApplyPlayerMappingUseCase(mappings, sidewaysRemotes, thrusts)
 
-    val observePlayerMapping = ObservePlayerMappingUseCase(observeMapping, observeSideways, savedLayouts)
+    val observePlayerMapping = ObservePlayerMappingUseCase(observeMapping, observeMotion, savedLayouts)
     val applyLayout = ApplyMappingLayoutUseCase(savedLayouts, applyPlayerMapping)
     val setMapping = SetControllerMappingUseCase(mappings)
     val setSidewaysRemote = SetSidewaysRemoteUseCase(sidewaysRemotes)
+    val setThrust = SetThrustUseCase(thrusts)
     val saveCustomLayout = SaveCustomLayoutUseCase(savedLayouts, observePlayerMapping)
     val deleteCustomLayout = DeleteCustomLayoutUseCase(savedLayouts)
     val saveGlobalLayout = SaveGlobalLayoutUseCase(globalLayouts, observePlayerMapping)

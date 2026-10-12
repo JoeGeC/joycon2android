@@ -17,16 +17,16 @@ class SidewaysRemoteTest {
 
     @Test
     fun `a body nothing has set follows the console's default layout`() = runBlocking {
-        assertFalse(fixture.playerMapping(body).sidewaysRemote)
+        assertFalse(fixture.playerMapping(body).motion.sideways)
     }
 
     @Test
     fun `applying a layout takes its answer with it, either way`() = runBlocking {
         fixture.applyLayout(fixture.console, body, MarioKartWheelMapping.id)
-        assertTrue(fixture.playerMapping(body).sidewaysRemote)
+        assertTrue(fixture.playerMapping(body).motion.sideways)
 
         fixture.applyLayout(fixture.console, body, WiiMapping.id)
-        assertFalse(fixture.playerMapping(body).sidewaysRemote)
+        assertFalse(fixture.playerMapping(body).motion.sideways)
     }
 
     @Test
@@ -34,10 +34,10 @@ class SidewaysRemoteTest {
         fixture.applyLayout(fixture.console, body, WiiMapping.id)
 
         fixture.setSidewaysRemote(fixture.console, body, true)
-        assertTrue(fixture.playerMapping(body).sidewaysRemote)
+        assertTrue(fixture.playerMapping(body).motion.sideways)
 
         fixture.applyLayout(fixture.console, body, WiiMapping.id)
-        assertFalse(fixture.playerMapping(body).sidewaysRemote)
+        assertFalse(fixture.playerMapping(body).motion.sideways)
     }
 
     @Test
@@ -46,7 +46,7 @@ class SidewaysRemoteTest {
 
         fixture.setSidewaysRemote(fixture.console, body, true)
 
-        assertTrue(fixture.playerMapping(body).sidewaysRemote)
-        assertEquals(false, fixture.playerMapping(other).sidewaysRemote)
+        assertTrue(fixture.playerMapping(body).motion.sideways)
+        assertEquals(false, fixture.playerMapping(other).motion.sideways)
     }
 }

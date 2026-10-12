@@ -13,7 +13,7 @@ class ApplyGlobalLayoutUseCase(
         if (saved == null) {
             bodies.forEach { applyMappingLayout(console, it, layoutId) }
         } else {
-            saved.bodies.forEach { applyPlayerMapping(console, it.body, it.entries, it.sidewaysRemote) }
+            saved.bodies.forEach { applyPlayerMapping(console, it.body, it.entries, it.motion) }
         }
     }
 }

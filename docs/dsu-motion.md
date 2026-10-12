@@ -194,16 +194,7 @@ With only the virtual gamepad, Eden then has no motion source at all.
 
 What `DolphinWiimoteConfig` writes, and why:
 
-- **Swing carries thrusts.** Dolphin moves the emulated remote only through Swing — the IMU path is
-  rotation alone — so games that read a push as distance to the sensor bar (Wii Play Billiards'
-  cue strength) see nothing from accel and gyro. A pair thrusts along `Accel Forward`; a sideways
-  Joy-Con out through its face, `Accel Up`.
-- **The swing input is signed and high-passed.** Pairing each input with its opposite makes it
-  signed (Dolphin clamps a single input at zero). An accelerometer can't tell gravity from
-  acceleration, so a tilted grip parks up to 1 g on the axis; `smooth()` is a slew limiter, so
-  subtracting it cancels a held tilt within ~0.3 s while an ~80 ms thrust outruns it.
-- **Range 7%, dead zone 20%.** Inputs arrive at 9.8 per g, so full range saturates on a twitch; 7%
-  puts a full lunge at ~1.5 g. The dead zone keeps a tilted grip's leak from nudging the remote.
+- **Swing is bound only with [Thrusts](#thrusts)** on.
 - **The Nunchuk reads another pad.** Dolphin splits a control on its last colon, so
   `DSUClient/<slot>/Joycon2:Accel Up` reads the second hand's slot. A real Nunchuk has no gyro.
 - **A remote no player uses is disconnected** (`Source = 0`) if it still reads our server. Left
@@ -213,6 +204,28 @@ What `DolphinWiimoteConfig` writes, and why:
   at the screen centre is what summons the pointer.
 - **`IMUIR/Total Yaw` is 60°.** Dolphin's 25° clamps the cursor after ±12.5° of turn, which a
   hand-held aim overruns; the clamp reads as the pointer sticking.
+
+### Thrusts
+
+A per-player switch in the mapping editor (`MappingLayout.thrust`, `ThrustRepository`), off in
+every shipped layout and overridable like [Sideways](#playing-as-a-sideways-wii-remote). On, it binds
+Dolphin's Swing to the thrust axis.
+
+- **Swing carries thrusts.** Dolphin moves the emulated remote only through Swing — the IMU path is
+  rotation alone — so games that read a push as distance to the sensor bar (Wii Play Billiards'
+  cue strength) see nothing from accel and gyro. A pair thrusts along `Accel Forward`; a sideways
+  Joy-Con out through its face, `Accel Up`.
+- **Off by default, because Swing adds to the accelerometer.** Dolphin reports
+  `m_swing_state.acceleration + IMU accel`, rotated by the swing's angle, so every thrust reaches
+  the game twice. A pendulum swing's centripetal pull lies along the remote's long axis, which is
+  the thrust axis, so Wii Sports Golf putts read far too strong and Bowling misses the swing
+  (2026-10, right Joy-Con; clearing Swing/Forward fixed both).
+- **The swing input is signed and high-passed.** Pairing each input with its opposite makes it
+  signed (Dolphin clamps a single input at zero). An accelerometer can't tell gravity from
+  acceleration, so a tilted grip parks up to 1 g on the axis; `smooth()` is a slew limiter, so
+  subtracting it cancels a held tilt within ~0.3 s while an ~80 ms thrust outruns it.
+- **Range 7%, dead zone 20%.** Inputs arrive at 9.8 per g, so full range saturates on a twitch; 7%
+  puts a full lunge at ~1.5 g. The dead zone keeps a tilted grip's leak from nudging the remote.
 
 ## MotionPlus tutorial replays
 

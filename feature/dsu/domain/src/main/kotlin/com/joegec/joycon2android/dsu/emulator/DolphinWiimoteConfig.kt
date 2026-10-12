@@ -3,6 +3,7 @@ package com.joegec.joycon2android.dsu.emulator
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.PlayerBody
+import com.joegec.joycon2android.buttonmapping.RemoteMotion
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.emittedDirection
@@ -161,8 +162,10 @@ object DolphinWiimoteConfig {
         } + listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
     }
 
-    private fun swingLines(side: JoyconSide, sidewaysRemote: Boolean): List<String> {
-            val body = bodyInputs(side, sidewaysRemote)
+    // Dolphin adds the swing it emulates to the accelerometer, so only a game that wants thrusts gets one.
+    private fun swingLines(side: JoyconSide, motion: RemoteMotion): List<String> {
+        if (!motion.thrust) return emptyList()
+        val body = bodyInputs(side, motion.sideways)
         val thrust = body["Accel Forward"] ?: "Accel Forward"
         val pull = body["Accel Backward"] ?: "Accel Backward"
         val signed = "(`$thrust` - `$pull`)"
@@ -180,23 +183,23 @@ object DolphinWiimoteConfig {
     fun merge(
         existing: String?,
         players: List<PlayerState>,
-        sidewaysRemoteFor: (PlayerBody) -> Boolean,
+        motionFor: (PlayerBody) -> RemoteMotion,
         mappingFor: (PlayerBody) -> Map<String, String>,
     ): String {
-        val sections = sections(players, sidewaysRemoteFor, mappingFor)
+        val sections = sections(players, motionFor, mappingFor)
         return IniEditor.mergeSections(existing, StaleDolphinWiimotes.disconnected(existing, sections.keys) + sections)
     }
 
     private fun sections(
         players: List<PlayerState>,
-        sidewaysRemoteFor: (PlayerBody) -> Boolean,
+        motionFor: (PlayerBody) -> RemoteMotion,
         mappingFor: (PlayerBody) -> Map<String, String>,
     ): Map<String, String> {
         val secondHands = DsuSlots.secondHands(players).associate { it.state.player to it.slot }
         return players.mapNotNull { player ->
             val slot = player.player.index - 1
             if (slot !in 0..3) return@mapNotNull null
-            bodyFor(player, slot, secondHands[player.player], sidewaysRemoteFor, mappingFor)
+            bodyFor(player, slot, secondHands[player.player], motionFor, mappingFor)
                 ?.let { "[Wiimote${player.player.index}]" to it }
         }.toMap()
     }
@@ -205,7 +208,7 @@ object DolphinWiimoteConfig {
         player: PlayerState,
         slot: Int,
         secondHandSlot: Int?,
-        sidewaysRemoteFor: (PlayerBody) -> Boolean,
+        motionFor: (PlayerBody) -> RemoteMotion,
         mappingFor: (PlayerBody) -> Map<String, String>,
     ): String? {
         val side = when {
@@ -216,7 +219,8 @@ object DolphinWiimoteConfig {
             else -> return null
         }
         val body = PlayerBody(player.player, side)
-        val sidewaysRemote = sidewaysRemoteFor(body)
+        val motion = motionFor(body)
+        val sidewaysRemote = motion.sideways
         // Source = 1 forces this Wii Remote slot to Emulated, so the mappings actually apply
         val header = listOf("Source = 1", "Device = DSUClient/$slot/Joycon2")
         val nunchukImu = if (side == JoyconSide.DUAL && secondHandSlot != null) {
@@ -227,7 +231,7 @@ object DolphinWiimoteConfig {
         val mapping = mappingFor(body)
         val shake = mapping.toSourceMap<WiimoteButton>()[WiimoteButton.Shake]
         return (header + lines(side, sidewaysRemote, mapping) + imuLines(side, sidewaysRemote, shake) +
-            swingLines(side, sidewaysRemote) + nunchukImu)
+            swingLines(side, motion) + nunchukImu)
             .joinToString("\n", postfix = "\n")
     }
 

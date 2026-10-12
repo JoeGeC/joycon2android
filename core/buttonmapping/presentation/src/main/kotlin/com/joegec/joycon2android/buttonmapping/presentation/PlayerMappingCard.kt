@@ -93,6 +93,9 @@ fun PlayerMappingCard(
                         actions.setSidewaysRemote(state.body, it)
                     }
                 }
+                if (state.offersThrust) {
+                    ThrustSwitch(state.thrust) { actions.setThrust(state.body, it) }
+                }
                 MappingBindings(console, state, actions, androidKeysNeedShizuku)
             }
         }
@@ -168,5 +171,18 @@ private fun SidewaysRemoteSwitch(side: JoyconSide, enabled: Boolean, onSetEnable
             .takeIf { aimsFromItsTail },
         checked = enabled,
         onCheckedChange = onSetEnabled,
+        modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
+    )
+}
+
+/** docs/dsu-motion.md#thrusts */
+@Composable
+private fun ThrustSwitch(enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
+    SettingSwitch(
+        title = stringResource(R.string.controller_mapping_thrust),
+        description = stringResource(R.string.controller_mapping_thrust_description),
+        checked = enabled,
+        onCheckedChange = onSetEnabled,
+        modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
     )
 }

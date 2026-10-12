@@ -8,6 +8,7 @@ private const val NAME = "name"
 private const val CONSOLE = "console"
 private const val SIDE = "side"
 private const val SIDEWAYS_REMOTE = "sidewaysRemote"
+private const val THRUST = "thrust"
 private const val BINDINGS = "bindings"
 private const val BODIES = "bodies"
 private const val PLAYER = "player"
@@ -18,6 +19,7 @@ internal fun SavedLayout.toJson(): String = JSONObject()
     .put(CONSOLE, console.name)
     .put(SIDE, side.name)
     .put(SIDEWAYS_REMOTE, sidewaysRemote)
+    .put(THRUST, thrust)
     .put(BINDINGS, JSONObject(bindings))
     .toString()
 
@@ -31,6 +33,7 @@ internal fun savedLayoutOf(id: String, json: String): SavedLayout? = runCatching
         side = JoyconSide.valueOf(document.getString(SIDE)),
         bindings = document.getJSONObject(BINDINGS).toStringMap(),
         sidewaysRemote = document.optBoolean(SIDEWAYS_REMOTE),
+        thrust = document.optBoolean(THRUST),
     )
 }.getOrNull()
 
@@ -53,13 +56,14 @@ internal fun globalLayoutOf(id: String, json: String): GlobalLayout? = runCatchi
 private fun PlayerLayoutSnapshot.toJson() = JSONObject()
     .put(PLAYER, body.player.name)
     .put(SIDE, body.side.name)
-    .put(SIDEWAYS_REMOTE, sidewaysRemote)
+    .put(SIDEWAYS_REMOTE, motion.sideways)
+    .put(THRUST, motion.thrust)
     .put(ENTRIES, JSONObject(entries))
 
 private fun JSONObject.toSnapshot() = PlayerLayoutSnapshot(
     body = PlayerBody(PlayerNumber.valueOf(getString(PLAYER)), JoyconSide.valueOf(getString(SIDE))),
     entries = getJSONObject(ENTRIES).toStringMap(),
-    sidewaysRemote = optBoolean(SIDEWAYS_REMOTE),
+    motion = RemoteMotion(sideways = optBoolean(SIDEWAYS_REMOTE), thrust = optBoolean(THRUST)),
 )
 
 private fun JSONObject.toStringMap(): Map<String, String> =

@@ -4,8 +4,9 @@ import android.content.pm.PackageManager
 import android.util.Log
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.GetEffectiveControllerMappingUseCase
-import com.joegec.joycon2android.buttonmapping.GetSidewaysRemoteUseCase
+import com.joegec.joycon2android.buttonmapping.GetRemoteMotionUseCase
 import com.joegec.joycon2android.buttonmapping.PlayerBody
+import com.joegec.joycon2android.buttonmapping.RemoteMotion
 import com.joegec.joycon2android.buttonmapping.body
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.dsu.emulator.DolphinDsuConfig
@@ -36,7 +37,7 @@ class EmulatorSetup(
     private val gamepadDevices: () -> Map<Int, EdenGamepad>,
     private val gamepadControllerNumbers: () -> Map<Int, Int>,
     private val getControllerMapping: GetEffectiveControllerMappingUseCase,
-    private val getSidewaysRemote: GetSidewaysRemoteUseCase,
+    private val getRemoteMotion: GetRemoteMotionUseCase,
 ) {
 
     // Read up front: the generators are synchronous.
@@ -48,12 +49,12 @@ class EmulatorSetup(
         return { body -> stored[body] ?: MappingPresets.default(console).entries(body.side) }
     }
 
-    private suspend fun sidewaysRemoteLookup(
+    private suspend fun motionLookup(
         console: Console,
         players: List<PlayerState>,
-    ): (PlayerBody) -> Boolean {
-        val stored = bodiesOf(players).associateWith { getSidewaysRemote(console, it) }
-        return { body -> stored[body] ?: false }
+    ): (PlayerBody) -> RemoteMotion {
+        val stored = bodiesOf(players).associateWith { getRemoteMotion(console, it) }
+        return { body -> stored[body] ?: MappingPresets.default(console).motion }
     }
 
     private fun bodiesOf(players: List<PlayerState>) = players.mapNotNull { it.body() }.distinct()
@@ -129,7 +130,7 @@ class EmulatorSetup(
             DolphinWiimoteConfig.merge(
                 shell.readText(DolphinWiimoteConfig.path),
                 players,
-                sidewaysRemoteLookup(Console.WIIMOTE_NUNCHUK, players),
+                motionLookup(Console.WIIMOTE_NUNCHUK, players),
                 mappingLookup(Console.WIIMOTE_NUNCHUK, players),
             ),
         )

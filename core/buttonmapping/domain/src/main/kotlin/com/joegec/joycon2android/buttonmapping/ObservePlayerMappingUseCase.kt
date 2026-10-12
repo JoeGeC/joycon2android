@@ -5,20 +5,20 @@ import kotlinx.coroutines.flow.combine
 
 class ObservePlayerMappingUseCase(
     private val observeControllerMapping: ObserveControllerMappingUseCase,
-    private val observeSidewaysRemote: ObserveSidewaysRemoteUseCase,
+    private val observeRemoteMotion: ObserveRemoteMotionUseCase,
     private val savedLayouts: SavedLayoutRepository,
 ) {
     operator fun invoke(console: Console, body: PlayerBody): Flow<PlayerMapping> =
         combine(
             observeControllerMapping(console, body),
-            observeSidewaysRemote(console, body),
+            observeRemoteMotion(console, body),
             savedLayouts.observe(),
-        ) { entries, sidewaysRemote, saved ->
+        ) { entries, motion, saved ->
             PlayerMapping(
                 body = body,
                 entries = entries,
-                sidewaysRemote = sidewaysRemote,
-                layout = MappingLayouts.matching(console, body.side, entries, sidewaysRemote, saved),
+                motion = motion,
+                layout = MappingLayouts.matching(console, body.side, entries, motion, saved),
             )
         }
 }

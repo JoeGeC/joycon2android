@@ -26,7 +26,7 @@ import com.joegec.joycon2android.buttonmapping.ControllerMappingRepository
 import com.joegec.joycon2android.buttonmapping.DeleteCustomLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.DeleteGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.GetEffectiveControllerMappingUseCase
-import com.joegec.joycon2android.buttonmapping.GetSidewaysRemoteUseCase
+import com.joegec.joycon2android.buttonmapping.GetRemoteMotionUseCase
 import com.joegec.joycon2android.buttonmapping.GlobalLayoutDataStore
 import com.joegec.joycon2android.buttonmapping.GlobalLayoutRepository
 import com.joegec.joycon2android.buttonmapping.ApplyPlayerMappingUseCase
@@ -34,15 +34,20 @@ import com.joegec.joycon2android.buttonmapping.ObserveControllerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveGlobalMappingUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveSavedLayoutsUseCase
 import com.joegec.joycon2android.buttonmapping.ObservePlayerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.ObserveRemoteMotionUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveSidewaysRemoteUseCase
+import com.joegec.joycon2android.buttonmapping.ObserveThrustUseCase
 import com.joegec.joycon2android.buttonmapping.SaveCustomLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SaveGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SavedLayoutDataStore
 import com.joegec.joycon2android.buttonmapping.SavedLayoutRepository
 import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.SetSidewaysRemoteUseCase
+import com.joegec.joycon2android.buttonmapping.SetThrustUseCase
 import com.joegec.joycon2android.buttonmapping.SidewaysRemoteDataStore
 import com.joegec.joycon2android.buttonmapping.SidewaysRemoteRepository
+import com.joegec.joycon2android.buttonmapping.ThrustDataStore
+import com.joegec.joycon2android.buttonmapping.ThrustRepository
 import com.joegec.joycon2android.assignment.AssignmentRepository
 import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerAssignmentManager
@@ -128,18 +133,23 @@ class AppContainer(context: Context) {
     private val savedLayoutRepository: SavedLayoutRepository = SavedLayoutDataStore(appContext)
     private val globalLayoutRepository: GlobalLayoutRepository = GlobalLayoutDataStore(appContext)
     private val sidewaysRemoteRepository: SidewaysRemoteRepository = SidewaysRemoteDataStore(appContext)
+    private val thrustRepository: ThrustRepository = ThrustDataStore(appContext)
 
     private val observeControllerMapping = ObserveControllerMappingUseCase(controllerMappingRepository)
-    private val observeSidewaysRemote = ObserveSidewaysRemoteUseCase(sidewaysRemoteRepository)
+    private val observeRemoteMotion = ObserveRemoteMotionUseCase(
+        ObserveSidewaysRemoteUseCase(sidewaysRemoteRepository),
+        ObserveThrustUseCase(thrustRepository),
+    )
     private val observePlayerMapping =
-        ObservePlayerMappingUseCase(observeControllerMapping, observeSidewaysRemote, savedLayoutRepository)
+        ObservePlayerMappingUseCase(observeControllerMapping, observeRemoteMotion, savedLayoutRepository)
     private val applyPlayerMapping =
-        ApplyPlayerMappingUseCase(controllerMappingRepository, sidewaysRemoteRepository)
+        ApplyPlayerMappingUseCase(controllerMappingRepository, sidewaysRemoteRepository, thrustRepository)
 
     val observeGlobalMapping = ObserveGlobalMappingUseCase(observePlayerMapping, globalLayoutRepository)
     val observeSavedLayouts = ObserveSavedLayoutsUseCase(savedLayoutRepository)
     val setControllerMapping = SetControllerMappingUseCase(controllerMappingRepository)
     val setSidewaysRemote = SetSidewaysRemoteUseCase(sidewaysRemoteRepository)
+    val setThrust = SetThrustUseCase(thrustRepository)
     val applyMappingLayout = ApplyMappingLayoutUseCase(savedLayoutRepository, applyPlayerMapping)
     val applyGlobalLayout =
         ApplyGlobalLayoutUseCase(globalLayoutRepository, applyMappingLayout, applyPlayerMapping)
@@ -149,7 +159,7 @@ class AppContainer(context: Context) {
     val deleteGlobalLayout = DeleteGlobalLayoutUseCase(globalLayoutRepository)
 
     private val getControllerMapping = GetEffectiveControllerMappingUseCase(observeControllerMapping)
-    private val getSidewaysRemote = GetSidewaysRemoteUseCase(observeSidewaysRemote)
+    private val getRemoteMotion = GetRemoteMotionUseCase(observeRemoteMotion)
 
     // --- DSU ---
     private val dsuRepository: DsuRepository = DsuServer(scope)
@@ -189,7 +199,7 @@ class AppContainer(context: Context) {
         gamepadDevices = { edenGamepads(appContext) },
         gamepadControllerNumbers = { dolphinGamepadIds(appContext) },
         getControllerMapping = getControllerMapping,
-        getSidewaysRemote = getSidewaysRemote,
+        getRemoteMotion = getRemoteMotion,
     )
 
     val emulatorLauncher = EmulatorLauncher(appContext)

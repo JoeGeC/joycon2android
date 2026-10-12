@@ -11,4 +11,5 @@ class MappingActions(
     val deleteLayout: (layoutId: String, global: Boolean) -> Unit,
     val setMapping: (body: PlayerBody, targetKey: String, sourceId: String) -> Unit,
     val setSidewaysRemote: (body: PlayerBody, enabled: Boolean) -> Unit,
+    val setThrust: (body: PlayerBody, enabled: Boolean) -> Unit,
 )

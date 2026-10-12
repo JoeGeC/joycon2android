@@ -16,7 +16,8 @@ class SaveCustomLayoutUseCase(
                 console = console,
                 side = body.side,
                 bindings = current.entries,
-                sidewaysRemote = current.sidewaysRemote,
+                sidewaysRemote = current.motion.sideways,
+                thrust = current.motion.thrust,
             ),
         )
     }

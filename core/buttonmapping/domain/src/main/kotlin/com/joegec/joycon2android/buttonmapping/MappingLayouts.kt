@@ -18,10 +18,10 @@ object MappingLayouts {
         console: Console,
         side: JoyconSide,
         entries: Map<String, String>,
-        sidewaysRemote: Boolean,
+        motion: RemoteMotion,
         saved: List<SavedLayout>,
     ): MappingLayout? = forBody(console, side, saved).firstOrNull {
-        it.sidewaysRemote == sidewaysRemote && entriesOf(console, side, it).bound() == entries.bound()
+        it.motion == motion && entriesOf(console, side, it).bound() == entries.bound()
     }
 
     // A target cleared back to "None" is stored as empty, which a layout that never bound it omits.

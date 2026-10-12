@@ -44,7 +44,7 @@ class AndroidKeyMappingTest {
     fun `an Android key cleared back to None still matches the layout`() {
         val entries = GameCubeMapping.entries(JoyconSide.DUAL) + (AndroidKey.HOME.targetKey to "")
 
-        val layout = MappingLayouts.matching(Console.GAMECUBE, JoyconSide.DUAL, entries, false, emptyList())
+        val layout = MappingLayouts.matching(Console.GAMECUBE, JoyconSide.DUAL, entries, RemoteMotion(), emptyList())
 
         assertEquals(GameCubeMapping, layout)
     }
@@ -53,6 +53,6 @@ class AndroidKeyMappingTest {
     fun `a bound Android key makes the mapping custom`() {
         val entries = GameCubeMapping.entries(JoyconSide.DUAL) + (AndroidKey.HOME.targetKey to "Home")
 
-        assertEquals(null, MappingLayouts.matching(Console.GAMECUBE, JoyconSide.DUAL, entries, false, emptyList()))
+        assertEquals(null, MappingLayouts.matching(Console.GAMECUBE, JoyconSide.DUAL, entries, RemoteMotion(), emptyList()))
     }
 }

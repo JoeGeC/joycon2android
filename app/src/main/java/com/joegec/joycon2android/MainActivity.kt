@@ -114,6 +114,7 @@ class MainActivity : ComponentActivity() {
                     c.applyGlobalLayout,
                     c.setControllerMapping,
                     c.setSidewaysRemote,
+                    c.setThrust,
                     c.saveCustomLayout,
                     c.saveGlobalLayout,
                     c.deleteCustomLayout,
@@ -246,6 +247,7 @@ class MainActivity : ComponentActivity() {
         setSidewaysRemote = { body, enabled ->
             controllerMappingViewModel.setSidewaysRemoteEnabled(body, enabled)
         },
+        setThrust = { body, enabled -> controllerMappingViewModel.setThrustEnabled(body, enabled) },
     )
 
     @Composable

@@ -32,6 +32,16 @@ internal class FakeSidewaysRemotes : SidewaysRemoteRepository {
     }
 }
 
+internal class FakeThrusts : ThrustRepository {
+    private val stored = MutableStateFlow(emptyMap<BodyKey, Boolean>())
+
+    override fun observe(console: Console, body: PlayerBody): Flow<Boolean?> = stored.map { it[console to body] }
+
+    override suspend fun set(console: Console, body: PlayerBody, enabled: Boolean) {
+        stored.update { it + ((console to body) to enabled) }
+    }
+}
+
 internal class FakeSavedLayouts(vararg initial: SavedLayout) : SavedLayoutRepository {
     private val stored = MutableStateFlow(initial.associateBy { it.id })
 

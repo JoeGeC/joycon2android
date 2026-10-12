@@ -119,6 +119,9 @@ target can take **several sources** — tick as many as you like, and any of the
 - **Sideways Wii Remote.** On the Wii console, a lone Joy-Con also gets this switch, for games that
   steer by tilting a sideways remote. On, up on the stick is towards the rail; off, towards L or R.
   The layout sets it (on for Mario Kart) and you can override it until you next pick a layout.
+- **Thrusts.** On the Wii console, turn this on for games that measure a push, like Wii Play
+  Billiards' cue. Leave it off for swings: with it on, Wii Sports Golf putts too hard and Bowling
+  misses your swing. Every layout starts with it off; saved layouts remember it.
 
 The layouts the app ships:
 
@@ -214,11 +217,12 @@ shoulder buttons.
      ([why](docs/dsu-motion.md#tricks-and-wheelies)). Dolphin's own **Shake** group doesn't land
      tricks, but you can bind **Shake** to a button.
 
-5. Under **Swing**, set **Forward** to
+5. **Only for games that measure a push**, like Wii Play Billiards: under **Swing**, set **Forward** to
    ``(`Accel Forward` - `Accel Backward`) - smooth((`Accel Forward` - `Accel Backward`), 0.03)``,
    **Range** to 7% and **Dead Zone** to 20%. For a single Joy-Con use whichever pair its nose reads
    above — `Accel Right`/`Left` on a right Joy-Con, and the other way round when it plays sideways.
-   This lets thrusts reach games like Wii Play Billiards ([why](docs/dsu-motion.md#dolphin-wii-remote-mapping)).
+   Leave it empty otherwise — Dolphin adds it to the real motion, so Wii Sports swings read too
+   strong ([why](docs/dsu-motion.md#thrusts)).
 6. **Pair only:** under **Nunchuk → Motion Input**, map each accelerometer entry to the left Joy-Con's
    slot, e.g. `` `DSUClient/3/Joycon2:Accel Up` `` — the highest slot no player uses (3 with one
    player).
