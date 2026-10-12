@@ -51,6 +51,7 @@ fun ControllerMappingScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     onInfoClick: (() -> Unit)? = null,
+    androidKeysNeedShizuku: Boolean = false,
 ) {
     BackHandler(onBack = onBack)
     var dialog by remember { mutableStateOf<MappingDialog?>(null) }
@@ -86,6 +87,7 @@ fun ControllerMappingScreen(
                         actions = actions,
                         onSaveLayout = { dialog = MappingDialog.Save(player.body) },
                         onDeleteLayout = { dialog = MappingDialog.Delete(it.id, it.label, global = false) },
+                        androidKeysNeedShizuku = androidKeysNeedShizuku,
                     )
                 }
             }

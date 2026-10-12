@@ -32,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.body
 import com.joegec.joycon2android.buttonmapping.presentation.ControllerMappingScreen
 import com.joegec.joycon2android.buttonmapping.presentation.ControllerMappingViewModel
@@ -43,7 +42,7 @@ import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
 import com.joegec.joycon2android.ui.pushTransition
 import com.joegec.joycon2android.dsu.DsuSlots
-import com.joegec.joycon2android.emulatorconfig.EdenPaths
+import com.joegec.joycon2android.emulator.EmulatorConsoles
 import com.joegec.joycon2android.ui.components.CloseEmulatorDialog
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.StartEmulatorDialog
@@ -67,6 +66,7 @@ class MainActivity : ComponentActivity() {
                     c.disableDsu,
                     dsuEmulators = c.emulatorSetup.dsuEmulators(),
                     configureDsu = c.emulatorSetup::configureDsu,
+                    onEmulatorSelected = c::selectDsuEmulator,
                 )
             }
         }
@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity() {
                     c.disableGamepad,
                     gamepadEmulators = c.emulatorSetup.gamepadEmulators(),
                     configureGamepad = c.emulatorSetup::configureGamepad,
+                    onEmulatorSelected = c::selectGamepadEmulator,
                 )
             }
         }
@@ -212,6 +213,7 @@ class MainActivity : ComponentActivity() {
         val players = session.activePlayers
         val bodies = players.mapNotNull { it.body() }
         val state by controllerMappingViewModel.uiState.collectAsState()
+        val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
         var showDsuHelp by rememberSaveable { mutableStateOf(false) }
 
         LaunchedEffect(console, bodies) { controllerMappingViewModel.edit(console, bodies) }
@@ -223,6 +225,7 @@ class MainActivity : ComponentActivity() {
                 actions = mappingActions,
                 onBack = onBack,
                 onInfoClick = if (route.fromDsu) ({ showDsuHelp = true }) else null,
+                androidKeysNeedShizuku = route.fromDsu && !shizukuAvailable,
             )
         }
         if (showDsuHelp) {
@@ -344,15 +347,13 @@ class MainActivity : ComponentActivity() {
             gamepadSetupPhase = gamepadSetupPhase,
             onConfigureGamepad = { gamepadViewModel.configureGamepad(state.activePlayers) },
             onOpenGamepadMapping = {
-                val console = if (selectedEmulator in EdenPaths.PACKAGES) Console.SWITCH_PRO else Console.GAMECUBE
-                onOpenMapping(MappingRoute(console, fromDsu = false))
+                onOpenMapping(MappingRoute(EmulatorConsoles.forGamepad(selectedEmulator), fromDsu = false))
             },
             onDsuToggle = dsuViewModel::toggle,
             onSelectDsuEmulator = dsuViewModel::selectEmulator,
             onConfigureDsu = { dsuViewModel.configureDsu(state.activePlayers) },
             onOpenDsuMapping = {
-                val console = if (selectedDsuEmulator in EdenPaths.PACKAGES) Console.SWITCH_PRO else Console.WIIMOTE_NUNCHUK
-                onOpenMapping(MappingRoute(console, fromDsu = true))
+                onOpenMapping(MappingRoute(EmulatorConsoles.forDsu(selectedDsuEmulator), fromDsu = true))
             },
             onOpenSystemSettings = { startActivity(viewModel.permissionHandler.buildSettingsIntent()) },
             onOpenSettings = onOpenSettings,

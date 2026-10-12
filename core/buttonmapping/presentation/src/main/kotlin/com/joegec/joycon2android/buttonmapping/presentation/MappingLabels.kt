@@ -14,6 +14,7 @@ import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
+import com.joegec.joycon2android.model.AndroidKey
 
 @Composable
 internal fun Console.label(): String = when (this) {
@@ -121,4 +122,19 @@ internal fun SwitchProButton.label(): String = when (this) {
 internal fun SwitchProStick.label(): String = when (this) {
     SwitchProStick.LStick -> stringResource(R.string.stick_l)
     SwitchProStick.RStick -> stringResource(R.string.stick_r)
+}
+
+@Composable
+internal fun MappingSection.label(): String = when (this) {
+    MappingSection.BUTTONS -> stringResource(R.string.section_buttons)
+    MappingSection.STICKS -> stringResource(R.string.section_sticks)
+    MappingSection.MOTION -> stringResource(R.string.section_motion)
+    MappingSection.ANDROID -> stringResource(R.string.section_android)
+}
+
+@Composable
+internal fun AndroidKey.label(): String = when (this) {
+    AndroidKey.HOME -> stringResource(R.string.android_key_home)
+    AndroidKey.BACK -> stringResource(R.string.android_key_back)
+    AndroidKey.SCREENSHOT -> stringResource(R.string.android_key_screenshot)
 }

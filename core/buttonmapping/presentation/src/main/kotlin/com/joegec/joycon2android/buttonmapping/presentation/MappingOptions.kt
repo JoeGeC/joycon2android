@@ -7,6 +7,7 @@ import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
+import com.joegec.joycon2android.buttonmapping.targetKey
 import com.joegec.joycon2android.buttonmapping.directionKey
 import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
 import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
@@ -15,6 +16,7 @@ import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
+import com.joegec.joycon2android.model.AndroidKey
 import com.joegec.joycon2android.model.JoyconButton
 
 internal object MappingOptions {
@@ -24,8 +26,12 @@ internal object MappingOptions {
         console == Console.WIIMOTE_NUNCHUK && side != JoyconSide.DUAL
 
     @Composable
-    fun targets(console: Console): List<Pair<String, String>> =
-        buttonTargets(console) + stickDirectionTargets(console) + motionTargets(console)
+    fun targets(console: Console, section: MappingSection): List<Pair<String, String>> = when (section) {
+        MappingSection.BUTTONS -> buttonTargets(console)
+        MappingSection.STICKS -> stickDirectionTargets(console)
+        MappingSection.MOTION -> motionTargets(console)
+        MappingSection.ANDROID -> AndroidKey.entries.map { it.targetKey to it.label() }
+    }
 
     @Composable
     private fun buttonTargets(console: Console): List<Pair<String, String>> = when (console) {
@@ -34,7 +40,7 @@ internal object MappingOptions {
         Console.SWITCH_PRO -> SwitchProButton.entries.map { it.name to it.label() }
     }
 
-    // Not buttons on the remote, so they're listed after the sticks.
+    // Not buttons on the remote, so they get their own section.
     private val MOTION_TARGETS = setOf(WiimoteButton.Shake, WiimoteButton.Recenter)
 
     @Composable
@@ -55,11 +61,12 @@ internal object MappingOptions {
         }
     }
 
+    // An Android key fires on a button press, so it offers no stick directions.
     @Composable
-    fun sources(side: JoyconSide): List<Pair<String, String>> =
+    fun sources(side: JoyconSide, section: MappingSection): List<Pair<String, String>> =
         listOf(NONE_ID to stringResource(R.string.source_none)) +
             physicalButtons(side).map { it.name to it.id } +
-            stickDirections(side)
+            if (section == MappingSection.ANDROID) emptyList() else stickDirections(side)
 
     // A lone Joy-Con has one stick, so its directions need no "Left"/"Right" to tell them apart.
     @Composable

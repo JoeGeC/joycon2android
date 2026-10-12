@@ -71,7 +71,7 @@ fun SettingSwitch(
 }
 
 @Composable
-private fun SettingWarning(text: String) {
+fun SettingWarning(text: String) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(Dimens.statusDotGap),
         verticalAlignment = Alignment.CenterVertically,

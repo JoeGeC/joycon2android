@@ -55,6 +55,7 @@ fun PlayerMappingCard(
     onSaveLayout: () -> Unit,
     onDeleteLayout: (DropdownOption) -> Unit,
     modifier: Modifier = Modifier,
+    androidKeysNeedShizuku: Boolean = false,
 ) {
     var expanded by rememberSaveable(state.body) { mutableStateOf(false) }
 
@@ -92,7 +93,7 @@ fun PlayerMappingCard(
                         actions.setSidewaysRemote(state.body, it)
                     }
                 }
-                MappingBindings(console, state, actions)
+                MappingBindings(console, state, actions, androidKeysNeedShizuku)
             }
         }
     }

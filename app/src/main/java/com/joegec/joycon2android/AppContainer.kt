@@ -12,7 +12,14 @@ import com.joegec.joycon2android.connection.StartScanUseCase
 import com.joegec.joycon2android.connection.StopScanUseCase
 import com.joegec.joycon2android.connection.ViewModePreferences
 import com.joegec.joycon2android.connection.ViewModePreferencesDataStore
+import com.joegec.joycon2android.androidkeys.AndroidKeyRouter
+import com.joegec.joycon2android.androidkeys.OutputAndroidKeys
+import com.joegec.joycon2android.androidkeys.ShellAndroidKeyPresser
 import com.joegec.joycon2android.buttonmapping.ApplyGlobalLayoutUseCase
+import com.joegec.joycon2android.buttonmapping.Console
+import com.joegec.joycon2android.buttonmapping.ObserveAndroidKeyBindingsUseCase
+import com.joegec.joycon2android.buttonmapping.PlayerBody
+import com.joegec.joycon2android.buttonmapping.body
 import com.joegec.joycon2android.buttonmapping.ApplyMappingLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.ControllerMappingDataStore
 import com.joegec.joycon2android.buttonmapping.ControllerMappingRepository
@@ -40,6 +47,7 @@ import com.joegec.joycon2android.assignment.AssignmentRepository
 import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerAssignmentManager
 import com.joegec.joycon2android.assignment.PlayerStateResolver
+import com.joegec.joycon2android.emulator.EmulatorConsoles
 import com.joegec.joycon2android.emulator.EmulatorLauncher
 import com.joegec.joycon2android.emulator.EmulatorSetup
 import com.joegec.joycon2android.emulator.dolphinGamepadIds
@@ -84,10 +92,16 @@ import com.joegec.joycon2android.update.UpdatePreferencesDataStore
 import com.joegec.joycon2android.update.UpdateRepository
 import com.joegec.joycon2android.update.installedAppVersion
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import java.io.File
 
 /** Composition root: docs/architecture.md#composition-root--appcontainer */
@@ -180,6 +194,32 @@ class AppContainer(context: Context) {
 
     val emulatorLauncher = EmulatorLauncher(appContext)
 
+    // --- Android keys (either output, from the mapping of the console each is set to) ---
+    private val gamepadConsole = MutableStateFlow(Console.GAMECUBE)
+    private val dsuConsole = MutableStateFlow(Console.WIIMOTE_NUNCHUK)
+    private val activeBodies = MutableStateFlow(emptyList<PlayerBody>())
+    private val observeAndroidKeyBindings = ObserveAndroidKeyBindingsUseCase(observeControllerMapping)
+
+    private val androidKeyRouter = AndroidKeyRouter(
+        gamepad = OutputAndroidKeys(gamepadRepository.enabled, androidKeyBindingsFor(gamepadConsole)),
+        dsu = OutputAndroidKeys(dsuRepository.enabled, androidKeyBindingsFor(dsuConsole)),
+        pressKey = ShellAndroidKeyPresser(scope, privilegedAccess::readyShell)::press,
+    )
+
+    fun selectGamepadEmulator(emulatorId: String) {
+        gamepadConsole.value = EmulatorConsoles.forGamepad(emulatorId)
+    }
+
+    fun selectDsuEmulator(emulatorId: String) {
+        dsuConsole.value = EmulatorConsoles.forDsu(emulatorId)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun androidKeyBindingsFor(console: StateFlow<Console>) =
+        combine(console, activeBodies, ::Pair)
+            .flatMapLatest { (console, bodies) -> observeAndroidKeyBindings(console, bodies) }
+            .stateIn(scope, SharingStarted.Eagerly, emptyMap())
+
     // --- Updates ---
     private val skippedVersions: SkippedVersionRepository = UpdatePreferencesDataStore(appContext)
     private val updateRepository: UpdateRepository = GitHubReleases(GITHUB_REPOSITORY)
@@ -201,8 +241,10 @@ class AppContainer(context: Context) {
         resolver = PlayerStateResolver(evictConflicting = assignmentRepository::unassign),
         comboDetector = ComboAssignmentDetector(),
         onState = { state ->
-            pushGamepadState(state.players)
-            pushDsuPadData(state.activePlayers)
+            activeBodies.value = state.activePlayers.mapNotNull { it.body() }
+            val routed = androidKeyRouter.route(state)
+            pushGamepadState(routed.gamepad)
+            pushDsuPadData(routed.dsu)
         },
         onPlayerAssigned = { onPlayerAssigned(it) },
         onPlayerUnassigned = { onPlayerUnassigned(it) },

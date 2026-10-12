@@ -23,8 +23,8 @@ class GamepadOutput(
 
     private var shell: PrivilegedShell? = null
 
-    private val playerStateFlows = PlayerNumber.entries.associateWith {
-        MutableStateFlow(PlayerState(it))
+    private val playerFrames = PlayerNumber.entries.associateWith {
+        MutableStateFlow(GamepadFrame(PlayerState(it)))
     }
 
     override fun enable(players: List<PlayerState>) {
@@ -47,9 +47,9 @@ class GamepadOutput(
 
     fun destroyAll() = gamepadManager.destroyAll()
 
-    override fun push(players: List<PlayerState>) {
+    override fun push(frames: List<GamepadFrame>) {
         if (!_enabled.value) return
-        players.forEach { playerStateFlows[it.player]?.value = it }
+        frames.forEach { playerFrames[it.state.player]?.value = it }
     }
 
     override fun onPlayerAssigned(player: PlayerNumber) {
@@ -57,7 +57,7 @@ class GamepadOutput(
         val active = shell ?: return
         scope.launch {
             if (gamepadManager.createGamepad(player, active)) {
-                gamepadManager.startReporting(player, playerStateFlows.getValue(player))
+                gamepadManager.startReporting(player, playerFrames.getValue(player))
             }
         }
     }
@@ -78,9 +78,9 @@ class GamepadOutput(
         var anyCreated = false
         for (playerState in active) {
             if (gamepadManager.createGamepad(playerState.player, shell)) {
-                val flow = playerStateFlows.getValue(playerState.player)
-                flow.value = playerState
-                gamepadManager.startReporting(playerState.player, flow)
+                val frames = playerFrames.getValue(playerState.player)
+                frames.value = GamepadFrame(playerState)
+                gamepadManager.startReporting(playerState.player, frames)
                 anyCreated = true
             }
         }

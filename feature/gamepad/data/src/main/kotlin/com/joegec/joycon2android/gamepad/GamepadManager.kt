@@ -4,7 +4,6 @@ import com.joegec.joycon2android.gamepad.privileged.PrivilegedShell
 import android.content.Context
 import android.util.Log
 import com.joegec.joycon2android.model.PlayerNumber
-import com.joegec.joycon2android.model.PlayerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,14 +33,11 @@ class GamepadManager(private val scope: CoroutineScope, private val context: Con
         success
     }
 
-    fun startReporting(player: PlayerNumber, stateFlow: StateFlow<PlayerState>) {
+    fun startReporting(player: PlayerNumber, frames: StateFlow<GamepadFrame>) {
         reportJobs[player]?.cancel()
         val device = devices[player] ?: return
         reportJobs[player] = scope.launch(Dispatchers.Default) {
-            stateFlow.collect { state ->
-                val report = ReportMapper.buildReport(state)
-                device.sendReport(report)
-            }
+            frames.collect { device.sendReport(ReportMapper.buildReport(it)) }
         }
     }
 

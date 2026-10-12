@@ -83,6 +83,9 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
   `MappingLayouts.matching` reads the name back by comparing a body's bindings with every shipped
   layout and every one the user saved for that body; no match is "Custom". So deleting a layout
   removes only its name, and the same bindings answer to it again if an identical one is saved.
+- **Android keys are mapping targets too** (`ANDROID_HOME`, …), so layouts save them. They act in
+  the app rather than the emulator: `AndroidKeyRouter` sits between the coordinator and both
+  outputs ([how](virtual-gamepad.md#android-keys)).
 - **`GlobalLayout` freezes the whole session** — every player's bindings in full, and the bodies they
   held — so it restores exactly what it saved, but only onto those players.
 
@@ -154,8 +157,9 @@ BLE notify ─→ Joycon2Manager (connection/data, ControllerRepository)
                    ▼
             SessionCoordinator (core/session) ── combines connections + assignments
                    │  onState(state)
-                   ├─→ PushGamepadStateUseCase ─→ GamepadOutput ─→ UHID relay ─→ /dev/uhid
-                   ├─→ PushDsuPadDataUseCase   ─→ DsuServer    ─→ UDP :26760 ─→ emulators
+                   ├─→ AndroidKeyRouter (withholds Android-key buttons, presses keys via shell)
+                   │      ├─→ PushGamepadStateUseCase ─→ GamepadOutput ─→ UHID relay ─→ /dev/uhid
+                   │      └─→ PushDsuPadDataUseCase   ─→ DsuServer    ─→ UDP :26760 ─→ emulators
                    └─→ ObserveSessionUseCase   ─→ Joycon2ViewModel ─→ AppUiState ─→ Compose
 ```
 

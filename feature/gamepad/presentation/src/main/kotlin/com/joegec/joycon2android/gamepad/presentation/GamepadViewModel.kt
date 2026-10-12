@@ -27,6 +27,7 @@ class GamepadViewModel(
     val gamepadEmulators: List<EmulatorOption> = emptyList(),
     private val configureGamepad: suspend (emulatorId: String, players: List<PlayerState>, closeEmulator: Boolean) -> EmulatorSetupResult =
         { _, _, _ -> EmulatorSetupResult.FAILED },
+    private val onEmulatorSelected: (emulatorId: String) -> Unit = {},
 ) : ViewModel() {
 
     val status: StateFlow<GamepadStatus> = observeGamepadStatus()
@@ -37,6 +38,10 @@ class GamepadViewModel(
 
     private val _selectedEmulator = MutableStateFlow(gamepadEmulators.firstOrNull()?.id ?: "")
     val selectedEmulator: StateFlow<String> = _selectedEmulator.asStateFlow()
+
+    init {
+        onEmulatorSelected(_selectedEmulator.value)
+    }
 
     private val _setupPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
     val setupPhase: StateFlow<DolphinSetupPhase> = _setupPhase.asStateFlow()
@@ -53,6 +58,7 @@ class GamepadViewModel(
 
     fun selectEmulator(id: String) {
         _selectedEmulator.value = id
+        onEmulatorSelected(id)
         _emulatorToClose.value = null
         _emulatorToStart.value = null
         resetSetupPhase()

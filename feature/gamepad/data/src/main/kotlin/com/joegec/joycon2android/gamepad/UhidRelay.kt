@@ -154,7 +154,7 @@ class UhidRelay(private val name: String, private val playerIndex: Int) {
         private const val UHID_INPUT2 = 12
         private const val BUS_USB = 3
         private const val UHID_EVENT_SIZE = 4380
-        private const val REPORT_SIZE = 14
+        private const val REPORT_SIZE = 15
 
         // Avoid Nintendo VID/PID — the hid-nintendo kernel driver intercepts those
         // and fails to initialize (since this isn't a real Joy-Con).
@@ -238,6 +238,22 @@ class UhidRelay(private val name: String, private val playerIndex: Int) {
             0x05, 0x09,               //   Usage Page (Button)
             0x19, 0x01,               //   Usage Minimum (Button 1)
             0x29, 0x02,               //   Usage Maximum (Button 2)
+            0x15, 0x00,               //   Logical Minimum (0)
+            0x25, 0x01,               //   Logical Maximum (1)
+            0x75, 0x01,               //   Report Size (1)
+            0x95.toByte(), 0x02,      //   Report Count (2)
+            0x81.toByte(), 0x02,      //   Input (Data, Var, Abs)
+            0x75, 0x06,               //   Report Size (6) - padding
+            0x95.toByte(), 0x01,      //   Report Count (1)
+            0x81.toByte(), 0x03,      //   Input (Const, Var, Abs)
+            0xC0.toByte(),            // End Collection
+
+            // Android's Home and Back keys: docs/virtual-gamepad.md#android-keys
+            0x05, 0x0C,               // Usage Page (Consumer)
+            0x09, 0x01,               // Usage (Consumer Control)
+            0xA1.toByte(), 0x01,      // Collection (Application)
+            0x0A, 0x23, 0x02,         //   Usage (AC Home)
+            0x0A, 0x24, 0x02,         //   Usage (AC Back)
             0x15, 0x00,               //   Logical Minimum (0)
             0x25, 0x01,               //   Logical Maximum (1)
             0x75, 0x01,               //   Report Size (1)

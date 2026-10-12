@@ -23,7 +23,7 @@ Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the 
 
 ## Report layout
 
-14 bytes:
+15 bytes:
 
 | Bytes | Content |
 |---|---|
@@ -33,6 +33,7 @@ Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the 
 | 11 | left trigger / brake — digital, 0 or 255 |
 | 12 | right trigger / accelerator — digital, 0 or 255 |
 | 13 | overflow buttons, in a trailing vendor-defined collection: bit 0 GR, bit 1 C |
+| 14 | Android keys, in a trailing Consumer Control collection: bit 0 Home, bit 1 Back ([below](#android-keys)) |
 
 ## Buttons and keycodes
 
@@ -65,6 +66,31 @@ shift:
 - **D-pad** is the hat (`AXIS_HAT_X` 15, `AXIS_HAT_Y` 16). Sticks are axes 0/1 (left) and 11/14
   (right). Eden's config uses numeric keycodes; Dolphin's uses names (`Button L2` = ZL,
   `Select` = −, …).
+
+## Android keys
+
+Each player's mapping, per console, has an **Android** section: buttons bound to Home, Back or
+Screenshot act as the device's own keys and never reach the game. `AndroidKeyRouter` applies the
+mapping of the console each output's card is set to, while that output runs.
+
+| Key | Virtual gamepad | DSU only |
+|---|---|---|
+| Home | byte 14 bit 0: Consumer `0x223` AC Home → `KEY_HOMEPAGE` → `HOME` | shell `input keyevent` |
+| Back | byte 14 bit 1: Consumer `0x224` AC Back → `KEY_BACK` → `BACK` | shell `input keyevent` |
+| Screenshot | shell `input keyevent 120` (`SYSRQ`), once per press | same |
+
+- **Withheld before either output.** `AndroidKeyBindings.withheldFrom` drops bound buttons from the
+  player's input as the controller reports it, so the same rule covers sideways Joy-Cons and both
+  outputs.
+- **Home and Back ride the pad when it runs**, even for a DSU binding, so a key bound on both
+  screens fires once.
+- **The shell is the slow path.** AYN Thor, Android 13, 2026-10-12: `input keyevent` took 50 ms to
+  1.5 s and twice hung; the pad's Consumer keys are immediate. DSU never reaches Android, so it has
+  no other path, and needs Shizuku.
+- **Screenshot skips the pad.** Retroid Pocket Nova, Android 13, 2026-10-09: a Keyboard `0x46`
+  Print Screen usage on the pad took no screenshot; `input keyevent 120` through the shell did.
+- **Android handles `HOME` itself** and never passes it to the app in front, so a bound Home always
+  leaves the game.
 
 ## Sideways Joy-Cons
 

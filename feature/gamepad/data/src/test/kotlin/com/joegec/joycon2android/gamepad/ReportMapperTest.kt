@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.gamepad
 
+import com.joegec.joycon2android.model.AndroidKey
 import com.joegec.joycon2android.model.BatteryCharge
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.JoyconButton
@@ -13,7 +14,9 @@ import org.junit.Test
 /** The bit is the Android keycode, so a moved button breaks every emulator config the app writes. */
 class ReportMapperTest {
 
-    private fun report(vararg pressed: JoyconButton): ByteArray {
+    private fun report(vararg pressed: JoyconButton): ByteArray = ReportMapper.buildReport(GamepadFrame(proPlayer(*pressed)))
+
+    private fun proPlayer(vararg pressed: JoyconButton): PlayerState {
         val input = JoyconInput(
             packetId = 0,
             buttons = 0,
@@ -27,7 +30,7 @@ class ReportMapperTest {
             battery = BatteryCharge(100),
         )
         val pro = ConnectedJoycon(address = "pro", side = Side.PRO, deviceName = "Pro", input = input)
-        return ReportMapper.buildReport(PlayerState(PlayerNumber.P1, left = pro))
+        return PlayerState(PlayerNumber.P1, left = pro)
     }
 
     private fun bitOf(button: JoyconButton): Int {
@@ -71,5 +74,25 @@ class ReportMapperTest {
         assertEquals(0x00.toByte(), report(JoyconButton.ZL)[12])
         assertEquals(0xFF.toByte(), report(JoyconButton.ZR)[12])
         assertEquals(0x00.toByte(), report(JoyconButton.ZR)[11])
+    }
+
+    @Test
+    fun `the frame's Home and Back take the Consumer byte`() {
+        val frame = GamepadFrame(proPlayer(), setOf(AndroidKey.HOME, AndroidKey.BACK))
+
+        assertEquals(0b11.toByte(), ReportMapper.buildReport(frame)[14])
+    }
+
+    @Test
+    fun `the Consumer byte has a bit for every key the pad can send`() {
+        assertEquals(GamepadFrame.SENDABLE_KEYS, ReportMapper.ANDROID_KEY_BITS.keys)
+    }
+
+    @Test
+    fun `with no Android keys the Consumer byte stays clear and Home stays a gamepad button`() {
+        val report = report(JoyconButton.Home)
+
+        assertEquals(0.toByte(), report[14])
+        assertEquals(0b10000.toByte(), report[1]) // Home, bit 12
     }
 }

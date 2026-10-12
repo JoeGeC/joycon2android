@@ -21,8 +21,11 @@ object MappingLayouts {
         sidewaysRemote: Boolean,
         saved: List<SavedLayout>,
     ): MappingLayout? = forBody(console, side, saved).firstOrNull {
-        it.sidewaysRemote == sidewaysRemote && entriesOf(console, side, it) == entries
+        it.sidewaysRemote == sidewaysRemote && entriesOf(console, side, it).bound() == entries.bound()
     }
+
+    // A target cleared back to "None" is stored as empty, which a layout that never bound it omits.
+    private fun Map<String, String>.bound() = filterValues { it.isNotEmpty() }
 
     /** Falls back to the family's other grip, then the console default (as a deleted layout does). */
     fun byId(console: Console, side: JoyconSide, id: String?, saved: List<SavedLayout>): MappingLayout =
