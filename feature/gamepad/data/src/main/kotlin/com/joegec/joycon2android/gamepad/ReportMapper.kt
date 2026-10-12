@@ -1,9 +1,7 @@
 package com.joegec.joycon2android.gamepad
 
 import com.joegec.joycon2android.model.AndroidKey
-import com.joegec.joycon2android.model.AndroidKeyBindings
 import com.joegec.joycon2android.model.JoyconButton
-import com.joegec.joycon2android.model.PlayerState
 
 object ReportMapper {
 
@@ -34,19 +32,18 @@ object ReportMapper {
         JoyconButton.Chat.id to 1,
     )
 
-    // The trailing system collection's byte. Screenshot goes through the shell instead:
-    // docs/virtual-gamepad.md#android-keys
-    private val ANDROID_KEY_BITS: Map<AndroidKey, Int> = mapOf(
+    // The trailing Consumer collection's byte: docs/virtual-gamepad.md#android-keys
+    internal val ANDROID_KEY_BITS: Map<AndroidKey, Int> = mapOf(
         AndroidKey.HOME to 0,
         AndroidKey.BACK to 1,
     )
 
     private const val HAT_CENTER = 0x0F
 
-    fun buildReport(state: PlayerState, androidKeys: AndroidKeyBindings = AndroidKeyBindings()): ByteArray {
-        val gamepad = state.gamepad
+    fun buildReport(frame: GamepadFrame): ByteArray {
+        val gamepad = frame.state.gamepad
         val report = ByteArray(REPORT_SIZE)
-        val pressed = androidKeys.gamepadButtons(gamepad.pressed)
+        val pressed = gamepad.pressed
 
         // Bytes 0-1: 15 button bits (little-endian) then one padding bit
         val buttons = bits(pressed, BUTTON_MAP)
@@ -72,7 +69,7 @@ object ReportMapper {
 
         report[13] = bits(pressed, OVERFLOW_MAP).toByte()
 
-        report[14] = androidKeys.pressedKeys(gamepad.pressed)
+        report[14] = frame.androidKeys
             .mapNotNull(ANDROID_KEY_BITS::get)
             .fold(0) { acc, bit -> acc or (1 shl bit) }
             .toByte()

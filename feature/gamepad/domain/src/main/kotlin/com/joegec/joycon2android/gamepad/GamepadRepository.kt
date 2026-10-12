@@ -10,7 +10,7 @@ interface GamepadRepository {
 
     fun enable(players: List<PlayerState>)
     fun disable()
-    fun push(players: List<PlayerState>)
+    fun push(frames: List<GamepadFrame>)
     fun onPlayerAssigned(player: PlayerNumber)
     fun onPlayerUnassigned(player: PlayerNumber)
 }

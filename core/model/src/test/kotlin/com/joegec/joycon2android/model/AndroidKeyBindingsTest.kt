@@ -1,41 +1,45 @@
 package com.joegec.joycon2android.model
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 class AndroidKeyBindingsTest {
 
-    private val homeAndBack = AndroidKeyBindings()
-        .bind(AndroidKey.HOME, JoyconButton.Home)
-        .bind(AndroidKey.BACK, JoyconButton.Chat)
+    private val homeAndBack = AndroidKeyBindings(
+        mapOf(
+            AndroidKey.HOME to setOf(JoyconButton.Home),
+            AndroidKey.BACK to setOf(JoyconButton.Chat, JoyconButton.Minus),
+        ),
+    )
 
-    @Test
-    fun `a bound button presses its key and leaves the gamepad`() {
-        val pressed = setOf(JoyconButton.Chat.id, JoyconButton.A.id)
-
-        assertEquals(setOf(AndroidKey.BACK), homeAndBack.pressedKeys(pressed))
-        assertEquals(setOf(JoyconButton.A.id), homeAndBack.gamepadButtons(pressed))
+    private fun pair(vararg pressed: JoyconButton): PlayerState {
+        val ids = pressed.map { it.id }.toSet()
+        return PlayerState(
+            PlayerNumber.P1,
+            left = ConnectedJoycon("l", Side.LEFT, "L", input = JoyconInput(pressed = ids)),
+            right = ConnectedJoycon("r", Side.RIGHT, "R", input = JoyconInput(pressed = ids)),
+        )
     }
 
     @Test
-    fun `binding a button to a second key moves it`() {
-        val moved = homeAndBack.bind(AndroidKey.SCREENSHOT, JoyconButton.Chat)
-
-        assertEquals(mapOf(AndroidKey.HOME to JoyconButton.Home, AndroidKey.SCREENSHOT to JoyconButton.Chat), moved.buttons)
+    fun `any bound button holds its key`() {
+        assertEquals(setOf(AndroidKey.BACK), homeAndBack.heldKeys(pair(JoyconButton.Minus, JoyconButton.A)))
     }
 
     @Test
-    fun `binding a key to nothing frees its button for the gamepad`() {
-        val cleared = homeAndBack.bind(AndroidKey.BACK, null)
+    fun `bound buttons are withheld from both Joy-Cons and the rest pass through`() {
+        val withheld = homeAndBack.withheldFrom(pair(JoyconButton.Home, JoyconButton.Chat, JoyconButton.A))
 
-        assertEquals(setOf(JoyconButton.Chat.id), cleared.gamepadButtons(setOf(JoyconButton.Chat.id)))
+        assertEquals(setOf(JoyconButton.A.id), withheld.left!!.input.pressed)
+        assertEquals(setOf(JoyconButton.A.id), withheld.right!!.input.pressed)
     }
 
     @Test
-    fun `nothing is bound by default`() {
-        val pressed = setOf(JoyconButton.Home.id)
+    fun `nothing bound leaves the state untouched`() {
+        val state = pair(JoyconButton.Home)
 
-        assertEquals(emptySet<AndroidKey>(), AndroidKeyBindings().pressedKeys(pressed))
-        assertEquals(pressed, AndroidKeyBindings().gamepadButtons(pressed))
+        assertEquals(emptySet<AndroidKey>(), AndroidKeyBindings().heldKeys(state))
+        assertSame(state, AndroidKeyBindings().withheldFrom(state))
     }
 }

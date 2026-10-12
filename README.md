@@ -88,9 +88,6 @@ The gear at the top right opens the settings panel:
   quicker buttons, at a battery cost. Applies while the virtual gamepad or DSU is on.
 - **Ignore this device's motion in Eden** (on by default, needs Shizuku) — stops Eden mixing this
   device's gyro into Player 1. Lifted when the virtual gamepad and DSU are both off.
-- **Android buttons** (all off by default) — pick a controller button for Android's Home, Back and
-  Screenshot, for every player, while the virtual gamepad is on. A button picked here no longer
-  reaches games, and Home always leaves the game for the home screen.
 
 ### 5. Set up your emulator
 
@@ -115,6 +112,10 @@ target can take **several sources** — tick as many as you like, and any of the
 - **All players** at the top sets and saves everyone at once. A grip only some bodies fit —
   **Mario Kart Wheel**, say — gives the rest the same game's other grip. A saved set remembers who
   held which body ("P1 L, P2 R, P3 L/R") and stays greyed out until those players are back.
+- **Android.** Below the emulator's buttons, sticks and motion, each card has Android's **Home**,
+  **Back** and **Screenshot**. A button picked here works as the device's own and never reaches the
+  game; Home always leaves it. Like the rest of the mapping it's per player and console, and saved in
+  layouts. Over DSU alone it needs Shizuku running.
 - **Sideways Wii Remote.** On the Wii console, a lone Joy-Con also gets this switch, for games that
   steer by tilting a sideways remote. On, up on the stick is towards the rail; off, towards L or R.
   The layout sets it (on for Mario Kart) and you can override it until you next pick a layout.

@@ -9,10 +9,4 @@
     <string name="settings_block_device_motion_title">Ignore this device\'s motion in Eden</string>
     <string name="settings_block_device_motion_description">Eden adds this device\'s gyro to Player 1, which makes controller motion stutter. Lifted when the Virtual Gamepad and DSU are both off.</string>
     <string name="settings_block_device_motion_needs_shizuku">Needs Shizuku running.</string>
-    <string name="settings_android_keys_title">Android buttons</string>
-    <string name="settings_android_keys_description">Controller buttons that work as Android\'s own, on every player while the Virtual Gamepad is on. A button chosen here no longer reaches games, and Home always leaves the game for the home screen.</string>
-    <string name="settings_android_key_home">Home</string>
-    <string name="settings_android_key_back">Back</string>
-    <string name="settings_android_key_screenshot">Screenshot</string>
-    <string name="settings_android_key_none">None</string>
 </resources>

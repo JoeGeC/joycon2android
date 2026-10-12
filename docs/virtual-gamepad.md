@@ -69,25 +69,28 @@ shift:
 
 ## Android keys
 
-The settings panel's **Android buttons** binds a controller button to Android's Home, Back or
-Screenshot, for every player. `ReportMapper` takes a bound button out of the gamepad bits
-(`AndroidKeyBindings`).
+Each player's mapping, per console, has an **Android** section: buttons bound to Home, Back or
+Screenshot act as the device's own keys and never reach the game. `AndroidKeyRouter` applies the
+mapping of the console each output's card is set to, while that output runs.
 
-| Key | Sent as | Reaches Android as |
+| Key | Virtual gamepad | DSU only |
 |---|---|---|
-| Home | byte 14 bit 0: Consumer `0x223` AC Home → `KEY_HOMEPAGE` | `HOME` |
-| Back | byte 14 bit 1: Consumer `0x224` AC Back → `KEY_BACK` | `BACK` |
-| Screenshot | `input keyevent 120` through the privileged shell, on press (`ShellScreenshot`) | `SYSRQ`, which the window manager takes as a screenshot |
+| Home | byte 14 bit 0: Consumer `0x223` AC Home → `KEY_HOMEPAGE` → `HOME` | shell `input keyevent` |
+| Back | byte 14 bit 1: Consumer `0x224` AC Back → `KEY_BACK` → `BACK` | shell `input keyevent` |
+| Screenshot | shell `input keyevent 120` (`SYSRQ`), once per press | same |
 
-- **Screenshot skips the virtual pad.** Retroid Pocket Nova, Android 13, 2026-10-09: a Keyboard
-  `0x46` Print Screen usage on the pad took no screenshot; `input keyevent 120` through the shell did.
-
-- **Only buttons `SidewaysMapper` never moves can be bound** (Home, Capture, C, GL, GR, −, +), so
-  a button's id is the same in the player's input and in the report.
+- **Withheld before either output.** `AndroidKeyBindings.withheldFrom` drops bound buttons from the
+  player's input as the controller reports it, so the same rule covers sideways Joy-Cons and both
+  outputs.
+- **Home and Back ride the pad when it runs**, even for a DSU binding, so a key bound on both
+  screens fires once.
+- **The shell is the slow path.** AYN Thor, Android 13, 2026-10-12: `input keyevent` took 50 ms to
+  1.5 s and twice hung; the pad's Consumer keys are immediate. DSU never reaches Android, so it has
+  no other path, and needs Shizuku.
+- **Screenshot skips the pad.** Retroid Pocket Nova, Android 13, 2026-10-09: a Keyboard `0x46`
+  Print Screen usage on the pad took no screenshot; `input keyevent 120` through the shell did.
 - **Android handles `HOME` itself** and never passes it to the app in front, so a bound Home always
   leaves the game.
-- **Emulator configs keep their bindings to a bound button.** It never arrives while bound, and
-  unbinding it needs no new Set up.
 
 ## Sideways Joy-Cons
 

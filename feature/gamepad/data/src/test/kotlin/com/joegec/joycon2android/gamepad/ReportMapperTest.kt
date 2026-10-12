@@ -1,7 +1,6 @@
 package com.joegec.joycon2android.gamepad
 
 import com.joegec.joycon2android.model.AndroidKey
-import com.joegec.joycon2android.model.AndroidKeyBindings
 import com.joegec.joycon2android.model.BatteryCharge
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.JoyconButton
@@ -15,7 +14,7 @@ import org.junit.Test
 /** The bit is the Android keycode, so a moved button breaks every emulator config the app writes. */
 class ReportMapperTest {
 
-    private fun report(vararg pressed: JoyconButton): ByteArray = ReportMapper.buildReport(proPlayer(*pressed))
+    private fun report(vararg pressed: JoyconButton): ByteArray = ReportMapper.buildReport(GamepadFrame(proPlayer(*pressed)))
 
     private fun proPlayer(vararg pressed: JoyconButton): PlayerState {
         val input = JoyconInput(
@@ -78,24 +77,22 @@ class ReportMapperTest {
     }
 
     @Test
-    fun `a button bound to an Android key leaves the gamepad, and Home and Back take the system byte`() {
-        val keys = AndroidKeyBindings()
-            .bind(AndroidKey.HOME, JoyconButton.Home)
-            .bind(AndroidKey.BACK, JoyconButton.Chat)
-            .bind(AndroidKey.SCREENSHOT, JoyconButton.Capture)
-        val report = ReportMapper.buildReport(proPlayer(JoyconButton.Home, JoyconButton.Chat, JoyconButton.Capture), keys)
+    fun `the frame's Home and Back take the Consumer byte`() {
+        val frame = GamepadFrame(proPlayer(), setOf(AndroidKey.HOME, AndroidKey.BACK))
 
-        assertEquals(0b011.toByte(), report[14]) // Screenshot goes through the shell
-        assertEquals(0.toByte(), report[0])  // Capture, bit 2
-        assertEquals(0.toByte(), report[1])  // Home, bit 12
-        assertEquals(0.toByte(), report[13]) // C, overflow bit 1
+        assertEquals(0b11.toByte(), ReportMapper.buildReport(frame)[14])
     }
 
     @Test
-    fun `with nothing bound the system byte stays clear`() {
-        val report = report(JoyconButton.Home, JoyconButton.Chat)
+    fun `the Consumer byte has a bit for every key the pad can send`() {
+        assertEquals(GamepadFrame.SENDABLE_KEYS, ReportMapper.ANDROID_KEY_BITS.keys)
+    }
+
+    @Test
+    fun `with no Android keys the Consumer byte stays clear and Home stays a gamepad button`() {
+        val report = report(JoyconButton.Home)
 
         assertEquals(0.toByte(), report[14])
-        assertEquals(0b10.toByte(), report[13]) // C, overflow bit 1
+        assertEquals(0b10000.toByte(), report[1]) // Home, bit 12
     }
 }
