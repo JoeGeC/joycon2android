@@ -142,7 +142,7 @@ One **ViewModel per feature**, in its presentation module, built in `MainActivit
 - `GamepadViewModel` — gamepad status, Shizuku availability and emulator auto setup.
 - `UpdateViewModel` — the once-per-launch release check and the update prompt.
 - `SettingsViewModel` — the settings that apply to whichever output runs (faster updates, the Eden
-  motion block, Dolphin stick calibration). The panel's layout choice stays with `Joycon2ViewModel`, which renders it.
+  motion block). The panel's layout choice stays with `Joycon2ViewModel`, which renders it.
 - `ControllerMappingViewModel` (in `:core:buttonmapping:presentation`) — the button-mapping editor.
 - `Joycon2ViewModel` (in `:app`) — the app-level host: the coordinator's session `uiState`
   (genuinely cross-feature), BLE permissions, scan/assign/disconnect, and the service binding.

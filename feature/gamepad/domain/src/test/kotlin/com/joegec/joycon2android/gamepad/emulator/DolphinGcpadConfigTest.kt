@@ -9,6 +9,7 @@ import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.Side
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -113,13 +114,14 @@ class DolphinGcpadConfigTest {
     }
 
     @Test
-    fun `turning calibration off leaves the sticks uncalibrated`() {
+    fun `a stick calibration already in the section is kept`() {
+        val existing = "[GCPad1]\nMain Stick/Calibration = 85.00\n"
         val pair = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
-        val result = DolphinGcpadConfig.merge(null, pair, mapOf(1 to 7), calibrateSticks = false) { body ->
-            MappingPresets.default(Console.GAMECUBE).entries(body.side)
-        }
+        val result = merge(existing, pair)
 
-        assertFalse(result.contains("Calibration"))
+        assertTrue(result.contains("Main Stick/Calibration = 85.00"))
+        assertFalse(result.contains("Main Stick/Calibration = 100.00"))
+        assertTrue(result.contains("C-Stick/Calibration = 100.00"))
     }
 
     @Test
@@ -134,10 +136,13 @@ class DolphinGcpadConfigTest {
     }
 
     @Test
-    fun `a pro controller with no section of its own gets none`() {
-        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
+    fun `a pro controller's own stick calibration is kept`() {
+        val handMade = "[GCPad1]\nDevice = Android/5/Pro\nMain Stick/Calibration = 85.00\n"
+        val result = merge(handMade, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
 
-        assertFalse(result.contains("[GCPad1]"))
+        assertTrue(result.contains("Main Stick/Calibration = 85.00"))
+        assertFalse(result.contains("Main Stick/Calibration = 100.00"))
+        assertTrue(result.contains("C-Stick/Calibration = 100.00"))
     }
 
     @Test
@@ -156,6 +161,17 @@ class DolphinGcpadConfigTest {
         assertTrue(result.contains("Buttons/Z = `Button R1`")) // the bumper Z travels on
         assertTrue(result.contains("Triggers/R = `Button R3`"))
         assertTrue(result.contains("C-Stick/Up = `Axis 14-`"))
+    }
+
+    @Test
+    fun `a gamecube controller's section is written by setup, with each stick calibrated once`() {
+        val gameCube = joycon(Side.PRO).copy(model = ControllerModel.GAMECUBE)
+        val stale = "[GCPad1]\nDevice = Android/5/Old\n"
+        val result = merge(stale, listOf(PlayerState(PlayerNumber.P1, left = gameCube, right = gameCube)))
+
+        assertFalse(result.contains("Device = Android/5/Old"))
+        assertEquals(1, Regex("Main Stick/Calibration = 100.00").findAll(result).count())
+        assertEquals(1, Regex("C-Stick/Calibration = 100.00").findAll(result).count())
     }
 
     @Test
