@@ -24,14 +24,16 @@ class PlayerBodyTest {
     }
 
     @Test
-    fun `a gamecube controller's ZL and Z are reported on the stick clicks, a pair's are not`() {
-        assertEquals(JoyconButton.RS, JoyconButton.ZR.emittedFor(JoyconSide.GAMECUBE))
-        assertEquals(JoyconButton.LS, JoyconButton.ZL.emittedFor(JoyconSide.GAMECUBE))
+    fun `a gamecube controller's ZL and Z are reported as the bumpers and its trigger clicks as the stick clicks`() {
+        assertEquals(JoyconButton.R, JoyconButton.ZR.emittedFor(JoyconSide.GAMECUBE))
+        assertEquals(JoyconButton.L, JoyconButton.ZL.emittedFor(JoyconSide.GAMECUBE))
+        assertEquals(JoyconButton.RS, JoyconButton.R.emittedFor(JoyconSide.GAMECUBE))
+        assertEquals(JoyconButton.LS, JoyconButton.L.emittedFor(JoyconSide.GAMECUBE))
         assertEquals(JoyconButton.ZR, JoyconButton.ZR.emittedFor(JoyconSide.DUAL))
     }
 
     @Test
-    fun `a gamecube controller's stick clicks emit nothing, so they can't fire with ZL or Z`() {
+    fun `a gamecube controller's stick clicks emit nothing, so they can't fire with a trigger click`() {
         assertEquals(null, JoyconButton.LS.emittedFor(JoyconSide.GAMECUBE))
         assertEquals(null, JoyconButton.RS.emittedFor(JoyconSide.GAMECUBE))
         assertEquals(JoyconButton.LS, JoyconButton.LS.emittedFor(JoyconSide.DUAL))

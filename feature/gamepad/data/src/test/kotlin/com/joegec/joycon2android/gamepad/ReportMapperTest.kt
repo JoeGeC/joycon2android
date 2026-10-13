@@ -109,13 +109,21 @@ class ReportMapperTest {
     }
 
     @Test
-    fun `a gamecube controller's ZL and Z travel on the stick-click bits, clear of L2 and R2`() {
-        val input = JoyconInput(pressed = setOf(JoyconButton.ZL.id, JoyconButton.ZR.id))
+    fun `a gamecube controller's ZL and Z travel on the bumper bits, clear of L2 and R2`() {
+        assertEquals((1 shl 6) or (1 shl 7), gameCubeButtonWord(JoyconButton.ZL, JoyconButton.ZR)) // BUTTON_L1, BUTTON_R1
+    }
+
+    @Test
+    fun `a gamecube controller's trigger clicks travel on the stick-click bits`() {
+        assertEquals((1 shl 13) or (1 shl 14), gameCubeButtonWord(JoyconButton.L, JoyconButton.R)) // BUTTON_THUMBL, BUTTON_THUMBR
+    }
+
+    private fun gameCubeButtonWord(vararg pressed: JoyconButton): Int {
+        val input = JoyconInput(pressed = pressed.map { it.id }.toSet())
         val gameCube = ConnectedJoycon(
             address = "gc", side = Side.PRO, model = ControllerModel.GAMECUBE, deviceName = "Joy-Con 2", input = input,
         )
         val report = ReportMapper.buildReport(GamepadFrame(PlayerState(PlayerNumber.P1, left = gameCube, right = gameCube)))
-        val word = (report[0].toInt() and 0xFF) or ((report[1].toInt() and 0xFF) shl 8)
-        assertEquals((1 shl 13) or (1 shl 14), word) // BUTTON_THUMBL, BUTTON_THUMBR
+        return (report[0].toInt() and 0xFF) or ((report[1].toInt() and 0xFF) shl 8)
     }
 }

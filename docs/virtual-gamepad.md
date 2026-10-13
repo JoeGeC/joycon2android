@@ -54,7 +54,8 @@ shift:
 | R | 7 | 103 `BUTTON_R1` | | | |
 
 - **Capture and GL** take `BUTTON_C` / `BUTTON_Z`, the two slots with no Switch equivalent.
-- **ZL and ZR take the stick clicks** on a controller with analog triggers ([below](#analog-triggers)).
+- **A controller with analog triggers moves its shoulders:** ZL/ZR onto L1/R1, the trigger clicks onto
+  the stick clicks ([below](#analog-triggers)).
 - **GR and C overflow.** One gamepad collection carries 15 buttons — a 16th lands on `0x13F`, which
   no key layout names — and the Switch 2 controllers have 17. For a Button usage outside a
   pointer/joystick/gamepad collection Linux falls back to `BTN_MISC + n - 1`, which key layouts name
@@ -130,17 +131,22 @@ Motion is turned too, but for DSU only — see [dsu-motion.md](dsu-motion.md#sid
 
 A controller with analog triggers (`ControllerModel.hasAnalogTriggers`, the NSO GameCube controller)
 drives bytes 11/12 with its calibrated L/R travel instead of ZL/ZR
-([calibration](protocol.md#analog-triggers)). The click at the bottom stays on L/R
-(`BUTTON_L1`/`BUTTON_R1`).
+([calibration](protocol.md#analog-triggers)). `AnalogTriggerMapper` moves its other shoulder buttons
+so each lands where Android expects that control:
 
-ZL and Z (the ZR bit) move to the stick-click bits, `BUTTON_THUMBL`/`BUTTON_THUMBR`, which this
-controller has no use for (`AnalogTriggerMapper`). They can't stay on `BUTTON_L2`/`BUTTON_R2`, which
-can follow the trigger axes instead. Retroid Pocket Nova, Android 13, 2026-10-08: pulling R fired
-Dolphin's `Button R2`, and pressing Z fired nothing. The Nova's L2/R2 setting wasn't the cause.
+| Button | Bits | Keycodes |
+|---|---|---|
+| ZL / Z (the ZR bit) | 6 / 7 | `BUTTON_L1` / `BUTTON_R1` |
+| L / R click at the bottom | 13 / 14 | `BUTTON_THUMBL` / `BUTTON_THUMBR` |
 
-So no binding of this controller's can use the stick clicks: on the wire they are ZL and Z.
-`emittedFor` resolves LS/RS to nothing for it, and its layouts leave the stick-click targets and
-the Joy-Con Wii layout's Recenter unbound.
+Confirmed on a Retroid Pocket Nova (Android 13) with an NSO GameCube controller, 2026-10-13.
+
+- **Nothing goes on `BUTTON_L2`/`BUTTON_R2`:** they can follow the trigger axes. Retroid Pocket Nova,
+  Android 13, 2026-10-08: with Z on R2, pulling R fired Dolphin's `Button R2` and Z fired nothing.
+  The Nova's L2/R2 setting wasn't the cause.
+- **The stick-click bits are free to reuse:** the controller has no stick clicks. So no binding of
+  its can use LS/RS: `emittedFor` resolves them to nothing for it, and its layouts leave the
+  stick-click targets and the Joy-Con Wii layout's Recenter unbound.
 
 For such a player, Dolphin setup adds ``Triggers/L-Analog = `Axis 23+` `` and
 ``Triggers/R-Analog = `Axis 22+` ``. Dolphin names Android axes by number, and a trigger has only a `+`

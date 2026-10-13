@@ -114,8 +114,8 @@ class DolphinGcpadConfigTest {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = gameCube, right = gameCube)))
 
         assertTrue(result.contains("[GCPad1]"))
-        assertTrue(result.contains("Buttons/Z = `Button R3`")) // the stick click Z travels on
-        assertTrue(result.contains("Triggers/R = `Button R1`"))
+        assertTrue(result.contains("Buttons/Z = `Button R1`")) // the bumper Z travels on
+        assertTrue(result.contains("Triggers/R = `Button R3`"))
         assertTrue(result.contains("C-Stick/Up = `Axis 14-`"))
     }
 
@@ -126,7 +126,7 @@ class DolphinGcpadConfigTest {
 
         assertTrue(result.contains("Triggers/L-Analog = `Axis 23+`"))
         assertTrue(result.contains("Triggers/R-Analog = `Axis 22+`"))
-        assertTrue(result.contains("Triggers/L = `Button L1`")) // the click at the second stop
+        assertTrue(result.contains("Triggers/L = `Button L3`")) // the click at the second stop
     }
 
     @Test

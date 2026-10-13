@@ -197,13 +197,15 @@ class EdenDsuConfigTest {
     }
 
     @Test
-    fun `a gamecube controller's ZL and ZR bind to the stick-click bits they travel on, and nothing else does`() {
+    fun `a gamecube controller's ZL and Z bind to the bumper bits and its trigger clicks to the stick-click bits`() {
         val gameCube = joycon(Side.PRO).copy(model = ControllerModel.GAMECUBE)
 
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = gameCube, right = gameCube)))
 
-        assertEquals("\"${device(0)},button:2\"", valueOf(result, "player_0_button_zl")) // LS
-        assertEquals("\"${device(0)},button:4\"", valueOf(result, "player_0_button_zr")) // RS
+        assertEquals("\"${device(0)},button:1024\"", valueOf(result, "player_0_button_zl")) // L
+        assertEquals("\"${device(0)},button:2048\"", valueOf(result, "player_0_button_zr")) // R
+        assertEquals("\"${device(0)},button:2\"", valueOf(result, "player_0_button_l")) // LS
+        assertEquals("\"${device(0)},button:4\"", valueOf(result, "player_0_button_r")) // RS
         assertFalse(result.contains("player_0_button_lstick"))
         assertFalse(result.contains("player_0_button_rstick"))
     }

@@ -189,14 +189,16 @@ class EdenGamepadConfigTest {
     }
 
     @Test
-    fun `a gamecube controller's ZL and ZR bind to the stick clicks they travel on, and nothing else does`() {
+    fun `a gamecube controller's ZL and Z bind to the bumpers and its trigger clicks to the stick clicks`() {
         val gameCube = joycon(Side.PRO).copy(model = ControllerModel.GAMECUBE)
         val players = listOf(PlayerState(PlayerNumber.P1, left = gameCube, right = gameCube))
 
         val result = merge(null, players, mapOf(1 to 0))
 
-        assertTrue(result.contains("player_0_button_zl=\"$DEVICE,button:106,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_THUMBL
-        assertTrue(result.contains("player_0_button_zr=\"$DEVICE,button:107,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_THUMBR
+        assertTrue(result.contains("player_0_button_zl=\"$DEVICE,button:102,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_L1
+        assertTrue(result.contains("player_0_button_zr=\"$DEVICE,button:103,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_R1
+        assertTrue(result.contains("player_0_button_l=\"$DEVICE,button:106,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_THUMBL
+        assertTrue(result.contains("player_0_button_r=\"$DEVICE,button:107,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_THUMBR
         assertFalse(result.contains("player_0_button_lstick"))
         assertFalse(result.contains("player_0_button_rstick"))
     }
