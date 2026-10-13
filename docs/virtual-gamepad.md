@@ -147,6 +147,9 @@ Confirmed on a Retroid Pocket Nova (Android 13) with an NSO GameCube controller,
 - **The stick-click bits are free to reuse:** the controller has no stick clicks. So no binding of
   its can use LS/RS: `emittedFor` resolves them to nothing for it, and its Switch Pro layout leaves
   the stick-click targets unbound.
+- **DSU carries no trigger travel.** Its packet has analog L2/R2 bytes, but `DsuPacketEncoder` fills
+  each analog byte from its button, 0 or 255, and this controller's ZL/ZR bits are moved, so L2/R2
+  stay 0. Its buttons reach DSU as they reach the pad: ZL/Z as L1/R1, the clicks as L3/R3.
 
 For such a player, Dolphin setup adds ``Triggers/L-Analog = `Axis 23+` `` and
 ``Triggers/R-Analog = `Axis 22+` ``. Dolphin names Android axes by number, and a trigger has only a `+`
