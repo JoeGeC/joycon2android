@@ -8,11 +8,14 @@ import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -29,7 +32,8 @@ class Joycon2Manager(
     private val scanner = BleScanner(context)
     private val pool = ConnectionPool(context)
     private val connectionJobs = mutableMapOf<String, Job>()
-    private val typeOverrides = typePreferences.overrides.stateIn(scope, SharingStarted.Eagerly, emptyMap())
+    // Null until the stored overrides load, so no controller connects as the wrong type.
+    private val typeOverrides = typePreferences.overrides.stateIn(scope, SharingStarted.Eagerly, null)
 
     @Volatile
     private var highPriority = false
@@ -51,7 +55,7 @@ class Joycon2Manager(
     }
 
     override fun startScan() {
-        if (scanner.isScanning) return
+        if (scanner.isScanning || _scanning.value) return
         if (pool.size >= MAX_CONNECTIONS) return
 
         if (!scanner.isAvailable) {
@@ -60,8 +64,11 @@ class Joycon2Manager(
         }
 
         _error.value = null
-        scanner.start(pool::isLive)
         _scanning.value = true
+        scope.launch(Dispatchers.Main.immediate) {
+            typeOverrides.filterNotNull().first()
+            if (_scanning.value) scanner.start(pool::isLive)
+        }
     }
 
     override fun stopScan() {
@@ -144,7 +151,7 @@ class Joycon2Manager(
             return
         }
 
-        val typeOverride = typeOverrides.value[result.device.address]
+        val typeOverride = typeOverrides.value?.get(result.device.address)
         pool.connect(result, model, typeOverride, name, highPriority) ?: return
         onPoolChanged()
     }
