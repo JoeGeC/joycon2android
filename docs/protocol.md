@@ -351,7 +351,8 @@ Joy-Con 2 never does. Android pairs one device at a time, so a second clone conn
 first one's pairing is pending sends none, and silence on the common channel 1.5 s after init
 switches it over instead. Genuine Joy-Con 2s answer the console channel too, so a controller moved
 over by that timeout returns to the common path on its first report on `...fd2`, which only a
-controller speaking that protocol sends.
+controller speaking that protocol sends. A controller with analog triggers (the GameCube controller)
+never switches: the console report has no trigger bytes, and it answers on the common channel.
 
 **Holding the link.** The pairing never succeeds (Confirm Value Failed, or a 30 s timeout):
 

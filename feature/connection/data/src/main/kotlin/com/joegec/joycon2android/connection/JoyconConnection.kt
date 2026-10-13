@@ -83,6 +83,9 @@ class JoyconConnection(
 
     val awaitingReturn: Boolean get() = returnWindow.isOpen
 
+    // The console report has no trigger bytes: docs/protocol.md#android-workarounds
+    private val mayUseConsole: Boolean get() = !model.hasAnalogTriggers
+
     fun connect(device: BluetoothDevice) {
         this.device = device
         gatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
@@ -189,7 +192,7 @@ class JoyconConnection(
             }
 
             servicesDiscovered = true
-            if (securityRequested) {
+            if (securityRequested && mayUseConsole) {
                 startConsoleSession(g)
                 return
             }
@@ -261,14 +264,14 @@ class JoyconConnection(
     private fun commonChannelAnswered() = commonReportSeen || commandReplySeen
 
     private fun fallBackToConsoleIfSilent(g: BluetoothGatt) {
-        if (commonChannelAnswered()) return
+        if (commonChannelAnswered() || !mayUseConsole) return
         Log.i(TAG, "[$side] No reply on the common channel; switching to the console protocol")
         startConsoleSession(g)
     }
 
     @Synchronized
     private fun startConsoleSession(g: BluetoothGatt) {
-        if (console != null || commonReportSeen || gatt !== g) return
+        if (!mayUseConsole || console != null || commonReportSeen || gatt !== g) return
         val channel = ConsoleChannel.find(g)
         if (channel == null) {
             fail("Not a compatible Joy-Con 2")
