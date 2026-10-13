@@ -247,7 +247,7 @@ IMUAccelerometer/Up = `Accel Up` + 0.25 * (<axis> - smooth(<axis>, 0.03))
   Likely causes: one sample per 15 ms report against the Wii Remote's 100 Hz clips swing peaks, and a
   Joy-Con is shorter and lighter than a Wii Remote. A flat 1.25 gain felt slightly too strong; 110%
   felt right, hence the default.
-- **The Nunchuk is not scaled.**
+- **The Nunchuk is scaled too**, from the second hand's slot, so both fists in Wii Sports Boxing read alike.
 
 ## MotionPlus tutorial replays
 

@@ -160,7 +160,7 @@ object DolphinWiimoteConfig {
         val bodyInputs = bodyInputs(side, motion.sideways)
         return IMU_CONTROLS.map { (control, input) ->
             val read = "`${bodyInputs[input] ?: input}`"
-            val boost = sensitivityBoost(control, bodyInputs, motion.sensitivityPercent)
+            val boost = sensitivityBoost(control, motion.sensitivityPercent) { "`${bodyInputs["Accel $it"] ?: "Accel $it"}`" }
             val shake = trickShake(trickTrigger(side, control, motion.sideways, bound))?.let { "+ $it" }
             "$control = " + listOfNotNull(read, boost, shake).joinToString(" ")
         } + listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
@@ -170,12 +170,11 @@ object DolphinWiimoteConfig {
     private val BOOSTED_ACCEL_AXES = mapOf("Up" to "Down", "Left" to "Right", "Forward" to "Backward")
 
     /** Scales motion and leaves gravity alone: docs/dsu-motion.md#motion-sensitivity */
-    private fun sensitivityBoost(control: String, bodyInputs: Map<String, String>, percent: Int): String? {
-        val direction = control.removePrefix("IMUAccelerometer/")
+    private fun sensitivityBoost(control: String, percent: Int, read: (direction: String) -> String): String? {
+        val direction = control.substringAfterLast("IMUAccelerometer/")
         val opposite = BOOSTED_ACCEL_AXES[direction] ?: return null
         val gain = percent - RemoteMotion.UNSCALED_SENSITIVITY_PERCENT
         if (gain == 0) return null
-        fun read(it: String) = "`${bodyInputs["Accel $it"] ?: "Accel $it"}`"
         val signed = "(${read(direction)} - ${read(opposite)})"
         val sign = if (gain > 0) "+" else "-"
         val fraction = BigDecimal(abs(gain)).movePointLeft(2).stripTrailingZeros().toPlainString()
@@ -197,8 +196,14 @@ object DolphinWiimoteConfig {
     }
 
     // Dolphin splits on the last colon, so `<device>:<input>` reads the second hand's slot.
-    private fun nunchukImuLines(slot: Int): List<String> =
-        ACCEL_DIRECTIONS.map { "Nunchuk/IMUAccelerometer/$it = `DSUClient/$slot/Joycon2:Accel $it`" }
+    private fun nunchukImuLines(slot: Int, sensitivityPercent: Int): List<String> {
+        val read = { direction: String -> "`DSUClient/$slot/Joycon2:Accel $direction`" }
+        return ACCEL_DIRECTIONS.map { direction ->
+            val control = "Nunchuk/IMUAccelerometer/$direction"
+            val boost = sensitivityBoost(control, sensitivityPercent, read)
+            "$control = " + listOfNotNull(read(direction), boost).joinToString(" ")
+        }
+    }
 
     fun merge(
         existing: String?,
@@ -244,7 +249,7 @@ object DolphinWiimoteConfig {
         // Source = 1 forces this Wii Remote slot to Emulated, so the mappings actually apply
         val header = listOf("Source = 1", "Device = DSUClient/$slot/Joycon2")
         val nunchukImu = if (side == JoyconSide.DUAL && secondHandSlot != null) {
-            nunchukImuLines(secondHandSlot)
+            nunchukImuLines(secondHandSlot, motion.sensitivityPercent)
         } else {
             emptyList()
         }

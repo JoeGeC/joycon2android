@@ -221,6 +221,19 @@ class DolphinWiimoteConfigTest {
     }
 
     @Test
+    fun `sensitivity boosts the nunchuk's accelerometer from the second hand's slot`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        val result = merge(null, listOf(both), sensitivityPercent = 125)
+
+        val up = "(`DSUClient/3/Joycon2:Accel Up` - `DSUClient/3/Joycon2:Accel Down`)"
+        assertTrue(
+            result.contains("Nunchuk/IMUAccelerometer/Up = `DSUClient/3/Joycon2:Accel Up` + 0.25 * ($up - smooth($up, 0.03))"),
+        )
+        assertTrue(result.contains("Nunchuk/IMUAccelerometer/Down = `DSUClient/3/Joycon2:Accel Down`\n"))
+    }
+
+    @Test
     fun `a sensitivity under 100 takes motion away`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sensitivityPercent = 80)
 
