@@ -7,6 +7,7 @@ import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.emittedFor
 import com.joegec.joycon2android.buttonmapping.emittedStick
+import com.joegec.joycon2android.buttonmapping.joyconSide
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
 import com.joegec.joycon2android.buttonmapping.toSourceMap
@@ -90,7 +91,7 @@ object EdenDsuConfig {
             val slot = player.player.index - 1
             if (slot !in 0 until DsuSlots.COUNT) return@forEach
             val type = EdenControls.npadType(player) ?: return@forEach
-            val side = sideFor(player) ?: return@forEach
+            val side = player.joyconSide() ?: return@forEach
             val mapping = mappingFor(PlayerBody(player.player, side))
             val device = device(slot)
 
@@ -154,13 +155,5 @@ object EdenDsuConfig {
             StickDirection.RIGHT -> x to '+'
         }
         return "axis:$axis,threshold:0.5,invert:$invert"
-    }
-
-    private fun sideFor(player: PlayerState): JoyconSide? = when {
-        player.hasGameCube -> JoyconSide.GAMECUBE
-        player.hasPro || player.hasFullController -> JoyconSide.DUAL
-        player.left != null -> JoyconSide.LEFT
-        player.right != null -> JoyconSide.RIGHT
-        else -> null
     }
 }

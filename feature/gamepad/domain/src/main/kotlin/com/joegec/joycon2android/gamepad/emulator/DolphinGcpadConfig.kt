@@ -6,6 +6,7 @@ import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.emittedFor
+import com.joegec.joycon2android.buttonmapping.joyconSide
 import com.joegec.joycon2android.buttonmapping.emittedStick
 import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
 import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
@@ -83,10 +84,13 @@ object DolphinGcpadConfig {
 
     fun mergeCore(existing: String?, players: List<PlayerState>): String {
         val siDevices = players
-            .filter { it.hasController && (!it.hasPro || it.hasGameCube) && it.player.index in 1..4 }
+            .filter { it.hasController && it.isSetUpByApp && it.player.index in 1..4 }
             .associate { "SIDevice${it.player.index - 1}" to STANDARD_CONTROLLER }
         return IniEditor.setKeys(existing, "[Core]", siDevices)
     }
+
+    // A Pro Controller's section is left to the player.
+    private val PlayerState.isSetUpByApp: Boolean get() = !hasPro || hasGameCube
 
     // A player whose pad isn't enumerated yet is skipped: docs/virtual-gamepad.md#device-identity
     private fun sections(
@@ -109,14 +113,8 @@ object DolphinGcpadConfig {
         deviceId: Int,
         mappingFor: (PlayerBody) -> Map<String, String>,
     ): String? {
-        val side = when {
-            player.hasGameCube -> JoyconSide.GAMECUBE
-            player.hasPro -> return null
-            player.hasFullController -> JoyconSide.DUAL
-            player.right != null -> JoyconSide.RIGHT
-            player.left != null -> JoyconSide.LEFT
-            else -> return null
-        }
+        if (!player.isSetUpByApp) return null
+        val side = player.joyconSide() ?: return null
         val device = "Device = Android/$deviceId/Joy-Con Virtual Gamepad $index"
         val analogTriggers = if (player.hasAnalogTriggers) ANALOG_TRIGGER_LINES else emptyList()
         return (listOf(device) + lines(side, mappingFor(PlayerBody(player.player, side))) + analogTriggers)

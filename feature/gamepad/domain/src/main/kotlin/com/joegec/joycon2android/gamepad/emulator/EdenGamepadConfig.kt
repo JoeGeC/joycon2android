@@ -7,6 +7,7 @@ import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.emittedFor
 import com.joegec.joycon2android.buttonmapping.emittedStick
+import com.joegec.joycon2android.buttonmapping.joyconSide
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
 import com.joegec.joycon2android.buttonmapping.toSourceMap
@@ -82,7 +83,7 @@ object EdenGamepadConfig {
             if (index !in 1..4) return@forEach
             val gamepad = gamepads[index] ?: return@forEach
             val type = EdenControls.npadType(player) ?: return@forEach
-            val side = sideFor(player) ?: return@forEach
+            val side = player.joyconSide() ?: return@forEach
             val layout = layoutFor(side, mappingFor(PlayerBody(player.player, side)))
             val p = index - 1
             val device = "engine:android,port:${gamepad.port},guid:${gamepad.guid},pad:0"
@@ -105,14 +106,6 @@ object EdenGamepadConfig {
             }
         }
         return keys
-    }
-
-    private fun sideFor(player: PlayerState): JoyconSide? = when {
-        player.hasGameCube -> JoyconSide.GAMECUBE
-        player.hasPro || player.hasFullController -> JoyconSide.DUAL
-        player.left != null && player.right == null -> JoyconSide.LEFT
-        player.right != null && player.left == null -> JoyconSide.RIGHT
-        else -> null
     }
 
     private fun layoutFor(side: JoyconSide, mapping: Map<String, String>): Layout {
