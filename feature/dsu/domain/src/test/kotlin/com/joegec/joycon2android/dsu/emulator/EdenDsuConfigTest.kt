@@ -6,6 +6,7 @@ import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.model.ConnectedJoycon
+import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.Side
@@ -193,5 +194,17 @@ class EdenDsuConfigTest {
         assertEquals("true", valueOf(result, "vibration_enabled"))
         assertTrue(result.contains("[Core]"))
         assertEquals("true", valueOf(result, "use_multi_core"))
+    }
+
+    @Test
+    fun `a gamecube controller's ZL and ZR bind to the stick-click bits they travel on, and nothing else does`() {
+        val gameCube = joycon(Side.PRO).copy(model = ControllerModel.GAMECUBE)
+
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = gameCube, right = gameCube)))
+
+        assertEquals("\"${device(0)},button:2\"", valueOf(result, "player_0_button_zl")) // LS
+        assertEquals("\"${device(0)},button:4\"", valueOf(result, "player_0_button_zr")) // RS
+        assertFalse(result.contains("player_0_button_lstick"))
+        assertFalse(result.contains("player_0_button_rstick"))
     }
 }

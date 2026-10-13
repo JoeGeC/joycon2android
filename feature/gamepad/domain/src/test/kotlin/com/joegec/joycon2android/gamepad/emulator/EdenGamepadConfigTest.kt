@@ -189,7 +189,7 @@ class EdenGamepadConfigTest {
     }
 
     @Test
-    fun `a gamecube controller's ZL and ZR bind to the stick clicks they travel on`() {
+    fun `a gamecube controller's ZL and ZR bind to the stick clicks they travel on, and nothing else does`() {
         val gameCube = joycon(Side.PRO).copy(model = ControllerModel.GAMECUBE)
         val players = listOf(PlayerState(PlayerNumber.P1, left = gameCube, right = gameCube))
 
@@ -197,6 +197,8 @@ class EdenGamepadConfigTest {
 
         assertTrue(result.contains("player_0_button_zl=\"$DEVICE,button:106,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_THUMBL
         assertTrue(result.contains("player_0_button_zr=\"$DEVICE,button:107,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_THUMBR
+        assertFalse(result.contains("player_0_button_lstick"))
+        assertFalse(result.contains("player_0_button_rstick"))
     }
 
     private companion object {

@@ -29,4 +29,11 @@ class PlayerBodyTest {
         assertEquals(JoyconButton.LS, JoyconButton.ZL.emittedFor(JoyconSide.GAMECUBE))
         assertEquals(JoyconButton.ZR, JoyconButton.ZR.emittedFor(JoyconSide.DUAL))
     }
+
+    @Test
+    fun `a gamecube controller's stick clicks emit nothing, so they can't fire with ZL or Z`() {
+        assertEquals(null, JoyconButton.LS.emittedFor(JoyconSide.GAMECUBE))
+        assertEquals(null, JoyconButton.RS.emittedFor(JoyconSide.GAMECUBE))
+        assertEquals(JoyconButton.LS, JoyconButton.LS.emittedFor(JoyconSide.DUAL))
+    }
 }

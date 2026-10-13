@@ -6,6 +6,7 @@ import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.emittedFor
 import com.joegec.joycon2android.buttonmapping.sourceIdsOf
+import com.joegec.joycon2android.buttonmapping.toMappingSources
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import org.junit.Assert.assertEquals
@@ -59,7 +60,7 @@ class WiiPresetsTest {
         JoyconSide.entries.forEach { side ->
             val fired = mutableMapOf<String, MutableSet<String>>()
             JoyconWiiMapping.entries(side).forEach { (target, value) ->
-                sourceIdsOf(value).forEach { fired.getOrPut(it) { mutableSetOf() }.add(target) }
+                emittedIds(value, side).forEach { fired.getOrPut(it) { mutableSetOf() }.add(target) }
             }
 
             assertEquals("$side", emptyMap<String, Set<String>>(), fired.filterValues { it.size > 1 })
@@ -123,6 +124,10 @@ class WiiPresetsTest {
                 emittedFace(right, target, JoyconSide.RIGHT),
             )
         }
+    }
+
+    private fun emittedIds(value: String, side: JoyconSide) = value.toMappingSources().mapNotNull { source ->
+        if (source is MappingSource.Button) source.button.emittedFor(side)?.name else source.id
     }
 
     private fun emittedFace(entries: Map<String, String>, target: WiimoteButton, side: JoyconSide) =

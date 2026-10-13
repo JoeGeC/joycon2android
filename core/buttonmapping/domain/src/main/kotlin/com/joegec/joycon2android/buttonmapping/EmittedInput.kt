@@ -8,7 +8,7 @@ import com.joegec.joycon2android.model.SidewaysMapper
 fun JoyconButton.emittedFor(side: JoyconSide): JoyconButton? {
     val emittedId = when (side) {
         JoyconSide.DUAL -> id
-        JoyconSide.GAMECUBE -> AnalogTriggerMapper.remapButtons(setOf(id)).first()
+        JoyconSide.GAMECUBE -> AnalogTriggerMapper.emittedId(id) ?: return null
         JoyconSide.LEFT -> SidewaysMapper.remapButtonsLeft(setOf(id)).first()
         JoyconSide.RIGHT -> SidewaysMapper.remapButtonsRight(setOf(id)).first()
     }

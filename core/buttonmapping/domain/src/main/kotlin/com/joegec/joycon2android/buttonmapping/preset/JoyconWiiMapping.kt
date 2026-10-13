@@ -21,7 +21,7 @@ object JoyconWiiMapping : MappingPreset {
     override val id = "JOYCON"
     override val console = Console.WIIMOTE_NUNCHUK
 
-    override fun entries(side: JoyconSide) = WiiMapping.entries(side) + buttons(side).buttonEntries()
+    override fun entries(side: JoyconSide) = WiiMapping.entries(side) + buttons(side).buttonEntries() + unbound(side)
 
     private fun buttons(side: JoyconSide): Map<WiimoteButton, JoyconButton> = when (side) {
         JoyconSide.DUAL, JoyconSide.GAMECUBE -> mapOf(
@@ -46,4 +46,8 @@ object JoyconWiiMapping : MappingPreset {
             WiimoteButton.Recenter to LS,
         )
     }
+
+    // No stick click to recenter from, and the Wii layout's R is One here.
+    private fun unbound(side: JoyconSide): Map<String, String> =
+        if (side == JoyconSide.GAMECUBE) mapOf(WiimoteButton.Recenter.name to "") else emptyMap()
 }
