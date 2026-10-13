@@ -106,6 +106,9 @@ In `JoyconScreen.kt`:
   a `PanelDropdownMenu`: Detect automatically first, sub-labelled with what was detected, then the
   four types. A manual choice shows `SET MANUALLY` beside the label. Only an unrecognised controller
   gets a `WarningBox`, which opens the same menu; a recognised one costs no extra row.
+- **A GameCube controller is named and drawn as itself.** Its card, compact row and mapping card
+  say GameCube, and its detailed view is the Pro layout without the buttons it lacks, with ZR marked
+  Z. `GameCubeButtons` is the one list of what it has, which the mapping editor offers too.
 
 ### Landscape
 

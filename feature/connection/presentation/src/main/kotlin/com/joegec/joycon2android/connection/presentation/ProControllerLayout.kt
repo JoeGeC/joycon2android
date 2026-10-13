@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.joegec.joycon2android.model.GameCubeButtons
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -21,21 +22,25 @@ internal fun ProControllerLayout(
     modifier: Modifier = Modifier,
 ) {
     val pressed = state.pressed
+    val buttons = if (state.hasGameCube) GameCubeButtons.present else JoyconButton.entries.toSet()
+    val marking = { button: JoyconButton ->
+        (if (state.hasGameCube) GameCubeButtons.marking(button) else null) ?: button.label
+    }
     JoyconCard(
         controller = state.left,
         onClick = { onUnassign(state.left!!.address) },
         modifier = modifier.fillMaxWidth(),
     ) {
-        ShoulderButtons(pressed)
-        ButtonRow(state, pressed)
-        SticksRow(state, pressed)
+        ShoulderButtons(pressed, buttons, marking)
+        ButtonRow(state, pressed, buttons)
+        SticksRow(state, pressed, buttons)
         SpecialButtons(pressed)
         SidewaysImuDisplay(state.leftInput)
     }
 }
 
 @Composable
-private fun ShoulderButtons(pressed: Set<String>) {
+private fun ShoulderButtons(pressed: Set<String>, buttons: Set<JoyconButton>, marking: (JoyconButton) -> String) {
     Row(
         Modifier.fillMaxWidth().height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
@@ -44,43 +49,47 @@ private fun ShoulderButtons(pressed: Set<String>) {
             Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(Dimens.sidewaysShoulderGap),
         ) {
-            ShoulderButton(JoyconButton.ZL.label, JoyconButton.ZL.id in pressed, Modifier.fillMaxWidth())
-            ShoulderButton(JoyconButton.L.label, JoyconButton.L.id in pressed, Modifier.fillMaxWidth())
-            ShoulderButton(JoyconButton.GL.label, JoyconButton.GL.id in pressed, Modifier.fillMaxWidth())
+            listOf(JoyconButton.ZL, JoyconButton.L, JoyconButton.GL).filter { it in buttons }.forEach {
+                ShoulderButton(marking(it), it.id in pressed, Modifier.fillMaxWidth())
+            }
         }
         Column(
             Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(Dimens.sidewaysShoulderGap),
         ) {
-            ShoulderButton(JoyconButton.ZR.label, JoyconButton.ZR.id in pressed, Modifier.fillMaxWidth())
-            ShoulderButton(JoyconButton.R.label, JoyconButton.R.id in pressed, Modifier.fillMaxWidth())
-            ShoulderButton(JoyconButton.GR.label, JoyconButton.GR.id in pressed, Modifier.fillMaxWidth())
+            listOf(JoyconButton.ZR, JoyconButton.R, JoyconButton.GR).filter { it in buttons }.forEach {
+                ShoulderButton(marking(it), it.id in pressed, Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
+
+// The ends are weighted so the battery stays centred when − is missing.
+@Composable
+private fun ButtonRow(state: PlayerState, pressed: Set<String>, buttons: Set<JoyconButton>) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            if (JoyconButton.Minus in buttons) SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in pressed)
+        }
+        state.leftInput.battery?.let { BatteryPill(it) }
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+            SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in pressed)
         }
     }
 }
 
 @Composable
-private fun ButtonRow(state: PlayerState, pressed: Set<String>) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in pressed)
-        state.leftInput.battery?.let { BatteryPill(it) }
-        SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in pressed)
-    }
-}
-
-@Composable
-private fun SticksRow(state: PlayerState, pressed: Set<String>) {
+private fun SticksRow(state: PlayerState, pressed: Set<String>, buttons: Set<JoyconButton>) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            StickCard(state.leftStickX, state.leftStickY, JoyconButton.LS.id in pressed,
+            StickCard(state.leftStickX, state.leftStickY, JoyconButton.LS in buttons && JoyconButton.LS.id in pressed,
                 canvasSize = Dimens.sidewaysStickSize)
         }
         Column(
@@ -91,7 +100,7 @@ private fun SticksRow(state: PlayerState, pressed: Set<String>) {
             FaceButtons(pressed, buttonSize = Dimens.sidewaysFaceSize)
         }
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            StickCard(state.rightStickX, state.rightStickY, JoyconButton.RS.id in pressed,
+            StickCard(state.rightStickX, state.rightStickY, JoyconButton.RS in buttons && JoyconButton.RS.id in pressed,
                 canvasSize = Dimens.sidewaysStickSize)
         }
     }

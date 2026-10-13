@@ -17,6 +17,7 @@ import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.AndroidKey
+import com.joegec.joycon2android.model.GameCubeButtons
 import com.joegec.joycon2android.model.JoyconButton
 
 internal object MappingOptions {
@@ -88,12 +89,7 @@ internal object MappingOptions {
     // Only what that side physically has, so every choice can fire.
     private fun physicalButtons(side: JoyconSide): List<JoyconButton> = when (side) {
         JoyconSide.DUAL -> JoyconButton.entries
-        JoyconSide.GAMECUBE -> listOf(
-            JoyconButton.A, JoyconButton.B, JoyconButton.X, JoyconButton.Y,
-            JoyconButton.L, JoyconButton.R, JoyconButton.ZL, JoyconButton.ZR, JoyconButton.Plus,
-            JoyconButton.Up, JoyconButton.Down, JoyconButton.Left, JoyconButton.Right,
-            JoyconButton.Home, JoyconButton.Capture, JoyconButton.Chat,
-        )
+        JoyconSide.GAMECUBE -> GameCubeButtons.present.toList()
         JoyconSide.LEFT -> listOf(
             JoyconButton.L, JoyconButton.ZL, JoyconButton.Minus, JoyconButton.LS,
             JoyconButton.Up, JoyconButton.Down, JoyconButton.Left, JoyconButton.Right,
@@ -106,7 +102,6 @@ internal object MappingOptions {
         )
     }
 
-    // The GameCube controller's Z reports as ZR.
     private fun JoyconButton.markingOn(side: JoyconSide): String =
-        if (side == JoyconSide.GAMECUBE && this == JoyconButton.ZR) "Z" else id
+        (if (side == JoyconSide.GAMECUBE) GameCubeButtons.marking(this) else null) ?: id
 }
