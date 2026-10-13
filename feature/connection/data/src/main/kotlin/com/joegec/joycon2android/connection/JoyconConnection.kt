@@ -83,8 +83,7 @@ class JoyconConnection(
 
     val awaitingReturn: Boolean get() = returnWindow.isOpen
 
-    // The console report has no trigger bytes: docs/protocol.md#android-workarounds
-    private val mayUseConsole: Boolean get() = !model.hasAnalogTriggers
+    private val mayUseConsole: Boolean get() = ConsoleFallback.allows(model)
 
     fun connect(device: BluetoothDevice) {
         this.device = device

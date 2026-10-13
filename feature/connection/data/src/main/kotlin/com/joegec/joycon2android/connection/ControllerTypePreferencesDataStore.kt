@@ -18,7 +18,7 @@ class ControllerTypePreferencesDataStore(context: Context) : ControllerTypePrefe
 
     override val overrides: Flow<Map<String, ControllerModel>> = dataStore.data.map { prefs ->
         prefs.asMap().mapNotNull { (key, value) ->
-            val model = runCatching { ControllerModel.valueOf(value as String) }.getOrNull() ?: return@mapNotNull null
+            val model = StoredControllerModel.parse(value) ?: return@mapNotNull null
             key.name to model
         }.toMap()
     }
