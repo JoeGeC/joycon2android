@@ -24,8 +24,8 @@ android {
         applicationId = "com.joegec.joycon2android"
         minSdk = 24
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.3.0"
+        versionCode = 9
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
