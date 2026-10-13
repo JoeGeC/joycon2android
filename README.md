@@ -271,6 +271,15 @@ Start with [CONTRIBUTING.md](CONTRIBUTING.md), then the [docs](docs/README.md):
 
 ## Credits
 
+### Contributors
+
+- **[mygamecache](https://github.com/mygamecache)** — the console protocol path for third-party
+  Joy-Cons, tested on NYXI Hyperion 3 ([#26](https://github.com/JoeGeC/joycon2android/pull/26)).
+- **[thisishuey](https://github.com/thisishuey)** — controller buttons for Android's Home, Back and
+  Screenshot ([#31](https://github.com/JoeGeC/joycon2android/pull/31)).
+
+### Community projects
+
 Built on the community's reverse-engineering work, in particular:
 
 - **[Joycon2forMac](https://github.com/seitanmen/Joycon2forMac)** by seitanmen — the working macOS BLE
