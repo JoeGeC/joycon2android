@@ -13,6 +13,8 @@ import com.joegec.joycon2android.model.JoyconButton.R
 import com.joegec.joycon2android.model.JoyconButton.RS
 import com.joegec.joycon2android.model.JoyconButton.Right
 import com.joegec.joycon2android.model.JoyconButton.Up
+import com.joegec.joycon2android.model.JoyconButton.X
+import com.joegec.joycon2android.model.JoyconButton.Y
 import com.joegec.joycon2android.model.JoyconButton.ZL
 import com.joegec.joycon2android.model.JoyconButton.ZR
 
@@ -21,15 +23,23 @@ object JoyconWiiMapping : MappingPreset {
     override val id = "JOYCON"
     override val console = Console.WIIMOTE_NUNCHUK
 
-    override fun entries(side: JoyconSide) = WiiMapping.entries(side) + buttons(side).buttonEntries() + unbound(side)
+    override fun entries(side: JoyconSide) = WiiMapping.entries(side) + buttons(side).buttonEntries()
 
     private fun buttons(side: JoyconSide): Map<WiimoteButton, JoyconButton> = when (side) {
-        JoyconSide.DUAL, JoyconSide.GAMECUBE -> mapOf(
+        JoyconSide.DUAL -> mapOf(
             WiimoteButton.B to B,
             WiimoteButton.One to R,
             WiimoteButton.Two to ZR,
             WiimoteButton.Minus to Minus,
             WiimoteButton.Recenter to RS,
+        )
+        // No − and no stick click: − takes X as on a lone right Joy-Con, and Recenter the free Y.
+        JoyconSide.GAMECUBE -> mapOf(
+            WiimoteButton.B to B,
+            WiimoteButton.One to R,
+            WiimoteButton.Two to ZR,
+            WiimoteButton.Minus to X,
+            WiimoteButton.Recenter to Y,
         )
         JoyconSide.RIGHT -> mapOf(
             WiimoteButton.B to B,
@@ -46,8 +56,4 @@ object JoyconWiiMapping : MappingPreset {
             WiimoteButton.Recenter to LS,
         )
     }
-
-    // No stick click to recenter from, and the Wii layout's R is One here.
-    private fun unbound(side: JoyconSide): Map<String, String> =
-        if (side == JoyconSide.GAMECUBE) mapOf(WiimoteButton.Recenter.name to "") else emptyMap()
 }

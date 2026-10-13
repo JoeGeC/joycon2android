@@ -145,8 +145,8 @@ Confirmed on a Retroid Pocket Nova (Android 13) with an NSO GameCube controller,
   Android 13, 2026-10-08: with Z on R2, pulling R fired Dolphin's `Button R2` and Z fired nothing.
   The Nova's L2/R2 setting wasn't the cause.
 - **The stick-click bits are free to reuse:** the controller has no stick clicks. So no binding of
-  its can use LS/RS: `emittedFor` resolves them to nothing for it, and its layouts leave the
-  stick-click targets and the Joy-Con Wii layout's Recenter unbound.
+  its can use LS/RS: `emittedFor` resolves them to nothing for it, and its Switch Pro layout leaves
+  the stick-click targets unbound.
 
 For such a player, Dolphin setup adds ``Triggers/L-Analog = `Axis 23+` `` and
 ``Triggers/R-Analog = `Axis 22+` ``. Dolphin names Android axes by number, and a trigger has only a `+`

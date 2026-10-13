@@ -56,6 +56,13 @@ class WiiPresetsTest {
     }
 
     @Test
+    fun `the Joy-Con layout puts a gamecube controller's missing minus and stick click on X and Y`() {
+        val gameCube = JoyconWiiMapping.entries(JoyconSide.GAMECUBE)
+        assertEquals("X", gameCube.getValue(WiimoteButton.Minus.name))
+        assertEquals("Y", gameCube.getValue(WiimoteButton.Recenter.name))
+    }
+
+    @Test
     fun `no button fires two of the Joy-Con layout's targets`() {
         JoyconSide.entries.forEach { side ->
             val fired = mutableMapOf<String, MutableSet<String>>()
