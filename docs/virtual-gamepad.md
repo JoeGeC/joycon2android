@@ -139,7 +139,8 @@ so each lands where Android expects that control:
 | ZL / Z (the ZR bit) | 6 / 7 | `BUTTON_L1` / `BUTTON_R1` |
 | L / R click at the bottom | 13 / 14 | `BUTTON_THUMBL` / `BUTTON_THUMBR` |
 
-Confirmed on a Retroid Pocket Nova (Android 13) with an NSO GameCube controller, 2026-10-13.
+Confirmed in Dolphin on a Retroid Pocket Nova (Android 13) with an NSO GameCube controller,
+2026-10-13. Eden is untested on hardware.
 
 - **Nothing goes on `BUTTON_L2`/`BUTTON_R2`:** they can follow the trigger axes. Retroid Pocket Nova,
   Android 13, 2026-10-08: with Z on R2, pulling R fired Dolphin's `Button R2` and Z fired nothing.
