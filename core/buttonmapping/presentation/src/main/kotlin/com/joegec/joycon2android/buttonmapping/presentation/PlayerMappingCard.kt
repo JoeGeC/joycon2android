@@ -149,18 +149,18 @@ private fun CardHeader(player: PlayerState, layoutName: String?, expanded: Boole
 private fun ControllerChips(player: PlayerState) {
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.compactControllerGap)) {
         if (player.hasPro) {
-            ControllerChip(R.string.controller_pro, player.left!!)
+            ControllerChip(player.left!!.modelLabel(), player.left!!)
         } else {
-            player.left?.let { ControllerChip(R.string.controller_left, it) }
-            player.right?.let { ControllerChip(R.string.controller_right, it) }
+            player.left?.let { ControllerChip(stringResource(R.string.controller_left), it) }
+            player.right?.let { ControllerChip(stringResource(R.string.controller_right), it) }
         }
     }
 }
 
 @Composable
-private fun ControllerChip(textRes: Int, joycon: ConnectedJoycon) {
+private fun ControllerChip(text: String, joycon: ConnectedJoycon) {
     Text(
-        stringResource(textRes),
+        text,
         color = joyconBorderColor(joycon.accentColor, JoyconDefaultColor),
         style = MaterialTheme.typography.titleMedium,
     )

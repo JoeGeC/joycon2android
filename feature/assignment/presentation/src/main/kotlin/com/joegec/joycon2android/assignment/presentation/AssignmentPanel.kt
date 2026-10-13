@@ -99,13 +99,7 @@ private fun JoyconAssignmentRow(
     onSetType: (String, ControllerModel?) -> Unit,
 ) {
     val sideColor = joyconBorderColor(joycon.accentColor, JoyconDefaultColor)
-    val sideLabel = when (joycon.side) {
-        Side.LEFT -> stringResource(R.string.side_left)
-        Side.RIGHT -> stringResource(R.string.side_right)
-        Side.PRO -> if (joycon.model == ControllerModel.GAMECUBE) stringResource(R.string.side_gamecube)
-        else stringResource(R.string.side_pro)
-        Side.UNKNOWN -> joycon.deviceName
-    }
+    val sideLabel = joycon.modelLabel()
 
     var typeMenuOpen by remember { mutableStateOf(false) }
 

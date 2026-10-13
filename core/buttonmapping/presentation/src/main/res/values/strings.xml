@@ -25,6 +25,7 @@
     <string name="controller_left">Left</string>
     <string name="controller_right">Right</string>
     <string name="controller_pro">Pro</string>
+    <string name="controller_gamecube">GameCube</string>
     <string name="layout_standard">Standard</string>
     <string name="layout_wii">Wii</string>
     <string name="layout_wii_description">Like a Wiimote, ZR \u2192 B</string>
