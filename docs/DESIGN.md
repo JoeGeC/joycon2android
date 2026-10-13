@@ -108,7 +108,7 @@ In `JoyconScreen.kt`:
   gets a `WarningBox`, which opens the same menu; a recognised one costs no extra row.
 - **A GameCube controller is named and drawn as itself.** Its card, compact row and mapping card
   say GameCube, and its detailed view is the Pro layout without the buttons it lacks, with ZR marked
-  Z. `GameCubeButtons` is the one list of what it has, which the mapping editor offers too.
+  Z and its triggers, L and R, above ZL and Z. `GameCubeButtons` is the one list of what it has, which the mapping editor offers too.
 
 ### Landscape
 

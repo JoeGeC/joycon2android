@@ -31,7 +31,7 @@ internal fun ProControllerLayout(
         onClick = { onUnassign(state.left!!.address) },
         modifier = modifier.fillMaxWidth(),
     ) {
-        ShoulderButtons(pressed, buttons, marking)
+        ShoulderButtons(pressed, shoulders(state.hasGameCube), marking)
         ButtonRow(state, pressed, buttons)
         SticksRow(state, pressed, buttons)
         SpecialButtons(pressed)
@@ -39,28 +39,35 @@ internal fun ProControllerLayout(
     }
 }
 
+// A GameCube controller's L and R are its triggers, so they sit above ZL and Z.
+private fun shoulders(gameCube: Boolean): Pair<List<JoyconButton>, List<JoyconButton>> =
+    if (gameCube) listOf(JoyconButton.L, JoyconButton.ZL) to listOf(JoyconButton.R, JoyconButton.ZR)
+    else listOf(JoyconButton.ZL, JoyconButton.L, JoyconButton.GL) to listOf(JoyconButton.ZR, JoyconButton.R, JoyconButton.GR)
+
 @Composable
-private fun ShoulderButtons(pressed: Set<String>, buttons: Set<JoyconButton>, marking: (JoyconButton) -> String) {
+private fun ShoulderButtons(
+    pressed: Set<String>,
+    shoulders: Pair<List<JoyconButton>, List<JoyconButton>>,
+    marking: (JoyconButton) -> String,
+) {
     Row(
         Modifier.fillMaxWidth().height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
     ) {
-        Column(
-            Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Dimens.sidewaysShoulderGap),
-        ) {
-            listOf(JoyconButton.ZL, JoyconButton.L, JoyconButton.GL).filter { it in buttons }.forEach {
-                ShoulderButton(marking(it), it.id in pressed, Modifier.fillMaxWidth())
-            }
-        }
-        Column(
-            Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Dimens.sidewaysShoulderGap),
-        ) {
-            listOf(JoyconButton.ZR, JoyconButton.R, JoyconButton.GR).filter { it in buttons }.forEach {
-                ShoulderButton(marking(it), it.id in pressed, Modifier.fillMaxWidth())
-            }
-        }
+        ShoulderColumn(shoulders.first, pressed, marking, Modifier.weight(1f))
+        ShoulderColumn(shoulders.second, pressed, marking, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun ShoulderColumn(
+    buttons: List<JoyconButton>,
+    pressed: Set<String>,
+    marking: (JoyconButton) -> String,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.sidewaysShoulderGap)) {
+        buttons.forEach { ShoulderButton(marking(it), it.id in pressed, Modifier.fillMaxWidth()) }
     }
 }
 
