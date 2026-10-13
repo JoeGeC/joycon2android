@@ -5,7 +5,6 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import com.joegec.joycon2android.connection.console.SecurityRequestReceiver
 import com.joegec.joycon2android.model.ControllerModel
-import com.joegec.joycon2android.model.Side
 import java.util.concurrent.ConcurrentHashMap
 
 /** Thread-safe: BLE callbacks arrive on binder threads. */
@@ -27,8 +26,8 @@ class ConnectionPool(private val context: Context) {
     /** Null for an address already in the pool; one awaiting its controller's return reconnects instead. */
     fun connect(
         result: ScanResult,
-        model: ControllerModel,
-        typeOverride: Side?,
+        detectedModel: ControllerModel,
+        typeOverride: ControllerModel?,
         name: String,
         highPriority: Boolean,
     ): JoyconConnection? {
@@ -39,7 +38,7 @@ class ConnectionPool(private val context: Context) {
         }
         val connection = JoyconConnection(
             context,
-            model,
+            detectedModel,
             typeOverride,
             name,
             onReady = { reassertOtherPriorities(address) },

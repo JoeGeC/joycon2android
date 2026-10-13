@@ -6,7 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.joegec.joycon2android.model.Side
+import com.joegec.joycon2android.model.ControllerModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -16,17 +16,17 @@ class ControllerTypePreferencesDataStore(context: Context) : ControllerTypePrefe
 
     private val dataStore = context.applicationContext.controllerTypeDataStore
 
-    override val overrides: Flow<Map<String, Side>> = dataStore.data.map { prefs ->
+    override val overrides: Flow<Map<String, ControllerModel>> = dataStore.data.map { prefs ->
         prefs.asMap().mapNotNull { (key, value) ->
-            val side = runCatching { Side.valueOf(value as String) }.getOrNull() ?: return@mapNotNull null
-            key.name to side
+            val model = runCatching { ControllerModel.valueOf(value as String) }.getOrNull() ?: return@mapNotNull null
+            key.name to model
         }.toMap()
     }
 
-    override suspend fun set(address: String, side: Side?) {
+    override suspend fun set(address: String, model: ControllerModel?) {
         dataStore.edit { prefs ->
             val key = stringPreferencesKey(address)
-            if (side == null) prefs.remove(key) else prefs[key] = side.name
+            if (model == null) prefs.remove(key) else prefs[key] = model.name
         }
     }
 }

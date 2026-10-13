@@ -26,8 +26,8 @@ import java.util.UUID
 @SuppressLint("MissingPermission")
 class JoyconConnection(
     private val context: Context,
-    val model: ControllerModel,
-    typeOverride: Side?,
+    val detectedModel: ControllerModel,
+    typeOverride: ControllerModel?,
     val deviceName: String,
     private val onReady: () -> Unit,
     private val onDisconnected: (() -> Unit)? = null,
@@ -43,9 +43,10 @@ class JoyconConnection(
         private const val RETURN_WINDOW_MS = 120_000L
     }
 
-    @Volatile var typeOverride: Side? = typeOverride
+    @Volatile var typeOverride: ControllerModel? = typeOverride
         private set
-    @Volatile var side: Side = typeOverride ?: model.defaultSide
+    val model: ControllerModel get() = typeOverride ?: detectedModel
+    @Volatile var side: Side = model.defaultSide
         private set
 
     private val _connectionState = MutableStateFlow(
@@ -110,10 +111,11 @@ class JoyconConnection(
     }
 
     // A new side reads the sticks from other offsets, so their learned centres no longer apply.
-    fun overrideType(side: Side?) {
-        typeOverride = side
-        this.side = side ?: model.defaultSide
+    fun overrideType(override: ControllerModel?) {
+        typeOverride = override
+        side = model.defaultSide
         calibrator = InputCalibrator(model).apply { useFactory(factory) }
+        if (initComplete) common?.read(FactoryCalibrationReads.commands(model))
     }
 
     fun setPlayerLed(player: PlayerNumber) {

@@ -7,7 +7,6 @@ import com.joegec.joycon2android.connection.data.R
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
-import com.joegec.joycon2android.model.Side
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -90,10 +89,10 @@ class Joycon2Manager(
         if (player != null) connection.setPlayerLed(player) else connection.clearPlayerLed()
     }
 
-    override fun setControllerType(address: String, side: Side?) {
-        scope.launch { typePreferences.set(address, side) }
+    override fun setControllerType(address: String, model: ControllerModel?) {
+        scope.launch { typePreferences.set(address, model) }
         val connection = pool.get(address) ?: return
-        connection.overrideType(side)
+        connection.overrideType(model)
         rebuildControllers()
     }
 
@@ -128,6 +127,7 @@ class Joycon2Manager(
                 address = address,
                 side = connection.side,
                 model = connection.model,
+                detectedModel = connection.detectedModel,
                 typeOverride = connection.typeOverride,
                 deviceName = connection.deviceName,
                 connectionState = connection.connectionState.value,

@@ -52,7 +52,7 @@ fun AssignmentPanel(
     players: List<PlayerState>,
     onAssign: (String, PlayerNumber) -> Unit,
     onDisconnect: (String) -> Unit,
-    onSetType: (String, Side?) -> Unit,
+    onSetType: (String, ControllerModel?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(Dimens.cardCorner)
@@ -91,7 +91,7 @@ private fun JoyconAssignmentRow(
     players: List<PlayerState>,
     onAssign: (String, PlayerNumber) -> Unit,
     onDisconnect: (String) -> Unit,
-    onSetType: (String, Side?) -> Unit,
+    onSetType: (String, ControllerModel?) -> Unit,
 ) {
     val sideColor = joyconBorderColor(joycon.accentColor, JoyconDefaultColor)
     val sideLabel = when (joycon.side) {
@@ -164,7 +164,7 @@ private fun JoyconAssignmentRow(
         }
         ControllerTypeDropdown(
             joycon,
-            onSetType = { side -> onSetType(joycon.address, side) },
+            onSetType = { model -> onSetType(joycon.address, model) },
             modifier = Modifier.padding(horizontal = Dimens.cardPadding),
         )
         PlayerSelection(joycon, players, onAssign)

@@ -5,6 +5,7 @@ import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerStateResolver
 import com.joegec.joycon2android.connection.ControllerRepository
 import com.joegec.joycon2android.model.ConnectedJoycon
+import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.Side
 import kotlinx.coroutines.CoroutineScope
@@ -35,11 +36,11 @@ class SessionCoordinatorTypeTest {
     fun `an assigned controller leaves its player before its type changes`() {
         assignments.players[ADDRESS] = PlayerNumber.P2
 
-        coordinator.setControllerType(ADDRESS, Side.PRO)
+        coordinator.setControllerType(ADDRESS, ControllerModel.GAMECUBE)
 
         assertNull(assignments.players[ADDRESS])
         assertEquals(listOf(PlayerNumber.P2), unassignedPlayers)
-        assertEquals(ADDRESS to Side.PRO, controllers.typeChanges.single())
+        assertEquals(ADDRESS to ControllerModel.GAMECUBE, controllers.typeChanges.single())
     }
 
     @Test
@@ -51,7 +52,7 @@ class SessionCoordinatorTypeTest {
     }
 
     private class FakeControllers : ControllerRepository {
-        val typeChanges = mutableListOf<Pair<String, Side?>>()
+        val typeChanges = mutableListOf<Pair<String, ControllerModel?>>()
         override val controllers: StateFlow<List<ConnectedJoycon>> = MutableStateFlow(emptyList())
         override val scanning: StateFlow<Boolean> = MutableStateFlow(false)
         override val error: StateFlow<String?> = MutableStateFlow(null)
@@ -60,8 +61,8 @@ class SessionCoordinatorTypeTest {
         override fun disconnect(address: String) = Unit
         override fun disconnectAll() = Unit
         override fun setPlayerLed(address: String, player: PlayerNumber?) = Unit
-        override fun setControllerType(address: String, side: Side?) {
-            typeChanges += address to side
+        override fun setControllerType(address: String, model: ControllerModel?) {
+            typeChanges += address to model
         }
         override fun emitError(message: String) = Unit
     }

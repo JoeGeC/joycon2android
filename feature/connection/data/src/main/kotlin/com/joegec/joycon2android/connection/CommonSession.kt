@@ -53,7 +53,7 @@ internal class CommonSession(
         ops.enqueue(INIT_GAP_MS) { write(FEATURES_INIT) }
         ops.enqueue(INIT_GAP_MS) { write(FEATURES_ENABLE) }
         ops.enqueue(INIT_GAP_MS) { write(SPI_READ_COLOR) }
-        calibrationReads.forEach { read -> ops.enqueue(INIT_GAP_MS) { write(read) } }
+        read(calibrationReads)
         ops.enqueue {
             ready = true
             Log.i(TAG, "[${side()}] Init sequence complete")
@@ -64,6 +64,10 @@ internal class CommonSession(
 
     override fun stop() {
         ready = false
+    }
+
+    fun read(commands: List<ByteArray>) {
+        commands.forEach { command -> ops.enqueue(INIT_GAP_MS) { write(command) } }
     }
 
     /** The console detour ended, so this channel is driving the controller again. */
