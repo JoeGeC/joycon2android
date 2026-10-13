@@ -61,7 +61,7 @@ class JoyconConnection(
     private val ops = GattOpQueue()
     private val returnWindow = ReturnWindow(RETURN_WINDOW_MS, MainThreadScheduler(), ::giveUpOnReturn)
     @Volatile private var calibrator = InputCalibrator(model)
-    private var factory = FactoryCalibration()
+    @Volatile private var factory = FactoryCalibration()
     private var gatt: BluetoothGatt? = null
     private var device: BluetoothDevice? = null
     private var common: CommonSession? = null
