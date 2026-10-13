@@ -26,6 +26,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -37,6 +41,7 @@ import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.Side
+import com.joegec.joycon2android.ui.components.WarningBox
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -102,6 +107,8 @@ private fun JoyconAssignmentRow(
         Side.UNKNOWN -> joycon.deviceName
     }
 
+    var typeMenuOpen by remember { mutableStateOf(false) }
+
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.cardPadding),
@@ -112,11 +119,21 @@ private fun JoyconAssignmentRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    sideLabel,
+                ControllerTypeMenu(
+                    joycon,
+                    label = sideLabel,
                     color = sideColor,
-                    style = MaterialTheme.typography.titleSmall,
+                    expanded = typeMenuOpen,
+                    onExpandedChange = { typeMenuOpen = it },
+                    onSetType = { model -> onSetType(joycon.address, model) },
                 )
+                if (joycon.typeOverride != null) {
+                    Text(
+                        stringResource(R.string.type_manual),
+                        color = TextDim,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
                 AnimatedVisibility(
                     visible = joycon.connectionLost,
                     enter = fadeIn() + expandHorizontally(),
@@ -162,11 +179,13 @@ private fun JoyconAssignmentRow(
                 )
             }
         }
-        ControllerTypeDropdown(
-            joycon,
-            onSetType = { model -> onSetType(joycon.address, model) },
-            modifier = Modifier.padding(horizontal = Dimens.cardPadding),
-        )
+        if (joycon.model == ControllerModel.UNKNOWN) {
+            WarningBox(
+                stringResource(R.string.type_unrecognised),
+                modifier = Modifier.padding(horizontal = Dimens.cardPadding),
+                onClick = { typeMenuOpen = true },
+            )
+        }
         PlayerSelection(joycon, players, onAssign)
     }
 }

@@ -102,6 +102,10 @@ In `JoyconScreen.kt`:
   inset as top clearance.
 - **Settings behind a gear.** The app bar's only action opens the settings panel, an `EndDrawer`
   from the right so it sits under the icon that opened it. The Ko-fi banner sits under the panel title.
+- **The type label is the type menu.** An unassigned controller's type at the top of its card opens
+  a `PanelDropdownMenu`: Detect automatically first, sub-labelled with what was detected, then the
+  four types. A manual choice shows `SET MANUALLY` beside the label. Only an unrecognised controller
+  gets a `WarningBox`, which opens the same menu; a recognised one costs no extra row.
 
 ### Landscape
 

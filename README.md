@@ -61,7 +61,7 @@ as an ordinary gamepad.
 2. Assign each controller to a player — from the app, or with the Switch combos: **L** on one Joy-Con
    and **R** on another for a pair, **SL + SR** for a sideways Joy-Con, **L + R** on a Pro Controller
    or GameCube controller.
-3. If a controller shows as the wrong type, pick the right one under **Controller type** on its card
+3. If a controller shows as the wrong type, tap its type at the top of its card and pick the right one
    before assigning it. The choice is remembered for that controller; **Auto** goes back to what it
    reports.
 
@@ -248,7 +248,7 @@ shoulder buttons.
 | "Shizuku is not running" | Open Shizuku and start it |
 | "Shizuku permission denied" | Shizuku → Apps → allow Joycon2Android |
 | Controller not found | Hold SYNC again and move closer |
-| Controller shows as the wrong type (stick turned sideways, no right stick) | Set **Controller type** on its card, then assign it |
+| Controller shows as the wrong type (stick turned sideways, no right stick) | Tap its type at the top of its card, pick the right one, then assign it |
 | Controller stops responding | Press SYNC and reconnect; wait a moment if it stays silent |
 | Controller shows "Connection lost" | Press SYNC on it and it reconnects to the same player by itself, or tap Scan. After two minutes it's removed |
 | Controllers drop when a game starts | Some phones clear background apps when a game launches. Tap the yellow banner at the top to let the app run in the background (or set its battery use to unrestricted), and exclude it from the game launcher's cleanup |
