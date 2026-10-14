@@ -102,7 +102,7 @@ object DolphinWiimoteConfig {
 
     // A left Joy-Con's L/ZL edge is already a sideways remote's nose, so only a right one differs.
     private fun bodyInputs(side: JoyconSide, sidewaysRemote: Boolean): Map<String, String> = when (side) {
-        JoyconSide.DUAL -> emptyMap()
+        JoyconSide.DUAL, JoyconSide.GAMECUBE -> emptyMap()
         JoyconSide.LEFT -> SIDEWAYS_REMOTE_INPUTS
         JoyconSide.RIGHT -> if (sidewaysRemote) SIDEWAYS_REMOTE_INPUTS else RIGHT_BODY_INPUTS
     }
@@ -261,7 +261,7 @@ object DolphinWiimoteConfig {
     }
 
     private fun lines(side: JoyconSide, sidewaysRemote: Boolean, mapping: Map<String, String>): List<String> {
-        val sideways = sidewaysRemote && side != JoyconSide.DUAL
+        val sideways = sidewaysRemote && side.isLone
         val buttonLines = (mapping.toSourceMap<WiimoteButton>() - WiimoteButton.Shake)
             .mapNotNull { (target, sources) ->
                 expressionFor(side, sidewaysRemote, sources)

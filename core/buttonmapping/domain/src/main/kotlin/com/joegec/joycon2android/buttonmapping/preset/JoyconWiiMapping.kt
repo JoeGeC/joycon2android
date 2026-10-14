@@ -13,6 +13,8 @@ import com.joegec.joycon2android.model.JoyconButton.R
 import com.joegec.joycon2android.model.JoyconButton.RS
 import com.joegec.joycon2android.model.JoyconButton.Right
 import com.joegec.joycon2android.model.JoyconButton.Up
+import com.joegec.joycon2android.model.JoyconButton.X
+import com.joegec.joycon2android.model.JoyconButton.Y
 import com.joegec.joycon2android.model.JoyconButton.ZL
 import com.joegec.joycon2android.model.JoyconButton.ZR
 
@@ -30,6 +32,14 @@ object JoyconWiiMapping : MappingPreset {
             WiimoteButton.Two to ZR,
             WiimoteButton.Minus to Minus,
             WiimoteButton.Recenter to RS,
+        )
+        // No − and no stick click: − takes X as on a lone right Joy-Con, and Recenter the free Y.
+        JoyconSide.GAMECUBE -> mapOf(
+            WiimoteButton.B to B,
+            WiimoteButton.One to R,
+            WiimoteButton.Two to ZR,
+            WiimoteButton.Minus to X,
+            WiimoteButton.Recenter to Y,
         )
         JoyconSide.RIGHT -> mapOf(
             WiimoteButton.B to B,

@@ -5,18 +5,24 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import com.joegec.joycon2android.connection.data.R
 import com.joegec.joycon2android.model.ConnectedJoycon
+import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
-import com.joegec.joycon2android.model.Side
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class Joycon2Manager(
     private val context: Context,
     private val scope: CoroutineScope,
+    private val typePreferences: ControllerTypePreferences,
 ) : ControllerRepository, ConnectionPriorityRepository {
 
     companion object {
@@ -26,6 +32,8 @@ class Joycon2Manager(
     private val scanner = BleScanner(context)
     private val pool = ConnectionPool(context)
     private val connectionJobs = mutableMapOf<String, Job>()
+    // Null until the stored overrides load, so no controller connects as the wrong type.
+    private val typeOverrides = typePreferences.overrides.stateIn(scope, SharingStarted.Eagerly, null)
 
     @Volatile
     private var highPriority = false
@@ -47,7 +55,7 @@ class Joycon2Manager(
     }
 
     override fun startScan() {
-        if (scanner.isScanning) return
+        if (scanner.isScanning || _scanning.value) return
         if (pool.size >= MAX_CONNECTIONS) return
 
         if (!scanner.isAvailable) {
@@ -56,8 +64,11 @@ class Joycon2Manager(
         }
 
         _error.value = null
-        scanner.start(pool::isLive)
         _scanning.value = true
+        scope.launch(Dispatchers.Main.immediate) {
+            typeOverrides.filterNotNull().first()
+            if (_scanning.value) scanner.start(pool::isLive)
+        }
     }
 
     override fun stopScan() {
@@ -83,6 +94,13 @@ class Joycon2Manager(
     override fun setPlayerLed(address: String, player: PlayerNumber?) {
         val connection = pool.get(address) ?: return
         if (player != null) connection.setPlayerLed(player) else connection.clearPlayerLed()
+    }
+
+    override fun setControllerType(address: String, model: ControllerModel?) {
+        scope.launch { typePreferences.set(address, model) }
+        val connection = pool.get(address) ?: return
+        connection.overrideType(model)
+        rebuildControllers()
     }
 
     override fun setHighPriority(enabled: Boolean) {
@@ -115,6 +133,9 @@ class Joycon2Manager(
             ConnectedJoycon(
                 address = address,
                 side = connection.side,
+                model = connection.model,
+                detectedModel = connection.detectedModel,
+                typeOverride = connection.typeOverride,
                 deviceName = connection.deviceName,
                 connectionState = connection.connectionState.value,
                 input = connection.input.value,
@@ -123,14 +144,15 @@ class Joycon2Manager(
         }
     }
 
-    private fun onDeviceFound(result: ScanResult, side: Side, name: String) {
+    private fun onDeviceFound(result: ScanResult, model: ControllerModel, name: String) {
         if (pool.size >= MAX_CONNECTIONS) {
             scanner.stop()
             _scanning.value = false
             return
         }
 
-        pool.connect(result, side, name, highPriority) ?: return
+        val typeOverride = typeOverrides.value?.get(result.device.address)
+        pool.connect(result, model, typeOverride, name, highPriority) ?: return
         onPoolChanged()
     }
 

@@ -60,14 +60,14 @@ fun CompactPlayerRow(
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.compactControllerGap)) {
             when {
                 playerState.hasPro ->
-                    ControllerChip(R.string.controller_pro, playerState.left!!, onUnassign)
+                    ControllerChip(playerState.left!!.modelLabel(), playerState.left!!, onUnassign)
                 playerState.hasFullController -> {
-                    ControllerChip(R.string.controller_left, playerState.left!!, onUnassign, batteryFirst = true)
-                    ControllerChip(R.string.controller_right, playerState.right!!, onUnassign)
+                    ControllerChip(stringResource(R.string.controller_left), playerState.left!!, onUnassign, batteryFirst = true)
+                    ControllerChip(stringResource(R.string.controller_right), playerState.right!!, onUnassign)
                 }
                 else -> {
-                    playerState.left?.let { ControllerChip(R.string.controller_left, it, onUnassign) }
-                    playerState.right?.let { ControllerChip(R.string.controller_right, it, onUnassign) }
+                    playerState.left?.let { ControllerChip(stringResource(R.string.controller_left), it, onUnassign) }
+                    playerState.right?.let { ControllerChip(stringResource(R.string.controller_right), it, onUnassign) }
                 }
             }
         }
@@ -82,7 +82,7 @@ fun CompactPlayerRow(
 
 @Composable
 private fun ControllerChip(
-    textRes: Int,
+    text: String,
     joycon: ConnectedJoycon,
     onUnassign: (String) -> Unit,
     batteryFirst: Boolean = false,
@@ -114,7 +114,7 @@ private fun ControllerChip(
 
         if (batteryFirst) battery()
         Text(
-            stringResource(textRes),
+            text,
             color = joyconBorderColor(joycon.accentColor, JoyconDefaultColor),
             style = MaterialTheme.typography.titleMedium,
         )

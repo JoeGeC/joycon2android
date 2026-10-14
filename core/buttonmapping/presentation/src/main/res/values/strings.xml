@@ -25,6 +25,7 @@
     <string name="controller_left">Left</string>
     <string name="controller_right">Right</string>
     <string name="controller_pro">Pro</string>
+    <string name="controller_gamecube">GameCube</string>
     <string name="layout_standard">Standard</string>
     <string name="layout_wii">Wii</string>
     <string name="layout_wii_description">Like a Wiimote, ZR \u2192 B</string>
@@ -41,6 +42,7 @@
     <string name="side_left_short">L</string>
     <string name="side_right_short">R</string>
     <string name="side_dual_short">L/R</string>
+    <string name="side_gamecube_short">GC</string>
     <string name="player_body">P%1$d %2$s</string>
     <string name="direction_up">Up</string>
     <string name="direction_down">Down</string>

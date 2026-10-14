@@ -5,6 +5,7 @@ import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.model.ConnectedJoycon
+import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.Side
@@ -185,6 +186,21 @@ class EdenGamepadConfigTest {
         assertTrue(result.contains("motion_enabled=true"))
         assertTrue(result.contains("[Cpu]"))
         assertTrue(result.contains("foo=bar"))
+    }
+
+    @Test
+    fun `a gamecube controller's ZL and Z bind to the bumpers and its trigger clicks to the stick clicks`() {
+        val gameCube = joycon(Side.PRO).copy(model = ControllerModel.GAMECUBE)
+        val players = listOf(PlayerState(PlayerNumber.P1, left = gameCube, right = gameCube))
+
+        val result = merge(null, players, mapOf(1 to 0))
+
+        assertTrue(result.contains("player_0_button_zl=\"$DEVICE,button:102,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_L1
+        assertTrue(result.contains("player_0_button_zr=\"$DEVICE,button:103,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_R1
+        assertTrue(result.contains("player_0_button_l=\"$DEVICE,button:106,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_THUMBL
+        assertTrue(result.contains("player_0_button_r=\"$DEVICE,button:107,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_THUMBR
+        assertFalse(result.contains("player_0_button_lstick"))
+        assertFalse(result.contains("player_0_button_rstick"))
     }
 
     private companion object {

@@ -64,4 +64,22 @@ class PacketParserTest {
         assertTrue(JoyconButton.GR.id !in input.pressed)
         assertTrue(JoyconButton.GL.id !in input.pressed)
     }
+
+    @Test
+    fun `analog triggers decode raw from bytes 0x3C and 0x3D`() {
+        val data = ByteArray(63).apply {
+            this[0x3C] = 0xEA.toByte()
+            this[0x3D] = 0x22
+        }
+        val input = PacketParser.parse(data, Side.PRO)!!
+        assertEquals(0xEA, input.triggerLeft)
+        assertEquals(0x22, input.triggerRight)
+    }
+
+    @Test
+    fun `triggers read zero from a packet too short to carry them`() {
+        val input = PacketParser.parse(ByteArray(0x3C), Side.PRO)!!
+        assertEquals(0, input.triggerLeft)
+        assertEquals(0, input.triggerRight)
+    }
 }

@@ -60,7 +60,7 @@ Add tests for new domain and data logic, and update any doc your change makes st
 BLE behaviour is very device-specific, so a good bug report includes:
 
 - Device model and Android version
-- Controller type (Joy-Con 2 left / right / pair / Pro) and how it was connected
+- Controller type (Joy-Con 2 left / right / pair, Pro or NSO GameCube) and how it was connected
 - What you expected vs. what happened
 - A relevant `adb logcat` snippet (the app logs under the `Joycon2` and `DsuServer` tags)
 

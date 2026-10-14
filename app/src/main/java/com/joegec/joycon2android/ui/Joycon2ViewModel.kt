@@ -14,6 +14,7 @@ import com.joegec.joycon2android.ble.BlePermissionHandler
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.ConnectionViewMode
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.power.BatteryOptimizationExemption
 import com.joegec.joycon2android.service.Joycon2Service
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -99,6 +100,8 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     fun unassign(address: String) = container.unassignController(address)
 
     fun disconnect(address: String) = container.disconnectController(address)
+
+    fun setControllerType(address: String, model: ControllerModel?) = container.setControllerType(address, model)
 
     fun onPermissionsDenied() {
         _permissionDenied.value = true

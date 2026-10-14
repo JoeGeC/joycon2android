@@ -6,6 +6,7 @@ import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.emittedFor
 import com.joegec.joycon2android.buttonmapping.sourceIdsOf
+import com.joegec.joycon2android.buttonmapping.toMappingSources
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import org.junit.Assert.assertEquals
@@ -55,11 +56,18 @@ class WiiPresetsTest {
     }
 
     @Test
+    fun `the Joy-Con layout puts a gamecube controller's missing minus and stick click on X and Y`() {
+        val gameCube = JoyconWiiMapping.entries(JoyconSide.GAMECUBE)
+        assertEquals("X", gameCube.getValue(WiimoteButton.Minus.name))
+        assertEquals("Y", gameCube.getValue(WiimoteButton.Recenter.name))
+    }
+
+    @Test
     fun `no button fires two of the Joy-Con layout's targets`() {
         JoyconSide.entries.forEach { side ->
             val fired = mutableMapOf<String, MutableSet<String>>()
             JoyconWiiMapping.entries(side).forEach { (target, value) ->
-                sourceIdsOf(value).forEach { fired.getOrPut(it) { mutableSetOf() }.add(target) }
+                emittedIds(value, side).forEach { fired.getOrPut(it) { mutableSetOf() }.add(target) }
             }
 
             assertEquals("$side", emptyMap<String, Set<String>>(), fired.filterValues { it.size > 1 })
@@ -97,7 +105,7 @@ class WiiPresetsTest {
 
     @Test
     fun `a lone Joy-Con on the Nunchuck layout plays both halves itself`() {
-        JoyconSide.entries.filterNot { it == JoyconSide.DUAL }.forEach { side ->
+        JoyconSide.entries.filter { it.isLone }.forEach { side ->
             val lone = MarioKartNunchukMapping.entries(side)
             val rail = if (side == JoyconSide.LEFT) "SlLeft" else "SlRight"
 
@@ -125,6 +133,10 @@ class WiiPresetsTest {
         }
     }
 
+    private fun emittedIds(value: String, side: JoyconSide) = value.toMappingSources().mapNotNull { source ->
+        if (source is MappingSource.Button) source.button.emittedFor(side)?.name else source.id
+    }
+
     private fun emittedFace(entries: Map<String, String>, target: WiimoteButton, side: JoyconSide) =
         (MappingSource.fromId(sourceIdsOf(entries.getValue(target.name)).first()) as? MappingSource.Button)
             ?.button
@@ -132,7 +144,7 @@ class WiiPresetsTest {
 
     @Test
     fun `no button on a lone Joy-Con fires two targets, bar the shoulder that hops and tricks`() {
-        JoyconSide.entries.filterNot { it == JoyconSide.DUAL }.forEach { side ->
+        JoyconSide.entries.filter { it.isLone }.forEach { side ->
             val entries = MappingLayouts.entriesOf(Console.WIIMOTE_NUNCHUK, side, MarioKartNunchukMapping)
             val fired = mutableMapOf<String, MutableSet<String>>()
             entries.forEach { (target, value) ->
@@ -188,7 +200,7 @@ class WiiPresetsTest {
 
     @Test
     fun `Mario Kart Wheel tricks off SR on a lone Joy-Con, the shoulder that already hops`() {
-        JoyconSide.entries.filterNot { it == JoyconSide.DUAL }.forEach { side ->
+        JoyconSide.entries.filter { it.isLone }.forEach { side ->
             val lone = MarioKartWheelMapping.entries(side)
 
             assertEquals("$side", lone.getValue(WiimoteButton.B.name), lone.getValue(WiimoteButton.Shake.name))

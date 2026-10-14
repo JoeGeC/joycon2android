@@ -75,7 +75,8 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
 
 ## Button mapping
 
-- **Keyed by `PlayerBody`** — a player plus the body they hold — so each player maps independently.
+- **Keyed by `PlayerBody`** — a player plus the body they hold (a pair or Pro, a lone Joy-Con, or a
+  GameCube controller) — so each player maps independently.
 - **A target holds every source bound to it.** Dolphin ORs them into one expression; Eden binds one
   input per key, so it keeps the first the body can emit.
 - **A layout is a name for a set of bindings, never a stored reference.** Applying one copies out

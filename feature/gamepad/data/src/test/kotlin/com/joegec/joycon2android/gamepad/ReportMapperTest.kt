@@ -3,6 +3,7 @@ package com.joegec.joycon2android.gamepad
 import com.joegec.joycon2android.model.AndroidKey
 import com.joegec.joycon2android.model.BatteryCharge
 import com.joegec.joycon2android.model.ConnectedJoycon
+import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerNumber
@@ -94,5 +95,35 @@ class ReportMapperTest {
 
         assertEquals(0.toByte(), report[14])
         assertEquals(0b10000.toByte(), report[1]) // Home, bit 12
+    }
+
+    @Test
+    fun `a gamecube controller's analog travel drives the trigger bytes, not ZL or ZR`() {
+        val input = JoyconInput(pressed = setOf(JoyconButton.ZL.id), triggerLeft = 128, triggerRight = 40)
+        val gameCube = ConnectedJoycon(
+            address = "gc", side = Side.PRO, model = ControllerModel.GAMECUBE, deviceName = "Joy-Con 2", input = input,
+        )
+        val report = ReportMapper.buildReport(GamepadFrame(PlayerState(PlayerNumber.P1, left = gameCube, right = gameCube)))
+        assertEquals(128.toByte(), report[11])
+        assertEquals(40.toByte(), report[12])
+    }
+
+    @Test
+    fun `a gamecube controller's ZL and Z travel on the bumper bits, clear of L2 and R2`() {
+        assertEquals((1 shl 6) or (1 shl 7), gameCubeButtonWord(JoyconButton.ZL, JoyconButton.ZR)) // BUTTON_L1, BUTTON_R1
+    }
+
+    @Test
+    fun `a gamecube controller's trigger clicks travel on the stick-click bits`() {
+        assertEquals((1 shl 13) or (1 shl 14), gameCubeButtonWord(JoyconButton.L, JoyconButton.R)) // BUTTON_THUMBL, BUTTON_THUMBR
+    }
+
+    private fun gameCubeButtonWord(vararg pressed: JoyconButton): Int {
+        val input = JoyconInput(pressed = pressed.map { it.id }.toSet())
+        val gameCube = ConnectedJoycon(
+            address = "gc", side = Side.PRO, model = ControllerModel.GAMECUBE, deviceName = "Joy-Con 2", input = input,
+        )
+        val report = ReportMapper.buildReport(GamepadFrame(PlayerState(PlayerNumber.P1, left = gameCube, right = gameCube)))
+        return (report[0].toInt() and 0xFF) or ((report[1].toInt() and 0xFF) shl 8)
     }
 }

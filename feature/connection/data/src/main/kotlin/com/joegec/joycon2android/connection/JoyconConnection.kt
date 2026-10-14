@@ -13,6 +13,7 @@ import android.os.Looper
 import android.util.Log
 import com.joegec.joycon2android.connection.console.ConsoleChannel
 import com.joegec.joycon2android.connection.console.ConsoleSession
+import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.JoyconConnectionState
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerNumber
@@ -25,7 +26,8 @@ import java.util.UUID
 @SuppressLint("MissingPermission")
 class JoyconConnection(
     private val context: Context,
-    val side: Side,
+    val detectedModel: ControllerModel,
+    typeOverride: ControllerModel?,
     val deviceName: String,
     private val onReady: () -> Unit,
     private val onDisconnected: (() -> Unit)? = null,
@@ -41,6 +43,12 @@ class JoyconConnection(
         private const val RETURN_WINDOW_MS = 120_000L
     }
 
+    @Volatile var typeOverride: ControllerModel? = typeOverride
+        private set
+    val model: ControllerModel get() = typeOverride ?: detectedModel
+    @Volatile var side: Side = model.defaultSide
+        private set
+
     private val _connectionState = MutableStateFlow(
         JoyconConnectionState(connecting = true, deviceName = deviceName)
     )
@@ -52,7 +60,8 @@ class JoyconConnection(
     private val mainHandler = Handler(Looper.getMainLooper())
     private val ops = GattOpQueue()
     private val returnWindow = ReturnWindow(RETURN_WINDOW_MS, MainThreadScheduler(), ::giveUpOnReturn)
-    private val stickCalibrator = StickCalibrator()
+    @Volatile private var calibrator = InputCalibrator(model)
+    @Volatile private var factory = FactoryCalibration()
     private var gatt: BluetoothGatt? = null
     private var device: BluetoothDevice? = null
     private var common: CommonSession? = null
@@ -73,6 +82,8 @@ class JoyconConnection(
     @Volatile private var released = false
 
     val awaitingReturn: Boolean get() = returnWindow.isOpen
+
+    private val mayUseConsole: Boolean get() = ConsoleFallback.allows(model)
 
     fun connect(device: BluetoothDevice) {
         this.device = device
@@ -99,6 +110,14 @@ class JoyconConnection(
     fun setHighPriority(enabled: Boolean) {
         highPriority = enabled
         if (initComplete) protocol?.setHighPriority(enabled)
+    }
+
+    // A new side reads the sticks from other offsets, so their learned centres no longer apply.
+    fun overrideType(override: ControllerModel?) {
+        typeOverride = override
+        side = model.defaultSide
+        calibrator = InputCalibrator(model).apply { useFactory(factory) }
+        if (initComplete) common?.read(FactoryCalibrationReads.commands(model))
     }
 
     fun setPlayerLed(player: PlayerNumber) {
@@ -172,7 +191,7 @@ class JoyconConnection(
             }
 
             servicesDiscovered = true
-            if (securityRequested) {
+            if (securityRequested && mayUseConsole) {
                 startConsoleSession(g)
                 return
             }
@@ -188,11 +207,13 @@ class JoyconConnection(
             common = CommonSession(
                 gatt = g,
                 channel = channel,
-                side = side,
+                side = { side },
                 ops = ops,
+                calibrationReads = FactoryCalibrationReads.commands(model),
                 initialLedBitmask = assignedPlayer?.ledBitmask ?: ControllerCommands.LED_ALL_ON,
                 onInput = ::publishInput,
                 onAccentColor = ::publishAccentColor,
+                onCommandReply = ::applyFactoryCalibration,
                 onReady = {
                     onProtocolReady()
                     mainHandler.postDelayed({ fallBackToConsoleIfSilent(g) }, CONSOLE_FALLBACK_MS)
@@ -242,14 +263,14 @@ class JoyconConnection(
     private fun commonChannelAnswered() = commonReportSeen || commandReplySeen
 
     private fun fallBackToConsoleIfSilent(g: BluetoothGatt) {
-        if (commonChannelAnswered()) return
+        if (commonChannelAnswered() || !mayUseConsole) return
         Log.i(TAG, "[$side] No reply on the common channel; switching to the console protocol")
         startConsoleSession(g)
     }
 
     @Synchronized
     private fun startConsoleSession(g: BluetoothGatt) {
-        if (console != null || commonReportSeen || gatt !== g) return
+        if (!mayUseConsole || console != null || commonReportSeen || gatt !== g) return
         val channel = ConsoleChannel.find(g)
         if (channel == null) {
             fail("Not a compatible Joy-Con 2")
@@ -336,7 +357,14 @@ class JoyconConnection(
     }
 
     private fun publishInput(input: JoyconInput) {
-        _input.value = stickCalibrator.calibrate(input)
+        _input.value = calibrator.calibrate(input)
+    }
+
+    private fun applyFactoryCalibration(reply: ByteArray) {
+        FactoryCalibrationReads.update(factory, reply)?.let {
+            factory = it
+            calibrator.useFactory(it)
+        }
     }
 
     private fun publishAccentColor(color: Int) {

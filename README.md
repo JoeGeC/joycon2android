@@ -15,7 +15,8 @@ as an ordinary gamepad.
 
 ## Features
 
-- **Joy-Con 2 and Switch 2 Pro Controller** — connect several at once, GL/GR paddles included.
+- **Joy-Con 2, Switch 2 Pro Controller and NSO GameCube controller** — connect several at once, GL/GR
+  paddles included.
 - **Up to 8 players** — each with a sideways Joy-Con, a pair, or a Pro Controller.
 - **A gamepad per player** — every app sees one standard controller per player, so multiplayer just
   works.
@@ -35,7 +36,7 @@ as an ordinary gamepad.
 ### What you need
 
 - Android 7.0 (API 24) or newer, with Bluetooth LE
-- Joy-Con 2 or a Switch 2 Pro Controller
+- Joy-Con 2, a Switch 2 Pro Controller or an NSO GameCube controller
 - [Shizuku](https://shizuku.rikka.app/), for the virtual gamepad and emulator auto setup — DSU motion
   works without it
 
@@ -58,7 +59,11 @@ as an ordinary gamepad.
 
 1. Hold **SYNC** on the controller and tap **Scan**.
 2. Assign each controller to a player — from the app, or with the Switch combos: **L** on one Joy-Con
-   and **R** on another for a pair, **SL + SR** for a sideways Joy-Con, **L + R** on a Pro Controller.
+   and **R** on another for a pair, **SL + SR** for a sideways Joy-Con, **L + R** on a Pro Controller
+   or GameCube controller.
+3. If a controller shows as the wrong type, tap its type at the top of its card and pick the right one
+   before assigning it. The choice is remembered for that controller; **Auto** goes back to what it
+   reports.
 
 ### 3. Turn on the virtual gamepad
 
@@ -96,12 +101,13 @@ the emulator afterwards — it only reads its config when it starts.
 
 | Card | Emulators | What it writes |
 |---|---|---|
-| Virtual Gamepad | Eden, Eden Nightly, Dolphin (GameCube) | buttons and sticks |
+| Virtual Gamepad | Eden, Eden Nightly, Dolphin (GameCube) | buttons and sticks; analog L/R for a GameCube controller |
 | DSU Motion Server | Eden, Eden Nightly, Dolphin (Wii) | buttons, sticks and motion |
 
 The gamepad button beside **Set up** opens the mapping editor, with a card per connected player —
 tap one to open its bindings. A single Joy-Con is set up as a Pro Controller held sideways, so every
 button works in every game ([why](docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers)). A
+GameCube controller has layouts of its own, with Z on its Z button and analog L/R in Dolphin. A
 target can take **several sources** — tick as many as you like, and any of them fires it.
 
 - **Layouts.** Each player picks a layout to start from, which resets their changes. The card reads
@@ -131,7 +137,7 @@ The layouts the app ships:
 | Layout | For |
 |---|---|
 | Wii | The Wii Remote's own arrangement: the trigger under your finger is B, 1 and 2 under the thumb |
-| Joy-Con | The same, with the Joy-Con's own B as B, 1 and 2 on the shoulders so your thumb stays on the stick, and Recenter on the stick click |
+| Joy-Con | The same, with the Joy-Con's own B as B, 1 and 2 on the shoulders so your thumb stays on the stick, and Recenter on the stick click. A GameCube controller has no stick click or −, so Recenter is on Y and − on X |
 | Mario Kart Wheel | A lone Joy-Con held sideways as a wheel, laid out the way Mario Kart 8 uses one — 2 accelerates, 1 brakes, SR hops and tricks, and SL throws an item alongside the stick. Steers by **tilt**, so it plays as a sideways Wii Remote: the d-pad turns with it and a right Joy-Con aims from its tail |
 | Mario Kart Nunchuck | The remote-and-nunchuk scheme, which steers by **stick** instead. A pair splits the halves across the hands, each index finger on the shoulder its controller keeps a trigger on; a lone Joy-Con plays both halves itself, its own stick standing in for the Nunchuk's and its rails carrying C and Z |
 
@@ -242,6 +248,7 @@ shoulder buttons.
 | "Shizuku is not running" | Open Shizuku and start it |
 | "Shizuku permission denied" | Shizuku → Apps → allow Joycon2Android |
 | Controller not found | Hold SYNC again and move closer |
+| Controller shows as the wrong type (stick turned sideways, no right stick) | Tap its type at the top of its card, pick the right one, then assign it |
 | Controller stops responding | Press SYNC and reconnect; wait a moment if it stays silent |
 | Controller shows "Connection lost" | Press SYNC on it and it reconnects to the same player by itself, or tap Scan. After two minutes it's removed |
 | Controllers drop when a game starts | Some phones clear background apps when a game launches. Tap the yellow banner at the top to let the app run in the background (or set its battery use to unrestricted), and exclude it from the game launcher's cleanup |

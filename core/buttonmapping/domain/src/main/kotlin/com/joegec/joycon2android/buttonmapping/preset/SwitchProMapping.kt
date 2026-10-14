@@ -37,27 +37,30 @@ object SwitchProMapping : MappingPreset {
 
     override fun entries(side: JoyconSide) = buttons(side).buttonEntries() + sticks(side).stickEntries()
 
+    private val PAIR_BUTTONS = mapOf(
+        SwitchProButton.A to A,
+        SwitchProButton.B to B,
+        SwitchProButton.X to X,
+        SwitchProButton.Y to Y,
+        SwitchProButton.L to L,
+        SwitchProButton.R to R,
+        SwitchProButton.ZL to ZL,
+        SwitchProButton.ZR to ZR,
+        SwitchProButton.Plus to Plus,
+        SwitchProButton.Minus to Minus,
+        SwitchProButton.Home to Home,
+        SwitchProButton.Capture to Capture,
+        SwitchProButton.LStickClick to LS,
+        SwitchProButton.RStickClick to RS,
+        SwitchProButton.DPadUp to Up,
+        SwitchProButton.DPadDown to Down,
+        SwitchProButton.DPadLeft to Left,
+        SwitchProButton.DPadRight to Right,
+    )
+
     private fun buttons(side: JoyconSide): Map<SwitchProButton, JoyconButton> = when (side) {
-        JoyconSide.DUAL -> mapOf(
-            SwitchProButton.A to A,
-            SwitchProButton.B to B,
-            SwitchProButton.X to X,
-            SwitchProButton.Y to Y,
-            SwitchProButton.L to L,
-            SwitchProButton.R to R,
-            SwitchProButton.ZL to ZL,
-            SwitchProButton.ZR to ZR,
-            SwitchProButton.Plus to Plus,
-            SwitchProButton.Minus to Minus,
-            SwitchProButton.Home to Home,
-            SwitchProButton.Capture to Capture,
-            SwitchProButton.LStickClick to LS,
-            SwitchProButton.RStickClick to RS,
-            SwitchProButton.DPadUp to Up,
-            SwitchProButton.DPadDown to Down,
-            SwitchProButton.DPadLeft to Left,
-            SwitchProButton.DPadRight to Right,
-        )
+        JoyconSide.DUAL -> PAIR_BUTTONS
+        JoyconSide.GAMECUBE -> PAIR_BUTTONS - SwitchProButton.LStickClick - SwitchProButton.RStickClick
         // Rails as shoulders, ZL/ZR unbound: docs/virtual-gamepad.md#sidewaysmapper
         JoyconSide.LEFT -> mapOf(
             SwitchProButton.A to Down,
@@ -84,7 +87,7 @@ object SwitchProMapping : MappingPreset {
     }
 
     private fun sticks(side: JoyconSide): Map<SwitchProStick, StickSource> = when (side) {
-        JoyconSide.DUAL -> mapOf(
+        JoyconSide.DUAL, JoyconSide.GAMECUBE -> mapOf(
             SwitchProStick.LStick to LEFT_STICK,
             SwitchProStick.RStick to RIGHT_STICK,
         )

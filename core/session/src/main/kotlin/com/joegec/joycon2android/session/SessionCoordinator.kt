@@ -7,6 +7,7 @@ import com.joegec.joycon2android.assignment.PlayerStateResolver
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.ControllerModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,6 +59,12 @@ class SessionCoordinator(
         assignments.unassign(address)
         controllers.setPlayerLed(address, null)
         player?.let(onPlayerUnassigned)
+    }
+
+    // Unassigned first: the assignment's slot checks were made for the old type.
+    fun setControllerType(address: String, model: ControllerModel?) {
+        if (assignments.getPlayer(address) != null) unassign(address)
+        controllers.setControllerType(address, model)
     }
 
     private fun publish(state: AppUiState) {

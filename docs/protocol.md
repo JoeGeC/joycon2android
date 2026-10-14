@@ -24,9 +24,10 @@ enables a subscription that never delivers data.
 Manufacturer data for ID `0x0553` carries:
 
 - **Bytes `[5..6]`** — little-endian product ID: `0x2067` left Joy-Con 2, `0x2066` right Joy-Con 2,
-  `0x2069` Switch 2 Pro Controller. The advertisement has no local name, so this is the only type
-  signal before input starts. Left and right are confirmed on hardware; the Pro value is community
-  reverse-engineering.
+  `0x2069` Switch 2 Pro Controller, `0x2073` NSO GameCube controller. The advertisement has no local
+  name, so this is the only type signal before input starts. Left, right and GameCube are confirmed
+  on hardware; the Pro value is community reverse-engineering. `JoyconAdvertisement.model` maps it to
+  a `ControllerModel`; the GameCube controller is held and decoded as a Pro Controller.
 - **Bytes `[10..15]`** — the bonded host's MAC. Holding SYNC zeroes it; a button press on a synced
   controller wakes it into a short reconnect advertisement carrying the address. The scanner only
   accepts a zeroed field, so stray presses on nearby synced Joy-Cons don't flash into the list.
@@ -114,8 +115,8 @@ stream.
 | Temperature | 0x2E | int16 | °C = 25 + raw / 127 |
 | Accel X/Y/Z | 0x30–0x35 | int16 ×3 | 4096 = 1 g |
 | Gyro X/Y/Z | 0x36–0x3B | int16 ×3 | 48000 = 360 °/s |
-| Trigger L | 0x3C | uint8 | analog |
-| Trigger R | 0x3D | uint8 | analog |
+| Trigger L | 0x3C | uint8 | analog, GameCube controller only ([below](#analog-triggers)) |
+| Trigger R | 0x3D | uint8 | analog, GameCube controller only |
 
 A left Joy-Con's right-stick bytes are garbage, and a right Joy-Con's left-stick bytes are too.
 
@@ -147,10 +148,49 @@ A left Joy-Con's right-stick bytes are garbage, and a right Joy-Con's left-stick
 The mask's low nibble lights P1–P4 solid (`0x01`, `0x02`, `0x04`, `0x08`), its high nibble flashes
 them (`0x10` … `0x80`). `0xF0`, all flashing, is the controller's default cycling animation.
 
+### Analog triggers
+
+The NSO GameCube controller's L and R travel to a **first stop**, where analog travel ends, then
+click through to a **second stop**, which sets the L/R button bit. Measured on three units with a
+Retroid Pocket Nova, 2026-10-07:
+
+| | Raw |
+|---|---|
+| Factory zero (SPI `0x013140`, byte 0 left, byte 1 right; `0xFF` unset) | 31–35 |
+| Rest | factory zero −2..+4 |
+| First stop | 170–196, differing by side and unit |
+| Second stop, bit set | 209–242 |
+
+- **The click is the bit, never an analog threshold.** In quick presses the bit can show with the
+  analog value at 155, and values up to 220 pass without it.
+- `TriggerCalibrator` maps factory zero plus a 5-count dead zone to 0 and the first stop to 255.
+  Full starts at 170 and widens to a value **held** still for 5 packets without the click, up to 205,
+  so quick presses through to the click don't move it. Without a factory zero, the lowest value seen
+  stands in.
+- Other drivers (Linux, SDL, BlueRetro) scale to ~225–232, the click point, which caps an unclicked
+  trigger at ~80%.
+
 ## SPI reads
 
-The controller keeps its factory data in SPI flash. The app wants one field: the **shell accent
-colour**, 3 bytes RGB at `0x01301F` — the per-side colour (coral right, blue left) the UI paints each
+The controller keeps its factory data in SPI flash. `FactoryCalibrationReads` picks what a model
+needs at connect:
+
+| Field | Address | Length | Read for |
+|---|---|---|---|
+| Main stick calibration | `0x0130A8` | 9 | the GameCube controller (its main stick) |
+| Right stick calibration | `0x0130E8` | 9 | the GameCube controller (its C-stick) |
+| [Trigger zeros](#analog-triggers) | `0x013140` | 2 | the GameCube controller |
+| Shell accent colour | `0x01301F` | 3 | every model, inside the DeviceInfo read below |
+
+**Stick calibration** is three X/Y pairs, each packed in 3 bytes as two 12-bit values (X = `b0 |
+(b1 & 0x0F) << 8`, Y = `b1 >> 4 | b2 << 4`): the centre, the span above it, the span below it. All
+`FF` means unset. Layout and addresses are from the Linux `hid-nintendo` Switch 2 driver (v16) and
+SDL's `SDL_hidapi_switch2.c`, both USB; the same flash serves BLE. A user calibration made on a
+Switch 2 lives at `0x1FC040` (magic `B2 A1`, then the same 9 bytes); the app doesn't read it, and
+sources disagree on the right stick's address. Only the GameCube controller's values have been
+checked against its sticks, so Joy-Con 2 and Pro Controllers aren't read and learn theirs instead.
+
+The **shell accent colour** is the per-side colour (coral right, blue left) the UI paints each
 controller with. Not the body colour at `0x013019`: that is the near-black shell, the same on both
 Joy-Cons.
 
@@ -202,11 +242,18 @@ Treating 2048 as centre and half-span leaves full deflection at ~60% with a 4–
 `StickCalibrator` runs where packets are parsed, so the live display, gamepad and DSU all see
 corrected values:
 
+- **A GameCube controller's factory calibration wins** once its [flash read](#spi-reads) answers,
+  about a second after connecting: it sets the centre and each direction's span. Everything below is
+  how every other controller calibrates, and the GameCube controller's fallback for unset flash and
+  the first packets before the reply.
 - **Centre** is learned from the first still window (30 samples), then frozen: a stick held at full
   deflection is perfectly still too.
 - **Each direction scales by its own span**, the centre/below/above triple the factory calibration
   stores. Spans are seeded just under the smallest travel measured (~1180 LSB), so full tilt works
-  from the first packet, and only ever widen.
+  from the first packet, and only ever widen, factory spans included. The NSO GameCube controller's
+  C-stick travels less, 1022–1204 from centre on three units (2026-10-07), so its spans are seeded
+  at 1000.
+- Changing a controller's type resets the calibrator; the factory values are applied again.
 
 ## Console-protocol controllers
 
@@ -304,7 +351,8 @@ Joy-Con 2 never does. Android pairs one device at a time, so a second clone conn
 first one's pairing is pending sends none, and silence on the common channel 1.5 s after init
 switches it over instead. Genuine Joy-Con 2s answer the console channel too, so a controller moved
 over by that timeout returns to the common path on its first report on `...fd2`, which only a
-controller speaking that protocol sends.
+controller speaking that protocol sends. A controller with analog triggers (the GameCube controller)
+never switches: the console report has no trigger bytes, and it answers on the common channel.
 
 **Holding the link.** The pairing never succeeds (Confirm Value Failed, or a 30 s timeout):
 

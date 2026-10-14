@@ -7,12 +7,24 @@ class StickCalibrator(
     restWindowSize: Int = DEFAULT_REST_WINDOW,
     maxRestSpreadLsb: Int = DEFAULT_MAX_REST_SPREAD,
     seedHalfSpan: Int = DEFAULT_SEED_HALF_SPAN,
+    rightSeedHalfSpan: Int = seedHalfSpan,
 ) {
 
     private val leftX = Axis(restWindowSize, maxRestSpreadLsb, seedHalfSpan)
     private val leftY = Axis(restWindowSize, maxRestSpreadLsb, seedHalfSpan)
-    private val rightX = Axis(restWindowSize, maxRestSpreadLsb, seedHalfSpan)
-    private val rightY = Axis(restWindowSize, maxRestSpreadLsb, seedHalfSpan)
+    private val rightX = Axis(restWindowSize, maxRestSpreadLsb, rightSeedHalfSpan)
+    private val rightY = Axis(restWindowSize, maxRestSpreadLsb, rightSeedHalfSpan)
+
+    fun useFactory(main: StickCalibration?, right: StickCalibration?) {
+        main?.let {
+            leftX.useFactory(it.centreX, it.aboveX, it.belowX)
+            leftY.useFactory(it.centreY, it.aboveY, it.belowY)
+        }
+        right?.let {
+            rightX.useFactory(it.centreX, it.aboveX, it.belowX)
+            rightY.useFactory(it.centreY, it.aboveY, it.belowY)
+        }
+    }
 
     fun calibrate(input: JoyconInput): JoyconInput = input.copy(
         stickX = leftX.rescale(input.stickX),
@@ -35,6 +47,14 @@ class StickCalibrator(
         private var sum = 0L
         private var min = 0
         private var max = 0
+
+        // Spans still widen past what the factory measured.
+        fun useFactory(centre: Int, above: Int, below: Int) {
+            this.centre = centre
+            centreLearned = true
+            this.above = above
+            this.below = below
+        }
 
         fun rescale(raw: Int): Int {
             learnCentre(raw)

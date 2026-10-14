@@ -3,6 +3,7 @@ package com.joegec.joycon2android
 import android.content.Context
 import com.joegec.joycon2android.connection.ConnectionPriorityRepository
 import com.joegec.joycon2android.connection.ControllerRepository
+import com.joegec.joycon2android.connection.ControllerTypePreferencesDataStore
 import com.joegec.joycon2android.connection.DisconnectControllerUseCase
 import com.joegec.joycon2android.connection.Joycon2Manager
 import com.joegec.joycon2android.connection.ObserveViewModeUseCase
@@ -64,6 +65,7 @@ import com.joegec.joycon2android.emulator.edenGamepads
 import com.joegec.joycon2android.session.AssignControllerUseCase
 import com.joegec.joycon2android.session.ObserveSessionUseCase
 import com.joegec.joycon2android.session.SessionCoordinator
+import com.joegec.joycon2android.session.SetControllerTypeUseCase
 import com.joegec.joycon2android.session.UnassignControllerUseCase
 import com.joegec.joycon2android.dsu.DisableDsuUseCase
 import com.joegec.joycon2android.dsu.DsuRepository
@@ -120,7 +122,7 @@ class AppContainer(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     // --- Connection (BLE) ---
-    private val joycon2Manager = Joycon2Manager(appContext, scope)
+    private val joycon2Manager = Joycon2Manager(appContext, scope, ControllerTypePreferencesDataStore(appContext))
     val controllerRepository: ControllerRepository = joycon2Manager
     private val connectionPriorityRepository: ConnectionPriorityRepository = joycon2Manager
     private val setHighConnectionPriority = SetHighConnectionPriorityUseCase(connectionPriorityRepository)
@@ -294,6 +296,7 @@ class AppContainer(context: Context) {
     val observeSession = ObserveSessionUseCase(sessionCoordinator)
     val assignController = AssignControllerUseCase(sessionCoordinator)
     val unassignController = UnassignControllerUseCase(sessionCoordinator)
+    val setControllerType = SetControllerTypeUseCase(sessionCoordinator)
 
     fun disconnectAll() {
         disableGamepad()

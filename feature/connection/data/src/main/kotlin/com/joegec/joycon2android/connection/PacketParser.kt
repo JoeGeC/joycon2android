@@ -10,6 +10,8 @@ import java.nio.ByteOrder
 object PacketParser {
 
     private const val MIN_PACKET_SIZE = 0x3B
+    private const val TRIGGER_LEFT = 0x3C
+    private const val TRIGGER_RIGHT = 0x3D
 
     // docs/protocol.md#packet-layout. The back-paddle byte (0x07) is folded into bits 32..39.
     private val buttonMasks: List<Pair<Long, JoyconButton>> = listOf(
@@ -48,6 +50,8 @@ object PacketParser {
             gyroY = bb.getShort(0x38).toInt(),
             gyroZ = bb.getShort(0x3A).toInt(),
             battery = BatteryCharge.fromVolts((bb.getShort(0x1F).toInt() and 0xFFFF) / 1000f),
+            triggerLeft = uint8OrZero(data, TRIGGER_LEFT),
+            triggerRight = uint8OrZero(data, TRIGGER_RIGHT),
         )
     }
 
@@ -80,6 +84,9 @@ object PacketParser {
             ((data[offset + 2].toInt() and 0xFF) shl 16)
         return (v and 0xFFF) to ((v shr 12) and 0xFFF)
     }
+
+    private fun uint8OrZero(data: ByteArray, offset: Int): Int =
+        if (offset < data.size) data[offset].toInt() and 0xFF else 0
 
     private fun decodeUint24(data: ByteArray, offset: Int): Int =
         (data[offset].toInt() and 0xFF) or

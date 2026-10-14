@@ -3,6 +3,16 @@
     <string name="side_left">Left</string>
     <string name="side_right">Right</string>
     <string name="side_pro">Pro</string>
+    <string name="side_gamecube">GameCube</string>
+    <string name="type_change">Change controller type</string>
+    <string name="type_detect">Detect automatically</string>
+    <string name="type_manual">SET MANUALLY</string>
+    <string name="type_unrecognised">Couldn\'t tell what this controller is. Tap its name to choose.</string>
+    <string name="type_joycon_left">Left Joy-Con</string>
+    <string name="type_joycon_right">Right Joy-Con</string>
+    <string name="type_pro">Pro Controller</string>
+    <string name="type_gamecube">GameCube controller</string>
+    <string name="type_unknown">Not recognised</string>
     <string name="status_connecting">CONNECTING…</string>
     <string name="status_connection_lost">CONNECTION LOST · PRESS SYNC</string>
     <string name="unassigned_title">Unassigned Controllers</string>
