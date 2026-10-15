@@ -128,7 +128,7 @@ target can take **several sources** — tick as many as you like, and any of the
   Super Mario Party Jamboree's motion games need; you map its own buttons, plus SL and SR. If a game
   won't accept the Joy-Con, or reads it as held upright (Moving Out), turn it on. Switching resets
   that player's buttons to the grip's standard ones (Android keys stay), and layouts save the switch
-  with the rest. It needs **Set up** run again (and Eden restarted) after changing it. Dolphin always
+  with the rest. Its layouts put SL/SR on L/R, or on ZL/ZR with **Pro Controller (ZL/ZR)**. It needs **Set up** run again (and Eden restarted) after changing it. Dolphin always
   uses the sideways grip.
 - **Sideways Wii Remote.** On the Wii console, a lone Joy-Con also gets this switch, for games that
   steer by tilting a sideways remote. On, up on the stick is towards the rail; off, towards L or R.

@@ -12,6 +12,7 @@ object MappingPresets {
         MarioKartNunchukMapping,
         SwitchProMapping,
         SwitchProSidewaysMapping,
+        SwitchProSidewaysTriggersMapping,
     )
 
     fun forConsole(console: Console): List<MappingPreset> = all.filter { it.console == console }

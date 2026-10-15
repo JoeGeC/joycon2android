@@ -2,6 +2,7 @@ package com.joegec.joycon2android.buttonmapping
 
 import com.joegec.joycon2android.buttonmapping.preset.SwitchProMapping
 import com.joegec.joycon2android.buttonmapping.preset.SwitchProSidewaysMapping
+import com.joegec.joycon2android.buttonmapping.preset.SwitchProSidewaysTriggersMapping
 import com.joegec.joycon2android.model.AndroidKey
 import com.joegec.joycon2android.model.PlayerNumber
 import kotlinx.coroutines.flow.first
@@ -48,6 +49,19 @@ class ProControllerTest {
         fixture.setProController(Console.SWITCH_PRO, body, false)
 
         assertEquals(SwitchProMapping, fixture.playerMapping(body).layout)
+    }
+
+    @Test
+    fun `the ZL-ZR sideways layout puts SL and SR on the triggers instead of the shoulders`() = runBlocking {
+        fixture.applyLayout(Console.SWITCH_PRO, body, SwitchProSidewaysTriggersMapping.id)
+
+        val mapping = fixture.playerMapping(body)
+        assertTrue(mapping.entries.proController)
+        assertEquals("SlLeft", mapping.entries["ZL"])
+        assertEquals("SrLeft", mapping.entries["ZR"])
+        assertEquals("", mapping.entries["L"])
+        assertEquals("", mapping.entries["R"])
+        assertEquals(SwitchProSidewaysTriggersMapping, mapping.layout)
     }
 
     @Test

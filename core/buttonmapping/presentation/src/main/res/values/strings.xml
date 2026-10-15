@@ -39,6 +39,8 @@
     <string name="layout_mario_kart_nunchuk_description">Steer with the stick, mapped like MK8</string>
     <string name="layout_pro_controller">Pro Controller</string>
     <string name="layout_pro_controller_description">Held sideways, for games that won\'t take a single Joy-Con</string>
+    <string name="layout_pro_controller_triggers">Pro Controller (ZL/ZR)</string>
+    <string name="layout_pro_controller_triggers_description">Held sideways, SL/SR \u2192 ZL/ZR</string>
     <string name="layout_family_mario_kart">Mario Kart</string>
     <string name="console_gamecube">Gamecube</string>
     <string name="console_wiimote_nunchuk">Wiimote &amp; Nunchuck</string>
