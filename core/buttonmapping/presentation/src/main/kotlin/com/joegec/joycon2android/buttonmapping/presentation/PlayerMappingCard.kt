@@ -85,10 +85,10 @@ fun PlayerMappingCard(
                 verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
             ) {
                 LayoutRow(
-                    options = state.layouts.map { labels.option(it) },
+                    options = state.layouts.map { labels.playerOption(it) },
                     selectedId = state.layout?.id,
                     layoutName = state.layout?.let(labels::name),
-                    subLabel = state.layout?.let(labels::description),
+                    subLabel = state.layout?.let(labels::playerDescription),
                     onSelect = { actions.selectLayout(state.body, it) },
                     onSave = onSaveLayout,
                     onDelete = onDeleteLayout,

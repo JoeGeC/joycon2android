@@ -25,6 +25,7 @@ import com.joegec.joycon2android.ui.components.DropdownOption
 class LayoutLabels internal constructor(
     private val names: Map<MappingPreset, String>,
     private val descriptions: Map<MappingPreset, String>,
+    private val playerDescriptions: Map<MappingPreset, String>,
     private val families: Map<LayoutFamily, String>,
 ) {
     fun name(layout: MappingLayout): String =
@@ -35,6 +36,8 @@ class LayoutLabels internal constructor(
     fun name(family: LayoutFamily): String = families.getValue(family)
 
     fun description(layout: MappingLayout): String? = descriptions[layout]
+
+    fun playerDescription(layout: MappingLayout): String? = playerDescriptions[layout] ?: description(layout)
 }
 
 @Composable
@@ -43,6 +46,7 @@ internal fun rememberLayoutLabels(): LayoutLabels {
     return LayoutLabels(
         names = presets.associateWith { nameOf(it) },
         descriptions = presets.mapNotNull { preset -> descriptionOf(preset)?.let { preset to it } }.toMap(),
+        playerDescriptions = presets.mapNotNull { preset -> playerDescriptionOf(preset)?.let { preset to it } }.toMap(),
         families = LayoutFamily.entries.associateWith { nameOf(it) },
     )
 }
@@ -70,14 +74,25 @@ private fun descriptionOf(preset: MappingPreset): String? = when (preset) {
 }
 
 @Composable
+private fun playerDescriptionOf(preset: MappingPreset): String? = when (preset) {
+    SwitchProSidewaysMapping -> stringResource(R.string.layout_pro_controller_player_description)
+    SwitchProSidewaysTriggersMapping -> stringResource(R.string.layout_pro_controller_triggers_player_description)
+    else -> null
+}
+
+@Composable
 private fun nameOf(family: LayoutFamily): String = when (family) {
     LayoutFamily.MARIO_KART -> stringResource(R.string.layout_family_mario_kart)
 }
 
-internal fun LayoutLabels.option(layout: MappingLayout) = DropdownOption(
+internal fun LayoutLabels.option(layout: MappingLayout) = option(layout, description(layout))
+
+internal fun LayoutLabels.playerOption(layout: MappingLayout) = option(layout, playerDescription(layout))
+
+private fun LayoutLabels.option(layout: MappingLayout, subLabel: String?) = DropdownOption(
     id = layout.id,
     label = name(layout),
-    subLabel = description(layout),
+    subLabel = subLabel,
     deletable = layout is SavedLayout,
 )
 
