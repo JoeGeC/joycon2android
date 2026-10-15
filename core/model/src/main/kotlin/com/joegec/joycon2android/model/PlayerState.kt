@@ -4,15 +4,19 @@ data class PlayerState(
     val player: PlayerNumber,
     val left: ConnectedJoycon? = null,
     val right: ConnectedJoycon? = null,
+    /** docs/virtual-gamepad.md#single-joy-con */
+    val asSingleJoycon: Boolean = false,
 ) {
     val hasPro: Boolean get() = left != null && left.side == Side.PRO
     val hasController: Boolean get() = left != null || right != null
     val hasFullController: Boolean get() = left != null && right != null
-    val isSideways: Boolean get() = hasController && !hasFullController && !hasPro
+    val isLone: Boolean get() = hasController && !hasFullController && !hasPro
+    val isSideways: Boolean get() = isLone && !asSingleJoycon
+    val isSingleJoycon: Boolean get() = isLone && asSingleJoycon
     val hasAnalogTriggers: Boolean get() = hasPro && left!!.model.hasAnalogTriggers
     val hasGameCube: Boolean get() = hasPro && left!!.model == ControllerModel.GAMECUBE
 
-    // As the hardware reports it, before any sideways rotation ([gamepad]).
+    // As the hardware reports it, before any sideways rotation or rail remap ([gamepad]).
     val pressed: Set<String>
         get() = if (hasPro) left!!.input.pressed
                 else (left?.input?.pressed ?: emptySet()) + (right?.input?.pressed ?: emptySet())

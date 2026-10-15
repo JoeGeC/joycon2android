@@ -19,4 +19,6 @@ enum class SwitchProButton {
     DPadDown,
     DPadLeft,
     DPadRight,
+    SL,
+    SR,
 }

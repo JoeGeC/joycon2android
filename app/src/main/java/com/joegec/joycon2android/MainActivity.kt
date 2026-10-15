@@ -116,6 +116,7 @@ class MainActivity : ComponentActivity() {
                     c.setSidewaysRemote,
                     c.setThrust,
                     c.setSensitivity,
+                    c.setProController,
                     c.saveCustomLayout,
                     c.saveGlobalLayout,
                     c.deleteCustomLayout,
@@ -250,6 +251,7 @@ class MainActivity : ComponentActivity() {
         },
         setThrust = { body, enabled -> controllerMappingViewModel.setThrustEnabled(body, enabled) },
         setSensitivity = { body, percent -> controllerMappingViewModel.setSensitivityPercent(body, percent) },
+        setProController = { body, enabled -> controllerMappingViewModel.setProControllerEnabled(body, enabled) },
     )
 
     @Composable

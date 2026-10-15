@@ -104,9 +104,10 @@ button bits and only sets an `is_horizontal` flag; on a real Switch the game's o
 rotation. Eden also masks an npad by type — a `JoyconLeft` has no A/B/X/Y at all, a `JoyconRight` no
 D-pad or left stick.
 
-So a single Joy-Con is configured as a **Pro Controller**, rotated on our side. It loses the
-single-Joy-Con icon but every input works in every game. Dolphin's GameCube pad has no sideways
-concept either, so `DolphinGcpadConfig` binds the same rotated inputs.
+So a single Joy-Con with the [Pro Controller](#single-joy-con) switch on, or on Dolphin, is
+configured as a **Pro Controller**, rotated on our side. It loses the single-Joy-Con icon but every
+input works in every game. Dolphin's GameCube pad has no sideways concept either, so
+`DolphinGcpadConfig` binds the same rotated inputs.
 
 ### `SidewaysMapper`
 
@@ -126,6 +127,38 @@ Left Joy-Con turned 90° counter-clockwise, right 90° clockwise, as on a Switch
   the body's own shoulders point away from the player.
 
 Motion is turned too, but for DSU only — see [dsu-motion.md](dsu-motion.md#sideways-joy-cons).
+
+### Single Joy-Con
+
+Eden's default for a lone Joy-Con: it reaches Eden as itself and the game rotates it, as on a Switch.
+The Eden mapping card's **Pro Controller** switch (off by default) sets up the sideways grip instead.
+
+- **The switch is a mapping entry.** `PRO_CONTROLLER` = `true` among the body's bindings
+  (`ProControllerEntry`), so layouts, saved sets and matching carry it with no extra store. The two
+  grips bind different targets, so flipping it (`SetProControllerUseCase`) applies that grip's
+  shipped layout — `SwitchProMapping` (Standard) or `SwitchProSidewaysMapping` (Pro Controller,
+  which clears every other target so Standard's bindings layered beneath can't fire) — keeping the
+  Android keys.
+- **Targets** (`SwitchProTargets`): only the body's own buttons — left: D-pad, L, ZL, −, stick click,
+  Capture; right: A/B/X/Y, R, ZR, +, stick click, Home — plus **SL/SR**, which `EdenControls.buttonKey`
+  writes to `button_slleft`/`button_srleft` or `button_slright`/`button_srright`. Its one stick is
+  `lstick` or `rstick`. The sideways grip offers neither SL nor SR.
+- **Eden-only.** `ObserveSingleJoyconBodiesUseCase` reads which bodies are single; `EdenSingleJoycons`
+  (`:app`) sets `PlayerState.asSingleJoycon` only on an output whose selected emulator is Eden, and on
+  the players handed to the Eden generators. Dolphin keeps the sideways grip.
+- **No rotation.** `GamepadState` passes buttons and stick through; a right Joy-Con's stick stays on
+  the right-stick axes. `SidewaysMotion` leaves motion alone (`DsuStream.heldSideways` is false).
+- **SL/SR ride the shoulders the body lacks** (`SingleJoyconMapper`), the same keycodes the sideways
+  grip uses: left SL/SR → R/ZR (103/105), right SL/SR → L/ZL (102/104). The HID report is unchanged.
+- **Npad type** `LeftJoycon` (2) / `RightJoycon` (3). Eden masks by type, which is why only the
+  body's own buttons are targets.
+- **Games that need one Joy-Con per player** (Super Mario Party Jamboree's motion games) won't take a
+  Pro Controller. Games without single-Joy-Con support refuse a Joy-Con, and some read it upright
+  (Moving Out, Eden 2026-10): Eden never rotates a `JoyconLeft`/`JoyconRight` and reports hold type
+  `Vertical` unless the game sets `Horizontal`. For those the player turns on Pro Controller.
+- **Older mappings** predate the switch and were all sideways. `LegacyGripMigration` (stored
+  bindings) and `LayoutJson` (layouts without `format` 2) turn the switch on for them.
+- Changing it needs Eden setup run again: the npad type lives in Eden's config.
 
 ### Analog triggers
 

@@ -31,6 +31,7 @@ import com.joegec.joycon2android.model.JoyconButton.Y
 import com.joegec.joycon2android.model.JoyconButton.ZL
 import com.joegec.joycon2android.model.JoyconButton.ZR
 
+/** A lone Joy-Con as Eden's own single Joy-Con: docs/virtual-gamepad.md#single-joy-con */
 object SwitchProMapping : MappingPreset {
     override val id = "STANDARD"
     override val console = Console.SWITCH_PRO
@@ -61,28 +62,31 @@ object SwitchProMapping : MappingPreset {
     private fun buttons(side: JoyconSide): Map<SwitchProButton, JoyconButton> = when (side) {
         JoyconSide.DUAL -> PAIR_BUTTONS
         JoyconSide.GAMECUBE -> PAIR_BUTTONS - SwitchProButton.LStickClick - SwitchProButton.RStickClick
-        // Rails as shoulders, ZL/ZR unbound: docs/virtual-gamepad.md#sidewaysmapper
         JoyconSide.LEFT -> mapOf(
-            SwitchProButton.A to Down,
-            SwitchProButton.B to Left,
-            SwitchProButton.X to Right,
-            SwitchProButton.Y to Up,
-            SwitchProButton.L to SlLeft,
-            SwitchProButton.R to SrLeft,
+            SwitchProButton.DPadUp to Up,
+            SwitchProButton.DPadDown to Down,
+            SwitchProButton.DPadLeft to Left,
+            SwitchProButton.DPadRight to Right,
+            SwitchProButton.L to L,
+            SwitchProButton.ZL to ZL,
             SwitchProButton.Minus to Minus,
             SwitchProButton.LStickClick to LS,
             SwitchProButton.Capture to Capture,
+            SwitchProButton.SL to SlLeft,
+            SwitchProButton.SR to SrLeft,
         )
         JoyconSide.RIGHT -> mapOf(
-            SwitchProButton.A to X,
-            SwitchProButton.B to A,
-            SwitchProButton.X to Y,
-            SwitchProButton.Y to B,
-            SwitchProButton.L to SlRight,
-            SwitchProButton.R to SrRight,
+            SwitchProButton.A to A,
+            SwitchProButton.B to B,
+            SwitchProButton.X to X,
+            SwitchProButton.Y to Y,
+            SwitchProButton.R to R,
+            SwitchProButton.ZR to ZR,
             SwitchProButton.Plus to Plus,
+            SwitchProButton.RStickClick to RS,
             SwitchProButton.Home to Home,
-            SwitchProButton.LStickClick to RS,
+            SwitchProButton.SL to SlRight,
+            SwitchProButton.SR to SrRight,
         )
     }
 
@@ -92,6 +96,6 @@ object SwitchProMapping : MappingPreset {
             SwitchProStick.RStick to RIGHT_STICK,
         )
         JoyconSide.LEFT -> mapOf(SwitchProStick.LStick to LEFT_STICK)
-        JoyconSide.RIGHT -> mapOf(SwitchProStick.LStick to RIGHT_STICK)
+        JoyconSide.RIGHT -> mapOf(SwitchProStick.RStick to RIGHT_STICK)
     }
 }

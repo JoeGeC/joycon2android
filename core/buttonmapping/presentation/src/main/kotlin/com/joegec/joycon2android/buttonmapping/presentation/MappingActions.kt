@@ -13,4 +13,5 @@ class MappingActions(
     val setSidewaysRemote: (body: PlayerBody, enabled: Boolean) -> Unit,
     val setThrust: (body: PlayerBody, enabled: Boolean) -> Unit,
     val setSensitivity: (body: PlayerBody, percent: Int) -> Unit,
+    val setProController: (body: PlayerBody, enabled: Boolean) -> Unit,
 )

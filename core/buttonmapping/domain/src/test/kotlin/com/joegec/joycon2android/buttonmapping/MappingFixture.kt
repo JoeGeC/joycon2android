@@ -32,6 +32,8 @@ internal class MappingFixture(val console: Console = Console.WIIMOTE_NUNCHUK) {
     val applyGlobalLayout = ApplyGlobalLayoutUseCase(globalLayouts, applyLayout, applyPlayerMapping)
     val observeGlobalMapping = ObserveGlobalMappingUseCase(observePlayerMapping, globalLayouts)
     val observeSavedLayouts = ObserveSavedLayoutsUseCase(savedLayouts)
+    val setProController = SetProControllerUseCase(observeMapping, mappings)
+    val observeSingleJoyconBodies = ObserveSingleJoyconBodiesUseCase(observeMapping)
 
     suspend fun playerMapping(body: PlayerBody) = observePlayerMapping(console, body).first()
 

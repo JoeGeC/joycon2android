@@ -15,6 +15,7 @@ import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.buttonmapping.preset.MarioKartNunchukMapping
 import com.joegec.joycon2android.buttonmapping.preset.MarioKartWheelMapping
 import com.joegec.joycon2android.buttonmapping.preset.SwitchProMapping
+import com.joegec.joycon2android.buttonmapping.preset.SwitchProSidewaysMapping
 import com.joegec.joycon2android.buttonmapping.preset.WiiMapping
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.ui.components.DropdownOption
@@ -52,15 +53,17 @@ private fun nameOf(preset: MappingPreset): String = when (preset) {
     JoyconWiiMapping -> stringResource(R.string.layout_joycon)
     MarioKartWheelMapping -> stringResource(R.string.layout_mario_kart_wheel)
     MarioKartNunchukMapping -> stringResource(R.string.layout_mario_kart_nunchuk)
+    SwitchProSidewaysMapping -> stringResource(R.string.layout_pro_controller)
 }
 
 @Composable
 private fun descriptionOf(preset: MappingPreset): String? = when (preset) {
-    GameCubeMapping, SwitchProMapping -> null // the only layout their console offers
+    GameCubeMapping, SwitchProMapping -> null
     WiiMapping -> stringResource(R.string.layout_wii_description)
     JoyconWiiMapping -> stringResource(R.string.layout_joycon_description)
     MarioKartWheelMapping -> stringResource(R.string.layout_mario_kart_wheel_description)
     MarioKartNunchukMapping -> stringResource(R.string.layout_mario_kart_nunchuk_description)
+    SwitchProSidewaysMapping -> stringResource(R.string.layout_pro_controller_description)
 }
 
 @Composable

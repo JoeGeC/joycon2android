@@ -2,8 +2,10 @@ package com.joegec.joycon2android.gamepad.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
+import com.joegec.joycon2android.buttonmapping.preset.SwitchProSidewaysMapping
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
@@ -15,7 +17,12 @@ import org.junit.Test
 
 private fun defaultSwitchProMapping(side: JoyconSide) = MappingPresets.default(Console.SWITCH_PRO).entries(side)
 
-private val switchProMapping: (PlayerBody) -> Map<String, String> = { defaultSwitchProMapping(it.side) }
+// As stored: a lone Joy-Con Eden isn't told is single holds the Pro Controller layout.
+private fun switchProMapping(players: List<PlayerState>): (PlayerBody) -> Map<String, String> = { body ->
+    val single = players.firstOrNull { it.player == body.player }?.isSingleJoycon ?: false
+    val layout = if (body.side.isLone && !single) SwitchProSidewaysMapping else MappingPresets.default(Console.SWITCH_PRO)
+    MappingLayouts.entriesOf(Console.SWITCH_PRO, body.side, layout)
+}
 
 class EdenGamepadConfigTest {
 
@@ -26,7 +33,7 @@ class EdenGamepadConfigTest {
             existing,
             players,
             ports.mapValues { (_, port) -> EdenGamepad.of(port, VENDOR_ID, PRODUCT_ID) },
-            switchProMapping,
+            switchProMapping(players),
         )
 
     @Test
@@ -85,6 +92,58 @@ class EdenGamepadConfigTest {
     }
 
     @Test
+    fun `single left Joy-Con is Eden's left Joy-Con with its own buttons and SL SR on the rails`() {
+        val players = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), asSingleJoycon = true))
+
+        val result = merge(null, players, mapOf(1 to 0))
+
+        assertTrue(result.contains("player_0_type=2"))
+        assertTrue(result.contains("player_0_button_dup=\"$DEVICE,axis:16,threshold:0.5,invert:-,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_button_l=\"$DEVICE,button:102,display:Joy-Con Virtual Gamepad 1 0\""))    // BUTTON_L1
+        assertTrue(result.contains("player_0_button_slleft=\"$DEVICE,button:103,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_R1
+        assertTrue(result.contains("player_0_button_srleft=\"$DEVICE,button:105,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_R2
+        assertTrue(result.contains("player_0_lstick=\"$DEVICE,axis_x:0,axis_y:1"))
+        assertFalse(result.contains("player_0_button_a="))
+    }
+
+    @Test
+    fun `single right Joy-Con is Eden's right Joy-Con with its stick on the right axes`() {
+        val players = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT), asSingleJoycon = true))
+
+        val result = merge(null, players, mapOf(1 to 0))
+
+        assertTrue(result.contains("player_0_type=3"))
+        assertTrue(result.contains("player_0_button_a=\"$DEVICE,button:96,display:Joy-Con Virtual Gamepad 1 0\""))      // BUTTON_A
+        assertTrue(result.contains("player_0_button_slright=\"$DEVICE,button:102,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_L1
+        assertTrue(result.contains("player_0_button_srright=\"$DEVICE,button:104,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_L2
+        assertTrue(result.contains("player_0_rstick=\"$DEVICE,axis_x:11,axis_y:14"))
+        assertFalse(result.contains("player_0_lstick="))
+    }
+
+    @Test
+    fun `a single Joy-Con's own buttons and SL SR can be remapped`() {
+        val players = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), asSingleJoycon = true))
+        val mapping = switchProMapping(players)(PlayerBody(PlayerNumber.P1, JoyconSide.LEFT)) +
+            mapOf("SL" to "Up", "DPadUp" to "SlLeft")
+
+        val result = EdenGamepadConfig.merge(null, players, mapOf(1 to EdenGamepad.of(0, VENDOR_ID, PRODUCT_ID))) { mapping }
+
+        assertTrue(result.contains("player_0_button_slleft=\"$DEVICE,axis:16,threshold:0.5,invert:-,display:Joy-Con Virtual Gamepad 1 0\""))
+        assertTrue(result.contains("player_0_button_dup=\"$DEVICE,button:103,display:Joy-Con Virtual Gamepad 1 0\"")) // BUTTON_R1
+    }
+
+    @Test
+    fun `a pair ignores the single Joy-Con choice`() {
+        val players = listOf(
+            PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT), asSingleJoycon = true),
+        )
+
+        val result = merge(null, players, mapOf(1 to 0))
+
+        assertTrue(result.contains("player_0_type=1"))
+    }
+
+    @Test
     fun `sideways left Joy-Con is a Pro Controller with its directions mapped to faces`() {
         val players = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT)))
 
@@ -132,7 +191,7 @@ class EdenGamepadConfigTest {
         // A handheld that re-publishes our pad under its built-in controller's vendor/product.
         val republished = mapOf(1 to EdenGamepad.of(port = 2, vendorId = 0x2020, productId = 0x0111))
 
-        val result = EdenGamepadConfig.merge(null, players, republished, switchProMapping)
+        val result = EdenGamepadConfig.merge(null, players, republished, switchProMapping(players))
 
         assertTrue(result.contains("guid:00000000000001110000000000002020"))
         assertFalse(result.contains(GUID))

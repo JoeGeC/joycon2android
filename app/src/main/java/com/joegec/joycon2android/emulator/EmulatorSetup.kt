@@ -38,6 +38,7 @@ class EmulatorSetup(
     private val gamepadControllerNumbers: () -> Map<Int, Int>,
     private val getControllerMapping: GetEffectiveControllerMappingUseCase,
     private val getRemoteMotion: GetRemoteMotionUseCase,
+    private val markSingleJoycons: (List<PlayerState>) -> List<PlayerState>,
 ) {
 
     // Read up front: the generators are synchronous.
@@ -106,7 +107,11 @@ class EmulatorSetup(
             val path = EdenDsuConfig.path(emulatorId)
             val written = shell.writeText(
                 path,
-                EdenDsuConfig.merge(shell.readText(path), players, mappingLookup(Console.SWITCH_PRO, players)),
+                EdenDsuConfig.merge(
+                    shell.readText(path),
+                    markSingleJoycons(players),
+                    mappingLookup(Console.SWITCH_PRO, players),
+                ),
             )
             if (written) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
         }
@@ -153,7 +158,7 @@ class EmulatorSetup(
                     path,
                     EdenGamepadConfig.merge(
                         shell.readText(path),
-                        players,
+                        markSingleJoycons(players),
                         gamepadDevices(),
                         mappingLookup(Console.SWITCH_PRO, players),
                     ),

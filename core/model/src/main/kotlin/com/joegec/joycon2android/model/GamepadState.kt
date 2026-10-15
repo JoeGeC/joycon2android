@@ -36,6 +36,7 @@ data class GamepadState(
                 rightStickX = state.rightStickX,
                 rightStickY = state.rightStickY,
             )
+            state.isSingleJoycon -> singleJoycon(state)
             state.left != null -> {
                 val input = state.left.input
                 val (sx, sy) = SidewaysMapper.rotateStickLeft(input.stickX, input.stickY)
@@ -66,5 +67,14 @@ data class GamepadState(
                 rightStickY = CENTER,
             )
         }
+
+        // Unrotated, each stick on its own side: the game turns it.
+        private fun singleJoycon(state: PlayerState) = GamepadState(
+            pressed = SingleJoyconMapper.remapRails(state.pressed),
+            leftStickX = state.leftStickX,
+            leftStickY = state.leftStickY,
+            rightStickX = state.rightStickX,
+            rightStickY = state.rightStickY,
+        )
     }
 }

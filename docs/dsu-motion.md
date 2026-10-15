@@ -77,6 +77,8 @@ if the nose pointed at the screen.
 - **The direction was measured** (Eden, Mario Kart 8) and is the *opposite* of the stick's turn: the
   IMU axes don't line up with the stick's.
 - **A pair's second hand isn't turned**, though it streams alone on its slot (`DsuStream.heldSideways`).
+- **A [single Joy-Con](virtual-gamepad.md#single-joy-con) isn't turned** either: Eden sees a Joy-Con
+  and the game orients its motion.
 - **Dolphin turns it back.** Its emulated Wii Remote is the Joy-Con's own body, so
   `DolphinWiimoteConfig` maps a lone Joy-Con's IMU inputs back about the button face (table in the
   [README](../README.md#manual-setup)), putting the nose on the shoulder edge the player aims. The

@@ -25,6 +25,14 @@ class SidewaysMotionTest {
     private fun wire(stream: DsuStream, input: JoyconInput) =
         MotionConverter.convert(SidewaysMotion.orient(stream, input))
 
+    @Test
+    fun `a single joycon's motion reaches the game unturned`() {
+        val single = DsuStream(0, PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT), asSingleJoycon = true))
+        val input = JoyconInput(accelY = 4096, gyroX = 100)
+
+        assertEquals(input, SidewaysMotion.orient(single, input))
+    }
+
     // Held up like a wheel (face toward the player, rail on top), as Mario Kart 8 was measured.
     @Test
     fun `sideways right joycon tipped nose down leans the grip to the left`() {

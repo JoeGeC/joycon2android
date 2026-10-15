@@ -10,6 +10,7 @@ import com.joegec.joycon2android.buttonmapping.emittedStick
 import com.joegec.joycon2android.buttonmapping.joyconSide
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
+import com.joegec.joycon2android.buttonmapping.target.SwitchProTargets
 import com.joegec.joycon2android.buttonmapping.toSourceMap
 import com.joegec.joycon2android.buttonmapping.toStickDirectionMap
 import com.joegec.joycon2android.buttonmapping.wholeEmittedStick
@@ -97,10 +98,11 @@ object EdenDsuConfig {
 
             keys.defineEdenKey("player_${slot}_type", type.toString())
             keys.defineEdenKey("player_${slot}_connected", "true")
-            buttonBindings(side, mapping).forEach { (key, input) ->
+            val single = player.isSingleJoycon
+            buttonBindings(side, single, mapping).forEach { (key, input) ->
                 keys.defineEdenKey("player_${slot}_$key", EdenControls.quote("$device,$input"))
             }
-            stickBindings(side, mapping, device).forEach { (key, binding) ->
+            stickBindings(side, single, mapping, device).forEach { (key, binding) ->
                 keys.defineEdenKey("player_${slot}_$key", EdenControls.quote(binding))
             }
             keys.defineEdenKey("player_${slot}_motionright", motion(slot))
@@ -113,23 +115,38 @@ object EdenDsuConfig {
 
     private fun motion(pad: Int) = EdenControls.quote("${device(pad)},motion:0")
 
-    private fun buttonBindings(side: JoyconSide, mapping: Map<String, String>): Map<String, String> =
-        mapping.toSourceMap<SwitchProButton>().mapNotNull { (target, sources) ->
-            inputFor(side, sources)?.let { EdenControls.BUTTON_KEYS.getValue(target) to it }
+    private fun buttonBindings(side: JoyconSide, single: Boolean, mapping: Map<String, String>): Map<String, String> {
+        val targets = SwitchProTargets.buttons(side, single)
+        return mapping.toSourceMap<SwitchProButton>().filterKeys { it in targets }.mapNotNull { (target, sources) ->
+            inputFor(side, single, sources)?.let { EdenControls.buttonKey(target, side) to it }
         }.toMap()
+    }
 
-    private fun stickBindings(side: JoyconSide, mapping: Map<String, String>, device: String): Map<String, String> =
-        mapping.toStickDirectionMap<SwitchProStick>().mapNotNull { (target, directions) ->
-            stickFor(side, directions, device)?.let { EdenControls.STICK_KEYS.getValue(target) to it }
-        }.toMap()
+    private fun stickBindings(
+        side: JoyconSide,
+        single: Boolean,
+        mapping: Map<String, String>,
+        device: String,
+    ): Map<String, String> {
+        val targets = SwitchProTargets.sticks(side, single)
+        return mapping.toStickDirectionMap<SwitchProStick>().filterKeys { it in targets }
+            .mapNotNull { (target, directions) ->
+                stickFor(side, single, directions, device)?.let { EdenControls.STICK_KEYS.getValue(target) to it }
+            }.toMap()
+    }
 
-    private fun stickFor(side: JoyconSide, directions: Map<StickDirection, List<MappingSource>>, device: String): String? {
-        directions.wholeEmittedStick(side)?.let { stick ->
+    private fun stickFor(
+        side: JoyconSide,
+        single: Boolean,
+        directions: Map<StickDirection, List<MappingSource>>,
+        device: String,
+    ): String? {
+        directions.wholeEmittedStick(side, single)?.let { stick ->
             val (x, y) = axesOf(stick)
             return "$device,axis_x:$x,axis_y:$y"
         }
         val inputs = directions.mapNotNull { (direction, sources) ->
-            inputFor(side, sources)?.let { direction to "$device,$it" }
+            inputFor(side, single, sources)?.let { direction to "$device,$it" }
         }
         return inputs.takeIf { it.isNotEmpty() }?.let { EdenControls.stickFromButtons(it.toMap()) }
     }
@@ -137,12 +154,12 @@ object EdenDsuConfig {
     private fun axesOf(stick: StickSource) =
         if (stick == StickSource.LEFT_STICK) LEFT_STICK_AXES else RIGHT_STICK_AXES
 
-    private fun inputFor(side: JoyconSide, sources: List<MappingSource>): String? =
-        sources.firstNotNullOfOrNull { inputFor(side, it) }
+    private fun inputFor(side: JoyconSide, single: Boolean, sources: List<MappingSource>): String? =
+        sources.firstNotNullOfOrNull { inputFor(side, single, it) }
 
-    private fun inputFor(side: JoyconSide, source: MappingSource): String? = when (source) {
-        is MappingSource.Button -> source.button.emittedFor(side)?.let(DS4_BITS::get)?.let { "button:$it" }
-        is MappingSource.Stick -> tiltOf(source.emittedStick(side), source.direction)
+    private fun inputFor(side: JoyconSide, single: Boolean, source: MappingSource): String? = when (source) {
+        is MappingSource.Button -> source.button.emittedFor(side, single)?.let(DS4_BITS::get)?.let { "button:$it" }
+        is MappingSource.Stick -> tiltOf(source.emittedStick(side, single), source.direction)
     }
 
     // Eden reads a cemuhook stick byte as (v - 127) / 127, so up and right are the positive ends.

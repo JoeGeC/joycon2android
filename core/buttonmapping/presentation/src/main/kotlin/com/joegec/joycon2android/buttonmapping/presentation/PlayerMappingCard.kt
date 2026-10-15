@@ -93,6 +93,9 @@ fun PlayerMappingCard(
                     onSave = onSaveLayout,
                     onDelete = onDeleteLayout,
                 )
+                if (state.offersProController) {
+                    ProControllerSwitch(state.proController) { actions.setProController(state.body, it) }
+                }
                 if (state.offersSidewaysRemote) {
                     SidewaysRemoteSwitch(state.body.side, state.sidewaysRemote) {
                         actions.setSidewaysRemote(state.body, it)
@@ -175,6 +178,18 @@ private fun SidewaysRemoteSwitch(side: JoyconSide, enabled: Boolean, onSetEnable
         description = stringResource(R.string.controller_mapping_sideways_remote_description),
         warning = stringResource(R.string.controller_mapping_sideways_remote_warning)
             .takeIf { aimsFromItsTail },
+        checked = enabled,
+        onCheckedChange = onSetEnabled,
+        modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
+    )
+}
+
+/** docs/virtual-gamepad.md#single-joy-con */
+@Composable
+private fun ProControllerSwitch(enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
+    SettingSwitch(
+        title = stringResource(R.string.controller_mapping_pro_controller),
+        description = stringResource(R.string.controller_mapping_pro_controller_description),
         checked = enabled,
         onCheckedChange = onSetEnabled,
         modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),

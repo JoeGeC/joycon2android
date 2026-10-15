@@ -117,6 +117,8 @@ internal fun SwitchProButton.label(): String = when (this) {
     SwitchProButton.DPadDown -> stringResource(R.string.button_dpad_down)
     SwitchProButton.DPadLeft -> stringResource(R.string.button_dpad_left)
     SwitchProButton.DPadRight -> stringResource(R.string.button_dpad_right)
+    SwitchProButton.SL -> "SL"
+    SwitchProButton.SR -> "SR"
 }
 
 @Composable

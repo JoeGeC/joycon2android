@@ -45,6 +45,8 @@ import com.joegec.joycon2android.buttonmapping.SavedLayoutDataStore
 import com.joegec.joycon2android.buttonmapping.SavedLayoutRepository
 import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.SensitivityDataStore
+import com.joegec.joycon2android.buttonmapping.ObserveSingleJoyconBodiesUseCase
+import com.joegec.joycon2android.buttonmapping.SetProControllerUseCase
 import com.joegec.joycon2android.buttonmapping.SensitivityRepository
 import com.joegec.joycon2android.buttonmapping.SetSensitivityUseCase
 import com.joegec.joycon2android.buttonmapping.SetSidewaysRemoteUseCase
@@ -57,6 +59,7 @@ import com.joegec.joycon2android.assignment.AssignmentRepository
 import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerAssignmentManager
 import com.joegec.joycon2android.assignment.PlayerStateResolver
+import com.joegec.joycon2android.emulator.EdenSingleJoycons
 import com.joegec.joycon2android.emulator.EmulatorConsoles
 import com.joegec.joycon2android.emulator.EmulatorLauncher
 import com.joegec.joycon2android.emulator.EmulatorSetup
@@ -164,6 +167,11 @@ class AppContainer(context: Context) {
     val setSidewaysRemote = SetSidewaysRemoteUseCase(sidewaysRemoteRepository)
     val setThrust = SetThrustUseCase(thrustRepository)
     val setSensitivity = SetSensitivityUseCase(sensitivityRepository)
+    val setProController = SetProControllerUseCase(observeControllerMapping, controllerMappingRepository)
+    private val edenSingleJoycons = EdenSingleJoycons(
+        ObserveSingleJoyconBodiesUseCase(observeControllerMapping)()
+            .stateIn(scope, SharingStarted.Eagerly, ObserveSingleJoyconBodiesUseCase.LONE_BODIES.toSet()),
+    )
     val applyMappingLayout = ApplyMappingLayoutUseCase(savedLayoutRepository, applyPlayerMapping)
     val applyGlobalLayout =
         ApplyGlobalLayoutUseCase(globalLayoutRepository, applyMappingLayout, applyPlayerMapping)
@@ -214,6 +222,7 @@ class AppContainer(context: Context) {
         gamepadControllerNumbers = { dolphinGamepadIds(appContext) },
         getControllerMapping = getControllerMapping,
         getRemoteMotion = getRemoteMotion,
+        markSingleJoycons = edenSingleJoycons::marked,
     )
 
     val emulatorLauncher = EmulatorLauncher(appContext)
@@ -267,8 +276,10 @@ class AppContainer(context: Context) {
         onState = { state ->
             activeBodies.value = state.activePlayers.mapNotNull { it.body() }
             val routed = androidKeyRouter.route(state)
-            pushGamepadState(routed.gamepad)
-            pushDsuPadData(routed.dsu)
+            pushGamepadState(
+                routed.gamepad.map { it.copy(state = edenSingleJoycons.markedFor(gamepadConsole.value, it.state)) },
+            )
+            pushDsuPadData(routed.dsu.map { edenSingleJoycons.markedFor(dsuConsole.value, it) })
         },
         onPlayerAssigned = { onPlayerAssigned(it) },
         onPlayerUnassigned = { onPlayerUnassigned(it) },

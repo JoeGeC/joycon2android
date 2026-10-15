@@ -2,8 +2,10 @@ package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
+import com.joegec.joycon2android.buttonmapping.preset.SwitchProSidewaysMapping
 import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.ControllerModel
@@ -17,7 +19,12 @@ import org.junit.Test
 
 private fun defaultSwitchProMapping(side: JoyconSide) = MappingPresets.default(Console.SWITCH_PRO).entries(side)
 
-private val switchProMapping: (PlayerBody) -> Map<String, String> = { defaultSwitchProMapping(it.side) }
+// As stored: a lone Joy-Con Eden isn't told is single holds the Pro Controller layout.
+private fun switchProMapping(players: List<PlayerState>): (PlayerBody) -> Map<String, String> = { body ->
+    val single = players.firstOrNull { it.player == body.player }?.isSingleJoycon ?: false
+    val layout = if (body.side.isLone && !single) SwitchProSidewaysMapping else MappingPresets.default(Console.SWITCH_PRO)
+    MappingLayouts.entriesOf(Console.SWITCH_PRO, body.side, layout)
+}
 
 class EdenDsuConfigTest {
 
@@ -34,7 +41,7 @@ class EdenDsuConfigTest {
         config.lines().first { it.substringBefore('=').trim() == key }.substringAfter('=').trim()
 
     private fun merge(existing: String?, players: List<PlayerState>) =
-        EdenDsuConfig.merge(existing, players, switchProMapping)
+        EdenDsuConfig.merge(existing, players, switchProMapping(players))
 
     private fun device(pad: Int) =
         "engine:cemuhookudp,guid:0000000000000000000000007f000001,port:${DsuConfig.PORT},pad:$pad"
@@ -159,6 +166,19 @@ class EdenDsuConfigTest {
         assertTrue(result.contains("player_0_button_a="))
         assertEquals("\"${device(0)},axis_x:0,axis_y:1\"", valueOf(result, "player_0_lstick"))
         assertFalse(result.contains("player_0_rstick="))
+    }
+
+    @Test
+    fun `a single right joycon is Eden's right Joy-Con with its own faces and stick`() {
+        val single = PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT), asSingleJoycon = true)
+
+        val result = merge(null, listOf(single))
+
+        assertEquals("3", valueOf(result, "player_0_type"))
+        assertEquals("\"${device(0)},button:8192\"", valueOf(result, "player_0_button_a"))       // DS4 A 0x2000
+        assertEquals("\"${device(0)},button:1024\"", valueOf(result, "player_0_button_slright")) // DS4 L1 0x400
+        assertEquals("\"${device(0)},axis_x:2,axis_y:3\"", valueOf(result, "player_0_rstick"))
+        assertFalse(result.contains("player_0_lstick="))
     }
 
     @Test

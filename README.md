@@ -105,7 +105,8 @@ the emulator afterwards — it only reads its config when it starts.
 | DSU Motion Server | Eden, Eden Nightly, Dolphin (Wii) | buttons, sticks and motion |
 
 The gamepad button beside **Set up** opens the mapping editor, with a card per connected player —
-tap one to open its bindings. A single Joy-Con is set up as a Pro Controller held sideways, so every
+tap one to open its bindings. On Eden a single Joy-Con is set up as a real left or right Joy-Con;
+with **Pro Controller** (below) turned on, or on Dolphin, it's a Pro Controller held sideways, so every
 button works in every game ([why](docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers)). A
 GameCube controller has layouts of its own, with Z on its Z button and analog L/R in Dolphin. A
 target can take **several sources** — tick as many as you like, and any of them fires it.
@@ -122,6 +123,13 @@ target can take **several sources** — tick as many as you like, and any of the
   **Back** and **Screenshot**. A button picked here works as the device's own and never reaches the
   game; Home always leaves it. Like the rest of the mapping it's per player and console, and saved in
   layouts. Over DSU alone it needs Shizuku running.
+- **Pro Controller.** On Eden, a lone Joy-Con also gets this switch, off by default. Off, Eden sees
+  a real left or right Joy-Con and the game handles the grip and motion itself, which games such as
+  Super Mario Party Jamboree's motion games need; you map its own buttons, plus SL and SR. If a game
+  won't accept the Joy-Con, or reads it as held upright (Moving Out), turn it on. Switching resets
+  that player's buttons to the grip's standard ones (Android keys stay), and layouts save the switch
+  with the rest. It needs **Set up** run again (and Eden restarted) after changing it. Dolphin always
+  uses the sideways grip.
 - **Sideways Wii Remote.** On the Wii console, a lone Joy-Con also gets this switch, for games that
   steer by tilting a sideways remote. On, up on the stick is towards the rail; off, towards L or R.
   The layout sets it (on for Mario Kart) and you can override it until you next pick a layout.
@@ -155,8 +163,8 @@ and the server address to copy.
 <details>
 <summary><b>DSU input names</b></summary>
 
-DSU uses DS4 names. SL, SR and C aren't streamed, except that a sideways Joy-Con's SL/SR arrive as its
-shoulder buttons.
+DSU uses DS4 names. SL, SR and C aren't streamed, except that a lone Joy-Con's SL/SR arrive as the
+shoulder buttons its body lacks.
 
 | Button | DSU name | Button | DSU name |
 |---|---|---|---|

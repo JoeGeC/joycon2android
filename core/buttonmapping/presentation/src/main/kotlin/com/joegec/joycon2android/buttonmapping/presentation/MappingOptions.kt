@@ -11,8 +11,7 @@ import com.joegec.joycon2android.buttonmapping.targetKey
 import com.joegec.joycon2android.buttonmapping.directionKey
 import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
 import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
-import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
-import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
+import com.joegec.joycon2android.buttonmapping.target.SwitchProTargets
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
@@ -26,22 +25,31 @@ internal object MappingOptions {
     fun offersSidewaysRemote(console: Console, side: JoyconSide) =
         console == Console.WIIMOTE_NUNCHUK && side.isLone
 
+    fun offersProController(console: Console, side: JoyconSide) =
+        console == Console.SWITCH_PRO && side.isLone
+
     fun offersRemoteMotion(console: Console) = console == Console.WIIMOTE_NUNCHUK
 
     @Composable
-    fun targets(console: Console, section: MappingSection): List<Pair<String, String>> = when (section) {
-        MappingSection.BUTTONS -> buttonTargets(console)
-        MappingSection.STICKS -> stickDirectionTargets(console)
+    fun targets(
+        console: Console,
+        section: MappingSection,
+        side: JoyconSide,
+        singleJoycon: Boolean,
+    ): List<Pair<String, String>> = when (section) {
+        MappingSection.BUTTONS -> buttonTargets(console, side, singleJoycon)
+        MappingSection.STICKS -> stickDirectionTargets(console, side, singleJoycon)
         MappingSection.MOTION -> motionTargets(console)
         MappingSection.ANDROID -> AndroidKey.entries.map { it.targetKey to it.label() }
     }
 
     @Composable
-    private fun buttonTargets(console: Console): List<Pair<String, String>> = when (console) {
-        Console.GAMECUBE -> GameCubeButton.entries.map { it.name to it.label() }
-        Console.WIIMOTE_NUNCHUK -> (WiimoteButton.entries - MOTION_TARGETS).map { it.name to it.label() }
-        Console.SWITCH_PRO -> SwitchProButton.entries.map { it.name to it.label() }
-    }
+    private fun buttonTargets(console: Console, side: JoyconSide, singleJoycon: Boolean): List<Pair<String, String>> =
+        when (console) {
+            Console.GAMECUBE -> GameCubeButton.entries.map { it.name to it.label() }
+            Console.WIIMOTE_NUNCHUK -> (WiimoteButton.entries - MOTION_TARGETS).map { it.name to it.label() }
+            Console.SWITCH_PRO -> SwitchProTargets.buttons(side, singleJoycon).map { it.name to it.label() }
+        }
 
     // Not buttons on the remote, so they get their own section.
     private val MOTION_TARGETS = setOf(WiimoteButton.Shake, WiimoteButton.Recenter)
@@ -51,11 +59,11 @@ internal object MappingOptions {
         if (console == Console.WIIMOTE_NUNCHUK) MOTION_TARGETS.map { it.name to it.label() } else emptyList()
 
     @Composable
-    private fun stickDirectionTargets(console: Console): List<Pair<String, String>> {
+    private fun stickDirectionTargets(console: Console, side: JoyconSide, singleJoycon: Boolean): List<Pair<String, String>> {
         val sticks = when (console) {
             Console.GAMECUBE -> GameCubeStick.entries.map { it to it.label() }
             Console.WIIMOTE_NUNCHUK -> WiimoteStick.entries.map { it to it.label() }
-            Console.SWITCH_PRO -> SwitchProStick.entries.map { it to it.label() }
+            Console.SWITCH_PRO -> SwitchProTargets.sticks(side, singleJoycon).map { it to it.label() }
         }
         return sticks.flatMap { (stick, label) ->
             StickDirection.entries.map { direction ->

@@ -14,8 +14,13 @@ private const val BINDINGS = "bindings"
 private const val BODIES = "bodies"
 private const val PLAYER = "player"
 private const val ENTRIES = "entries"
+private const val FORMAT = "format"
+
+// Format 2 stores the Pro Controller switch among the bindings; older documents predate it.
+private const val GRIP_FORMAT = 2
 
 internal fun SavedLayout.toJson(): String = JSONObject()
+    .put(FORMAT, GRIP_FORMAT)
     .put(NAME, name)
     .put(CONSOLE, console.name)
     .put(SIDE, side.name)
@@ -28,12 +33,14 @@ internal fun SavedLayout.toJson(): String = JSONObject()
 /** Null for a document this build can no longer read, so one bad entry can't take the list with it. */
 internal fun savedLayoutOf(id: String, json: String): SavedLayout? = runCatching {
     val document = JSONObject(json)
+    val console = Console.valueOf(document.getString(CONSOLE))
+    val side = JoyconSide.valueOf(document.getString(SIDE))
     SavedLayout(
         id = id,
         name = document.getString(NAME),
-        console = Console.valueOf(document.getString(CONSOLE)),
-        side = JoyconSide.valueOf(document.getString(SIDE)),
-        bindings = document.getJSONObject(BINDINGS).toStringMap(),
+        console = console,
+        side = side,
+        bindings = document.getJSONObject(BINDINGS).toStringMap().upgraded(document, console, side),
         sidewaysRemote = document.optBoolean(SIDEWAYS_REMOTE),
         thrust = document.optBoolean(THRUST),
         sensitivityPercent = document.optInt(SENSITIVITY_PERCENT, RemoteMotion.DEFAULT_SENSITIVITY_PERCENT),
@@ -41,6 +48,7 @@ internal fun savedLayoutOf(id: String, json: String): SavedLayout? = runCatching
 }.getOrNull()
 
 internal fun GlobalLayout.toJson(): String = JSONObject()
+    .put(FORMAT, GRIP_FORMAT)
     .put(NAME, name)
     .put(CONSOLE, console.name)
     .put(BODIES, JSONArray(bodies.map { it.toJson() }))
@@ -48,11 +56,12 @@ internal fun GlobalLayout.toJson(): String = JSONObject()
 
 internal fun globalLayoutOf(id: String, json: String): GlobalLayout? = runCatching {
     val document = JSONObject(json)
+    val console = Console.valueOf(document.getString(CONSOLE))
     GlobalLayout(
         id = id,
         name = document.getString(NAME),
-        console = Console.valueOf(document.getString(CONSOLE)),
-        bodies = document.getJSONArray(BODIES).objects().map { it.toSnapshot() },
+        console = console,
+        bodies = document.getJSONArray(BODIES).objects().map { it.toSnapshot(document, console) },
     )
 }.getOrNull()
 
@@ -64,15 +73,23 @@ private fun PlayerLayoutSnapshot.toJson() = JSONObject()
     .put(SENSITIVITY_PERCENT, motion.sensitivityPercent)
     .put(ENTRIES, JSONObject(entries))
 
-private fun JSONObject.toSnapshot() = PlayerLayoutSnapshot(
-    body = PlayerBody(PlayerNumber.valueOf(getString(PLAYER)), JoyconSide.valueOf(getString(SIDE))),
-    entries = getJSONObject(ENTRIES).toStringMap(),
-    motion = RemoteMotion(
-        sideways = optBoolean(SIDEWAYS_REMOTE),
-        thrust = optBoolean(THRUST),
-        sensitivityPercent = optInt(SENSITIVITY_PERCENT, RemoteMotion.DEFAULT_SENSITIVITY_PERCENT),
-    ),
+private fun JSONObject.toSnapshot(document: JSONObject, console: Console): PlayerLayoutSnapshot {
+    val body = PlayerBody(PlayerNumber.valueOf(getString(PLAYER)), JoyconSide.valueOf(getString(SIDE)))
+    return PlayerLayoutSnapshot(
+        body = body,
+        entries = getJSONObject(ENTRIES).toStringMap().upgraded(document, console, body.side),
+        motion = motion(),
+    )
+}
+
+private fun JSONObject.motion() = RemoteMotion(
+    sideways = optBoolean(SIDEWAYS_REMOTE),
+    thrust = optBoolean(THRUST),
+    sensitivityPercent = optInt(SENSITIVITY_PERCENT, RemoteMotion.DEFAULT_SENSITIVITY_PERCENT),
 )
+
+private fun Map<String, String>.upgraded(document: JSONObject, console: Console, side: JoyconSide) =
+    if (document.optInt(FORMAT) < GRIP_FORMAT) withLegacyGrip(console, side) else this
 
 private fun JSONObject.toStringMap(): Map<String, String> =
     keys().asSequence().associateWith { getString(it) }

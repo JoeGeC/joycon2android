@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.emulatorconfig
 
+import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
@@ -11,7 +12,14 @@ object EdenControls {
     /** Every player key, so either feature can clear a prior layout before rewriting it. */
     val PLAYER_KEY = Regex("""player_\d+_.*""")
 
-    val BUTTON_KEYS = mapOf(
+    /** SL/SR take the key of the Joy-Con's own side. */
+    fun buttonKey(target: SwitchProButton, side: JoyconSide): String = when (target) {
+        SwitchProButton.SL -> if (side == JoyconSide.LEFT) "button_slleft" else "button_slright"
+        SwitchProButton.SR -> if (side == JoyconSide.LEFT) "button_srleft" else "button_srright"
+        else -> BUTTON_KEYS.getValue(target)
+    }
+
+    private val BUTTON_KEYS = mapOf(
         SwitchProButton.A to "button_a", SwitchProButton.B to "button_b",
         SwitchProButton.X to "button_x", SwitchProButton.Y to "button_y",
         SwitchProButton.L to "button_l", SwitchProButton.R to "button_r",
@@ -25,10 +33,11 @@ object EdenControls {
 
     val STICK_KEYS = mapOf(SwitchProStick.LStick to "lstick", SwitchProStick.RStick to "rstick")
 
-    /** Both single Joy-Cons report as Pro: docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers. */
+    /** A sideways Joy-Con reports as Pro: docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers. */
     fun npadType(player: PlayerState): Int? = when {
         player.hasPro -> PRO
         player.hasFullController -> DUAL_JOYCON
+        player.isSingleJoycon -> if (player.left != null) LEFT_JOYCON else RIGHT_JOYCON
         player.hasController -> PRO
         else -> null
     }
@@ -47,6 +56,8 @@ object EdenControls {
 
     private const val PRO = 0
     private const val DUAL_JOYCON = 1
+    private const val LEFT_JOYCON = 2
+    private const val RIGHT_JOYCON = 3
 }
 
 /** Eden falls back to the engine default when a key's `\default` flag is true, so pin both. */

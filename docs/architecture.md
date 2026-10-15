@@ -87,6 +87,8 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
 - **Android keys are mapping targets too** (`ANDROID_HOME`, …), so layouts save them. They act in
   the app rather than the emulator: `AndroidKeyRouter` sits between the coordinator and both
   outputs ([how](virtual-gamepad.md#android-keys)).
+- **So is Eden's Pro Controller switch** for a lone Joy-Con (`PRO_CONTROLLER`), so layouts carry the
+  grip with its bindings ([how](virtual-gamepad.md#single-joy-con)).
 - **`GlobalLayout` freezes the whole session** — every player's bindings in full, and the bodies they
   held — so it restores exactly what it saved, but only onto those players.
 
