@@ -258,6 +258,7 @@ shoulder buttons.
 | Motion aiming stutters | Settings (gear, top right): keep **Ignore this device's motion in Eden** and **Faster controller updates** on |
 | Tilting the device moves the aim in Eden | Turn on **Ignore this device's motion in Eden** |
 | Pointer drifts or starts off-screen | Rest the controller for ~2 s, then press Recenter |
+| Sticks feel twitchy in Dolphin (hard to walk or aim) | Tap **Set up** for Dolphin again. A Pro Controller: map it in Dolphin first, then tap **Set up** once to add the calibration |
 | MotionPlus tutorial replays every boot (Dolphin) | Set `MPLS.MOVIE` in `Wii/shared2/sys/SYSCONF` with Dolphin closed ([why](docs/dsu-motion.md#motionplus-tutorial-replays)) |
 
 ## Roadmap and feedback
