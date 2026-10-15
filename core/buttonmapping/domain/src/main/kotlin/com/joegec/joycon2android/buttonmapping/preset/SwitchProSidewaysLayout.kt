@@ -54,7 +54,7 @@ sealed class SwitchProSidewaysLayout(
             SwitchProButton.Y to Up,
             slTarget to SlLeft,
             srTarget to SrLeft,
-            SwitchProButton.Minus to Minus,
+            SwitchProButton.Plus to Minus,
             SwitchProButton.LStickClick to LS,
             SwitchProButton.Capture to Capture,
         )

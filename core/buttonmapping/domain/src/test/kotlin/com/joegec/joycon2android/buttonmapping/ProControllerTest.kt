@@ -65,6 +65,15 @@ class ProControllerTest {
     }
 
     @Test
+    fun `both sideways layouts put a left Joy-Con's minus on plus`() {
+        listOf(SwitchProSidewaysMapping, SwitchProSidewaysTriggersMapping).forEach { layout ->
+            val entries = layout.entries(JoyconSide.LEFT)
+            assertEquals("Minus", entries["Plus"])
+            assertEquals("", entries["Minus"])
+        }
+    }
+
+    @Test
     fun `a saved layout keeps the switch`() = runBlocking {
         fixture.setProController(Console.SWITCH_PRO, body, true)
         fixture.saveCustomLayout(Console.SWITCH_PRO, body, "Sideways")

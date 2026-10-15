@@ -142,6 +142,8 @@ Left Joy-Con turned 90° counter-clockwise, right 90° clockwise, as on a Switch
 - **SL/SR fill the shoulders the body lacks** — a left Joy-Con already has L/ZL — which is why a
   single Joy-Con's `button_l` isn't keycode 102 on both sides. ZL/ZR get no default: held sideways,
   the body's own shoulders point away from the player.
+- **A left Joy-Con's − is the Pro Controller's +** in both sideways layouts: a lone Joy-Con has only
+  one of the two, and games pause on +.
 
 Motion is turned too, but for DSU only — see [dsu-motion.md](dsu-motion.md#sideways-joy-cons).
 
