@@ -67,6 +67,13 @@ fun EmulatorAutoSetup(
                     MappingButton(onConfigureMapping)
                 }
             }
+            if (onConfigureMapping != null) {
+                Spacer(Modifier.height(Dimens.emulatorSetupRowGap))
+                HintBubble(
+                    stringResource(R.string.emulator_auto_setup_mapping_hint),
+                    pointerCenterFromEnd = Dimens.emulatorSetupButtonHeight / 2,
+                )
+            }
             if (phase.isFailure) {
                 Spacer(Modifier.height(Dimens.elementSpacing))
                 DolphinSetupMessage(phase)

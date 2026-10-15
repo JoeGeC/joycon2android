@@ -137,6 +137,7 @@ Shared in `core/designsystem/.../ui/components/`:
 - `ConfirmDialog` · `TextInputDialog` — ask before a change lands, or ask it for a name
 - `InfoSheet` — help behind an info icon, as a bottom sheet (auto setup, DSU mapping)
 - `ErrorBox` · `WarningBox` · `LabeledBorderBox` · `ExpandableInfoSection` · `CopyableCode`
+- `HintBubble` — an accent bubble pointing up at a control (the mapping button, under auto setup)
 
 ## Motion
 
