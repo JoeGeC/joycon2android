@@ -1,6 +1,11 @@
 package com.joegec.joycon2android.buttonmapping.presentation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +42,7 @@ import com.joegec.joycon2android.buttonmapping.GlobalMapping
 import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.ui.components.DropdownOption
+import com.joegec.joycon2android.ui.components.HintBubble
 import com.joegec.joycon2android.ui.components.InfoBox
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
@@ -148,23 +155,43 @@ private fun GroupLayoutRow(
         )
     }
 
-    LayoutPanel(
-        title = stringResource(R.string.controller_mapping_group_layout),
-        description = stringResource(R.string.controller_mapping_group_layout_description),
-        modifier = Modifier
+    val layoutName = labels.sessionName(global)
+
+    Column(
+        Modifier
             .background(CardBg, RoundedCornerShape(Dimens.buttonCorner))
             .padding(horizontal = Dimens.cardPadding, vertical = Dimens.legendContentVertical),
     ) {
-        LayoutRow(
-            options = MappingPresets.forConsole(console).map { labels.option(it) } + saved,
-            selectedId = global.selectedId,
-            layoutName = labels.sessionName(global),
-            subLabel = global.matchingSaved?.let { it.playerSummary() },
-            onSelect = actions.selectGlobalLayout,
-            onSave = { onDialog(MappingDialog.Save(body = null)) },
-            onDelete = { onDialog(MappingDialog.Delete(it.id, it.label, global = true)) },
-        )
+        LayoutPanel(
+            title = stringResource(R.string.controller_mapping_group_layout),
+            description = stringResource(R.string.controller_mapping_group_layout_description),
+        ) {
+            LayoutRow(
+                options = MappingPresets.forConsole(console).map { labels.option(it) } + saved,
+                selectedId = global.selectedId,
+                layoutName = layoutName,
+                subLabel = global.matchingSaved?.let { it.playerSummary() },
+                onSelect = actions.selectGlobalLayout,
+                onSave = { onDialog(MappingDialog.Save(body = null)) },
+                onDelete = { onDialog(MappingDialog.Delete(it.id, it.label, global = true)) },
+            )
+        }
+        AnimatedVisibility(
+            visible = layoutName == null,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            SaveGroupHint()
+        }
     }
+}
+
+@Composable
+private fun SaveGroupHint() {
+    HintBubble(
+        stringResource(R.string.controller_mapping_save_group_hint),
+        pointerCenterFromEnd = LocalMinimumInteractiveComponentSize.current / 2,
+    )
 }
 
 @Composable

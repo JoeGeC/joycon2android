@@ -139,7 +139,7 @@ Shared in `core/designsystem/.../ui/components/`:
 - `InfoSheet` — help behind an info icon, as a bottom sheet (auto setup, DSU mapping)
 - `ErrorBox` · `WarningBox` · `LabeledBorderBox` · `ExpandableInfoSection` · `CopyableCode`
 - `InfoBox` — an accent note with an exclamation-circle icon, at the top of a screen (mapping tips)
-- `HintBubble` — an accent bubble pointing up at a control (the mapping button, under auto setup)
+- `HintBubble` — an accent bubble pointing up at a control (the mapping button, under auto setup; the save button, under a Custom group layout)
 
 ## Motion
 
