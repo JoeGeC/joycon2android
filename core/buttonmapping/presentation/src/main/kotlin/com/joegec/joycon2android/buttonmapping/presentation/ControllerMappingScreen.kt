@@ -1,6 +1,8 @@
 package com.joegec.joycon2android.buttonmapping.presentation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -40,7 +43,10 @@ import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.components.ConfirmDialog
 import com.joegec.joycon2android.ui.components.TextInputDialog
+import com.joegec.joycon2android.ui.theme.Background
+import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
+import com.joegec.joycon2android.ui.theme.TextBright
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
@@ -74,7 +80,7 @@ fun ControllerMappingScreen(
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
             } else {
-                AllPlayersRow(state.console, state.global, labels, actions) { dialog = it }
+                GroupLayoutRow(state.console, state.global, labels, actions) { dialog = it }
             }
             state.players.forEach { player ->
                 val connected = players.firstOrNull { it.player == player.body.player }
@@ -126,7 +132,7 @@ private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit, on
 }
 
 @Composable
-private fun AllPlayersRow(
+private fun GroupLayoutRow(
     console: Console,
     global: GlobalMapping,
     labels: LayoutLabels,
@@ -144,15 +150,23 @@ private fun AllPlayersRow(
     }
 
     Row(
-        Modifier.fillMaxWidth(),
+        Modifier
+            .fillMaxWidth()
+            .background(CardBg, RoundedCornerShape(Dimens.buttonCorner))
+            .border(Dimens.cardBorderWidth, TextDim, RoundedCornerShape(Dimens.buttonCorner))
+            .padding(horizontal = Dimens.cardPadding, vertical = Dimens.legendContentVertical),
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            stringResource(R.string.controller_mapping_all_players),
-            color = TextDim,
-            modifier = Modifier.weight(1f),
-        )
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.controller_mapping_group_layout), color = TextBright)
+            Spacer(Modifier.height(Dimens.featureCardTitleGap))
+            Text(
+                stringResource(R.string.controller_mapping_group_layout_description),
+                color = TextDim,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
         LayoutRow(
             options = MappingPresets.forConsole(console).map { labels.option(it) } + saved,
             selectedId = global.selectedId,
@@ -162,6 +176,7 @@ private fun AllPlayersRow(
             onSave = { onDialog(MappingDialog.Save(body = null)) },
             onDelete = { onDialog(MappingDialog.Delete(it.id, it.label, global = true)) },
             modifier = Modifier.weight(1f),
+            dropdownModifier = Modifier.background(Background, RoundedCornerShape(Dimens.buttonCorner)),
         )
     }
 }

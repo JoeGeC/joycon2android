@@ -32,6 +32,7 @@ fun LayoutRow(
     onDelete: (DropdownOption) -> Unit,
     modifier: Modifier = Modifier,
     subLabel: String? = null,
+    dropdownModifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
 
@@ -54,7 +55,7 @@ fun LayoutRow(
                     option.subLabel.orEmpty(),
                 )
             },
-            modifier = Modifier.weight(1f),
+            modifier = dropdownModifier.weight(1f),
         )
         SaveButton(layoutName, onSave)
     }

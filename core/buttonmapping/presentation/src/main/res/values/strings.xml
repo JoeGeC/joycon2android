@@ -1,7 +1,8 @@
 <resources>
     <string name="controller_mapping_back">Back</string>
     <string name="controller_mapping_info">Setup help</string>
-    <string name="controller_mapping_all_players">All players</string>
+    <string name="controller_mapping_group_layout">Group layout</string>
+    <string name="controller_mapping_group_layout_description">Sets every player. Saves for this mix of controllers.</string>
     <string name="controller_mapping_layout_custom">Custom</string>
     <string name="controller_mapping_layout_name">Name</string>
     <string name="controller_mapping_layout_unavailable">\"%1$s\" was saved for %2$s</string>
