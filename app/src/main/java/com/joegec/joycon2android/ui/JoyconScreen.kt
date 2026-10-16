@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -437,11 +438,13 @@ private fun DisconnectAllButton(onDisconnectAll: () -> Unit, modifier: Modifier 
 
 @Composable
 private fun SyncButtonGraphic(modifier: Modifier = Modifier) {
+    val painter = painterResource(R.drawable.sync_button_graphic)
     Image(
-        painter = painterResource(R.drawable.sync_button_graphic),
+        painter = painter,
         contentDescription = stringResource(R.string.scanning_hint),
         modifier = modifier
             .fillMaxWidth()
+            .aspectRatio(painter.intrinsicSize.width / painter.intrinsicSize.height)
             .clip(RoundedCornerShape(Dimens.cardCorner)),
     )
 }
