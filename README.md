@@ -115,11 +115,11 @@ target can take **several sources** — tick as many as you like, and any of the
   **Custom** once you change a binding, and the layout's name again if you change it back.
 - **Saving.** The save icon beside the name keeps your mapping as a layout for any player holding the
   same body. It dims when the mapping already matches a layout. Deleting a layout (the bin in the
-  dropdown) keeps everyone's buttons; they just read **Custom** until you save again.
+  dropdown) keeps everyone's buttons; they just read **Custom** until you save again. While a layout reads **Custom**, a hint points at its save icon.
 - **Tips.** A note at the top reminds you that games differ: if one plays oddly, try another layout.
 - **Group layout** at the top sets and saves everyone at once. A grip only some bodies fit —
   **Mario Kart Wheel**, say — gives the rest the same game's other grip. A saved group remembers who
-  held which body ("P1 L, P2 R, P3 L/R") and stays greyed out until those players are back. While it reads **Custom**, a hint points at its save icon.
+  held which body ("P1 L, P2 R, P3 L/R") and stays greyed out until those players are back.
 - **Android.** Below the emulator's buttons, sticks and motion, each card has Android's **Home**,
   **Back** and **Screenshot**. A button picked here works as the device's own and never reaches the
   game; Home always leaves it. Like the rest of the mapping it's per player and console, and saved in

@@ -21,7 +21,7 @@ private const val PICKER_WEIGHT = 1.4f
 @Composable
 fun LayoutPanel(
     title: String,
-    description: String,
+    description: String? = null,
     modifier: Modifier = Modifier,
     picker: @Composable () -> Unit,
 ) {
@@ -32,8 +32,10 @@ fun LayoutPanel(
     ) {
         Column(Modifier.weight(1f)) {
             Text(title, color = TextTitle)
-            Spacer(Modifier.height(Dimens.featureCardTitleGap))
-            Text(description, color = TextDim, style = MaterialTheme.typography.bodySmall)
+            description?.let {
+                Spacer(Modifier.height(Dimens.featureCardTitleGap))
+                Text(it, color = TextDim, style = MaterialTheme.typography.bodySmall)
+            }
         }
         Box(Modifier.weight(PICKER_WEIGHT)) { picker() }
     }

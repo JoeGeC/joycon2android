@@ -84,21 +84,7 @@ fun PlayerMappingCard(
                 ),
                 verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
             ) {
-                LayoutPanel(
-                    title = stringResource(R.string.controller_mapping_player_layout),
-                    description = stringResource(R.string.controller_mapping_player_layout_description),
-                    modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
-                ) {
-                    LayoutRow(
-                        options = state.layouts.map { labels.playerOption(it) },
-                        selectedId = state.layout?.id,
-                        layoutName = state.layout?.let(labels::name),
-                        subLabel = state.layout?.let(labels::playerDescription),
-                        onSelect = { actions.selectLayout(state.body, it) },
-                        onSave = onSaveLayout,
-                        onDelete = onDeleteLayout,
-                    )
-                }
+                PlayerLayoutPicker(state, labels, actions, onSaveLayout, onDeleteLayout)
                 if (state.offersProController) {
                     ProControllerSwitch(state.proController) { actions.setProController(state.body, it) }
                 }
@@ -173,6 +159,34 @@ private fun ControllerChip(text: String, joycon: ConnectedJoycon) {
         color = joyconBorderColor(joycon.accentColor, JoyconDefaultColor),
         style = MaterialTheme.typography.titleMedium,
     )
+}
+
+@Composable
+private fun PlayerLayoutPicker(
+    state: PlayerMappingUiState,
+    labels: LayoutLabels,
+    actions: MappingActions,
+    onSaveLayout: () -> Unit,
+    onDeleteLayout: (DropdownOption) -> Unit,
+) {
+    val layoutName = state.layout?.let(labels::name)
+    Column(Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding)) {
+        LayoutPanel(title = stringResource(R.string.controller_mapping_player_layout)) {
+            LayoutRow(
+                options = state.layouts.map { labels.playerOption(it) },
+                selectedId = state.layout?.id,
+                layoutName = layoutName,
+                subLabel = state.layout?.let(labels::playerDescription),
+                onSelect = { actions.selectLayout(state.body, it) },
+                onSave = onSaveLayout,
+                onDelete = onDeleteLayout,
+            )
+        }
+        SaveLayoutHint(
+            visible = layoutName == null,
+            text = stringResource(R.string.controller_mapping_save_player_hint),
+        )
+    }
 }
 
 /** A right Joy-Con aims from its tail: docs/dsu-motion.md#playing-as-a-sideways-wii-remote */

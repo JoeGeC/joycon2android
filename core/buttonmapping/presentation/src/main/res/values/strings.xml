@@ -5,8 +5,8 @@
     <string name="controller_mapping_group_layout">Group layout</string>
     <string name="controller_mapping_group_layout_description">Sets every eligible player.</string>
     <string name="controller_mapping_save_group_hint">Save this group layout for later!</string>
+    <string name="controller_mapping_save_player_hint">Save this controller layout for later!</string>
     <string name="controller_mapping_player_layout">Player layout</string>
-    <string name="controller_mapping_player_layout_description">Saves for this controller.</string>
     <string name="controller_mapping_layout_custom">Custom</string>
     <string name="controller_mapping_layout_name">Name</string>
     <string name="controller_mapping_layout_unavailable">\"%1$s\" was saved for %2$s</string>
