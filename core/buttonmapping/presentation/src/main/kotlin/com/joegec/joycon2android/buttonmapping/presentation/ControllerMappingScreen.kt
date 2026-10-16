@@ -2,7 +2,6 @@ package com.joegec.joycon2android.buttonmapping.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -154,7 +153,6 @@ private fun GroupLayoutRow(
         description = stringResource(R.string.controller_mapping_group_layout_description),
         modifier = Modifier
             .background(CardBg, RoundedCornerShape(Dimens.buttonCorner))
-            .border(Dimens.cardBorderWidth, TextDim, RoundedCornerShape(Dimens.buttonCorner))
             .padding(horizontal = Dimens.cardPadding, vertical = Dimens.legendContentVertical),
     ) {
         LayoutRow(
