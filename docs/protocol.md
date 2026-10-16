@@ -106,9 +106,9 @@ stream.
 | Back paddles | 0x07 | uint8 | Pro Controller only, below |
 | Left Stick | 0x0A | 3 bytes | 12-bit X = `val & 0xFFF`, Y = `(val >> 12) & 0xFFF` |
 | Right Stick | 0x0D | 3 bytes | same packing |
-| Mouse X/Y | 0x10–0x13 | int16 ×2 | |
-| Mouse Unk | 0x14 | int16 | |
-| Mouse Distance | 0x16 | int16 | |
+| Mouse X/Y | 0x10–0x13 | int16 ×2 | running counters ([below](#mouse-0x100x17)) |
+| Mouse Unk | 0x14 | int16 | surface reading; saturates when lifted |
+| Mouse Distance | 0x16 | int16 | ~150 on a surface, ~3100 lifted |
 | Mag X/Y/Z | 0x18–0x1D | int16 ×3 | |
 | Battery Voltage | 0x1F | uint16 | volts = raw / 1000 |
 | Battery Current | 0x28 | int16 | mA = raw / 100 |
@@ -138,6 +138,26 @@ A left Joy-Con's right-stick bytes are garbage, and a right Joy-Con's left-stick
 ```
 0x01 GR                0x02 GL
 ```
+
+### Mouse (0x10–0x17)
+
+Filled once `CommonSession` selects and enables every feature (mask `0xFF`, which takes in the mouse).
+Measured on a left and a right Joy-Con 2 over an AYN Thor, Android 13 (2026-10-16), each held on its
+rail edge, with both outputs off (a report every 30 ms) and with one on (every 15 ms). Both sides
+read alike:
+
+| Field | Behaviour |
+|---|---|
+| X, Y | int16 counters that hold still at rest; movement is the int16-wrapped difference between reports. +X is right, +Y towards the player |
+| Resolution | ~610 counts/cm (~1550 CPI): a 15 cm slide on the left read ~9,200 |
+| Per-report cap | a delta clamps at ±2047: ~1.1 m/s at the 30 ms rate, where a fast slide lost ~17% (+10,800 out, −13,200 on the slow return). At 15 ms the cap is ~2.2 m/s and the same test lost nothing (+12,316 / −12,379, peak 1,659 a report) |
+| Distance (0x16) | 117–158 on a desk (~151 at rest); 3083–3321 lifted. X and Y freeze while lifted |
+| Unk (0x14) | ~2365 at rest on a desk, ~2620 on a second surface, dips to ~2100 in fast moves, pins at 4607 lifted |
+
+No wrap was seen (X stayed within −3527 to 13625); the counters are int16, so one will wrap in a long session.
+Cross-talk between X and Y was ~25% on the left but ~4% on the right, so it is most likely the hand,
+not the sensor. The right side's longer slide read ~13,500, consistent with the same resolution. The 15 ms
+rate is the high connection priority that **Faster controller updates** requests while an output runs.
 
 ## Player LEDs
 
