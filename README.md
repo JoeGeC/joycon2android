@@ -297,8 +297,10 @@ Start with [CONTRIBUTING.md](CONTRIBUTING.md), then the [docs](docs/README.md):
 
 - **[mygamecache](https://github.com/mygamecache)** — the console protocol path for third-party
   Joy-Cons, tested on NYXI Hyperion 3 ([#26](https://github.com/JoeGeC/joycon2android/pull/26)).
-- **[thisishuey](https://github.com/thisishuey)** — controller buttons for Android's Home, Back and
-  Screenshot ([#31](https://github.com/JoeGeC/joycon2android/pull/31)).
+- **[thisishuey](https://github.com/thisishuey)** — NSO GameCube controller support
+  ([#30](https://github.com/JoeGeC/joycon2android/pull/30)), controller buttons for Android's Home,
+  Back and Screenshot ([#31](https://github.com/JoeGeC/joycon2android/pull/31)), and Dolphin sticks
+  calibrated to the GameCube gate ([#32](https://github.com/JoeGeC/joycon2android/pull/32)).
 
 ### Community projects
 
