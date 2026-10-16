@@ -176,7 +176,6 @@ private fun PlayerLayoutPicker(
                 options = state.layouts.map { labels.playerOption(it) },
                 selectedId = state.layout?.id,
                 layoutName = layoutName,
-                subLabel = state.layout?.let(labels::playerDescription),
                 onSelect = { actions.selectLayout(state.body, it) },
                 onSave = onSaveLayout,
                 onDelete = onDeleteLayout,
