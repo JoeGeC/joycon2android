@@ -1,6 +1,7 @@
 <resources>
     <string name="controller_mapping_back">Back</string>
     <string name="controller_mapping_info">Setup help</string>
+    <string name="controller_mapping_tips">Some games may require different mappings from others. Try different auto-mapping settings to suit the game you\'re playing.</string>
     <string name="controller_mapping_group_layout">Group layout</string>
     <string name="controller_mapping_group_layout_description">Sets every player. Saves for this mix of controllers.</string>
     <string name="controller_mapping_player_layout">Player layout</string>

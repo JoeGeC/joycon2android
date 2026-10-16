@@ -37,6 +37,7 @@ import com.joegec.joycon2android.buttonmapping.GlobalMapping
 import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.ui.components.DropdownOption
+import com.joegec.joycon2android.ui.components.InfoBox
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.PlayerState
@@ -75,6 +76,7 @@ fun ControllerMappingScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
         ) {
+            InfoBox(stringResource(R.string.controller_mapping_tips))
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
             } else {

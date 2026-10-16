@@ -116,6 +116,7 @@ target can take **several sources** — tick as many as you like, and any of the
 - **Saving.** The save icon beside the name keeps your mapping as a layout for any player holding the
   same body. It dims when the mapping already matches a layout. Deleting a layout (the bin in the
   dropdown) keeps everyone's buttons; they just read **Custom** until you save again.
+- **Tips.** A note at the top reminds you that games differ: if one plays oddly, try another layout.
 - **Group layout** at the top sets and saves everyone at once. A grip only some bodies fit —
   **Mario Kart Wheel**, say — gives the rest the same game's other grip. A saved group remembers who
   held which body ("P1 L, P2 R, P3 L/R") and stays greyed out until those players are back.
