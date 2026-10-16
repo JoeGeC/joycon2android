@@ -41,7 +41,34 @@ Read the commits rather than counting them, then state the level and one line of
 why. If the user named a level, use theirs. Ask only when the call is genuinely
 close — a fix and a small feature together is a minor, not a question.
 
-## 2. Bump
+## 2. Credit contributors
+
+Every merged contribution from someone else gets a line under `### Contributors`
+in the README's `## Credits` before it ships.
+
+```sh
+gh pr list --state merged --base main --limit 100 \
+  --search "merged:>=$(git log -1 --format=%cs "$last") -author:JoeGeC" \
+  --json number,title,author,url
+git log "$last"..HEAD --format='%an <%ae>%n%(trailers:key=Co-authored-by,valueonly)' | sort -u
+```
+
+The PR list is the source: it gives the GitHub login and the link the README
+uses. The `git log` catches work that arrived without a PR, such as a
+`Co-authored-by` trailer on a squash. Joe and Claude are not contributors.
+
+For each contributor, credit every PR not yet linked in the README:
+
+- New name — add `- **[login](https://github.com/login)** — <what a player gets>
+  ([#N](url)).`, in the order they first contributed.
+- Already listed — extend their line with the new work and PR link; one line
+  per person.
+
+Describe the feature the way the release notes would, not the PR title. Show
+the user the README change and commit it as `Credit <login> in the README`
+before the bump, so the release tag includes it.
+
+## 3. Bump
 
 `app/build.gradle.kts` is the only place a version lives (`versionCode`,
 `versionName`) — no changelog or fastlane metadata to keep in step.
@@ -50,7 +77,7 @@ Commit as `Bump version to X.Y.Z`, matching the existing history, and push to
 `main`. `main` is protected by the `main-guardrails` ruleset, but the repository
 admin role bypasses it, so a direct push lands.
 
-## 3a. Prerelease — a shareable debug build
+## 4a. Prerelease — a shareable debug build
 
 The `Prerelease` workflow reads the version out of `build.gradle.kts`, so after
 a bump it needs no `version` input:
@@ -66,7 +93,7 @@ publish from a failing tree. The APK is signed with the debug key restored from
 the `DEBUG_KEYSTORE_BASE64` secret: it installs over a local debug build, and
 never over a release build.
 
-## 3b. Release — the real thing
+## 4b. Release — the real thing
 
 CI cannot do this. Release signing needs `release.jks` and
 `keystore.properties`, both gitignored and local only.
