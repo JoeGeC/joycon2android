@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,12 +22,13 @@ import com.joegec.joycon2android.ui.theme.AccentDim
 import com.joegec.joycon2android.ui.theme.Dimens
 
 @Composable
-fun InfoBox(text: String, modifier: Modifier = Modifier) {
+fun InfoBox(text: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     Row(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.buttonCorner))
             .background(AccentDim)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(Dimens.cardPadding),
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         verticalAlignment = Alignment.CenterVertically,

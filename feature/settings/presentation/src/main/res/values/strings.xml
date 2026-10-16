@@ -3,6 +3,8 @@
     <string name="settings_layout_title">Layout</string>
     <string name="settings_layout_detailed">Detailed</string>
     <string name="settings_layout_compact">Compact</string>
+    <string name="settings_show_tips_title">Show tips</string>
+    <string name="settings_show_tips_description">Hints around the app that point out features. Tap one to turn them off.</string>
     <string name="settings_faster_updates_title">Faster controller updates</string>
     <string name="settings_faster_updates_description">Joy-Cons send input about twice as often for smoother motion and quicker buttons but uses more battery.</string>
     <string name="settings_block_device_motion_title">Ignore this device\'s motion in Eden</string>

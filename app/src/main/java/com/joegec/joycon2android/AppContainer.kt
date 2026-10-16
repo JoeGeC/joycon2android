@@ -77,11 +77,15 @@ import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
 import com.joegec.joycon2android.dsu.PushDsuPadDataUseCase
 import com.joegec.joycon2android.settings.ObserveOutputSettingsUseCase
+import com.joegec.joycon2android.settings.ObserveShowTipsUseCase
 import com.joegec.joycon2android.settings.OutputSettingsDataStore
 import com.joegec.joycon2android.settings.OutputSettingsRepository
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.settings.SetDeviceMotionBlockedUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
+import com.joegec.joycon2android.settings.SetShowTipsUseCase
+import com.joegec.joycon2android.settings.TipsDataStore
+import com.joegec.joycon2android.settings.TipsRepository
 import com.joegec.joycon2android.emulator.EdenDeviceMotionBlocker
 import com.joegec.joycon2android.gamepad.DisableGamepadUseCase
 import com.joegec.joycon2android.gamepad.EnableGamepadUseCase
@@ -136,6 +140,10 @@ class AppContainer(context: Context) {
     private val viewModePreferences: ViewModePreferences = ViewModePreferencesDataStore(appContext)
     val observeViewMode = ObserveViewModeUseCase(viewModePreferences)
     val setViewMode = SetViewModeUseCase(viewModePreferences)
+
+    private val tipsRepository: TipsRepository = TipsDataStore(appContext)
+    val observeShowTips = ObserveShowTipsUseCase(tipsRepository)
+    val setShowTips = SetShowTipsUseCase(tipsRepository)
 
     // --- Controller button mapping (shared by Gamepad and DSU) ---
     private val controllerMappingRepository: ControllerMappingRepository = ControllerMappingDataStore(appContext)

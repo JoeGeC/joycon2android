@@ -7,4 +7,5 @@ data class SettingsPanelState(
     val viewMode: ConnectionViewMode = ConnectionViewMode.DETAILED,
     val outputSettings: OutputSettings = OutputSettings(),
     val deviceMotionBlockAvailable: Boolean = false,
+    val showTips: Boolean = true,
 )

@@ -2,6 +2,7 @@ package com.joegec.joycon2android.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +26,7 @@ fun HintBubble(
     text: String,
     pointerCenterFromEnd: Dp,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
         BubblePointer(Modifier.padding(end = pointerCenterFromEnd - Dimens.hintPointerWidth / 2))
@@ -32,6 +34,7 @@ fun HintBubble(
             Modifier
                 .clip(RoundedCornerShape(Dimens.buttonCorner))
                 .background(AccentDim)
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                 .padding(horizontal = Dimens.hintPaddingHorizontal, vertical = Dimens.hintPaddingVertical),
         ) {
             Text(text, color = Accent, style = MaterialTheme.typography.bodySmall)

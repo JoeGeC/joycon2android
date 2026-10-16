@@ -89,6 +89,8 @@ same device connect to `127.0.0.1:26760`.
 The gear at the top right opens the settings panel:
 
 - **Layout** — detailed controller graphics or compact rows.
+- **Show tips** (on by default) — the hints under auto setup and on the mapping screen. Tap any tip
+  to turn them all off.
 - **Faster controller updates** (on by default) — Joy-Cons send input about twice as often, for
   smoother motion and quicker buttons, at a battery cost. Applies while the virtual gamepad or DSU is on.
 - **Ignore this device's motion in Eden** (on by default, needs Shizuku) — stops Eden mixing this

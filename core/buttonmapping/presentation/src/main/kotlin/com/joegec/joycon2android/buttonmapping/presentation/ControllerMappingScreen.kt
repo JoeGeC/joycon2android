@@ -1,6 +1,11 @@
 package com.joegec.joycon2android.buttonmapping.presentation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,6 +42,7 @@ import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.ui.components.DropdownOption
 import com.joegec.joycon2android.ui.components.InfoBox
+import com.joegec.joycon2android.ui.components.LocalTips
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.PlayerState
@@ -75,7 +81,14 @@ fun ControllerMappingScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
         ) {
-            InfoBox(stringResource(R.string.controller_mapping_tips))
+            val tips = LocalTips.current
+            AnimatedVisibility(
+                visible = tips.visible,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                InfoBox(stringResource(R.string.controller_mapping_tips), onClick = tips.onTap)
+            }
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
             } else {

@@ -140,6 +140,8 @@ Shared in `core/designsystem/.../ui/components/`:
 - `ErrorBox` · `WarningBox` · `LabeledBorderBox` · `ExpandableInfoSection` · `CopyableCode`
 - `InfoBox` — an accent note with an exclamation-circle icon, at the top of a screen (mapping tips)
 - `HintBubble` — an accent bubble pointing up at a control (the mapping button, under auto setup; the save button, under a Custom group or player layout)
+- Tips (`InfoBox`, `HintBubble`) show only while `LocalTips` is visible and pass its `onTap`;
+  `ProvideTips` at the root supplies it from **Show tips** and asks before turning them off
 
 ## Motion
 

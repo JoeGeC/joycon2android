@@ -46,6 +46,7 @@ import com.joegec.joycon2android.emulator.EmulatorConsoles
 import com.joegec.joycon2android.ui.components.CloseEmulatorDialog
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.StartEmulatorDialog
+import com.joegec.joycon2android.ui.components.ProvideTips
 import com.joegec.joycon2android.dsu.presentation.DsuCardState
 import com.joegec.joycon2android.dsu.presentation.DsuMappingHelpSheet
 import com.joegec.joycon2android.update.presentation.UpdateDialog
@@ -91,7 +92,13 @@ class MainActivity : ComponentActivity() {
         viewModelFactory {
             initializer {
                 val c = (application as JoyconApplication).container
-                SettingsViewModel(c.observeOutputSettings, c.setFasterUpdates, c.setBlockDeviceMotion)
+                SettingsViewModel(
+                    c.observeOutputSettings,
+                    c.setFasterUpdates,
+                    c.setBlockDeviceMotion,
+                    c.observeShowTips,
+                    c.setShowTips,
+                )
             }
         }
     }
@@ -154,25 +161,28 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            val showTips by settingsViewModel.showTips.collectAsState()
             Joycon2AndroidTheme {
-                Surface(Modifier.fillMaxSize(), color = Background) {
-                    var mappingRoute by rememberSaveable { mutableStateOf<MappingRoute?>(null) }
+                ProvideTips(visible = showTips, onTurnOff = { settingsViewModel.toggleShowTips(false) }) {
+                    Surface(Modifier.fillMaxSize(), color = Background) {
+                        var mappingRoute by rememberSaveable { mutableStateOf<MappingRoute?>(null) }
 
-                    UpdatePrompt()
+                        UpdatePrompt()
 
-                    AnimatedContent(
-                        targetState = mappingRoute,
-                        transitionSpec = { pushTransition(forward = targetState != null) },
-                        label = "mappingScreen",
-                    ) { route ->
-                        Box(Modifier.fillMaxSize().background(Background)) {
-                            if (route != null) {
-                                ControllerMappingRoute(route, onBack = { mappingRoute = null })
-                            } else {
-                                MainRoute(
-                                    onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
-                                    onOpenMapping = { mappingRoute = it },
-                                )
+                        AnimatedContent(
+                            targetState = mappingRoute,
+                            transitionSpec = { pushTransition(forward = targetState != null) },
+                            label = "mappingScreen",
+                        ) { route ->
+                            Box(Modifier.fillMaxSize().background(Background)) {
+                                if (route != null) {
+                                    ControllerMappingRoute(route, onBack = { mappingRoute = null })
+                                } else {
+                                    MainRoute(
+                                        onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
+                                        onOpenMapping = { mappingRoute = it },
+                                    )
+                                }
                             }
                         }
                     }
@@ -268,14 +278,21 @@ class MainActivity : ComponentActivity() {
         val outputSettings by settingsViewModel.outputSettings.collectAsState()
         val viewMode by viewModel.viewMode.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
+        val showTips by settingsViewModel.showTips.collectAsState()
         EndDrawer(
             drawerState = drawerState,
             drawerContent = {
                 SettingsPanel(
-                    state = SettingsPanelState(viewMode, outputSettings, deviceMotionBlockAvailable = shizukuAvailable),
+                    state = SettingsPanelState(
+                        viewMode,
+                        outputSettings,
+                        deviceMotionBlockAvailable = shizukuAvailable,
+                        showTips = showTips,
+                    ),
                     onViewModeChange = viewModel::setViewMode,
                     onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
                     onBlockDeviceMotionToggle = settingsViewModel::toggleBlockDeviceMotion,
+                    onShowTipsToggle = settingsViewModel::toggleShowTips,
                 )
             },
             containerColor = Background,

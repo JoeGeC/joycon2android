@@ -1,5 +1,10 @@
 package com.joegec.joycon2android.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -67,11 +73,17 @@ fun EmulatorAutoSetup(
                     MappingButton(onConfigureMapping)
                 }
             }
-            if (onConfigureMapping != null) {
-                Spacer(Modifier.height(Dimens.emulatorSetupRowGap))
+            val tips = LocalTips.current
+            AnimatedVisibility(
+                visible = onConfigureMapping != null && tips.visible,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
                 HintBubble(
                     stringResource(R.string.emulator_auto_setup_mapping_hint),
                     pointerCenterFromEnd = Dimens.emulatorSetupButtonHeight / 2,
+                    modifier = Modifier.padding(top = Dimens.emulatorSetupRowGap),
+                    onClick = tips.onTap,
                 )
             }
             if (phase.isFailure) {

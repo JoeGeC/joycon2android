@@ -21,6 +21,7 @@ fun SettingsPanel(
     onViewModeChange: (ConnectionViewMode) -> Unit,
     onFasterUpdatesToggle: (Boolean) -> Unit,
     onBlockDeviceMotionToggle: (Boolean) -> Unit,
+    onShowTipsToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -35,7 +36,18 @@ fun SettingsPanel(
             style = MaterialTheme.typography.headlineSmall,
         )
         KofiBanner()
-        SettingsSection { LayoutSetting(state.viewMode, onViewModeChange) }
+        SettingsSection {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
+                LayoutSetting(state.viewMode, onViewModeChange)
+                SettingSwitch(
+                    title = stringResource(R.string.settings_show_tips_title),
+                    description = stringResource(R.string.settings_show_tips_description),
+                    checked = state.showTips,
+                    onCheckedChange = onShowTipsToggle,
+                    titleStyle = MaterialTheme.typography.titleMedium,
+                )
+            }
+        }
         SettingsSection {
             SettingSwitch(
                 title = stringResource(R.string.settings_faster_updates_title),
