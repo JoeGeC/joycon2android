@@ -578,8 +578,8 @@ private fun ConnectedContent(
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
                 gamepadCard()
-                shizukuCard()
                 dsuCard()
+                shizukuCard()
             }
         }
     }
