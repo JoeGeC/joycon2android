@@ -16,8 +16,8 @@ class SensitivityTest {
     private suspend fun sensitivity() = fixture.playerMapping(body).motion.sensitivityPercent
 
     @Test
-    fun `a body nothing has set reads swings slightly boosted`() = runBlocking {
-        assertEquals(110, sensitivity())
+    fun `a body nothing has set passes motion through unscaled`() = runBlocking {
+        assertEquals(100, sensitivity())
     }
 
     @Test
@@ -41,7 +41,7 @@ class SensitivityTest {
         assertNull(fixture.playerMapping(body).layout)
 
         fixture.applyLayout(fixture.console, body, WiiMapping.id)
-        assertEquals(110, sensitivity())
+        assertEquals(100, sensitivity())
     }
 
     @Test

@@ -232,7 +232,7 @@ Dolphin's Swing to the thrust axis.
 ### Motion sensitivity
 
 A per-player slider in the mapping editor, 50–200% in steps of 5 (`RemoteMotion.sensitivityPercent`,
-`SensitivityRepository`), 110% in every shipped layout and saved with custom ones. Below or above
+`SensitivityRepository`), 100% in every shipped layout and saved with custom ones. Below or above
 100%, `DolphinWiimoteConfig` adds a high-passed copy of each accelerometer axis to that axis:
 
 ```
@@ -248,7 +248,12 @@ IMUAccelerometer/Up = `Accel Up` + 0.25 * (<axis> - smooth(<axis>, 0.03))
 - **Why it exists.** Wii Sports Golf and Bowling read swings slightly soft (2026-10, right Joy-Con).
   Likely causes: one sample per 15 ms report against the Wii Remote's 100 Hz clips swing peaks, and a
   Joy-Con is shorter and lighter than a Wii Remote. A flat 1.25 gain felt slightly too strong; 110%
-  felt right, hence the default.
+  felt right.
+- **Why the default is 100% anyway.** Any boost turns and drags Dolphin's IMU pointer on a Galaxy
+  S25 (Android 16, Dolphin 2606) and Pixel 9 (Android 17, Dolphin 2609), though not an AYN Thor
+  (Android 13, Dolphin 2609a) with an identical `WiimoteNew.ini` (2026-10, Joy-Con pair).
+  `EmulateIMUCursor` corrects its orientation from the same accelerometer group, so the boost can't
+  be kept from the pointer. Why only some devices break is unknown.
 - **The Nunchuk is scaled too**, from the second hand's slot, so both fists in Wii Sports Boxing read alike.
 
 ## MotionPlus tutorial replays
