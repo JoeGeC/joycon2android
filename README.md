@@ -91,6 +91,9 @@ The gear at the top right opens the settings panel:
 - **Layout** — detailed controller graphics or compact rows.
 - **Show tips** (on by default) — the hints under auto setup and on the mapping screen. Tap any tip
   to turn them all off.
+- **Open emulators on the main screen** (on by default, two-screen devices such as the AYN Thor) —
+  when the app offers to start the emulator after setup, it opens on the main screen instead of the
+  one this app is on.
 - **Faster controller updates** (on by default) — Joy-Cons send input about twice as often, for
   smoother motion and quicker buttons, at a battery cost. Applies while the virtual gamepad or DSU is on.
 - **Ignore this device's motion in Eden** (on by default, needs Shizuku) — stops Eden mixing this

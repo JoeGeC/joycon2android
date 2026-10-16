@@ -22,6 +22,7 @@ fun SettingsPanel(
     onFasterUpdatesToggle: (Boolean) -> Unit,
     onBlockDeviceMotionToggle: (Boolean) -> Unit,
     onShowTipsToggle: (Boolean) -> Unit,
+    onLaunchOnMainScreenToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -44,6 +45,17 @@ fun SettingsPanel(
                     description = stringResource(R.string.settings_show_tips_description),
                     checked = state.showTips,
                     onCheckedChange = onShowTipsToggle,
+                    titleStyle = MaterialTheme.typography.titleMedium,
+                )
+            }
+        }
+        if (state.mainScreenLaunchAvailable) {
+            SettingsSection {
+                SettingSwitch(
+                    title = stringResource(R.string.settings_launch_on_main_screen_title),
+                    description = stringResource(R.string.settings_launch_on_main_screen_description),
+                    checked = state.launchOnMainScreen,
+                    onCheckedChange = onLaunchOnMainScreenToggle,
                     titleStyle = MaterialTheme.typography.titleMedium,
                 )
             }

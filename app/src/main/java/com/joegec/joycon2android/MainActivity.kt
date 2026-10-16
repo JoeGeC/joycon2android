@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -98,6 +99,8 @@ class MainActivity : ComponentActivity() {
                     c.setBlockDeviceMotion,
                     c.observeShowTips,
                     c.setShowTips,
+                    c.observeLaunchOnMainScreen,
+                    c.setLaunchOnMainScreen,
                 )
             }
         }
@@ -214,7 +217,10 @@ class MainActivity : ComponentActivity() {
             emulatorName = emulator.label,
             onConfirm = {
                 onDismiss()
-                (application as JoyconApplication).container.emulatorLauncher.launch(emulator.id)
+                val container = (application as JoyconApplication).container
+                val onMainScreen = settingsViewModel.launchOnMainScreen.value &&
+                    container.deviceScreens.canLaunchOnMainScreen()
+                container.emulatorLauncher.launch(emulator.id, onMainScreen)
             },
             onDismiss = onDismiss,
         )
@@ -279,6 +285,10 @@ class MainActivity : ComponentActivity() {
         val viewMode by viewModel.viewMode.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
         val showTips by settingsViewModel.showTips.collectAsState()
+        val launchOnMainScreen by settingsViewModel.launchOnMainScreen.collectAsState()
+        val mainScreenLaunchAvailable = remember {
+            (application as JoyconApplication).container.deviceScreens.canLaunchOnMainScreen()
+        }
         EndDrawer(
             drawerState = drawerState,
             drawerContent = {
@@ -288,11 +298,14 @@ class MainActivity : ComponentActivity() {
                         outputSettings,
                         deviceMotionBlockAvailable = shizukuAvailable,
                         showTips = showTips,
+                        mainScreenLaunchAvailable = mainScreenLaunchAvailable,
+                        launchOnMainScreen = launchOnMainScreen,
                     ),
                     onViewModeChange = viewModel::setViewMode,
                     onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
                     onBlockDeviceMotionToggle = settingsViewModel::toggleBlockDeviceMotion,
                     onShowTipsToggle = settingsViewModel::toggleShowTips,
+                    onLaunchOnMainScreenToggle = settingsViewModel::toggleLaunchOnMainScreen,
                 )
             },
             containerColor = Background,

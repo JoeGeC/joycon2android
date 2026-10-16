@@ -59,6 +59,7 @@ import com.joegec.joycon2android.assignment.AssignmentRepository
 import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerAssignmentManager
 import com.joegec.joycon2android.assignment.PlayerStateResolver
+import com.joegec.joycon2android.emulator.DeviceScreens
 import com.joegec.joycon2android.emulator.EdenSingleJoycons
 import com.joegec.joycon2android.emulator.EmulatorConsoles
 import com.joegec.joycon2android.emulator.EmulatorLauncher
@@ -76,6 +77,9 @@ import com.joegec.joycon2android.dsu.DsuServer
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
 import com.joegec.joycon2android.dsu.PushDsuPadDataUseCase
+import com.joegec.joycon2android.settings.MainScreenLaunchDataStore
+import com.joegec.joycon2android.settings.MainScreenLaunchRepository
+import com.joegec.joycon2android.settings.ObserveLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.ObserveOutputSettingsUseCase
 import com.joegec.joycon2android.settings.ObserveShowTipsUseCase
 import com.joegec.joycon2android.settings.OutputSettingsDataStore
@@ -83,6 +87,7 @@ import com.joegec.joycon2android.settings.OutputSettingsRepository
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.settings.SetDeviceMotionBlockedUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
+import com.joegec.joycon2android.settings.SetLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.SetShowTipsUseCase
 import com.joegec.joycon2android.settings.TipsDataStore
 import com.joegec.joycon2android.settings.TipsRepository
@@ -144,6 +149,10 @@ class AppContainer(context: Context) {
     private val tipsRepository: TipsRepository = TipsDataStore(appContext)
     val observeShowTips = ObserveShowTipsUseCase(tipsRepository)
     val setShowTips = SetShowTipsUseCase(tipsRepository)
+
+    private val mainScreenLaunchRepository: MainScreenLaunchRepository = MainScreenLaunchDataStore(appContext)
+    val observeLaunchOnMainScreen = ObserveLaunchOnMainScreenUseCase(mainScreenLaunchRepository)
+    val setLaunchOnMainScreen = SetLaunchOnMainScreenUseCase(mainScreenLaunchRepository)
 
     // --- Controller button mapping (shared by Gamepad and DSU) ---
     private val controllerMappingRepository: ControllerMappingRepository = ControllerMappingDataStore(appContext)
@@ -234,6 +243,7 @@ class AppContainer(context: Context) {
     )
 
     val emulatorLauncher = EmulatorLauncher(appContext)
+    val deviceScreens = DeviceScreens(appContext)
 
     // --- Android keys (either output, from the mapping of the console each is set to) ---
     private val gamepadConsole = MutableStateFlow(Console.GAMECUBE)
