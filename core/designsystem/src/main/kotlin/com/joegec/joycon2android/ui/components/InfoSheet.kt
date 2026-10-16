@@ -15,9 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +38,7 @@ fun InfoSheet(
                 .padding(bottom = Dimens.cardPadding)
                 .navigationBarsPadding(),
         ) {
-            Text(title, color = Color.White, style = MaterialTheme.typography.titleSmall)
+            Text(title, color = TextTitle, style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(Dimens.elementSpacing))
             content()
         }

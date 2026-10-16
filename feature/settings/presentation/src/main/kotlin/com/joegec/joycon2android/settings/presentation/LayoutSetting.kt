@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -29,6 +28,7 @@ import com.joegec.joycon2android.ui.theme.ButtonOff
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 @Composable
 internal fun LayoutSetting(
@@ -39,7 +39,7 @@ internal fun LayoutSetting(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
         Text(
             stringResource(R.string.settings_layout_title),
-            color = Color.White,
+            color = TextTitle,
             style = MaterialTheme.typography.titleMedium,
         )
         Row(

@@ -10,6 +10,7 @@ val Background = Color(0xFF0E1116)
 val CardBg = Color(0xFF161B22)
 val TextDim = Color(0xFF8B98A5)
 val TextBright = Color(0xFFC2CDD8)
+val TextTitle = Color.White
 val ButtonOff = Color(0xFF1A1F26)
 val ErrorBg = Color(0xFF2D1B1B)
 val ErrorText = Color(0xFFFF6B6B)

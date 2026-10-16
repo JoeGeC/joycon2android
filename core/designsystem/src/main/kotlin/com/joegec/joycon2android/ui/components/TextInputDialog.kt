@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 /** [defaultValue] stands if nothing is typed, and clears when the field is tapped. */
 @Composable
@@ -36,7 +37,7 @@ fun TextInputDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = CardBg,
-        title = { Text(title, color = Color.White, style = MaterialTheme.typography.titleSmall) },
+        title = { Text(title, color = TextTitle, style = MaterialTheme.typography.titleSmall) },
         text = {
             OutlinedTextField(
                 value = text,

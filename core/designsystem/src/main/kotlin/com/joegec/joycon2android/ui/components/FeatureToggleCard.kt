@@ -29,6 +29,7 @@ import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.ErrorText
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 @Composable
 fun FeatureToggleCard(
@@ -54,7 +55,7 @@ fun FeatureToggleCard(
             Column(Modifier.weight(1f)) {
                 Text(
                     title,
-                    color = Color.White,
+                    color = TextTitle,
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Spacer(Modifier.height(Dimens.featureCardTitleGap))

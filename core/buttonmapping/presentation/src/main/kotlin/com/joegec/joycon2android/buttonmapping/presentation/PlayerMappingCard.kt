@@ -84,15 +84,21 @@ fun PlayerMappingCard(
                 ),
                 verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
             ) {
-                LayoutRow(
-                    options = state.layouts.map { labels.playerOption(it) },
-                    selectedId = state.layout?.id,
-                    layoutName = state.layout?.let(labels::name),
-                    subLabel = state.layout?.let(labels::playerDescription),
-                    onSelect = { actions.selectLayout(state.body, it) },
-                    onSave = onSaveLayout,
-                    onDelete = onDeleteLayout,
-                )
+                LayoutPanel(
+                    title = stringResource(R.string.controller_mapping_player_layout),
+                    description = stringResource(R.string.controller_mapping_player_layout_description),
+                    modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
+                ) {
+                    LayoutRow(
+                        options = state.layouts.map { labels.playerOption(it) },
+                        selectedId = state.layout?.id,
+                        layoutName = state.layout?.let(labels::name),
+                        subLabel = state.layout?.let(labels::playerDescription),
+                        onSelect = { actions.selectLayout(state.body, it) },
+                        onSave = onSaveLayout,
+                        onDelete = onDeleteLayout,
+                    )
+                }
                 if (state.offersProController) {
                     ProControllerSwitch(state.proController) { actions.setProController(state.body, it) }
                 }

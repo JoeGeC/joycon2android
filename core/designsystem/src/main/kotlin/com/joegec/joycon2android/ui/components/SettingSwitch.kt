@@ -27,6 +27,7 @@ import com.joegec.joycon2android.core.designsystem.R
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextTitle
 import com.joegec.joycon2android.ui.theme.WarningText
 
 @Composable
@@ -53,7 +54,7 @@ fun SettingSwitch(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = Color.White, style = titleStyle)
+            Text(title, color = TextTitle, style = titleStyle)
             Spacer(Modifier.height(Dimens.featureCardTitleGap))
             Text(description, color = descriptionColor, style = MaterialTheme.typography.bodySmall)
             warning?.let {

@@ -2,10 +2,12 @@ package com.joegec.joycon2android.buttonmapping.presentation
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Icon
@@ -19,6 +21,7 @@ import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.ui.components.DropdownOption
 import com.joegec.joycon2android.ui.components.OptionDropdown
 import com.joegec.joycon2android.ui.theme.Accent
+import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
@@ -32,7 +35,6 @@ fun LayoutRow(
     onDelete: (DropdownOption) -> Unit,
     modifier: Modifier = Modifier,
     subLabel: String? = null,
-    dropdownModifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
 
@@ -55,7 +57,9 @@ fun LayoutRow(
                     option.subLabel.orEmpty(),
                 )
             },
-            modifier = dropdownModifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .background(Background, RoundedCornerShape(Dimens.buttonCorner)),
         )
         SaveButton(layoutName, onSave)
     }

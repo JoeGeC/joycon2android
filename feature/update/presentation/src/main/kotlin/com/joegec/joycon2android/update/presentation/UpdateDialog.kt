@@ -24,6 +24,7 @@ import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.ErrorText
 import com.joegec.joycon2android.ui.theme.TextBright
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 @Composable
 fun UpdateDialog(
@@ -39,7 +40,7 @@ fun UpdateDialog(
         title = {
             Text(
                 stringResource(R.string.update_title, update.version.toString()),
-                color = Color.White,
+                color = TextTitle,
                 style = MaterialTheme.typography.titleSmall,
             )
         },

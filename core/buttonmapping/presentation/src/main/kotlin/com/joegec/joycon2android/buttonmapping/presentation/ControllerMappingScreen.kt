@@ -31,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.GlobalMapping
@@ -43,11 +42,10 @@ import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.components.ConfirmDialog
 import com.joegec.joycon2android.ui.components.TextInputDialog
-import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
-import com.joegec.joycon2android.ui.theme.TextBright
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 @Composable
 fun ControllerMappingScreen(
@@ -116,7 +114,7 @@ private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit, on
         Text(
             state.console.label(),
             style = MaterialTheme.typography.headlineSmall,
-            color = Color.White,
+            color = TextTitle,
             modifier = Modifier.weight(1f),
         )
         if (onInfoClick != null) {
@@ -149,24 +147,14 @@ private fun GroupLayoutRow(
         )
     }
 
-    Row(
-        Modifier
-            .fillMaxWidth()
+    LayoutPanel(
+        title = stringResource(R.string.controller_mapping_group_layout),
+        description = stringResource(R.string.controller_mapping_group_layout_description),
+        modifier = Modifier
             .background(CardBg, RoundedCornerShape(Dimens.buttonCorner))
             .border(Dimens.cardBorderWidth, TextDim, RoundedCornerShape(Dimens.buttonCorner))
             .padding(horizontal = Dimens.cardPadding, vertical = Dimens.legendContentVertical),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.controller_mapping_group_layout), color = TextBright)
-            Spacer(Modifier.height(Dimens.featureCardTitleGap))
-            Text(
-                stringResource(R.string.controller_mapping_group_layout_description),
-                color = TextDim,
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
         LayoutRow(
             options = MappingPresets.forConsole(console).map { labels.option(it) } + saved,
             selectedId = global.selectedId,
@@ -175,8 +163,6 @@ private fun GroupLayoutRow(
             onSelect = actions.selectGlobalLayout,
             onSave = { onDialog(MappingDialog.Save(body = null)) },
             onDelete = { onDialog(MappingDialog.Delete(it.id, it.label, global = true)) },
-            modifier = Modifier.weight(1f),
-            dropdownModifier = Modifier.background(Background, RoundedCornerShape(Dimens.buttonCorner)),
         )
     }
 }

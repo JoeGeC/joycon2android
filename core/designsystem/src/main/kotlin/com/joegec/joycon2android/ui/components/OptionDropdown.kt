@@ -1,7 +1,7 @@
 package com.joegec.joycon2android.ui.components
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,7 +36,7 @@ fun OptionDropdown(
             onDismissRequest = { expanded = false },
             options = options,
             selectedId = selectedId,
-            modifier = Modifier.width(anchorWidth),
+            modifier = Modifier.widthIn(min = anchorWidth),
             onDelete = onDelete?.let { delete -> { option -> expanded = false; delete(option) } },
             onSelect = { option ->
                 expanded = false

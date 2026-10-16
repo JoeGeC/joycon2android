@@ -17,6 +17,7 @@ top-level `Color` vals used directly. One teal accent, plus each controller's ow
 - `CardBg` — `#161B22` (raised card surface)
 - `ButtonOff` — `#1A1F26` (inactive control fill)
 - Ink (default on-surface) — Material default near-white
+- `TextTitle` — `#FFFFFF` (screen, section, card, dialog and setting titles)
 - `TextBright` — `#C2CDD8` (light blue-gray; live telemetry values — the data that pops, ~10.7:1 on CardBg)
 - `TextDim` — `#8B98A5` (muted gray secondary text / telemetry labels; ~5.9:1 on CardBg — AA-safe as a solid, never at reduced alpha for text)
 - `TextOnAccent` — `#0E1116` (ink on the teal accent)

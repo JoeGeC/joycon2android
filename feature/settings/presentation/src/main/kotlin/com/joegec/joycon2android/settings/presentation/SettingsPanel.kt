@@ -9,11 +9,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.model.ConnectionViewMode
 import com.joegec.joycon2android.ui.components.SettingSwitch
 import com.joegec.joycon2android.ui.theme.Dimens
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 @Composable
 fun SettingsPanel(
@@ -31,7 +31,7 @@ fun SettingsPanel(
     ) {
         Text(
             stringResource(R.string.settings_title),
-            color = Color.White,
+            color = TextTitle,
             style = MaterialTheme.typography.headlineSmall,
         )
         KofiBanner()

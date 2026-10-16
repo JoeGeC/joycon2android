@@ -10,7 +10,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.sourceIdOf
@@ -20,6 +19,7 @@ import com.joegec.joycon2android.ui.components.MultiSelectDropdown
 import com.joegec.joycon2android.ui.components.SettingWarning
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 @Composable
 fun MappingBindings(
@@ -49,7 +49,7 @@ private fun BindingSection(
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
         Text(
             section.label(),
-            color = Color.White,
+            color = TextTitle,
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.padding(top = Dimens.mappingHeaderTopPadding),
         )

@@ -18,6 +18,7 @@ import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AccentDim
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 @Composable
 fun SettingSlider(
@@ -33,7 +34,7 @@ fun SettingSlider(
 ) {
     Column(modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(title, color = Color.White, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            Text(title, color = TextTitle, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(Dimens.featureCardSwitchGap))
             Text(valueLabel, color = Accent, style = MaterialTheme.typography.bodyMedium)
         }

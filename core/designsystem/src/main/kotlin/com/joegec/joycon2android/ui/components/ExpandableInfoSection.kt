@@ -25,9 +25,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 @Composable
 fun ExpandableInfoSection(
@@ -48,7 +48,7 @@ fun ExpandableInfoSection(
         ) {
             Text(
                 title,
-                color = Color.White,
+                color = TextTitle,
                 style = MaterialTheme.typography.titleSmall,
             )
             Icon(
