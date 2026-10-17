@@ -32,8 +32,6 @@ object DolphinWiimoteConfig {
     // Keeps a tilted grip's gravity leak from nudging the virtual remote off its neutral position.
     private const val SWING_DEAD_ZONE_PERCENT = 20
     private const val SWING_RANGE_PERCENT = 7
-    // A slew limit no tilt outruns but a swing does, so subtracting it leaves the motion and drops gravity.
-    private const val TILT_SETTLE_SECONDS = 0.03
 
     private val DOLPHIN_KEYS = mapOf(
         WiimoteButton.A to "Buttons/A",
@@ -178,8 +176,10 @@ object DolphinWiimoteConfig {
         val signed = "(${read(direction)} - ${read(opposite)})"
         val sign = if (gain > 0) "+" else "-"
         val fraction = BigDecimal(abs(gain)).movePointLeft(2).stripTrailingZeros().toPlainString()
-        return "$sign $fraction * ($signed - smooth($signed, $TILT_SETTLE_SECONDS))"
+        return "$sign $fraction * ${DolphinHighPass.of(signed, control)}"
     }
+
+    private const val SWING_FORWARD = "Swing/Forward"
 
     // Dolphin adds the swing it emulates to the accelerometer, so only a game that wants thrusts gets one.
     private fun swingLines(side: JoyconSide, motion: RemoteMotion): List<String> {
@@ -189,7 +189,7 @@ object DolphinWiimoteConfig {
         val pull = body["Accel Backward"] ?: "Accel Backward"
         val signed = "(`$thrust` - `$pull`)"
         return listOf(
-            "Swing/Forward = $signed - smooth($signed, $TILT_SETTLE_SECONDS)",
+            "$SWING_FORWARD = ${DolphinHighPass.of(signed, SWING_FORWARD)}",
             "Swing/Forward/Range = $SWING_RANGE_PERCENT",
             "Swing/Dead Zone = $SWING_DEAD_ZONE_PERCENT",
         )

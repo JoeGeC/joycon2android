@@ -190,12 +190,8 @@ class DolphinWiimoteConfigTest {
 
         val result = merge(null, listOf(both), thrust = true)
 
-        assertTrue(
-            result.contains(
-                "Swing/Forward = (`Accel Forward` - `Accel Backward`) - " +
-                    "smooth((`Accel Forward` - `Accel Backward`), 0.03)",
-            ),
-        )
+        val thrust = "(`Accel Forward` - `Accel Backward`)"
+        assertTrue(result.contains("Swing/Forward = ${DolphinHighPass.of(thrust, "Swing/Forward")}\n"))
         assertTrue(result.contains("Swing/Forward/Range = 7"))
         assertTrue(result.contains("Swing/Dead Zone = 20"))
     }
@@ -204,7 +200,8 @@ class DolphinWiimoteConfigTest {
     fun `a lone Joy-Con thrusts along the axis its nose reads`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), thrust = true)
 
-        assertTrue(result.contains("Swing/Forward = (`Accel Right` - `Accel Left`) - smooth("))
+        assertTrue(result.contains("Swing/Forward = (\$Swing_Forward_now = timer(1000), "))
+        assertTrue(result.contains("\$Swing_Forward_slew = \$Swing_Forward_slew + clamp((`Accel Right` - `Accel Left`) - "))
     }
 
     @Test
@@ -214,7 +211,7 @@ class DolphinWiimoteConfigTest {
         val result = merge(null, listOf(both), sensitivityPercent = 125)
 
         val up = "(`Accel Up` - `Accel Down`)"
-        assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up` + 0.25 * ($up - smooth($up, 0.03))"))
+        assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up` + 0.25 * ${DolphinHighPass.of(up, "IMUAccelerometer/Up")}\n"))
         assertTrue(result.contains("IMUAccelerometer/Down = `Accel Down`\n"))
         assertTrue(result.contains("IMUAccelerometer/Left = `Accel Left` + 0.25 * ("))
         assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Forward` + 0.25 * ("))
@@ -227,9 +224,8 @@ class DolphinWiimoteConfigTest {
         val result = merge(null, listOf(both), sensitivityPercent = 125)
 
         val up = "(`DSUClient/3/Joycon2:Accel Up` - `DSUClient/3/Joycon2:Accel Down`)"
-        assertTrue(
-            result.contains("Nunchuk/IMUAccelerometer/Up = `DSUClient/3/Joycon2:Accel Up` + 0.25 * ($up - smooth($up, 0.03))"),
-        )
+        val highPass = DolphinHighPass.of(up, "Nunchuk/IMUAccelerometer/Up")
+        assertTrue(result.contains("Nunchuk/IMUAccelerometer/Up = `DSUClient/3/Joycon2:Accel Up` + 0.25 * $highPass\n"))
         assertTrue(result.contains("Nunchuk/IMUAccelerometer/Down = `DSUClient/3/Joycon2:Accel Down`\n"))
     }
 
@@ -244,7 +240,28 @@ class DolphinWiimoteConfigTest {
     fun `a lone Joy-Con's boost follows its body's axes`() {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sensitivityPercent = 150)
 
-        assertTrue(result.contains("IMUAccelerometer/Left = `Accel Forward` + 0.5 * ((`Accel Forward` - `Accel Backward`) - smooth("))
+        assertTrue(result.contains("IMUAccelerometer/Left = `Accel Forward` + 0.5 * (\$IMUAccelerometer_Left_now"))
+        assertTrue(result.contains("clamp((`Accel Forward` - `Accel Backward`) - \$IMUAccelerometer_Left_slew, "))
+    }
+
+    @Test
+    fun `no line uses Dolphin's smooth, which can't settle on FEAT_AFP phones`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        val result = merge(null, listOf(both), thrust = true, sensitivityPercent = 150)
+
+        assertFalse(result.contains("smooth("))
+    }
+
+    @Test
+    fun `each high-passed control keeps its own slew`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        val result = merge(null, listOf(both), thrust = true, sensitivityPercent = 150)
+
+        val slews = Regex("""\$([A-Za-z_]+)_slew = """).findAll(result).map { it.groupValues[1] }.toList()
+        assertEquals(7, slews.size) // 3 remote axes, 3 nunchuk axes, swing
+        assertEquals(slews.size, slews.toSet().size)
     }
 
     @Test

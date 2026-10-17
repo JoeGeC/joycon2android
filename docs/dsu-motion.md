@@ -224,37 +224,63 @@ Dolphin's Swing to the thrust axis.
   (2026-10, right Joy-Con; clearing Swing/Forward fixed both).
 - **The swing input is signed and high-passed.** Pairing each input with its opposite makes it
   signed (Dolphin clamps a single input at zero). An accelerometer can't tell gravity from
-  acceleration, so a tilted grip parks up to 1 g on the axis; `smooth()` is a slew limiter, so
-  subtracting it cancels a held tilt within ~0.3 s while an ~80 ms thrust outruns it.
+  acceleration, so a tilted grip parks up to 1 g on the axis; subtracting a
+  [slew-limited copy](#high-pass-without-smooth) cancels a held tilt within ~0.3 s while an ~80 ms
+  thrust outruns it.
 - **Range 7%, dead zone 20%.** Inputs arrive at 9.8 per g, so full range saturates on a twitch; 7%
   puts a full lunge at ~1.5 g. The dead zone keeps a tilted grip's leak from nudging the remote.
 
 ### Motion sensitivity
 
 A per-player slider in the mapping editor, 50–200% in steps of 5 (`RemoteMotion.sensitivityPercent`,
-`SensitivityRepository`), 100% in every shipped layout and saved with custom ones. Below or above
-100%, `DolphinWiimoteConfig` adds a high-passed copy of each accelerometer axis to that axis:
+`SensitivityRepository`), 110% in every shipped layout and saved with custom ones. Below or above
+100%, `DolphinWiimoteConfig` adds a [high-passed](#high-pass-without-smooth) copy of each
+accelerometer axis to that axis:
 
 ```
-IMUAccelerometer/Up = `Accel Up` + 0.25 * (<axis> - smooth(<axis>, 0.03))
-<axis> = (`Accel Up` - `Accel Down`)
+IMUAccelerometer/Up = `Accel Up` + 0.25 * <high-pass of (`Accel Up` - `Accel Down`)>
 ```
 
 - **Why not a gain.** `Accel Up * 1.25` also makes gravity read 1.25 g at rest, which bends tilt.
   The same 0.03 s slew limit as the [thrust](#thrusts) input passes swings and drops held tilt, so
   only motion is scaled.
+- **The IMU pointer reads the boost too.** `EmulateIMUCursor` corrects its pitch and roll from the
+  same accelerometer group at 2% per update, so a boost term that doesn't settle to zero at rest
+  drags and turns the pointer.
 - **One control per axis.** Dolphin reads each axis as one control minus its opposite and clamps
   neither, so the term goes on Up, Left and Forward only; on both it would count twice.
 - **Why it exists.** Wii Sports Golf and Bowling read swings slightly soft (2026-10, right Joy-Con).
   Likely causes: one sample per 15 ms report against the Wii Remote's 100 Hz clips swing peaks, and a
   Joy-Con is shorter and lighter than a Wii Remote. A flat 1.25 gain felt slightly too strong; 110%
-  felt right.
-- **Why the default is 100% anyway.** Any boost turns and drags Dolphin's IMU pointer on a Galaxy
-  S25 (Android 16, Dolphin 2606) and Pixel 9 (Android 17, Dolphin 2609), though not an AYN Thor
-  (Android 13, Dolphin 2609a) with an identical `WiimoteNew.ini` (2026-10, Joy-Con pair).
-  `EmulateIMUCursor` corrects its orientation from the same accelerometer group, so the boost can't
-  be kept from the pointer. Why only some devices break is unknown.
+  felt right, hence the default.
 - **The Nunchuk is scaled too**, from the second hand's slot, so both fists in Wii Sports Boxing read alike.
+
+### High-pass without smooth()
+
+`DolphinHighPass` builds the slew limiter that [Thrusts](#thrusts) and
+[Motion sensitivity](#motion-sensitivity) subtract, from Dolphin variables:
+
+```
+$c_now  = timer(1000)
+$c_step = clamp(($c_now - $c_last) * 1000, 0, 0.1) / 0.03   // seconds since last read, as slew
+$c_last = $c_now
+$c_slew = $c_slew + clamp(<x> - $c_slew, 0 - $c_step, $c_step)
+<x> - $c_slew                                               // the expression's value
+```
+
+- **Dolphin's `smooth()` can't settle on newer phones.** While a game has set the PowerPC's
+  non-IEEE mode (Wii Sports does), Dolphin leaves `FPCR.AH` set on the CPU thread
+  (`Common/ArmFPURoundMode.cpp`), and that thread evaluates input expressions. On CPUs with
+  FEAT_AFP (Armv8.7+), `AH` stops `FNEG` flipping a NaN's sign, and clang builds `copysign`'s mask
+  as `movi #0xff…; fneg`, so `copysign` loses its sign. `smooth()` then only steps one way and runs
+  away at ~33 units/s; `deadzone()` and `relative()` use `copysign` too.
+- **Measured 2026-10:** `smooth()`'s code with Dolphin's FPCR ran away on a Galaxy S25 (Snapdragon 8
+  Elite) and Pixel 9 (Tensor G4), and settled on an AYN Thor (Snapdragon 8 Gen 2, no FEAT_AFP),
+  whose CPU ignores `AH`. Comparisons, `+ - * /`, `clamp()` and `timer()` are unaffected.
+- **Variables are per Wii Remote**, shared by all its controls and its Nunchuk, so each control
+  prefixes its own with the control's name (`$IMUAccelerometer_Up_slew`).
+- **The step is capped at 0.1 s**, which bounds the first read (`$c_last` starts at 0), a pause, and
+  the read where `timer(1000)` wraps (a negative step, clamped to 0).
 
 ## MotionPlus tutorial replays
 

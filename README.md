@@ -143,8 +143,8 @@ target can take **several sources** — tick as many as you like, and any of the
   Billiards' cue. Leave it off for swings: with it on, Wii Sports Golf putts too hard and Bowling
   misses your swing. Every layout starts with it off; saved layouts remember it.
 - **Motion sensitivity.** On the Wii console, a slider from 50% to 200% scales swings and shakes
-  without changing tilt. Every layout starts at 100%, which passes motion through unscaled; 110%
-  suits Wii Sports swings. Saved layouts remember it.
+  without changing tilt. Every layout starts at 110%, which suits Wii Sports; 100% passes motion
+  through unscaled. Saved layouts remember it.
 
 The layouts the app ships:
 
@@ -241,8 +241,9 @@ shoulder buttons its body lacks.
      tricks, but you can bind **Shake** to a button.
 
 5. **Only for games that measure a push**, like Wii Play Billiards: under **Swing**, set **Forward** to
-   ``(`Accel Forward` - `Accel Backward`) - smooth((`Accel Forward` - `Accel Backward`), 0.03)``,
-   **Range** to 7% and **Dead Zone** to 20%. For a single Joy-Con use whichever pair its nose reads
+   ``($n = timer(1000), $d = clamp(($n - $l) * 1000, 0, 0.1) / 0.03, $l = $n, $s = $s + clamp((`Accel Forward` - `Accel Backward`) - $s, 0 - $d, $d), (`Accel Forward` - `Accel Backward`) - $s)``,
+   **Range** to 7% and **Dead Zone** to 20%. Don't use Dolphin's `smooth()` here: it misbehaves on
+   newer phones ([why](docs/dsu-motion.md#high-pass-without-smooth)). For a single Joy-Con use whichever pair its nose reads
    above — `Accel Right`/`Left` on a right Joy-Con, and the other way round when it plays sideways.
    Leave it empty otherwise — Dolphin adds it to the real motion, so Wii Sports swings read too
    strong ([why](docs/dsu-motion.md#thrusts)).
