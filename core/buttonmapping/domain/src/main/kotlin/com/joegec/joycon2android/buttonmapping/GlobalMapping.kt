@@ -15,6 +15,13 @@ data class GlobalMapping(
     val sharedLayout: MappingLayout?
         get() = players.takeIf { it.isNotEmpty() }?.map { it.layout }?.distinct()?.singleOrNull()
 
+    /** Every player on a saved layout of one name, whichever body each was saved for. */
+    val sharedSavedName: String?
+        get() = players.takeIf { it.isNotEmpty() }
+            ?.map { (it.layout as? SavedLayout)?.name ?: return null }
+            ?.distinct()
+            ?.singleOrNull()
+
     val sharedFamily: LayoutFamily?
         get() = players.takeIf { it.isNotEmpty() }
             ?.map { (it.layout as? MappingPreset)?.family }

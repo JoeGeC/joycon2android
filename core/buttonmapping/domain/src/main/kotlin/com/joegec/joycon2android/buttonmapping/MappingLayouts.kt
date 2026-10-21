@@ -39,6 +39,12 @@ object MappingLayouts {
         return presets.firstOrNull { it.family == family && side in it.sides }
     }
 
+    /** Saved layouts sharing a name are one game on different bodies. Empty when [id] isn't saved. */
+    fun namedAlike(saved: List<SavedLayout>, console: Console, id: String): List<SavedLayout> {
+        val name = saved.firstOrNull { it.id == id && it.console == console }?.name ?: return emptyList()
+        return saved.filter { it.console == console && it.name == name }
+    }
+
     /** Prefixed so it can never collide with a shipped id. */
     fun newId(): String = "saved-${java.util.UUID.randomUUID()}"
 

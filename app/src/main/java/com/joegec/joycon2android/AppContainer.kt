@@ -191,7 +191,7 @@ class AppContainer(context: Context) {
     )
     val applyMappingLayout = ApplyMappingLayoutUseCase(savedLayoutRepository, applyPlayerMapping)
     val applyGlobalLayout =
-        ApplyGlobalLayoutUseCase(globalLayoutRepository, applyMappingLayout, applyPlayerMapping)
+        ApplyGlobalLayoutUseCase(globalLayoutRepository, savedLayoutRepository, applyMappingLayout, applyPlayerMapping)
     val saveCustomLayout = SaveCustomLayoutUseCase(savedLayoutRepository, observePlayerMapping)
     val saveGlobalLayout = SaveGlobalLayoutUseCase(globalLayoutRepository, observePlayerMapping)
     val deleteCustomLayout = DeleteCustomLayoutUseCase(savedLayoutRepository)

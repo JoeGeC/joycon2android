@@ -102,4 +102,5 @@ private fun LayoutLabels.option(layout: MappingLayout, subLabel: String?) = Drop
 fun LayoutLabels.sessionName(global: GlobalMapping): String? =
     global.matchingSaved?.let(::name)
         ?: global.sharedLayout?.let(::name)
+        ?: global.sharedSavedName
         ?: global.sharedFamily?.let(::name)

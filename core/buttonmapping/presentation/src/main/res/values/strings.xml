@@ -4,6 +4,7 @@
     <string name="controller_mapping_tips">Some games may require different mappings from others. Try different auto-mapping settings to suit the game you\'re playing.</string>
     <string name="controller_mapping_group_layout">Group layout</string>
     <string name="controller_mapping_group_layout_description">Sets every eligible player.</string>
+    <string name="controller_mapping_body_layout">Players on %1$s</string>
     <string name="controller_mapping_save_group_hint">Save this group layout for later!</string>
     <string name="controller_mapping_save_player_hint">Save this controller layout for later!</string>
     <string name="controller_mapping_player_layout">Player layout</string>

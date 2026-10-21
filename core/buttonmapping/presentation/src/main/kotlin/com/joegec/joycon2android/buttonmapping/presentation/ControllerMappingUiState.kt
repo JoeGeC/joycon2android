@@ -14,6 +14,7 @@ data class ControllerMappingUiState(
     val console: Console,
     val global: GlobalMapping,
     val players: List<PlayerMappingUiState>,
+    val savedLayouts: List<SavedLayout>,
 )
 
 data class PlayerMappingUiState(
@@ -43,6 +44,7 @@ internal fun controllerMappingUiState(
     players = mapping.players.map {
         it.uiState(console, MappingLayouts.forBody(console, it.body.side, savedLayouts))
     },
+    savedLayouts = savedLayouts,
 )
 
 private fun PlayerMapping.uiState(

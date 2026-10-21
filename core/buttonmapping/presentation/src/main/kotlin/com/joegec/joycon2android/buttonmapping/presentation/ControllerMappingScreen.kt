@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.GlobalMapping
 import com.joegec.joycon2android.buttonmapping.MappingLayouts
+import com.joegec.joycon2android.buttonmapping.SavedLayout
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.ui.components.DropdownOption
 import com.joegec.joycon2android.ui.components.InfoBox
@@ -92,7 +93,7 @@ fun ControllerMappingScreen(
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
             } else {
-                GroupLayoutRow(state.console, state.global, labels, actions) { dialog = it }
+                GroupLayoutRow(state.console, state.global, state.savedLayouts, labels, actions) { dialog = it }
             }
             state.players.forEach { player ->
                 val connected = players.firstOrNull { it.player == player.body.player }
@@ -104,7 +105,7 @@ fun ControllerMappingScreen(
                         labels = labels,
                         actions = actions,
                         onSaveLayout = { dialog = MappingDialog.Save(player.body) },
-                        onDeleteLayout = { dialog = MappingDialog.Delete(it.id, it.label, global = false) },
+                        onDeleteLayout = { dialog = MappingDialog.Delete(listOf(it.id), it.label, global = false) },
                         androidKeysNeedShizuku = androidKeysNeedShizuku,
                     )
                 }
@@ -147,10 +148,22 @@ private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit, on
 private fun GroupLayoutRow(
     console: Console,
     global: GlobalMapping,
+    playerLayouts: List<SavedLayout>,
     labels: LayoutLabels,
     actions: MappingActions,
     onDialog: (MappingDialog) -> Unit,
 ) {
+    val named = playerLayouts.groupBy { it.name }
+    val forBodies = named.map { (name, layouts) ->
+        val sides = layouts.map { it.side }.distinct()
+        DropdownOption(
+            id = layouts.first().id,
+            label = name,
+            subLabel = stringResource(R.string.controller_mapping_body_layout, sides.map { it.shortLabel() }.joinToString(", ")),
+            available = global.bodies.any { it.side in sides },
+            deletable = true,
+        )
+    }
     val saved = global.savedLayouts.map {
         DropdownOption(
             id = it.id,
@@ -173,13 +186,19 @@ private fun GroupLayoutRow(
             description = stringResource(R.string.controller_mapping_group_layout_description),
         ) {
             LayoutRow(
-                options = MappingPresets.forConsole(console).map { labels.option(it) } + saved,
-                selectedId = global.selectedId,
+                options = MappingPresets.forConsole(console).map { labels.option(it) } + forBodies + saved,
+                selectedId = global.matchingSaved?.id
+                    ?: global.sharedSavedName?.let { named[it]?.first()?.id }
+                    ?: global.sharedLayout?.id,
                 layoutName = layoutName,
                 subLabel = global.matchingSaved?.let { it.playerSummary() },
                 onSelect = actions.selectGlobalLayout,
                 onSave = { onDialog(MappingDialog.Save(body = null)) },
-                onDelete = { onDialog(MappingDialog.Delete(it.id, it.label, global = true)) },
+                onDelete = { option ->
+                    val group = global.savedLayouts.any { it.id == option.id }
+                    val ids = if (group) listOf(option.id) else named.getValue(option.label).map { it.id }
+                    onDialog(MappingDialog.Delete(ids, option.label, global = group))
+                },
             )
         }
         SaveLayoutHint(
@@ -219,7 +238,7 @@ private fun MappingDialogs(
             confirmLabel = stringResource(R.string.controller_mapping_delete),
             dismissLabel = stringResource(R.string.controller_mapping_cancel),
             onConfirm = {
-                actions.deleteLayout(dialog.id, dialog.global)
+                dialog.ids.forEach { actions.deleteLayout(it, dialog.global) }
                 onDismiss()
             },
             onDismiss = onDismiss,
@@ -231,5 +250,6 @@ private sealed interface MappingDialog {
     /** Null means the whole session. */
     data class Save(val body: PlayerBody?) : MappingDialog
 
-    data class Delete(val id: String, val name: String, val global: Boolean) : MappingDialog
+    /** Several ids when a group option names saved layouts for different bodies. */
+    data class Delete(val ids: List<String>, val name: String, val global: Boolean) : MappingDialog
 }

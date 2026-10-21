@@ -141,4 +141,51 @@ class GlobalMappingTest {
         assertEquals("My Wheel", (fixture.playerMapping(first).layout as? SavedLayout)?.name)
         assertEquals("Party", fixture.globalMapping(first, second).agreedName())
     }
+
+    @Test
+    fun `a saved player layout sets every player holding its body and leaves the rest alone`() = runBlocking {
+        val otherLeft = left(PlayerNumber.P3)
+        val players = listOf(first, second, otherLeft)
+        fixture.setMapping(fixture.console, first, "A", "Down")
+        fixture.saveCustomLayout(fixture.console, first, "Mine")
+        fixture.applyLayout(fixture.console, second, MarioKartWheelMapping.id)
+
+        fixture.applyGlobalLayout(fixture.console, players, fixture.savedLayoutNamed("Mine").id)
+
+        assertEquals("Mine", (fixture.playerMapping(otherLeft).layout as SavedLayout).name)
+        assertEquals(MarioKartWheelMapping, fixture.playerMapping(second).layout)
+    }
+
+    @Test
+    fun `a saved player layout names the session once everyone holds its body and plays it`() = runBlocking {
+        val otherLeft = left(PlayerNumber.P3)
+        fixture.setMapping(fixture.console, first, "A", "Down")
+        fixture.saveCustomLayout(fixture.console, first, "Mine")
+        val mine = fixture.savedLayoutNamed("Mine")
+
+        fixture.applyGlobalLayout(fixture.console, listOf(first, otherLeft), mine.id)
+
+        assertEquals(mine, fixture.globalMapping(first, otherLeft).sharedLayout)
+    }
+
+    @Test
+    fun `saved player layouts sharing a name give each player the one saved for their body`() = runBlocking {
+        val pair = PlayerBody(PlayerNumber.P3, JoyconSide.DUAL)
+        val players = listOf(first, second, pair)
+        fixture.setMapping(fixture.console, second, "A", "B")
+        fixture.saveCustomLayout(fixture.console, second, "Smash")
+        fixture.setMapping(fixture.console, pair, "A", "Y")
+        fixture.saveCustomLayout(fixture.console, pair, "Smash")
+        fixture.applyLayout(fixture.console, second, WiiMapping.id)
+        fixture.applyLayout(fixture.console, pair, WiiMapping.id)
+        fixture.applyLayout(fixture.console, first, MarioKartWheelMapping.id)
+
+        fixture.applyGlobalLayout(fixture.console, players, fixture.savedLayoutNamed("Smash").id)
+
+        assertEquals("B", fixture.playerMapping(second).entries["A"])
+        assertEquals("Y", fixture.playerMapping(pair).entries["A"])
+        assertEquals(MarioKartWheelMapping, fixture.playerMapping(first).layout)
+        assertEquals("Smash", fixture.globalMapping(second, pair).sharedSavedName)
+        assertNull(fixture.globalMapping(first, second, pair).sharedSavedName)
+    }
 }
