@@ -229,8 +229,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun ControllerMappingRoute(route: MappingRoute, onBack: () -> Unit) {
         val console = route.console
-        val session by viewModel.uiState.collectAsState()
-        val players = session.activePlayers
+        val players by viewModel.heldControllers.collectAsState()
         val bodies = players.mapNotNull { it.body() }
         val state by controllerMappingViewModel.uiState.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()

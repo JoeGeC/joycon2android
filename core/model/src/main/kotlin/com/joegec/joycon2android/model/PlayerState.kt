@@ -33,4 +33,8 @@ data class PlayerState(
     val motionSource: ConnectedJoycon? get() = right ?: left
 
     val gamepad: GamepadState get() = GamepadState.from(this)
+
+    /** Equal from one packet to the next, for screens that show who holds what but no input. */
+    fun withoutInput(): PlayerState =
+        copy(left = left?.copy(input = JoyconInput()), right = right?.copy(input = JoyconInput()))
 }

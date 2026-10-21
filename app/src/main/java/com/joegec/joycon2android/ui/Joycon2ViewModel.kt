@@ -14,6 +14,7 @@ import com.joegec.joycon2android.ble.BlePermissionHandler
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.ConnectionViewMode
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.power.BatteryOptimizationExemption
 import com.joegec.joycon2android.service.Joycon2Service
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -33,6 +35,11 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     private val _uiState = MutableStateFlow(AppUiState())
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
+
+    // Collecting uiState recomposes on every packet; the mapping editor draws no input.
+    val heldControllers: StateFlow<List<PlayerState>> = uiState
+        .map { state -> state.activePlayers.map(PlayerState::withoutInput) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val container: AppContainer
         get() = (getApplication<Application>() as JoyconApplication).container
