@@ -127,16 +127,15 @@ class EmulatorSetup(
         shell.writeText(DolphinDsuConfig.path, dsuMerged)
         val dsuOk = shell.readText(DolphinDsuConfig.path)?.contains("127.0.0.1:${DsuConfig.PORT}") == true
 
-        val configurable = players.any {
-            !it.hasPro && (it.left != null || it.right != null) && it.player.index in 1..4
-        }
+        val mapping = mappingLookup(Console.WIIMOTE_NUNCHUK, players)
+        val configurable = players.any { DolphinWiimoteConfig.writesFor(it, mapping) }
         val wiimoteOk = !configurable || shell.writeText(
             DolphinWiimoteConfig.path,
             DolphinWiimoteConfig.merge(
                 shell.readText(DolphinWiimoteConfig.path),
                 players,
                 motionLookup(Console.WIIMOTE_NUNCHUK, players),
-                mappingLookup(Console.WIIMOTE_NUNCHUK, players),
+                mapping,
             ),
         )
 

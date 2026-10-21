@@ -7,6 +7,7 @@ import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.PlayerMapping
 import com.joegec.joycon2android.buttonmapping.SavedLayout
+import com.joegec.joycon2android.buttonmapping.classicController
 import com.joegec.joycon2android.buttonmapping.proController
 
 data class ControllerMappingUiState(
@@ -25,6 +26,7 @@ data class PlayerMappingUiState(
     val offersRemoteMotion: Boolean,
     val sensitivityPercent: Int,
     val proController: Boolean,
+    val classicController: Boolean,
     val offersProController: Boolean,
     val mapping: Map<String, String>,
 ) {
@@ -51,11 +53,12 @@ private fun PlayerMapping.uiState(
     layouts = layouts,
     layout = layout,
     sidewaysRemote = motion.sideways,
-    offersSidewaysRemote = MappingOptions.offersSidewaysRemote(console, body.side),
+    offersSidewaysRemote = MappingOptions.offersSidewaysRemote(console, body.side, entries.classicController),
     thrust = motion.thrust,
     sensitivityPercent = motion.sensitivityPercent,
-    offersRemoteMotion = MappingOptions.offersRemoteMotion(console),
+    offersRemoteMotion = MappingOptions.offersRemoteMotion(console, entries.classicController),
     proController = entries.proController,
+    classicController = entries.classicController,
     offersProController = MappingOptions.offersProController(console, body.side),
     mapping = entries,
 )

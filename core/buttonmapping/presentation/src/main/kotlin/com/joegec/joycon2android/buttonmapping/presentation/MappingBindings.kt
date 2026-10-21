@@ -30,7 +30,7 @@ fun MappingBindings(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
         MappingSection.entries.forEach { section ->
-            val targets = MappingOptions.targets(console, section, state.body.side, state.singleJoycon)
+            val targets = MappingOptions.targets(console, section, state.body.side, state.singleJoycon, state.classicController)
             if (targets.isNotEmpty()) {
                 BindingSection(section, targets, state, actions, androidKeysNeedShizuku)
             }

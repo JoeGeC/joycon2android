@@ -214,7 +214,7 @@ class WiiPresetsTest {
             WiimoteButton.Shake - WiimoteButton.Recenter).map { it.name }
 
         MappingPresets.forConsole(Console.WIIMOTE_NUNCHUK)
-            .filterNot { it == MarioKartNunchukMapping }
+            .filterNot { it == MarioKartNunchukMapping || it == ClassicControllerMapping }
             .forEach { preset ->
                 assertTrue(
                     "${preset.id} binds the remote",

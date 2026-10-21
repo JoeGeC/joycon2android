@@ -4,9 +4,11 @@ import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.RemoteMotion
+import com.joegec.joycon2android.buttonmapping.preset.ClassicControllerMapping
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.ConnectedJoycon
+import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.Side
@@ -409,6 +411,65 @@ class DolphinWiimoteConfigTest {
         val result = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
 
         assertFalse(result.contains("[Wiimote1]"))
+    }
+
+    private fun mergeClassic(players: List<PlayerState>) = DolphinWiimoteConfig.merge(
+        null,
+        players,
+        { unscaled },
+        { ClassicControllerMapping.entries(it.side) },
+    )
+
+    @Test
+    fun `a Classic Controller replaces the nunchuk and binds no remote buttons or motion`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+
+        val result = mergeClassic(listOf(both))
+
+        assertTrue(result.contains("Extension = Classic"))
+        assertTrue(result.contains("Classic/Buttons/A = `Circle`"))
+        assertTrue(result.contains("Classic/Triggers/L = `L1`"))
+        assertTrue(result.contains("Classic/Buttons/ZL = `L2`"))
+        assertTrue(result.contains("Classic/Buttons/Home = `PS`"))
+        assertTrue(result.contains("Classic/D-Pad/Up = `Pad N`"))
+        assertTrue(result.contains("Classic/Left Stick/Up = `Left Y+`"))
+        assertTrue(result.contains("Classic/Right Stick/Left = `Right X-`"))
+        assertFalse(result.contains("Buttons/A = `Cross`"))
+        assertFalse(result.contains("Nunchuk/"))
+        assertFalse(result.contains("IMUAccelerometer"))
+    }
+
+    @Test
+    fun `a pro controller is set up once it plays a Classic Controller`() {
+        val pro = PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))
+
+        val result = mergeClassic(listOf(pro))
+
+        assertTrue(result.contains("[Wiimote1]"))
+        assertTrue(result.contains("Device = DSUClient/0/Joycon2"))
+        assertTrue(result.contains("Classic/Buttons/B = `Cross`"))
+        assertTrue(DolphinWiimoteConfig.writesFor(pro) { ClassicControllerMapping.entries(it.side) })
+        assertFalse(DolphinWiimoteConfig.writesFor(pro, ::wiimoteMappingFor))
+    }
+
+    @Test
+    fun `a GameCube controller plays the Classic Controller's minus on Capture`() {
+        val gameCube = ConnectedJoycon(address = "GC", side = Side.PRO, model = ControllerModel.GAMECUBE, deviceName = "GameCube")
+
+        val result = mergeClassic(listOf(PlayerState(PlayerNumber.P1, left = gameCube)))
+
+        assertTrue(result.contains("Classic/Buttons/- = `Touch Button`"))
+        assertTrue(result.contains("Classic/Buttons/A = `Circle`"))
+    }
+
+    @Test
+    fun `a lone Joy-Con plays the Classic Controller sideways, with no d-pad`() {
+        val result = mergeClassic(listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))))
+
+        assertTrue(result.contains("Classic/Buttons/A = `Circle`")) // X rotates onto A
+        assertFalse(result.contains("Classic/D-Pad/"))
+        assertTrue(result.contains("Classic/Left Stick/Up = `Left Y+`"))
+        assertFalse(result.contains("Classic/Right Stick/"))
     }
 
     @Test

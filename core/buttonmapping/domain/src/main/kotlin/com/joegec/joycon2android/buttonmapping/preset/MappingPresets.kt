@@ -10,6 +10,7 @@ object MappingPresets {
         JoyconWiiMapping,
         MarioKartWheelMapping,
         MarioKartNunchukMapping,
+        ClassicControllerMapping,
         SwitchProMapping,
         SwitchProSidewaysMapping,
         SwitchProSidewaysTriggersMapping,

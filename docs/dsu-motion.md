@@ -207,6 +207,21 @@ What `DolphinWiimoteConfig` writes, and why:
 - **`IMUIR/Total Yaw` is 60°.** Dolphin's 25° clamps the cursor after ±12.5° of turn, which a
   hand-held aim overruns; the clamp reads as the pointer sticking.
 
+### Classic Controller
+
+The **Classic Controller** layout sets `CLASSIC_CONTROLLER` among a body's bindings
+(`ClassicControllerEntry`), and `DolphinClassicController` writes that remote instead:
+
+- **`Extension = Classic`, its own targets only.** Classic targets are stored as `ClassicA`,
+  `ClassicLeftStick_UP`, …, beside the remote's, which stay stored but aren't written. No motion
+  lines: the remote's IMU, pointer and swing are left at Dolphin's defaults.
+- **L and R are digital** (`Classic/Triggers/L`). DSU carries no trigger travel; Dolphin's mixed
+  trigger reads a press as fully pulled.
+- **Pro and GameCube controllers are written too**, but only in this layout. Otherwise setup leaves
+  their remote to the player's own Dolphin mapping.
+- **A lone Joy-Con plays it sideways**, buttons as `SwitchProSidewaysLayout` places them, its stick
+  as the left stick. The d-pad is left unbound.
+
 ### Thrusts
 
 A per-player switch in the mapping editor (`MappingLayout.thrust`, `ThrustRepository`), off in

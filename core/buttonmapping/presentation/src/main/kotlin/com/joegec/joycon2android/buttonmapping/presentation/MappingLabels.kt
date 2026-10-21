@@ -7,6 +7,8 @@ import com.joegec.joycon2android.buttonmapping.GlobalLayout
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
+import com.joegec.joycon2android.buttonmapping.target.ClassicButton
+import com.joegec.joycon2android.buttonmapping.target.ClassicStick
 import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
 import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
@@ -95,6 +97,31 @@ internal fun WiimoteButton.label(): String = when (this) {
 @Composable
 internal fun WiimoteStick.label(): String = when (this) {
     WiimoteStick.NunchukStick -> stringResource(R.string.stick_nunchuk)
+}
+
+@Composable
+internal fun ClassicButton.label(): String = when (this) {
+    ClassicButton.ClassicA -> "A"
+    ClassicButton.ClassicB -> "B"
+    ClassicButton.ClassicX -> "X"
+    ClassicButton.ClassicY -> "Y"
+    ClassicButton.ClassicL -> "L"
+    ClassicButton.ClassicR -> "R"
+    ClassicButton.ClassicZL -> "ZL"
+    ClassicButton.ClassicZR -> "ZR"
+    ClassicButton.ClassicPlus -> "+"
+    ClassicButton.ClassicMinus -> "-"
+    ClassicButton.ClassicHome -> stringResource(R.string.button_home)
+    ClassicButton.ClassicDPadUp -> stringResource(R.string.button_dpad_up)
+    ClassicButton.ClassicDPadDown -> stringResource(R.string.button_dpad_down)
+    ClassicButton.ClassicDPadLeft -> stringResource(R.string.button_dpad_left)
+    ClassicButton.ClassicDPadRight -> stringResource(R.string.button_dpad_right)
+}
+
+@Composable
+internal fun ClassicStick.label(): String = when (this) {
+    ClassicStick.ClassicLeftStick -> stringResource(R.string.stick_left)
+    ClassicStick.ClassicRightStick -> stringResource(R.string.stick_right)
 }
 
 @Composable

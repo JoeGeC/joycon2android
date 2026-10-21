@@ -42,6 +42,8 @@
     <string name="layout_mario_kart_wheel_description">Steer with motion, mapped like MK8</string>
     <string name="layout_mario_kart_nunchuk">Mario Kart Nunchuck</string>
     <string name="layout_mario_kart_nunchuk_description">Steer with the stick, mapped like MK8</string>
+    <string name="layout_classic_controller">Classic Controller</string>
+    <string name="layout_classic_controller_description">A Classic Controller in place of the Nunchuk</string>
     <string name="layout_pro_controller">Pro Controller (L/R)</string>
     <string name="layout_pro_controller_description">Single Joy-Con -> Pro Controller. SL/SR -> L/R.</string>
     <string name="layout_pro_controller_triggers">Pro Controller (ZL/ZR)</string>

@@ -154,6 +154,7 @@ The layouts the app ships:
 | Joy-Con | The same, with the Joy-Con's own B as B, 1 and 2 on the shoulders so your thumb stays on the stick, and Recenter on the stick click. A GameCube controller has no stick click or −, so Recenter is on Y and − on X |
 | Mario Kart Wheel | A lone Joy-Con held sideways as a wheel, laid out the way Mario Kart 8 uses one — 2 accelerates, 1 brakes, SR hops and tricks, and SL throws an item alongside the stick. Steers by **tilt**, so it plays as a sideways Wii Remote: the d-pad turns with it and a right Joy-Con aims from its tail |
 | Mario Kart Nunchuck | The remote-and-nunchuk scheme, which steers by **stick** instead. A pair splits the halves across the hands, each index finger on the shoulder its controller keeps a trigger on; a lone Joy-Con plays both halves itself, its own stick standing in for the Nunchuk's and its rails carrying C and Z |
+| Classic Controller | A Classic Controller in place of the remote and Nunchuk, for any controller, buttons where a Pro Controller has them. A lone Joy-Con plays it sideways, its stick as the left stick. The only layout that sets up a Pro or GameCube controller on Dolphin (Wii) |
 
 > [!NOTE]
 > Auto setup needs Shizuku, and some devices block writing into another app's `Android/data` — use

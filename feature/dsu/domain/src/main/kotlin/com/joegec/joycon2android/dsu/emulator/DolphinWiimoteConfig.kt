@@ -4,11 +4,8 @@ import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.RemoteMotion
-import com.joegec.joycon2android.buttonmapping.StickDirection
-import com.joegec.joycon2android.buttonmapping.StickSource
-import com.joegec.joycon2android.buttonmapping.emittedDirection
-import com.joegec.joycon2android.buttonmapping.emittedFor
-import com.joegec.joycon2android.buttonmapping.emittedStick
+import com.joegec.joycon2android.buttonmapping.body
+import com.joegec.joycon2android.buttonmapping.classicController
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.buttonmapping.toSourceMap
@@ -17,7 +14,6 @@ import com.joegec.joycon2android.dsu.DsuSlots
 import com.joegec.joycon2android.emulatorconfig.DolphinControls
 import com.joegec.joycon2android.emulatorconfig.DolphinPaths
 import com.joegec.joycon2android.emulatorconfig.IniEditor
-import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.PlayerState
 import java.math.BigDecimal
 import kotlin.math.abs
@@ -48,32 +44,6 @@ object DolphinWiimoteConfig {
         WiimoteButton.NunchukC to "Nunchuk/Buttons/C",
         WiimoteButton.NunchukZ to "Nunchuk/Buttons/Z",
         WiimoteButton.Recenter to "IMUIR/Recenter",
-    )
-
-    // DSU carries exactly the DS4 button set — these are protocol input names, not UI copy.
-    private val DS4_NAMES = mapOf(
-        JoyconButton.A to "Circle",
-        JoyconButton.B to "Cross",
-        JoyconButton.X to "Triangle",
-        JoyconButton.Y to "Square",
-        JoyconButton.L to "L1",
-        JoyconButton.R to "R1",
-        JoyconButton.ZL to "L2",
-        JoyconButton.ZR to "R2",
-        JoyconButton.Minus to "Share",
-        JoyconButton.Plus to "Options",
-        JoyconButton.LS to "L3",
-        JoyconButton.RS to "R3",
-        JoyconButton.Home to "PS",
-        JoyconButton.Capture to "Touch Button",
-    )
-
-    // The D-Pad target reads the DS4 pad nibble instead of a face button.
-    private val PAD_NAMES = mapOf(
-        JoyconButton.Up to "Pad N",
-        JoyconButton.Down to "Pad S",
-        JoyconButton.Left to "Pad W",
-        JoyconButton.Right to "Pad E",
     )
 
     private val ACCEL_DIRECTIONS = listOf("Up", "Down", "Left", "Right", "Forward", "Backward")
@@ -141,7 +111,7 @@ object DolphinWiimoteConfig {
         } else {
             null
         }
-        val pressed = bound?.takeIf { control == UP }?.let { expressionFor(side, sidewaysRemote, it) }
+        val pressed = bound?.takeIf { control == UP }?.let { DolphinDsuInputs.expressionFor(side, sidewaysRemote, it) }
         return listOfNotNull(flick, pressed).takeIf { it.isNotEmpty() }?.joinToString(" | ")
     }
 
@@ -215,45 +185,43 @@ object DolphinWiimoteConfig {
         return IniEditor.mergeSections(existing, StaleDolphinWiimotes.disconnected(existing, sections.keys) + sections)
     }
 
+    /** Pro and GameCube controllers are left to the player's own Dolphin mapping, unless they play a Classic Controller. */
+    fun writesFor(player: PlayerState, mappingFor: (PlayerBody) -> Map<String, String>): Boolean {
+        val body = player.body() ?: return false
+        return player.player.index - 1 in 0 until DsuSlots.COUNT && (!player.hasPro || mappingFor(body).classicController)
+    }
+
     private fun sections(
         players: List<PlayerState>,
         motionFor: (PlayerBody) -> RemoteMotion,
         mappingFor: (PlayerBody) -> Map<String, String>,
     ): Map<String, String> {
         val secondHands = DsuSlots.secondHands(players).associate { it.state.player to it.slot }
-        return players.mapNotNull { player ->
-            val slot = player.player.index - 1
-            if (slot !in 0..3) return@mapNotNull null
-            bodyFor(player, slot, secondHands[player.player], motionFor, mappingFor)
-                ?.let { "[Wiimote${player.player.index}]" to it }
-        }.toMap()
+        return players.filter { writesFor(it, mappingFor) }.mapNotNull { it.body() }.associate { body ->
+            "[Wiimote${body.player.index}]" to bodyFor(body, secondHands[body.player], motionFor, mappingFor)
+        }
     }
 
     private fun bodyFor(
-        player: PlayerState,
-        slot: Int,
+        body: PlayerBody,
         secondHandSlot: Int?,
         motionFor: (PlayerBody) -> RemoteMotion,
         mappingFor: (PlayerBody) -> Map<String, String>,
-    ): String? {
-        val side = when {
-            player.hasPro -> return null
-            player.hasFullController -> JoyconSide.DUAL
-            player.right != null -> JoyconSide.RIGHT
-            player.left != null -> JoyconSide.LEFT
-            else -> return null
+    ): String {
+        val side = body.side
+        val mapping = mappingFor(body)
+        // Source = 1 forces this Wii Remote slot to Emulated, so the mappings actually apply
+        val header = listOf("Source = 1", "Device = DSUClient/${body.player.index - 1}/Joycon2")
+        if (mapping.classicController) {
+            return (header + DolphinClassicController.lines(side, mapping)).joinToString("\n", postfix = "\n")
         }
-        val body = PlayerBody(player.player, side)
         val motion = motionFor(body)
         val sidewaysRemote = motion.sideways
-        // Source = 1 forces this Wii Remote slot to Emulated, so the mappings actually apply
-        val header = listOf("Source = 1", "Device = DSUClient/$slot/Joycon2")
         val nunchukImu = if (side == JoyconSide.DUAL && secondHandSlot != null) {
             nunchukImuLines(secondHandSlot, motion.sensitivityPercent)
         } else {
             emptyList()
         }
-        val mapping = mappingFor(body)
         val shake = mapping.toSourceMap<WiimoteButton>()[WiimoteButton.Shake]
         return (header + lines(side, sidewaysRemote, mapping) + imuLines(side, motion, shake) +
             swingLines(side, motion) + nunchukImu)
@@ -264,7 +232,7 @@ object DolphinWiimoteConfig {
         val sideways = sidewaysRemote && side.isLone
         val buttonLines = (mapping.toSourceMap<WiimoteButton>() - WiimoteButton.Shake)
             .mapNotNull { (target, sources) ->
-                expressionFor(side, sidewaysRemote, sources)
+                DolphinDsuInputs.expressionFor(side, sidewaysRemote, sources)
                     ?.let { expression -> "${dolphinKey(target, sideways)} = $expression" }
             }
         val stickLines = nunchukStickLines(side, sidewaysRemote, mapping)
@@ -279,28 +247,7 @@ object DolphinWiimoteConfig {
     private fun nunchukStickLines(side: JoyconSide, sidewaysRemote: Boolean, mapping: Map<String, String>): List<String> =
         mapping.toStickDirectionMap<WiimoteStick>().values.flatMap { directions ->
             directions.mapNotNull { (direction, sources) ->
-                expressionFor(side, sidewaysRemote, sources)?.let { expression -> "Nunchuk/Stick/${DolphinControls.DIRECTIONS.getValue(direction)} = $expression" }
+                DolphinDsuInputs.expressionFor(side, sidewaysRemote, sources)?.let { expression -> "Nunchuk/Stick/${DolphinControls.DIRECTIONS.getValue(direction)} = $expression" }
             }
         }
-
-    private fun expressionFor(side: JoyconSide, sidewaysRemote: Boolean, sources: List<MappingSource>): String? =
-        sources.mapNotNull { specFor(side, sidewaysRemote, it) }
-            .takeIf { it.isNotEmpty() }
-            ?.joinToString(" | ") { "`$it`" }
-
-    private fun specFor(side: JoyconSide, sidewaysRemote: Boolean, source: MappingSource): String? = when (source) {
-        is MappingSource.Button -> source.button.emittedFor(side)?.let { DS4_NAMES[it] ?: PAD_NAMES[it] }
-        is MappingSource.Stick -> tiltSpec(source.emittedStick(side), source.emittedDirection(side, sidewaysRemote))
-    }
-
-    // DSU sticks report up as a positive Y, unlike Android's axes.
-    private fun tiltSpec(stick: StickSource, direction: StickDirection): String {
-        val prefix = if (stick == StickSource.LEFT_STICK) "Left" else "Right"
-        return when (direction) {
-            StickDirection.UP -> "$prefix Y+"
-            StickDirection.DOWN -> "$prefix Y-"
-            StickDirection.LEFT -> "$prefix X-"
-            StickDirection.RIGHT -> "$prefix X+"
-        }
-    }
 }

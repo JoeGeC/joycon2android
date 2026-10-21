@@ -9,6 +9,8 @@ import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.targetKey
 import com.joegec.joycon2android.buttonmapping.directionKey
+import com.joegec.joycon2android.buttonmapping.target.ClassicButton
+import com.joegec.joycon2android.buttonmapping.target.ClassicStick
 import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
 import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
 import com.joegec.joycon2android.buttonmapping.target.SwitchProTargets
@@ -22,16 +24,31 @@ import com.joegec.joycon2android.model.JoyconButton
 internal object MappingOptions {
     const val NONE_ID = ""
 
-    fun offersSidewaysRemote(console: Console, side: JoyconSide) =
-        console == Console.WIIMOTE_NUNCHUK && side.isLone
+    fun offersSidewaysRemote(console: Console, side: JoyconSide, classicController: Boolean) =
+        offersRemoteMotion(console, classicController) && side.isLone
 
     fun offersProController(console: Console, side: JoyconSide) =
         console == Console.SWITCH_PRO && side.isLone
 
-    fun offersRemoteMotion(console: Console) = console == Console.WIIMOTE_NUNCHUK
+    // A Classic Controller has no motion of its own.
+    fun offersRemoteMotion(console: Console, classicController: Boolean) =
+        console == Console.WIIMOTE_NUNCHUK && !classicController
 
     @Composable
     fun targets(
+        console: Console,
+        section: MappingSection,
+        side: JoyconSide,
+        singleJoycon: Boolean,
+        classicController: Boolean,
+    ): List<Pair<String, String>> = when {
+        section == MappingSection.ANDROID -> AndroidKey.entries.map { it.targetKey to it.label() }
+        classicController -> classicTargets(section)
+        else -> remoteTargets(console, section, side, singleJoycon)
+    }
+
+    @Composable
+    private fun remoteTargets(
         console: Console,
         section: MappingSection,
         side: JoyconSide,
@@ -40,7 +57,7 @@ internal object MappingOptions {
         MappingSection.BUTTONS -> buttonTargets(console, side, singleJoycon)
         MappingSection.STICKS -> stickDirectionTargets(console, side, singleJoycon)
         MappingSection.MOTION -> motionTargets(console)
-        MappingSection.ANDROID -> AndroidKey.entries.map { it.targetKey to it.label() }
+        MappingSection.ANDROID -> emptyList()
     }
 
     @Composable
@@ -59,18 +76,29 @@ internal object MappingOptions {
         if (console == Console.WIIMOTE_NUNCHUK) MOTION_TARGETS.map { it.name to it.label() } else emptyList()
 
     @Composable
-    private fun stickDirectionTargets(console: Console, side: JoyconSide, singleJoycon: Boolean): List<Pair<String, String>> {
-        val sticks = when (console) {
-            Console.GAMECUBE -> GameCubeStick.entries.map { it to it.label() }
-            Console.WIIMOTE_NUNCHUK -> WiimoteStick.entries.map { it to it.label() }
-            Console.SWITCH_PRO -> SwitchProTargets.sticks(side, singleJoycon).map { it to it.label() }
-        }
-        return sticks.flatMap { (stick, label) ->
+    private fun classicTargets(section: MappingSection): List<Pair<String, String>> = when (section) {
+        MappingSection.BUTTONS -> ClassicButton.entries.map { it.name to it.label() }
+        MappingSection.STICKS -> directionTargets(ClassicStick.entries.map { it to it.label() })
+        MappingSection.MOTION, MappingSection.ANDROID -> emptyList()
+    }
+
+    @Composable
+    private fun stickDirectionTargets(console: Console, side: JoyconSide, singleJoycon: Boolean): List<Pair<String, String>> =
+        directionTargets(
+            when (console) {
+                Console.GAMECUBE -> GameCubeStick.entries.map { it to it.label() }
+                Console.WIIMOTE_NUNCHUK -> WiimoteStick.entries.map { it to it.label() }
+                Console.SWITCH_PRO -> SwitchProTargets.sticks(side, singleJoycon).map { it to it.label() }
+            },
+        )
+
+    @Composable
+    private fun directionTargets(sticks: List<Pair<Enum<*>, String>>): List<Pair<String, String>> =
+        sticks.flatMap { (stick, label) ->
             StickDirection.entries.map { direction ->
                 stick.directionKey(direction) to stringResource(R.string.source_direction, label, direction.label())
             }
         }
-    }
 
     // An Android key fires on a button press, so it offers no stick directions.
     @Composable

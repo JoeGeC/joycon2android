@@ -8,6 +8,7 @@ import com.joegec.joycon2android.buttonmapping.GlobalMapping
 import com.joegec.joycon2android.buttonmapping.LayoutFamily
 import com.joegec.joycon2android.buttonmapping.MappingLayout
 import com.joegec.joycon2android.buttonmapping.SavedLayout
+import com.joegec.joycon2android.buttonmapping.preset.ClassicControllerMapping
 import com.joegec.joycon2android.buttonmapping.preset.GameCubeMapping
 import com.joegec.joycon2android.buttonmapping.preset.JoyconWiiMapping
 import com.joegec.joycon2android.buttonmapping.preset.MappingPreset
@@ -58,6 +59,7 @@ private fun nameOf(preset: MappingPreset): String = when (preset) {
     JoyconWiiMapping -> stringResource(R.string.layout_joycon)
     MarioKartWheelMapping -> stringResource(R.string.layout_mario_kart_wheel)
     MarioKartNunchukMapping -> stringResource(R.string.layout_mario_kart_nunchuk)
+    ClassicControllerMapping -> stringResource(R.string.layout_classic_controller)
     SwitchProSidewaysMapping -> stringResource(R.string.layout_pro_controller)
     SwitchProSidewaysTriggersMapping -> stringResource(R.string.layout_pro_controller_triggers)
 }
@@ -69,6 +71,7 @@ private fun descriptionOf(preset: MappingPreset): String? = when (preset) {
     JoyconWiiMapping -> stringResource(R.string.layout_joycon_description)
     MarioKartWheelMapping -> stringResource(R.string.layout_mario_kart_wheel_description)
     MarioKartNunchukMapping -> stringResource(R.string.layout_mario_kart_nunchuk_description)
+    ClassicControllerMapping -> stringResource(R.string.layout_classic_controller_description)
     SwitchProSidewaysMapping -> stringResource(R.string.layout_pro_controller_description)
     SwitchProSidewaysTriggersMapping -> stringResource(R.string.layout_pro_controller_triggers_description)
 }
