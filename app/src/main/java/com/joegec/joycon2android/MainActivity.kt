@@ -314,7 +314,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun MainScreen(onScan: () -> Unit, onOpenMapping: (MappingRoute) -> Unit, onOpenSettings: () -> Unit) {
-        val state by viewModel.uiState.collectAsState()
+        val state by viewModel.session.collectAsState()
         val gamepadStatus by gamepadViewModel.status.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
         val dsuStatus by dsuViewModel.status.collectAsState()
@@ -358,6 +358,7 @@ class MainActivity : ComponentActivity() {
 
         JoyconScreen(
             state = state,
+            liveInputs = viewModel.liveInputs,
             gamepadEnabled = gamepadStatus.enabled,
             gamepadError = gamepadStatus.error,
             dsuState = DsuCardState(

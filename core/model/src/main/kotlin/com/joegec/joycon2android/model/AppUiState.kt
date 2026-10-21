@@ -11,4 +11,15 @@ data class AppUiState(
 
     val activePlayers: List<PlayerState>
         get() = players.filter { it.hasController }
+
+    /** Every controller's input, by address. */
+    val liveInputs: Map<String, JoyconInput>
+        get() = (unassignedJoycons + players.flatMap { listOfNotNull(it.left, it.right) })
+            .associate { it.address to it.input }
+
+    /** docs/architecture.md#live-input */
+    fun withoutLiveInput(): AppUiState = copy(
+        unassignedJoycons = unassignedJoycons.map(ConnectedJoycon::withoutLiveInput),
+        players = players.map(PlayerState::withoutLiveInput),
+    )
 }

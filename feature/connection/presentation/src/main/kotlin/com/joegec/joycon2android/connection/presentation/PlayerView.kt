@@ -19,14 +19,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.connection.presentation.R
+import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun PlayerView(
     playerState: PlayerState,
+    liveInputs: StateFlow<Map<String, JoyconInput>>,
     onUnassign: (String) -> Unit,
     onRemovePlayer: () -> Unit,
     modifier: Modifier = Modifier,
@@ -54,6 +57,6 @@ fun PlayerView(
                 modifier = Modifier.size(Dimens.iconSizeSmall),
             )
         }
-        PlayerControllerLayout(playerState, onUnassign)
+        PlayerControllerLayout(playerState, liveInputs, onUnassign)
     }
 }

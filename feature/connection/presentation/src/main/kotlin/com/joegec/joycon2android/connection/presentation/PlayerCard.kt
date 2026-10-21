@@ -12,7 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.joegec.joycon2android.model.ConnectionViewMode
+import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerState
+import kotlinx.coroutines.flow.StateFlow
 
 private const val FadeOutMillis = 90
 private const val FadeInMillis = 210
@@ -21,6 +23,7 @@ private const val EnterScale = 0.92f
 @Composable
 fun PlayerCard(
     playerState: PlayerState,
+    liveInputs: StateFlow<Map<String, JoyconInput>>,
     viewMode: ConnectionViewMode,
     onUnassign: (String) -> Unit,
     onRemovePlayer: () -> Unit,
@@ -37,6 +40,7 @@ fun PlayerCard(
         when (mode) {
             ConnectionViewMode.DETAILED -> PlayerView(
                 playerState = playerState,
+                liveInputs = liveInputs,
                 onUnassign = onUnassign,
                 onRemovePlayer = onRemovePlayer,
                 modifier = detailedModifier,

@@ -155,6 +155,23 @@ One **ViewModel per feature**, in its presentation module, built in `MainActivit
 `AppUiState` (in `:core:model`) is the `SessionCoordinator`'s output — the single immutable
 snapshot the screen renders.
 
+### Live input
+
+`AppUiState` changes with every BLE packet, so `Joycon2ViewModel` hands the UI two streams instead:
+
+| Stream | Holds | Changes when |
+|---|---|---|
+| `session` | `withoutLiveInput()`: everything but sticks, buttons, motion and packet id | who holds what, connection state, battery |
+| `liveInputs` | each controller's `JoyconInput`, by address | every packet |
+
+Only `PlayerControllerLayout` (the detailed view's controller graphics) collects `liveInputs`, so a
+packet recomposes nothing else and compact view none at all. A new screen that draws input collects
+it at the leaf the same way, never `session` with input put back.
+
+`compose-stability.conf` marks `kotlin.collections` stable, so a composable taking `pressed: Set<String>`
+skips when the set is equal rather than identical — each packet builds a new one. Pass a leaf only
+what it draws (a battery row takes `BatteryCharge?`, not `JoyconInput`), or it recomposes with the IMU.
+
 ## Data & control flow
 
 ```

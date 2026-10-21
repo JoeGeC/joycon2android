@@ -14,4 +14,10 @@ data class ConnectedJoycon(
 ) {
     val accentColor: Int? get() = connectionState.accentColor
     val connectionLost: Boolean get() = connectionState.connectionLost
+
+    /** Keeps what a packet rarely changes, so the result is equal from one packet to the next. */
+    fun withoutLiveInput(): ConnectedJoycon =
+        copy(input = JoyconInput(battery = input.battery, motionSupport = input.motionSupport))
+
+    fun withLiveInput(inputs: Map<String, JoyconInput>): ConnectedJoycon = copy(input = inputs[address] ?: input)
 }

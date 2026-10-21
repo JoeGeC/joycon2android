@@ -13,6 +13,7 @@ import com.joegec.joycon2android.JoyconApplication
 import com.joegec.joycon2android.ble.BlePermissionHandler
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.ConnectionViewMode
+import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.ControllerModel
@@ -33,13 +34,20 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     private var bound = false
 
+    // Changes with every packet, so the UI reads it split: docs/architecture.md#live-input
     private val _uiState = MutableStateFlow(AppUiState())
-    val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
 
-    // Collecting uiState recomposes on every packet; the mapping editor draws no input.
-    val heldControllers: StateFlow<List<PlayerState>> = uiState
-        .map { state -> state.activePlayers.map(PlayerState::withoutInput) }
+    val session: StateFlow<AppUiState> = _uiState
+        .map(AppUiState::withoutLiveInput)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AppUiState())
+
+    val heldControllers: StateFlow<List<PlayerState>> = session
+        .map { it.activePlayers }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val liveInputs: StateFlow<Map<String, JoyconInput>> = _uiState
+        .map { it.liveInputs }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyMap())
 
     private val container: AppContainer
         get() = (getApplication<Application>() as JoyconApplication).container

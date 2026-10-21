@@ -72,6 +72,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.R
 import com.joegec.joycon2android.model.AppUiState
+import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.ControllerModel
@@ -92,6 +93,7 @@ import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextOnAccent
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -124,6 +126,7 @@ private fun Modifier.scaleLayout(scale: Float): Modifier = layout { measurable, 
 @Composable
 fun JoyconScreen(
     state: AppUiState,
+    liveInputs: StateFlow<Map<String, JoyconInput>>,
     gamepadEnabled: Boolean,
     gamepadError: String?,
     dsuState: DsuCardState,
@@ -254,7 +257,7 @@ fun JoyconScreen(
                         BatteryRestrictedBanner(batteryRestricted, onAllowBackgroundRunning)
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
-                                state, viewMode, gamepadEnabled, gamepadError, dsuState, shizukuAvailable,
+                                state, liveInputs, viewMode, gamepadEnabled, gamepadError, dsuState, shizukuAvailable,
                                 gamepadEmulators, selectedGamepadEmulator, onSelectGamepadEmulator,
                                 gamepadSetupPhase, onConfigureGamepad, onOpenGamepadMapping,
                                 onScan, onDisconnectAll, onAssign, unassignController, removePlayer, onDisconnect,
@@ -452,6 +455,7 @@ private fun SyncButtonGraphic(modifier: Modifier = Modifier) {
 @Composable
 private fun ConnectedContent(
     state: AppUiState,
+    liveInputs: StateFlow<Map<String, JoyconInput>>,
     viewMode: ConnectionViewMode,
     gamepadEnabled: Boolean,
     gamepadError: String?,
@@ -497,6 +501,7 @@ private fun ConnectedContent(
                 rowPlayers.forEach { playerState ->
                     PlayerCard(
                         playerState = playerState,
+                        liveInputs = liveInputs,
                         viewMode = viewMode,
                         onUnassign = onUnassign,
                         onRemovePlayer = { onRemovePlayer(playerState) },
@@ -511,6 +516,7 @@ private fun ConnectedContent(
         state.activePlayers.forEach { playerState ->
             PlayerCard(
                 playerState = playerState,
+                liveInputs = liveInputs,
                 viewMode = viewMode,
                 onUnassign = onUnassign,
                 onRemovePlayer = { onRemovePlayer(playerState) },

@@ -85,6 +85,11 @@ android {
     }
 }
 
+// Same as the compose convention plugin's: docs/architecture.md#live-input
+composeCompiler {
+    stabilityConfigurationFiles.add(rootProject.layout.projectDirectory.file("compose-stability.conf"))
+}
+
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:designsystem"))

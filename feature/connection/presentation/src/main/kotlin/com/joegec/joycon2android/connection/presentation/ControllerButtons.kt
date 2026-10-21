@@ -18,29 +18,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.joegec.joycon2android.model.JoyconButton
-import com.joegec.joycon2android.model.JoyconInput
+import com.joegec.joycon2android.model.BatteryCharge
 import com.joegec.joycon2android.ui.theme.Dimens
 
 @Composable
-internal fun MinusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier: Modifier = Modifier) {
+internal fun MinusBatteryRow(battery: BatteryCharge?, pressed: Set<String>, modifier: Modifier = Modifier) {
     Row(
         modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AnimatedVisibility(
-            visible = input.battery != null,
+            visible = battery != null,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            input.battery?.let { BatteryPill(it) }
+            battery?.let { BatteryPill(it) }
         }
         SmallButton(JoyconButton.Minus.label, JoyconButton.Minus.id in pressed)
     }
 }
 
 @Composable
-internal fun PlusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier: Modifier = Modifier) {
+internal fun PlusBatteryRow(battery: BatteryCharge?, pressed: Set<String>, modifier: Modifier = Modifier) {
     Row(
         modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -48,11 +48,11 @@ internal fun PlusBatteryRow(input: JoyconInput, pressed: Set<String>, modifier: 
     ) {
         SmallButton(JoyconButton.Plus.label, JoyconButton.Plus.id in pressed)
         AnimatedVisibility(
-            visible = input.battery != null,
+            visible = battery != null,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            input.battery?.let { BatteryPill(it) }
+            battery?.let { BatteryPill(it) }
         }
     }
 }

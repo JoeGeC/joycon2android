@@ -54,6 +54,7 @@ class JoyconConnection(
     )
     val connectionState: StateFlow<JoyconConnectionState> = _connectionState.asStateFlow()
 
+    private val battery = SteadyBattery()
     private val _input = MutableStateFlow(JoyconInput())
     val input: StateFlow<JoyconInput> = _input.asStateFlow()
 
@@ -149,6 +150,7 @@ class JoyconConnection(
         ops.reset()
         _connectionState.value = JoyconConnectionState()
         _input.value = JoyconInput()
+        battery.reset()
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
@@ -166,6 +168,7 @@ class JoyconConnection(
                     Log.w(TAG, "[$side] Disconnected (status=$status)")
                     endSession(g)
                     _input.value = JoyconInput()
+                    battery.reset()
                     if (!released && (everReady || awaitingReturn) && awaitReturn(status)) return
                     _connectionState.value = JoyconConnectionState(
                         deviceName = deviceName,
@@ -357,7 +360,7 @@ class JoyconConnection(
     }
 
     private fun publishInput(input: JoyconInput) {
-        _input.value = calibrator.calibrate(input)
+        _input.value = calibrator.calibrate(input).copy(battery = battery.steady(input.battery))
     }
 
     private fun applyFactoryCalibration(reply: ByteArray) {

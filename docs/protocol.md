@@ -246,6 +246,9 @@ from dekuNukem's docs) shifted down 0.6 V. Below ~3.0 V is extrapolated; no low 
 captured yet. `JoyconInput` carries the result as a `BatteryCharge` percentage, since the console
 report gives a level rather than a voltage.
 
+Above 3.30 V the gauge moves 1% per 12 mV, so each packet's percentage wobbles. `SteadyBattery`
+holds the shown charge until a reading is 5% away, so the UI redraws only on a real change.
+
 ## Stick range and centre
 
 The raw 12-bit sticks neither span `0x000..0xFFF` nor rest at the midpoint, and both vary per

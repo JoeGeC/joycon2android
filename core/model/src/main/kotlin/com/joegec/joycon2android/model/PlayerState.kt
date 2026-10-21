@@ -34,7 +34,8 @@ data class PlayerState(
 
     val gamepad: GamepadState get() = GamepadState.from(this)
 
-    /** Equal from one packet to the next, for screens that show who holds what but no input. */
-    fun withoutInput(): PlayerState =
-        copy(left = left?.copy(input = JoyconInput()), right = right?.copy(input = JoyconInput()))
+    fun withoutLiveInput(): PlayerState = copy(left = left?.withoutLiveInput(), right = right?.withoutLiveInput())
+
+    fun withLiveInput(inputs: Map<String, JoyconInput>): PlayerState =
+        copy(left = left?.withLiveInput(inputs), right = right?.withLiveInput(inputs))
 }

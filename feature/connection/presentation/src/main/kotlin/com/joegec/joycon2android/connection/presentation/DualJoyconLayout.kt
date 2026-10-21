@@ -41,7 +41,7 @@ private fun LeftJoyconVertical(
     ) {
         ShoulderButton(JoyconButton.ZL.label, JoyconButton.ZL.id in pressed, Modifier.fillMaxWidth())
         ShoulderButton(JoyconButton.L.label, JoyconButton.L.id in pressed, Modifier.fillMaxWidth())
-        MinusBatteryRow(state.leftInput, pressed)
+        MinusBatteryRow(state.leftInput.battery, pressed)
         StickCard(state.leftStickX, state.leftStickY, JoyconButton.LS.id in pressed)
         DPad(pressed)
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
@@ -67,7 +67,7 @@ private fun RightJoyconVertical(
     ) {
         ShoulderButton(JoyconButton.ZR.label, JoyconButton.ZR.id in pressed, Modifier.fillMaxWidth())
         ShoulderButton(JoyconButton.R.label, JoyconButton.R.id in pressed, Modifier.fillMaxWidth())
-        PlusBatteryRow(state.rightInput, pressed)
+        PlusBatteryRow(state.rightInput.battery, pressed)
         FaceButtons(pressed)
         StickCard(state.rightStickX, state.rightStickY, JoyconButton.RS.id in pressed)
         HomeButtonRow(pressed)
