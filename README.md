@@ -1,7 +1,7 @@
 # Joycon2Android
 
 [![Latest release](https://img.shields.io/github/v/release/JoeGeC/joycon2android)](../../releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/JoeGeC/joycon2android/total)](../../releases)
+[![Downloads](https://img.shields.io/github/downloads/JoeGeC/joycon2android/total?cacheSeconds=3600)](../../releases)
 [![Android 7.0+](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](#what-you-need)
 [![License: GPL-3.0](https://img.shields.io/github/license/JoeGeC/joycon2android)](LICENSE)
 [![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/joestechprojects)
