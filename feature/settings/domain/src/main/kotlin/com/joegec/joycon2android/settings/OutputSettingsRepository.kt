@@ -6,4 +6,5 @@ interface OutputSettingsRepository {
     val settings: Flow<OutputSettings>
     suspend fun setFasterUpdates(enabled: Boolean)
     suspend fun setBlockDeviceMotion(enabled: Boolean)
+    suspend fun setMouse(enabled: Boolean)
 }

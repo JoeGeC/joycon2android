@@ -97,6 +97,7 @@ class MainActivity : ComponentActivity() {
                     c.observeOutputSettings,
                     c.setFasterUpdates,
                     c.setBlockDeviceMotion,
+                    c.setMouse,
                     c.observeShowTips,
                     c.setShowTips,
                     c.observeLaunchOnMainScreen,
@@ -295,7 +296,7 @@ class MainActivity : ComponentActivity() {
                     state = SettingsPanelState(
                         viewMode,
                         outputSettings,
-                        deviceMotionBlockAvailable = shizukuAvailable,
+                        shizukuAvailable = shizukuAvailable,
                         showTips = showTips,
                         mainScreenLaunchAvailable = mainScreenLaunchAvailable,
                         launchOnMainScreen = launchOnMainScreen,
@@ -303,6 +304,7 @@ class MainActivity : ComponentActivity() {
                     onViewModeChange = viewModel::setViewMode,
                     onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
                     onBlockDeviceMotionToggle = settingsViewModel::toggleBlockDeviceMotion,
+                    onMouseToggle = settingsViewModel::toggleMouse,
                     onShowTipsToggle = settingsViewModel::toggleShowTips,
                     onLaunchOnMainScreenToggle = settingsViewModel::toggleLaunchOnMainScreen,
                 )

@@ -21,6 +21,7 @@ fun SettingsPanel(
     onViewModeChange: (ConnectionViewMode) -> Unit,
     onFasterUpdatesToggle: (Boolean) -> Unit,
     onBlockDeviceMotionToggle: (Boolean) -> Unit,
+    onMouseToggle: (Boolean) -> Unit,
     onShowTipsToggle: (Boolean) -> Unit,
     onLaunchOnMainScreenToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -76,9 +77,22 @@ fun SettingsPanel(
                 checked = state.outputSettings.blockDeviceMotion,
                 onCheckedChange = onBlockDeviceMotionToggle,
                 titleStyle = MaterialTheme.typography.titleMedium,
-                warning = if (state.deviceMotionBlockAvailable) null
-                else stringResource(R.string.settings_block_device_motion_needs_shizuku),
+                warning = shizukuWarning(state),
+            )
+        }
+        SettingsSection {
+            SettingSwitch(
+                title = stringResource(R.string.settings_mouse_title),
+                description = stringResource(R.string.settings_mouse_description),
+                checked = state.outputSettings.mouse,
+                onCheckedChange = onMouseToggle,
+                titleStyle = MaterialTheme.typography.titleMedium,
+                warning = shizukuWarning(state),
             )
         }
     }
 }
+
+@Composable
+private fun shizukuWarning(state: SettingsPanelState): String? =
+    if (state.shizukuAvailable) null else stringResource(R.string.settings_needs_shizuku)

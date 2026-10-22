@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.connection
 
 import com.joegec.joycon2android.model.JoyconButton
+import com.joegec.joycon2android.model.MouseSensor
 import com.joegec.joycon2android.model.Side
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -81,5 +82,21 @@ class PacketParserTest {
         val input = PacketParser.parse(ByteArray(0x3C), Side.PRO)!!
         assertEquals(0, input.triggerLeft)
         assertEquals(0, input.triggerRight)
+    }
+
+    @Test
+    fun `a joy-con decodes its mouse counters and distance as int16`() {
+        val data = ByteArray(63).apply {
+            this[0x10] = 0x34; this[0x11] = 0x12       // X 0x1234
+            this[0x12] = 0xFE.toByte(); this[0x13] = 0xFF.toByte() // Y -2
+            this[0x16] = 0x96.toByte(); this[0x17] = 0x00 // distance 150
+        }
+
+        assertEquals(MouseSensor(x = 0x1234, y = -2, distance = 150), PacketParser.parse(data, Side.RIGHT)!!.mouse)
+    }
+
+    @Test
+    fun `a pro controller has no mouse`() {
+        assertNull(PacketParser.parse(ByteArray(63), Side.PRO)!!.mouse)
     }
 }

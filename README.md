@@ -24,6 +24,7 @@ as an ordinary gamepad.
   for players 1–4.
 - **One-tap emulator setup** — writes controller and motion bindings for Eden and Dolphin.
 - **Custom button mapping** — choose which button drives which emulator button, per console.
+- **Joy-Con mouse** — stand a Joy-Con 2 on its rail on a desk and it moves Android's pointer.
 - **Live readout** of buttons, sticks, motion and battery, with each card in the controller's real
   shell colour.
 - **Third-party clones** — controllers that speak the console's protocol instead, tested with the
@@ -95,9 +96,14 @@ The gear at the top right opens the settings panel:
   when the app offers to start the emulator after setup, it opens on the main screen instead of the
   one this app is on.
 - **Faster controller updates** (on by default) — Joy-Cons send input about twice as often, for
-  smoother motion and quicker buttons, at a battery cost. Applies while the virtual gamepad or DSU is on.
+  smoother motion and quicker buttons, at a battery cost. Applies while the virtual gamepad, DSU or
+  Joy-Con mouse is on.
 - **Ignore this device's motion in Eden** (on by default, needs Shizuku) — stops Eden mixing this
   device's gyro into Player 1. Lifted when the virtual gamepad and DSU are both off.
+- **Joy-Con mouse** (off by default, needs Shizuku) — stand a Joy-Con 2 on its rail on a flat
+  surface and it moves Android's pointer: L or R clicks, ZL or ZR right-clicks, the stick scrolls.
+  While it rests there those buttons and the stick never reach the game; lift it and they do again.
+  Works with or without the virtual gamepad, and not on Pro, GameCube or third-party controllers.
 
 ### 5. Set up your emulator
 
@@ -276,6 +282,7 @@ shoulder buttons its body lacks.
 | Emulator won't detect DSU presses | Pick inputs from the list — detection never sees DSU — with the virtual gamepad off |
 | Motion aiming stutters | Settings (gear, top right): keep **Ignore this device's motion in Eden** and **Faster controller updates** on |
 | Tilting the device moves the aim in Eden | Turn on **Ignore this device's motion in Eden** |
+| Joy-Con mouse doesn't move the pointer | Stand the Joy-Con on its rail, not its back, on a flat, non-glossy surface; check `adb shell getevent -p` lists "Joy-Con Virtual Mouse" |
 | Pointer drifts or starts off-screen | Rest the controller for ~2 s, then press Recenter |
 | Sticks feel twitchy in Dolphin (hard to walk or aim) | Tap **Set up** for Dolphin again. A Pro Controller: map it in Dolphin first, then tap **Set up** once to add the calibration |
 | MotionPlus tutorial replays every boot (Dolphin) | Set `MPLS.MOVIE` in `Wii/shared2/sys/SYSCONF` with Dolphin closed ([why](docs/dsu-motion.md#motionplus-tutorial-replays)) |

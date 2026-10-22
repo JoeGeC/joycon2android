@@ -14,12 +14,36 @@ The app creates gamepads through Linux's UHID (user-space HID) interface:
 - **`ReportMapper`** — turns a `PlayerState` into a HID input report.
 - **`GamepadManager`** — owns one relay per player and drives reports at input rate.
 
-The device uses `BUS_USB` with generic IDs `0x1234:0x5678` so the kernel's `hid-generic` driver
+The device uses `BUS_USB` with generic IDs `0x1234:0x5678` (the [mouse](#mouse) `0x1234:0x5679`) so the kernel's `hid-generic` driver
 binds it. Nintendo's IDs would let `hid-nintendo` claim it and reject it.
 
 Each assigned player gets its own device, `Joy-Con Virtual Gamepad <N>`, named by player number.
 Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the third pad,
 `Android/3/Joy-Con Virtual Gamepad 4` ([Device identity](#device-identity)).
+
+## Mouse
+
+The **Joy-Con mouse** setting adds one more UHID device, `Joy-Con Virtual Mouse`, shared by every
+Joy-Con 2. `MousePolicy` keeps it up while the setting is on and Shizuku is running, independent of
+the gamepad and DSU. A Joy-Con drives it while its distance reading says it rests on a surface
+([sensor](protocol.md#mouse-0x100x17)); lifted, it is a plain controller again.
+
+| Input | Mouse | Notes |
+|---|---|---|
+| X/Y counters | REL_X / REL_Y, one count a unit | the change since the last report, int16-wrapped; +Y is towards the player, down the screen |
+| L, R | primary button | |
+| ZL, ZR | secondary button | |
+| Stick Y | wheel | rate set by tilt, up to 20 detents/s past a 25% dead zone, timed by the packet clock |
+
+- **A separate device, not a collection on the pad.** Pointer axes on the gamepad's evdev node would
+  have Android class it as a mouse too.
+- **What the mouse spends, the game never sees.** `MouseRouter` runs before `AndroidKeyRouter` and
+  takes L/ZL/R/ZR and the stick off a Joy-Con on a surface, for both outputs.
+- **Movement is summed, never conflated.** A pad report replaces the last; a mouse delta skipped is
+  lost, so `PendingMouseFrame` adds deltas up until the relay writes.
+- Only `PacketParser` (Joy-Con 2, `Side.LEFT`/`RIGHT`) fills the sensor; Pro, GameCube and
+  console-protocol controllers have none.
+- **Faster controller updates** counts the mouse as an output, doubling its report rate.
 
 ## Report layout
 

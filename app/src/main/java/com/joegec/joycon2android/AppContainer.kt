@@ -88,6 +88,7 @@ import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.settings.SetDeviceMotionBlockedUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
 import com.joegec.joycon2android.settings.SetLaunchOnMainScreenUseCase
+import com.joegec.joycon2android.settings.SetMouseUseCase
 import com.joegec.joycon2android.settings.SetShowTipsUseCase
 import com.joegec.joycon2android.settings.TipsDataStore
 import com.joegec.joycon2android.settings.TipsRepository
@@ -103,6 +104,11 @@ import com.joegec.joycon2android.gamepad.OnPlayerAssignedUseCase
 import com.joegec.joycon2android.gamepad.OnPlayerUnassignedUseCase
 import com.joegec.joycon2android.gamepad.privileged.PrivilegedAccess
 import com.joegec.joycon2android.gamepad.PushGamepadStateUseCase
+import com.joegec.joycon2android.gamepad.mouse.MouseOutput
+import com.joegec.joycon2android.gamepad.mouse.MouseRepository
+import com.joegec.joycon2android.gamepad.mouse.PushMouseFrameUseCase
+import com.joegec.joycon2android.gamepad.mouse.SetMouseEnabledUseCase
+import com.joegec.joycon2android.mouse.MouseRouter
 import com.joegec.joycon2android.update.ApkDownloader
 import com.joegec.joycon2android.update.ApkUpdateInstaller
 import com.joegec.joycon2android.update.CheckForUpdateUseCase
@@ -213,6 +219,7 @@ class AppContainer(context: Context) {
     val observeOutputSettings = ObserveOutputSettingsUseCase(outputSettings)
     val setFasterUpdates = SetFasterUpdatesUseCase(outputSettings)
     val setBlockDeviceMotion = SetBlockDeviceMotionUseCase(outputSettings)
+    val setMouse = SetMouseUseCase(outputSettings)
 
     // --- Assignment ---
     val assignmentRepository: AssignmentRepository = PlayerAssignmentManager()
@@ -230,6 +237,10 @@ class AppContainer(context: Context) {
     val observeGamepadStatus = ObserveGamepadStatusUseCase(gamepadRepository)
 
     val observeShizukuAvailability = ObserveShizukuAvailabilityUseCase(privilegedAccess)
+
+    // --- Mouse ---
+    private val mouseRepository: MouseRepository = MouseOutput(scope, appContext, privilegedAccess::acquire)
+    private val mouseRouter = MouseRouter(mouseRepository.enabled, PushMouseFrameUseCase(mouseRepository)::invoke)
 
     val emulatorSetup = EmulatorSetup(
         appContext.packageManager,
@@ -293,7 +304,7 @@ class AppContainer(context: Context) {
         comboDetector = ComboAssignmentDetector(),
         onState = { state ->
             activeBodies.value = state.activePlayers.mapNotNull { it.body() }
-            val routed = androidKeyRouter.route(state)
+            val routed = androidKeyRouter.route(mouseRouter.route(state))
             pushGamepadState(
                 routed.gamepad.map { it.copy(state = edenSingleJoycons.markedFor(gamepadConsole.value, it.state)) },
             )
@@ -309,7 +320,7 @@ class AppContainer(context: Context) {
 
     private val fasterUpdatesPolicy = FasterUpdatesPolicy(
         scope = scope,
-        outputActive = outputActive,
+        outputActive = combine(outputActive, mouseRepository.enabled) { output, mouse -> output || mouse },
         fasterUpdates = observeOutputSettings().map { it.fasterUpdates },
         setHighConnectionPriority = setHighConnectionPriority,
     ).also { it.start() }
@@ -320,6 +331,13 @@ class AppContainer(context: Context) {
         blockDeviceMotion = observeOutputSettings().map { it.blockDeviceMotion },
         privilegedShellAvailable = observeShizukuAvailability(),
         setDeviceMotionBlocked = SetDeviceMotionBlockedUseCase(EdenDeviceMotionBlocker(privilegedAccess::readyShell)),
+    ).also { it.start() }
+
+    private val mousePolicy = MousePolicy(
+        scope = scope,
+        mouseSetting = observeOutputSettings().map { it.mouse },
+        privilegedShellAvailable = observeShizukuAvailability(),
+        setMouseEnabled = SetMouseEnabledUseCase(mouseRepository),
     ).also { it.start() }
 
     val observeSession = ObserveSessionUseCase(sessionCoordinator)
