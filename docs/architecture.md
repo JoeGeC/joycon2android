@@ -84,10 +84,11 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
   `MappingLayouts.matching` reads the name back by comparing a body's bindings with every shipped
   layout and every one the user saved for that body; no match is "Custom". So deleting a layout
   removes only its name, and the same bindings answer to it again if an identical one is saved.
-- **Android and keyboard keys are mapping targets too** (`ANDROID_HOME`, `KEYBOARD_W`, …), so layouts
-  save them and a grip switch keeps them (`DEVICE_KEY_TARGETS`). They act in the app rather than the
-  emulator, parsed into `KeyBindings`: `AndroidKeyRouter` and `KeyboardKeyRouter` sit between the
-  coordinator and both outputs ([how](virtual-gamepad.md#android-keys)).
+- **Android keys, keyboard keys and mouse actions are mapping targets too** (`ANDROID_HOME`,
+  `KEYBOARD_W`, `MOUSE_LEFT_CLICK`, …), so layouts save them and a grip switch keeps them
+  (`DEVICE_KEY_TARGETS`). They act in the app rather than the emulator, parsed into `KeyBindings`:
+  `AndroidKeyRouter` and a `HeldKeyRouter` per kind sit between the coordinator and both outputs
+  ([how](virtual-gamepad.md#android-keys)).
 - **So is Eden's Pro Controller switch** for a lone Joy-Con (`PRO_CONTROLLER`), so layouts carry the
   grip with its bindings ([how](virtual-gamepad.md#single-joy-con)).
 - **And the Wii's Classic Controller** (`CLASSIC_CONTROLLER`), set by its layout
@@ -181,10 +182,11 @@ BLE notify ─→ Joycon2Manager (connection/data, ControllerRepository)
                    ▼
             SessionCoordinator (core/session) ── combines connections + assignments
                    │  onState(state)
-                   ├─→ MouseRouter (claims Joy-Cons on a surface) ─→ PushMouseFrameUseCase ─→ MouseOutput ─→ UHID relay
+                   ├─→ MouseRouter (pointer from Joy-Cons on a surface; default clicks if unmapped) ─→ MouseMix
                    │      └─→ AndroidKeyRouter (withholds Android-key buttons; keys the pad lacks ─→ keyboard, else shell)
-                   │             └─→ KeyboardKeyRouter (withholds keyboard-key buttons)
+                   │             └─→ HeldKeyRouter × 2 (keyboard keys, mouse actions; withholds their sources)
                    │                    ├─→ PushKeyboardFrameUseCase ─→ KeyboardOutput ─→ UHID relay
+                   │                    ├─→ MouseMix ─→ PushMouseFrameUseCase ─→ MouseOutput ─→ UHID relay
                    │                    ├─→ PushGamepadStateUseCase  ─→ GamepadOutput  ─→ UHID relay ─→ /dev/uhid
                    │                    └─→ PushDsuPadDataUseCase    ─→ DsuServer     ─→ UDP :26760 ─→ emulators
                    └─→ ObserveSessionUseCase   ─→ Joycon2ViewModel ─→ AppUiState ─→ Compose

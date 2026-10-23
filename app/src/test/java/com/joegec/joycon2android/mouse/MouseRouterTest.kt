@@ -20,7 +20,8 @@ class MouseRouterTest {
 
     private val enabled = MutableStateFlow(true)
     private val pushed = mutableListOf<MouseFrame>()
-    private val router = MouseRouter(enabled) { pushed += it }
+    private val mapped = mutableSetOf<PlayerNumber>()
+    private val router = MouseRouter(enabled, { it in mapped }) { pushed += it }
 
     private fun joycon(address: String, side: Side, x: Int, distance: Int, vararg pressed: JoyconButton) =
         ConnectedJoycon(
@@ -80,6 +81,16 @@ class MouseRouterTest {
 
         assertSame(state, router.route(state))
         assertTrue(pushed.isEmpty())
+    }
+
+    @Test
+    fun `a player who maps the mouse moves the pointer but clicks only through the mapping`() {
+        mapped += PlayerNumber.P1
+        router.route(pair(rightX = 100))
+        val routed = router.route(pair(rightX = 130))
+
+        assertEquals(MouseFrame(dx = 30), pushed.last())
+        assertEquals(setOf(JoyconButton.R.id), routed.players.single().right!!.input.pressed)
     }
 
     private companion object {

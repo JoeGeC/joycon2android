@@ -125,6 +125,15 @@ class JoyconMouseTest {
         assertNull(right.read(input(accelX = RAIL_DOWN_LEFT)))
     }
 
+    @Test
+    fun `without its default controls it only moves the pointer`() {
+        mouse.read(input(x = 100, packetId = 0, stickY = 4095))
+
+        val frame = mouse.read(input(x = 120, packetId = 100, stickY = 4095, pressed = arrayOf(JoyconButton.R)), defaultControls = false)
+
+        assertEquals(MouseFrame(dx = 20), frame)
+    }
+
     private companion object {
         const val RAIL_DOWN_LEFT = -4096
     }

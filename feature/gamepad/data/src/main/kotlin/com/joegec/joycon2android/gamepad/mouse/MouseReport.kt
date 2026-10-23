@@ -5,7 +5,7 @@ object MouseReport {
 
     private const val SIZE = 6
 
-    private val BUTTON_BITS = mapOf(MouseButton.PRIMARY to 0, MouseButton.SECONDARY to 1)
+    private val BUTTON_BITS = mapOf(MouseButton.PRIMARY to 0, MouseButton.SECONDARY to 1, MouseButton.MIDDLE to 2)
 
     fun build(frame: MouseFrame): ByteArray {
         val report = ByteArray(SIZE)

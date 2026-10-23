@@ -17,6 +17,7 @@ import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.AndroidKey
+import com.joegec.joycon2android.model.MouseAction
 
 @Composable
 internal fun Console.label(): String = when (this) {
@@ -161,6 +162,7 @@ internal fun MappingSection.label(): String = when (this) {
     MappingSection.MOTION -> stringResource(R.string.section_motion)
     MappingSection.ANDROID -> stringResource(R.string.section_android)
     MappingSection.KEYBOARD -> stringResource(R.string.section_keyboard)
+    MappingSection.MOUSE -> stringResource(R.string.section_mouse)
 }
 
 @Composable
@@ -168,4 +170,13 @@ internal fun AndroidKey.label(): String = when (this) {
     AndroidKey.HOME -> stringResource(R.string.android_key_home)
     AndroidKey.BACK -> stringResource(R.string.android_key_back)
     AndroidKey.SCREENSHOT -> stringResource(R.string.android_key_screenshot)
+}
+
+@Composable
+internal fun MouseAction.label(): String = when (this) {
+    MouseAction.LEFT_CLICK -> stringResource(R.string.mouse_left_click)
+    MouseAction.RIGHT_CLICK -> stringResource(R.string.mouse_right_click)
+    MouseAction.MIDDLE_CLICK -> stringResource(R.string.mouse_middle_click)
+    MouseAction.SCROLL_UP -> stringResource(R.string.mouse_scroll_up)
+    MouseAction.SCROLL_DOWN -> stringResource(R.string.mouse_scroll_down)
 }

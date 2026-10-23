@@ -22,8 +22,8 @@ fun MappingBindings(
             when {
                 targets.isEmpty() -> Unit
                 section == MappingSection.KEYBOARD ->
-                    KeyboardBindingSection(targets, state, actions, warnings.keyboardNeedsShizuku)
-                else -> BindingSection(section, targets, state, actions, warnings.androidNeedsShizuku)
+                    KeyboardBindingSection(targets, state, actions, warnings.keyboardAndMouseNeedShizuku)
+                else -> BindingSection(section, targets, state, actions, shizukuWarning(section, warnings))
             }
         }
     }
@@ -35,14 +35,19 @@ private fun BindingSection(
     targets: List<Pair<String, String>>,
     state: PlayerMappingUiState,
     actions: MappingActions,
-    androidKeysNeedShizuku: Boolean,
+    shizukuWarning: String?,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
         SectionHeader(section)
-        if (section == MappingSection.ANDROID && androidKeysNeedShizuku) {
-            SettingWarning(stringResource(R.string.android_keys_need_shizuku))
-        }
+        shizukuWarning?.let { SettingWarning(it) }
         val sources = MappingOptions.sources(state.body.side, section)
         targets.forEach { (key, label) -> BindingRow(label, key, sources, state, actions) }
     }
+}
+
+@Composable
+private fun shizukuWarning(section: MappingSection, warnings: DeviceKeyWarnings): String? = when {
+    section == MappingSection.ANDROID && warnings.androidNeedsShizuku -> stringResource(R.string.android_keys_need_shizuku)
+    section == MappingSection.MOUSE && warnings.keyboardAndMouseNeedShizuku -> stringResource(R.string.mouse_needs_shizuku)
+    else -> null
 }

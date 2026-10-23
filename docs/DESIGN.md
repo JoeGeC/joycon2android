@@ -117,6 +117,7 @@ In `JoyconScreen.kt`:
 - **Keyboard lists only the keys in use.** Bound keys, then an "Add a key" `OptionDropdown` of the
   rest; a key added but left on None is gone next visit. Sixty rows of None would bury the few that
   matter. A bound letter adds a `SettingWarning` that the on-screen keyboard hides.
+- **Mouse is five plain rows**, like Android: few enough to show whole.
 
 ### Landscape
 

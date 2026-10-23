@@ -23,31 +23,43 @@ Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the 
 
 ## Mouse
 
-The **Joy-Con mouse** setting adds one more UHID device, `Joy-Con Virtual Mouse`, shared by every
-Joy-Con 2. `PrivilegedDevicePolicy` keeps it up while the setting is on and Shizuku is running, independent of
-the gamepad and DSU. A Joy-Con drives it while its distance reading says it rests on a surface
-([sensor](protocol.md#mouse-0x100x17)) **and** it stands on its rail; lifted, it is a plain
-controller again.
+`Joy-Con Virtual Mouse` is one UHID device, shared by every player, with three buttons and a wheel.
+`PrivilegedDevicePolicy` keeps it up while Shizuku runs and either the **Joy-Con mouse** setting is
+on (independent of the gamepad and DSU) or an output runs with a mouse action mapped.
+
+**One mouse, two inputs to it.** Clicks and scroll come from each player's **Mouse** mapping, held
+or not. With the setting on, a Joy-Con 2 standing on a surface also moves the pointer. A player whose
+mapping binds no mouse action gets default clicks and scroll on a Joy-Con on the surface instead:
+
+| Input | Mouse | Notes |
+|---|---|---|
+| X/Y counters | REL_X / REL_Y, one count a unit | always; the change since the last report, int16-wrapped; +Y is towards the player, down the screen |
+| L, R | primary button | default |
+| ZL, ZR | secondary button | default |
+| Stick Y | wheel | default; rate set by tilt, up to 20 detents/s past a 25% dead zone, timed by the packet clock |
+
+**On a surface** means the distance reading says so ([sensor](protocol.md#mouse-0x100x17)) **and**
+the Joy-Con stands on its rail; lifted, it is a plain controller again.
 
 - **Distance alone mistakes a hand for a desk.** AYN Thor, 2026-10-23, a pair held to play: fingers
   round the rail read as a surface in 1–2 s bursts, moving the pointer and taking the stick for the
   wheel. So `JoyconMouse` also wants raw accel x, which reads +1 g on whichever axis points up, at
   ≥ 0.71 g away from the rail (−x on a left Joy-Con, +x on a right): within 45° of rail-down. A
   grip leaves x level, and a sideways hold turns the rail up.
-
-| Input | Mouse | Notes |
-|---|---|---|
-| X/Y counters | REL_X / REL_Y, one count a unit | the change since the last report, int16-wrapped; +Y is towards the player, down the screen |
-| L, R | primary button | |
-| ZL, ZR | secondary button | |
-| Stick Y | wheel | rate set by tilt, up to 20 detents/s past a 25% dead zone, timed by the packet clock |
-
-- **A separate device, not a collection on the pad.** Pointer axes on the gamepad's evdev node would
-  have Android class it as a mouse too.
-- **What the mouse spends, the game never sees.** `MouseRouter` runs before `AndroidKeyRouter` and
-  takes L/ZL/R/ZR and the stick off a Joy-Con on a surface, for both outputs.
+- **The mapping replaces the defaults whole**, not per button, once it binds any mouse action on a
+  running output. Two sets of clicks on one Joy-Con would fight.
+- **What the mouse spends, the game never sees.** The defaults are withheld by `MouseRouter`, before
+  `AndroidKeyRouter`; mapped actions by their `HeldKeyRouter`, like [keyboard keys](#keyboard).
+- **One report a packet.** A report's buttons replace the last's, so `MouseMix` adds the mapped
+  frame to the surface Joy-Cons' before pushing.
 - **Movement is summed, never conflated.** A pad report replaces the last; a mouse delta skipped is
   lost, so `PendingMouseFrame` adds deltas up until the relay writes.
+- **A mapped scroll steps once on press, then every 100 ms while held** (`MappedMouse`, by uptime),
+  whatever a stick's tilt.
+- **A click lands where the pointer is.** Games that capture the mouse (most PC games under
+  Winlator) read the clicks alone.
+- **A separate device, not a collection on the pad.** Pointer axes on the gamepad's evdev node would
+  have Android class it as a mouse too.
 - Only `PacketParser` (Joy-Con 2, `Side.LEFT`/`RIGHT`) fills the sensor; Pro, GameCube and
   console-protocol controllers have none.
 - **Faster controller updates** counts the mouse as an output, doubling its report rate.
@@ -69,8 +81,9 @@ gamepad or DSU is on (`PrivilegedDevicePolicy`). It carries the mapping's **Keyb
   devices when `KeyboardDeclarationPolicy` reports the change.
 - **Keys are positions.** `KeyboardUsages` sends HID usages, which Android reads through the system
   layout, so on AZERTY the `Q` binding types `A`.
-- **Buttons and stick directions, withheld like Android keys.** `KeyboardKeyRouter` runs after
-  `AndroidKeyRouter`, each output withholding what its own console's mapping binds.
+- **Buttons and stick directions, withheld like Android keys.** `HeldKeyRouter` runs after
+  `AndroidKeyRouter`, each output withholding what its own console's mapping binds. It reads what is
+  held from the state before any key withholding, so one button bound to Home and Enter fires both.
 - **A stick key presses at half tilt and releases below 35%**, so one resting near the threshold
   doesn't chatter. Diagonals hold both keys.
 - **A bound direction is cut at centre for the game**, its opposite passed through, so binding only

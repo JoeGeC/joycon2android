@@ -24,7 +24,7 @@ as an ordinary gamepad.
   for players 1–4.
 - **One-tap emulator setup** — writes controller and motion bindings for Eden and Dolphin.
 - **Custom button mapping** — choose which button drives which emulator button, per console, or a
-  keyboard key or Android's Home, Back and Screenshot.
+  keyboard key, a mouse click or scroll, or Android's Home, Back and Screenshot.
 - **Joy-Con mouse** — stand a Joy-Con 2 on its rail on a desk and it moves Android's pointer.
 - **Live readout** of buttons, sticks, motion and battery, with each card in the controller's real
   shell colour.
@@ -102,9 +102,10 @@ The gear at the top right opens the settings panel:
 - **Ignore this device's motion in Eden** (on by default, needs Shizuku) — stops Eden mixing this
   device's gyro into Player 1. Lifted when the virtual gamepad and DSU are both off.
 - **Joy-Con mouse** (off by default, needs Shizuku) — stand a Joy-Con 2 on its rail on a flat
-  surface and it moves Android's pointer: L or R clicks, ZL or ZR right-clicks, the stick scrolls.
-  While it rests there those buttons and the stick never reach the game; lift it and they do again.
-  Works with or without the virtual gamepad, and not on Pro, GameCube or third-party controllers.
+  surface and it moves Android's pointer. It clicks and scrolls with the player's **Mouse** mapping;
+  with none, L or R clicks, ZL or ZR right-clicks and the stick scrolls, and while it rests there
+  those never reach the game. Works with or without the virtual gamepad, and not on Pro, GameCube or
+  third-party controllers.
 
 ### 5. Set up your emulator
 
@@ -144,6 +145,10 @@ target can take **several sources** — tick as many as you like, and any of the
   a keyboard; the stick on W, A, S and D walks. A stick presses its key at half tilt. Like Android
   keys it never reaches the game, and it needs Shizuku running. While a letter is bound,
   Android hides the on-screen keyboard; tap **None** on the letter to bring it back.
+- **Mouse.** Left, right and middle click, and scroll up and down, from a button or stick direction
+  — for PC games that want a click or the wheel. A held scroll repeats. Works held, and on a Joy-Con
+  standing on the desk as a mouse (**Joy-Con mouse** in settings), replacing its default clicks.
+  Needs Shizuku running.
 - **Pro Controller.** On Eden, a lone Joy-Con also gets this switch, off by default. Off, Eden sees
   a real left or right Joy-Con and the game handles the grip and motion itself, which games such as
   Super Mario Party Jamboree's motion games need; you map its own buttons, plus SL and SR. If a game

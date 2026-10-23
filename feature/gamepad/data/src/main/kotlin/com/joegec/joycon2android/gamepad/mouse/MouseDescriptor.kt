@@ -21,13 +21,13 @@ object MouseDescriptor {
 
             0x05, 0x09,               //     Usage Page (Button)
             0x19, 0x01,               //     Usage Minimum (Button 1)
-            0x29, 0x02,               //     Usage Maximum (Button 2)
+            0x29, 0x03,               //     Usage Maximum (Button 3)
             0x15, 0x00,               //     Logical Minimum (0)
             0x25, 0x01,               //     Logical Maximum (1)
             0x75, 0x01,               //     Report Size (1)
-            0x95.toByte(), 0x02,      //     Report Count (2)
+            0x95.toByte(), 0x03,      //     Report Count (3)
             0x81.toByte(), 0x02,      //     Input (Data, Var, Abs)
-            0x75, 0x06,               //     Report Size (6) - padding
+            0x75, 0x05,               //     Report Size (5) - padding
             0x95.toByte(), 0x01,      //     Report Count (1)
             0x81.toByte(), 0x03,      //     Input (Const, Var, Abs)
 

@@ -13,14 +13,17 @@ class JoyconMouse(private val side: Side) {
     private var lastPacketId: Int? = null
     private var wheelDetents = 0f
 
-    /** Null while the Joy-Con is lifted, held, or has no mouse sensor. */
-    fun read(input: JoyconInput): MouseFrame? {
+    /**
+     * Null while the Joy-Con is lifted, held, or has no mouse sensor. [defaultControls] adds the
+     * fixed clicks and scroll, for a player whose mapping has none of its own.
+     */
+    fun read(input: JoyconInput, defaultControls: Boolean = true): MouseFrame? {
         val sensor = input.mouse?.takeIf { it.onSurface && standsOnRail(input) } ?: return null.also { forget() }
         val frame = MouseFrame(
             dx = sensor.x.since(lastX),
             dy = sensor.y.since(lastY),
-            wheel = wheel(input),
-            buttons = buttons(input.pressed),
+            wheel = if (defaultControls) wheel(input) else 0.also { wheelDetents = 0f },
+            buttons = if (defaultControls) buttons(input.pressed) else emptySet(),
         )
         lastX = sensor.x
         lastY = sensor.y

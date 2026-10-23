@@ -18,4 +18,9 @@ class MouseReportTest {
 
         assertArrayEquals(byteArrayOf(0x01, 0xFF.toByte(), 0x7F, 0x00, 0x00, 0x7F), report)
     }
+
+    @Test
+    fun `the middle button is the third bit`() {
+        assertArrayEquals(byteArrayOf(0x04, 0, 0, 0, 0, 0), MouseReport.build(MouseFrame(buttons = setOf(MouseButton.MIDDLE))))
+    }
 }

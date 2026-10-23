@@ -1,6 +1,7 @@
 package com.joegec.joycon2android
 
 import android.content.Context
+import android.os.SystemClock
 import com.joegec.joycon2android.connection.ConnectionPriorityRepository
 import com.joegec.joycon2android.connection.ControllerRepository
 import com.joegec.joycon2android.connection.ControllerTypePreferencesDataStore
@@ -14,7 +15,7 @@ import com.joegec.joycon2android.connection.StopScanUseCase
 import com.joegec.joycon2android.connection.ViewModePreferences
 import com.joegec.joycon2android.connection.ViewModePreferencesDataStore
 import com.joegec.joycon2android.androidkeys.AndroidKeyRouter
-import com.joegec.joycon2android.androidkeys.KeyboardKeyRouter
+import com.joegec.joycon2android.androidkeys.HeldKeyRouter
 import com.joegec.joycon2android.androidkeys.OutputBindings
 import com.joegec.joycon2android.androidkeys.ShellAndroidKeyPresser
 import com.joegec.joycon2android.buttonmapping.ApplyGlobalLayoutUseCase
@@ -23,6 +24,7 @@ import com.joegec.joycon2android.buttonmapping.KeyBindings
 import com.joegec.joycon2android.buttonmapping.ObserveKeyBindingsUseCase
 import com.joegec.joycon2android.buttonmapping.androidKeyBindings
 import com.joegec.joycon2android.buttonmapping.keyboardKeyBindings
+import com.joegec.joycon2android.buttonmapping.mouseActionBindings
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.body
 import com.joegec.joycon2android.buttonmapping.ApplyMappingLayoutUseCase
@@ -113,11 +115,13 @@ import com.joegec.joycon2android.gamepad.keyboard.KeyboardRepository
 import com.joegec.joycon2android.gamepad.keyboard.DeclareKeyboardKeysUseCase
 import com.joegec.joycon2android.gamepad.keyboard.PushKeyboardFrameUseCase
 import com.joegec.joycon2android.gamepad.keyboard.SetKeyboardEnabledUseCase
+import com.joegec.joycon2android.gamepad.mouse.MappedMouse
 import com.joegec.joycon2android.gamepad.mouse.MouseOutput
 import com.joegec.joycon2android.gamepad.mouse.MouseRepository
 import com.joegec.joycon2android.gamepad.mouse.PushMouseFrameUseCase
 import com.joegec.joycon2android.gamepad.mouse.SetMouseEnabledUseCase
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.mouse.MouseMix
 import com.joegec.joycon2android.mouse.MouseRouter
 import com.joegec.joycon2android.update.ApkDownloader
 import com.joegec.joycon2android.update.ApkUpdateInstaller
@@ -251,7 +255,13 @@ class AppContainer(context: Context) {
 
     // --- Mouse ---
     private val mouseRepository: MouseRepository = MouseOutput(scope, appContext, privilegedAccess::acquire)
-    private val mouseRouter = MouseRouter(mouseRepository.enabled, PushMouseFrameUseCase(mouseRepository)::invoke)
+    private val mouseMix = MouseMix(MappedMouse(SystemClock::uptimeMillis), PushMouseFrameUseCase(mouseRepository)::invoke)
+    // A player's own mouse mapping replaces the desk mouse's default clicks and scroll.
+    private val mouseRouter = MouseRouter(
+        enabled = mouseRepository.enabled,
+        mapsMouse = { player -> gamepadMouseActions.bindsAny(player) || dsuMouseActions.bindsAny(player) },
+        push = mouseMix::desk,
+    )
 
     // --- Keyboard ---
     private val keyboardRepository: KeyboardRepository = KeyboardOutput(scope, appContext, privilegedAccess::acquire)
@@ -270,7 +280,7 @@ class AppContainer(context: Context) {
     val emulatorLauncher = EmulatorLauncher(appContext)
     val deviceScreens = DeviceScreens(appContext)
 
-    // --- Device keys: Android and keyboard (either output, from the mapping of the console each is set to) ---
+    // --- Device keys: Android, keyboard and mouse (either output, from the mapping of the console each is set to) ---
     private val gamepadConsole = MutableStateFlow(Console.GAMECUBE)
     private val dsuConsole = MutableStateFlow(Console.WIIMOTE_NUNCHUK)
     private val activeBodies = MutableStateFlow(emptyList<PlayerBody>())
@@ -280,8 +290,13 @@ class AppContainer(context: Context) {
     private val observeKeyboardKeyBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeSidewaysRemote) { entries, side, sideways ->
         entries.keyboardKeyBindings(side, sideways)
     }
+    private val observeMouseActionBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeSidewaysRemote) { entries, side, sideways ->
+        entries.mouseActionBindings(side, sideways)
+    }
     private val gamepadKeyboardBindings = bindingsFor(gamepadConsole, observeKeyboardKeyBindings)
     private val dsuKeyboardBindings = bindingsFor(dsuConsole, observeKeyboardKeyBindings)
+    private val gamepadMouseBindings = bindingsFor(gamepadConsole, observeMouseActionBindings)
+    private val dsuMouseBindings = bindingsFor(dsuConsole, observeMouseActionBindings)
 
     private val androidKeyRouter = AndroidKeyRouter(
         gamepad = OutputBindings(gamepadRepository.enabled, bindingsFor(gamepadConsole, observeAndroidKeyBindings)),
@@ -289,10 +304,15 @@ class AppContainer(context: Context) {
         keyboardEnabled = keyboardRepository.enabled,
         pressKey = ShellAndroidKeyPresser(scope, privilegedAccess::readyShell)::press,
     )
-    private val keyboardKeyRouter = KeyboardKeyRouter(
+    private val keyboardKeyRouter = HeldKeyRouter(
         gamepad = OutputBindings(gamepadRepository.enabled, gamepadKeyboardBindings),
         dsu = OutputBindings(dsuRepository.enabled, dsuKeyboardBindings),
-    )
+    ) { held -> copy(keyboard = keyboard.copy(keys = held)) }
+    private val gamepadMouseActions = OutputBindings(gamepadRepository.enabled, gamepadMouseBindings)
+    private val dsuMouseActions = OutputBindings(dsuRepository.enabled, dsuMouseBindings)
+    private val mouseActionRouter = HeldKeyRouter(gamepadMouseActions, dsuMouseActions) { held ->
+        copy(mouseActions = held)
+    }
     private val pushKeyboardFrame = PushKeyboardFrameUseCase(keyboardRepository)
 
     fun selectGamepadEmulator(emulatorId: String) {
@@ -334,8 +354,10 @@ class AppContainer(context: Context) {
         comboDetector = ComboAssignmentDetector(),
         onState = { state ->
             activeBodies.value = state.activePlayers.mapNotNull { it.body() }
-            val routed = keyboardKeyRouter.route(androidKeyRouter.route(mouseRouter.route(state)))
+            val onDesk = mouseRouter.route(state)
+            val routed = mouseActionRouter.route(onDesk, keyboardKeyRouter.route(onDesk, androidKeyRouter.route(onDesk)))
             pushKeyboardFrame(routed.keyboard)
+            mouseMix.send(routed.mouseActions)
             pushGamepadState(
                 routed.gamepad.map { it.copy(state = edenSingleJoycons.markedFor(gamepadConsole.value, it.state)) },
             )
@@ -364,9 +386,16 @@ class AppContainer(context: Context) {
         setDeviceMotionBlocked = SetDeviceMotionBlockedUseCase(EdenDeviceMotionBlocker(privilegedAccess::readyShell)),
     ).also { it.start() }
 
+    private val mouseActionsBound = combine(gamepadMouseBindings, dsuMouseBindings) { gamepad, dsu ->
+        (gamepad.values + dsu.values).any { it.sources.isNotEmpty() }
+    }
+
+    // Up for the desk mouse, or while an output runs with a mouse action bound.
     private val mousePolicy = PrivilegedDevicePolicy(
         scope = scope,
-        setting = observeOutputSettings().map { it.mouse },
+        setting = combine(observeOutputSettings(), outputActive, mouseActionsBound) { settings, outputOn, bound ->
+            settings.mouse || outputOn && bound
+        },
         privilegedShellAvailable = observeShizukuAvailability(),
         setEnabled = SetMouseEnabledUseCase(mouseRepository)::invoke,
     ).also { it.start() }

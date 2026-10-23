@@ -21,6 +21,7 @@ import com.joegec.joycon2android.model.AndroidKey
 import com.joegec.joycon2android.model.GameCubeButtons
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.KeyboardKey
+import com.joegec.joycon2android.model.MouseAction
 
 internal object MappingOptions {
     const val NONE_ID = ""
@@ -45,6 +46,7 @@ internal object MappingOptions {
     ): List<Pair<String, String>> = when {
         section == MappingSection.ANDROID -> AndroidKey.entries.map { it.targetKey to it.label() }
         section == MappingSection.KEYBOARD -> KeyboardKey.entries.map { it.targetKey to it.label() }
+        section == MappingSection.MOUSE -> MouseAction.entries.map { it.targetKey to it.label() }
         classicController -> classicTargets(section)
         else -> remoteTargets(console, section, side, singleJoycon)
     }
@@ -59,7 +61,7 @@ internal object MappingOptions {
         MappingSection.BUTTONS -> buttonTargets(console, side, singleJoycon)
         MappingSection.STICKS -> stickDirectionTargets(console, side, singleJoycon)
         MappingSection.MOTION -> motionTargets(console)
-        MappingSection.ANDROID, MappingSection.KEYBOARD -> emptyList()
+        MappingSection.ANDROID, MappingSection.KEYBOARD, MappingSection.MOUSE -> emptyList()
     }
 
     @Composable
@@ -81,7 +83,7 @@ internal object MappingOptions {
     private fun classicTargets(section: MappingSection): List<Pair<String, String>> = when (section) {
         MappingSection.BUTTONS -> ClassicButton.entries.map { it.name to it.label() }
         MappingSection.STICKS -> directionTargets(ClassicStick.entries.map { it to it.label() })
-        MappingSection.MOTION, MappingSection.ANDROID, MappingSection.KEYBOARD -> emptyList()
+        MappingSection.MOTION, MappingSection.ANDROID, MappingSection.KEYBOARD, MappingSection.MOUSE -> emptyList()
     }
 
     @Composable

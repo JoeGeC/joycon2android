@@ -248,7 +248,7 @@ class MainActivity : ComponentActivity() {
                 onInfoClick = if (route.fromDsu) ({ showDsuHelp = true }) else null,
                 deviceKeyWarnings = DeviceKeyWarnings(
                     androidNeedsShizuku = route.fromDsu && !shizukuAvailable,
-                    keyboardNeedsShizuku = !shizukuAvailable,
+                    keyboardAndMouseNeedShizuku = !shizukuAvailable,
                 ),
             )
         }

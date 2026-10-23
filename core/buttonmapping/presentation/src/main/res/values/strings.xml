@@ -99,6 +99,13 @@
     <string name="keyboard_add_key">Add a key</string>
     <string name="keyboard_keys_need_shizuku">Keyboard keys need Shizuku running.</string>
     <string name="keyboard_letters_hide_ime">While a letter is bound, Android hides the on-screen keyboard.</string>
+    <string name="section_mouse">Mouse</string>
+    <string name="mouse_needs_shizuku">Mouse inputs need Shizuku running.</string>
+    <string name="mouse_left_click">Left click</string>
+    <string name="mouse_right_click">Right click</string>
+    <string name="mouse_middle_click">Middle click</string>
+    <string name="mouse_scroll_up">Scroll up</string>
+    <string name="mouse_scroll_down">Scroll down</string>
     <string name="keyboard_key_up">Up arrow</string>
     <string name="keyboard_key_down">Down arrow</string>
     <string name="keyboard_key_left">Left arrow</string>
