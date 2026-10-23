@@ -17,13 +17,17 @@ class AndroidKeyRouterTest {
 
     private val gamepadOn = MutableStateFlow(true)
     private val dsuOn = MutableStateFlow(false)
+    private val keyboardOn = MutableStateFlow(false)
     private val gamepadBindings = MutableStateFlow(mapOf(PlayerNumber.P1 to bindings(AndroidKey.HOME to JoyconButton.Home)))
     private val dsuBindings = MutableStateFlow(mapOf(PlayerNumber.P1 to bindings(AndroidKey.BACK to JoyconButton.Minus)))
     private val pressed = mutableListOf<AndroidKey>()
+    private val onKeyboard = mutableListOf<Set<AndroidKey>>()
 
     private val router = AndroidKeyRouter(
         gamepad = OutputAndroidKeys(gamepadOn, gamepadBindings),
         dsu = OutputAndroidKeys(dsuOn, dsuBindings),
+        keyboardEnabled = keyboardOn,
+        pushKeyboard = { onKeyboard += it },
         pressKey = { pressed += it },
     )
 
@@ -83,5 +87,31 @@ class AndroidKeyRouterTest {
         router.route(holding(JoyconButton.Home, JoyconButton.Minus))
 
         assertEquals(emptyList<AndroidKey>(), pressed)
+    }
+
+    @Test
+    fun `with the keyboard up and only DSU running the keyboard holds every key instead of the shell`() {
+        gamepadOn.value = false
+        dsuOn.value = true
+        keyboardOn.value = true
+
+        router.route(holding(JoyconButton.Minus))
+        router.route(holding())
+
+        assertEquals(listOf(setOf(AndroidKey.BACK), emptySet<AndroidKey>()), onKeyboard)
+        assertEquals(emptyList<AndroidKey>(), pressed)
+    }
+
+    @Test
+    fun `with the keyboard up the pad still sends Home and the keyboard takes screenshot`() {
+        keyboardOn.value = true
+        gamepadBindings.value = mapOf(
+            PlayerNumber.P1 to bindings(AndroidKey.HOME to JoyconButton.Home, AndroidKey.SCREENSHOT to JoyconButton.Capture),
+        )
+
+        val frame = router.route(holding(JoyconButton.Home, JoyconButton.Capture)).gamepad.single()
+
+        assertEquals(setOf(AndroidKey.HOME), frame.androidKeys)
+        assertEquals(listOf(setOf(AndroidKey.SCREENSHOT)), onKeyboard)
     }
 }

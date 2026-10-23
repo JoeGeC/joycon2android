@@ -181,7 +181,7 @@ BLE notify ─→ Joycon2Manager (connection/data, ControllerRepository)
             SessionCoordinator (core/session) ── combines connections + assignments
                    │  onState(state)
                    ├─→ MouseRouter (claims Joy-Cons on a surface) ─→ PushMouseFrameUseCase ─→ MouseOutput ─→ UHID relay
-                   │      └─→ AndroidKeyRouter (withholds Android-key buttons, presses keys via shell)
+                   │      └─→ AndroidKeyRouter (withholds Android-key buttons; keys the pad lacks ─→ KeyboardOutput or shell)
                    │             ├─→ PushGamepadStateUseCase ─→ GamepadOutput ─→ UHID relay ─→ /dev/uhid
                    │             └─→ PushDsuPadDataUseCase   ─→ DsuServer    ─→ UDP :26760 ─→ emulators
                    └─→ ObserveSessionUseCase   ─→ Joycon2ViewModel ─→ AppUiState ─→ Compose

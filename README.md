@@ -104,6 +104,8 @@ The gear at the top right opens the settings panel:
   surface and it moves Android's pointer: L or R clicks, ZL or ZR right-clicks, the stick scrolls.
   While it rests there those buttons and the stick never reach the game; lift it and they do again.
   Works with or without the virtual gamepad, and not on Pro, GameCube or third-party controllers.
+- **Virtual keyboard** (experimental, off by default, needs Shizuku) — Home, Back and Screenshot
+  bindings go through a virtual keyboard instead of the shell, so they are quicker with DSU alone.
 
 ### 5. Set up your emulator
 

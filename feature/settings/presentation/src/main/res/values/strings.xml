@@ -12,6 +12,8 @@
     <string name="settings_needs_shizuku">Needs Shizuku running.</string>
     <string name="settings_mouse_title">Joy-Con mouse</string>
     <string name="settings_mouse_description">Stand a Joy-Con on its rail on a flat surface to move this device\'s pointer. L or R clicks, ZL or ZR right-clicks and the stick scrolls.</string>
+    <string name="settings_keyboard_title">Virtual keyboard (experimental)</string>
+    <string name="settings_keyboard_description">Sends Home, Back and Screenshot bindings through a virtual keyboard instead of the shell, for quicker keys with DSU alone.</string>
     <string name="settings_launch_on_main_screen_title">Open emulators on the main screen</string>
     <string name="settings_launch_on_main_screen_description">On a device with two screens, starts the emulator on the main one rather than the screen this app is on.</string>
     <string name="kofi_banner">Support on Ko-fi - tips go towards controllers and devices for development and testing (and coffee!)</string>

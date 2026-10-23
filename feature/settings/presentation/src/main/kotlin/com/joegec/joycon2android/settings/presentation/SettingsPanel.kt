@@ -22,6 +22,7 @@ fun SettingsPanel(
     onFasterUpdatesToggle: (Boolean) -> Unit,
     onBlockDeviceMotionToggle: (Boolean) -> Unit,
     onMouseToggle: (Boolean) -> Unit,
+    onKeyboardToggle: (Boolean) -> Unit,
     onShowTipsToggle: (Boolean) -> Unit,
     onLaunchOnMainScreenToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -86,6 +87,16 @@ fun SettingsPanel(
                 description = stringResource(R.string.settings_mouse_description),
                 checked = state.outputSettings.mouse,
                 onCheckedChange = onMouseToggle,
+                titleStyle = MaterialTheme.typography.titleMedium,
+                warning = shizukuWarning(state),
+            )
+        }
+        SettingsSection {
+            SettingSwitch(
+                title = stringResource(R.string.settings_keyboard_title),
+                description = stringResource(R.string.settings_keyboard_description),
+                checked = state.outputSettings.keyboard,
+                onCheckedChange = onKeyboardToggle,
                 titleStyle = MaterialTheme.typography.titleMedium,
                 warning = shizukuWarning(state),
             )

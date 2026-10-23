@@ -14,7 +14,7 @@ The app creates gamepads through Linux's UHID (user-space HID) interface:
 - **`ReportMapper`** — turns a `PlayerState` into a HID input report.
 - **`GamepadManager`** — owns one relay per player and drives reports at input rate.
 
-The device uses `BUS_USB` with generic IDs `0x1234:0x5678` (the [mouse](#mouse) `0x1234:0x5679`) so the kernel's `hid-generic` driver
+The device uses `BUS_USB` with generic IDs `0x1234:0x5678` (the [mouse](#mouse) `0x5679`, the [keyboard](#keyboard) `0x567A`) so the kernel's `hid-generic` driver
 binds it. Nintendo's IDs would let `hid-nintendo` claim it and reject it.
 
 Each assigned player gets its own device, `Joy-Con Virtual Gamepad <N>`, named by player number.
@@ -24,7 +24,7 @@ Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the 
 ## Mouse
 
 The **Joy-Con mouse** setting adds one more UHID device, `Joy-Con Virtual Mouse`, shared by every
-Joy-Con 2. `MousePolicy` keeps it up while the setting is on and Shizuku is running, independent of
+Joy-Con 2. `PrivilegedDevicePolicy` keeps it up while the setting is on and Shizuku is running, independent of
 the gamepad and DSU. A Joy-Con drives it while its distance reading says it rests on a surface
 ([sensor](protocol.md#mouse-0x100x17)); lifted, it is a plain controller again.
 
@@ -44,6 +44,29 @@ the gamepad and DSU. A Joy-Con drives it while its distance reading says it rest
 - Only `PacketParser` (Joy-Con 2, `Side.LEFT`/`RIGHT`) fills the sensor; Pro, GameCube and
   console-protocol controllers have none.
 - **Faster controller updates** counts the mouse as an output, doubling its report rate.
+- `UhidOutput` owns the shared-device lifecycle for the mouse and the [keyboard](#keyboard).
+
+## Keyboard
+
+Experimental. The **Virtual keyboard** setting adds `Joy-Con Virtual Keyboard`, shared by every
+player and kept up like the [mouse](#mouse). While it is up it carries the
+[Android keys](#android-keys) the pad does not, in place of the shell.
+
+| Report | Bytes | Carries |
+|---|---|---|
+| ID 1, Keyboard | modifiers, reserved, 6 key slots of usages `0x1E`–`0x65` | Screenshot as `0x46` Print Screen → `KEY_SYSRQ` |
+| ID 2, Consumer | bit 0 AC Home, bit 1 AC Back | Home and Back, as on the pad |
+
+AYN Thor, Android 13, 2026-10-23:
+
+- **Print Screen takes a screenshot here**, unlike on the pad. Home, Back and Screenshot all fire,
+  bound with either output.
+- **A letter key hides the on-screen keyboard.** Android classes a keyboard with `KEY_Q` as
+  alphabetic (`ALPHAKEY`, `KeyboardType: 2`) and Gboard stays hidden, even with
+  `show_ime_with_hard_keyboard` on. So the key slots start at `0x1E` (`1`), past the letters;
+  with no `KEY_Q` it is `KeyboardType: 1` and Gboard shows. Binding letters later means declaring
+  them only when bound.
+- Keys felt as quick as the pad's, with the gamepad or DSU alone. Not timed.
 
 ## Report layout
 
@@ -98,7 +121,8 @@ shift:
 
 Each player's mapping, per console, has an **Android** section: buttons bound to Home, Back or
 Screenshot act as the device's own keys and never reach the game. `AndroidKeyRouter` applies the
-mapping of the console each output's card is set to, while that output runs.
+mapping of the console each output's card is set to, while that output runs. A key the pad does not
+send goes through the [keyboard](#keyboard) while it is up, else the shell.
 
 | Key | Virtual gamepad | DSU only |
 |---|---|---|

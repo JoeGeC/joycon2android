@@ -1,18 +1,14 @@
 package com.joegec.joycon2android
 
-import com.joegec.joycon2android.gamepad.mouse.MouseFrame
-import com.joegec.joycon2android.gamepad.mouse.MouseRepository
-import com.joegec.joycon2android.gamepad.mouse.SetMouseEnabledUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class MousePolicyTest {
+class PrivilegedDevicePolicyTest {
 
     private val scope = CoroutineScope(Dispatchers.Unconfined)
     private val setting = MutableStateFlow(false)
@@ -20,16 +16,11 @@ class MousePolicyTest {
     private val calls = mutableListOf<Boolean>()
 
     init {
-        MousePolicy(
+        PrivilegedDevicePolicy(
             scope = scope,
-            mouseSetting = setting,
+            setting = setting,
             privilegedShellAvailable = shellAvailable,
-            setMouseEnabled = SetMouseEnabledUseCase(object : MouseRepository {
-                override val enabled: StateFlow<Boolean> = MutableStateFlow(false)
-                override fun enable() { calls += true }
-                override fun disable() { calls += false }
-                override fun push(frame: MouseFrame) = Unit
-            }),
+            setEnabled = { calls += it },
         ).start()
     }
 
@@ -37,7 +28,7 @@ class MousePolicyTest {
     fun tearDown() = scope.cancel()
 
     @Test
-    fun `the setting turns the mouse on and off`() {
+    fun `the setting turns the device on and off`() {
         setting.value = true
         setting.value = false
 
@@ -45,7 +36,7 @@ class MousePolicyTest {
     }
 
     @Test
-    fun `the mouse goes down with the shell and comes back with it`() {
+    fun `the device goes down with the shell and comes back with it`() {
         setting.value = true
         shellAvailable.value = false
         shellAvailable.value = true

@@ -98,6 +98,7 @@ class MainActivity : ComponentActivity() {
                     c.setFasterUpdates,
                     c.setBlockDeviceMotion,
                     c.setMouse,
+                    c.setKeyboard,
                     c.observeShowTips,
                     c.setShowTips,
                     c.observeLaunchOnMainScreen,
@@ -305,6 +306,7 @@ class MainActivity : ComponentActivity() {
                     onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
                     onBlockDeviceMotionToggle = settingsViewModel::toggleBlockDeviceMotion,
                     onMouseToggle = settingsViewModel::toggleMouse,
+                    onKeyboardToggle = settingsViewModel::toggleKeyboard,
                     onShowTipsToggle = settingsViewModel::toggleShowTips,
                     onLaunchOnMainScreenToggle = settingsViewModel::toggleLaunchOnMainScreen,
                 )

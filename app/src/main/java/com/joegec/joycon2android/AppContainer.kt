@@ -87,6 +87,7 @@ import com.joegec.joycon2android.settings.OutputSettingsRepository
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.settings.SetDeviceMotionBlockedUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
+import com.joegec.joycon2android.settings.SetKeyboardUseCase
 import com.joegec.joycon2android.settings.SetLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.SetMouseUseCase
 import com.joegec.joycon2android.settings.SetShowTipsUseCase
@@ -104,6 +105,10 @@ import com.joegec.joycon2android.gamepad.OnPlayerAssignedUseCase
 import com.joegec.joycon2android.gamepad.OnPlayerUnassignedUseCase
 import com.joegec.joycon2android.gamepad.privileged.PrivilegedAccess
 import com.joegec.joycon2android.gamepad.PushGamepadStateUseCase
+import com.joegec.joycon2android.gamepad.keyboard.KeyboardOutput
+import com.joegec.joycon2android.gamepad.keyboard.KeyboardRepository
+import com.joegec.joycon2android.gamepad.keyboard.PushKeyboardKeysUseCase
+import com.joegec.joycon2android.gamepad.keyboard.SetKeyboardEnabledUseCase
 import com.joegec.joycon2android.gamepad.mouse.MouseOutput
 import com.joegec.joycon2android.gamepad.mouse.MouseRepository
 import com.joegec.joycon2android.gamepad.mouse.PushMouseFrameUseCase
@@ -220,6 +225,7 @@ class AppContainer(context: Context) {
     val setFasterUpdates = SetFasterUpdatesUseCase(outputSettings)
     val setBlockDeviceMotion = SetBlockDeviceMotionUseCase(outputSettings)
     val setMouse = SetMouseUseCase(outputSettings)
+    val setKeyboard = SetKeyboardUseCase(outputSettings)
 
     // --- Assignment ---
     val assignmentRepository: AssignmentRepository = PlayerAssignmentManager()
@@ -241,6 +247,9 @@ class AppContainer(context: Context) {
     // --- Mouse ---
     private val mouseRepository: MouseRepository = MouseOutput(scope, appContext, privilegedAccess::acquire)
     private val mouseRouter = MouseRouter(mouseRepository.enabled, PushMouseFrameUseCase(mouseRepository)::invoke)
+
+    // --- Keyboard ---
+    private val keyboardRepository: KeyboardRepository = KeyboardOutput(scope, appContext, privilegedAccess::acquire)
 
     val emulatorSetup = EmulatorSetup(
         appContext.packageManager,
@@ -265,6 +274,8 @@ class AppContainer(context: Context) {
     private val androidKeyRouter = AndroidKeyRouter(
         gamepad = OutputAndroidKeys(gamepadRepository.enabled, androidKeyBindingsFor(gamepadConsole)),
         dsu = OutputAndroidKeys(dsuRepository.enabled, androidKeyBindingsFor(dsuConsole)),
+        keyboardEnabled = keyboardRepository.enabled,
+        pushKeyboard = PushKeyboardKeysUseCase(keyboardRepository)::invoke,
         pressKey = ShellAndroidKeyPresser(scope, privilegedAccess::readyShell)::press,
     )
 
@@ -333,11 +344,18 @@ class AppContainer(context: Context) {
         setDeviceMotionBlocked = SetDeviceMotionBlockedUseCase(EdenDeviceMotionBlocker(privilegedAccess::readyShell)),
     ).also { it.start() }
 
-    private val mousePolicy = MousePolicy(
+    private val mousePolicy = PrivilegedDevicePolicy(
         scope = scope,
-        mouseSetting = observeOutputSettings().map { it.mouse },
+        setting = observeOutputSettings().map { it.mouse },
         privilegedShellAvailable = observeShizukuAvailability(),
-        setMouseEnabled = SetMouseEnabledUseCase(mouseRepository),
+        setEnabled = SetMouseEnabledUseCase(mouseRepository)::invoke,
+    ).also { it.start() }
+
+    private val keyboardPolicy = PrivilegedDevicePolicy(
+        scope = scope,
+        setting = observeOutputSettings().map { it.keyboard },
+        privilegedShellAvailable = observeShizukuAvailability(),
+        setEnabled = SetKeyboardEnabledUseCase(keyboardRepository)::invoke,
     ).also { it.start() }
 
     val observeSession = ObserveSessionUseCase(sessionCoordinator)
