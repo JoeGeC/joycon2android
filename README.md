@@ -196,7 +196,7 @@ The layouts the app ships:
 ### Manual setup
 
 The DSU server binds each player to slot N−1. Press-to-detect in Android emulators never sees DSU
-inputs, so pick them from the input list instead. The info button on the Motion tab's mapping screen has these steps
+inputs, so pick them from the input list instead. The info button on a Motion tab mapping screen has these steps
 and the server address to copy.
 
 <details>

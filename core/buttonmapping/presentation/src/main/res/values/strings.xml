@@ -60,6 +60,8 @@
     <string name="console_android">Android</string>
     <string name="mapping_title_gamepad">Virtual Gamepad</string>
     <string name="mapping_title_motion">Motion Controller</string>
+    <string name="mapping_manual_gamepad">Not all emulators are supported for auto setup. Each player has their own Virtual Gamepad, which can be mapped manually per emulator or game.</string>
+    <string name="mapping_manual_motion">Not all emulators are supported for auto setup. Each player streams to their own DSU slot, which can be mapped manually per emulator.</string>
     <string name="console_pc">Mouse &amp; keyboard</string>
     <string name="side_left_short">L</string>
     <string name="side_right_short">R</string>

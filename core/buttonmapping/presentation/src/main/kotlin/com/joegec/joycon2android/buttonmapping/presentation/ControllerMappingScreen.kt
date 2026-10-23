@@ -86,12 +86,11 @@ fun ControllerMappingScreen(
         ) {
             val tips = LocalTips.current
             AnimatedVisibility(
-                // Advice on emulator layouts; a keys-only mapping has none to try.
-                visible = tips.visible && state.console != Console.ANDROID,
+                visible = tips.visible,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
             ) {
-                InfoBox(stringResource(R.string.controller_mapping_tips), onClick = tips.onTap)
+                InfoBox(state.console.tip(viaDsu), onClick = tips.onTap)
             }
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)

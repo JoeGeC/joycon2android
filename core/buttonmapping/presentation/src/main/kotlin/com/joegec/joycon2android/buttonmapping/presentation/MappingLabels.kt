@@ -28,6 +28,15 @@ internal fun Console.label(): String = when (this) {
     Console.PC -> stringResource(R.string.console_pc)
 }
 
+/** A keys-only mapping has no layouts to try, so it says how to map by hand instead. */
+@Composable
+internal fun Console.tip(viaDsu: Boolean): String = stringResource(
+    when (this) {
+        Console.ANDROID -> if (viaDsu) R.string.mapping_manual_motion else R.string.mapping_manual_gamepad
+        Console.GAMECUBE, Console.WIIMOTE_NUNCHUK, Console.SWITCH_PRO, Console.PC -> R.string.controller_mapping_tips
+    },
+)
+
 /** The mapping screen's title; a keys-only mapping is named for the output it's on. */
 @Composable
 internal fun Console.title(viaDsu: Boolean): String = when (this) {

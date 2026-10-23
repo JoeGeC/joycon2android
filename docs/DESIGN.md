@@ -138,7 +138,8 @@ In `JoyconScreen.kt`:
   matter. A bound letter adds a `SettingWarning` that the on-screen keyboard hides.
 - **Mouse is five plain rows**, like Android: few enough to show whole.
 - **Other's keys-only mapping is named for its output**, "Virtual Gamepad" or "Motion Controller",
-  though both share it, and skips the layouts tip, which is about emulator layouts.
+  though both share it. Its tip says how to map by hand in place of trying another layout; like every
+  tip it hides with **Show tips** off.
 
 ### Landscape
 
