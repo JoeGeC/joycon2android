@@ -27,7 +27,11 @@ class MouseRouterTest {
             address,
             side,
             address,
-            input = JoyconInput(pressed = pressed.map { it.id }.toSet(), mouse = MouseSensor(x, 0, distance)),
+            input = JoyconInput(
+                pressed = pressed.map { it.id }.toSet(),
+                accelX = if (side == Side.LEFT) -ONE_G else ONE_G, // standing on its rail
+                mouse = MouseSensor(x, 0, distance),
+            ),
         )
 
     private fun pair(rightX: Int, rightDistance: Int = 150, leftDistance: Int = 3100) = AppUiState(
@@ -76,5 +80,9 @@ class MouseRouterTest {
 
         assertSame(state, router.route(state))
         assertTrue(pushed.isEmpty())
+    }
+
+    private companion object {
+        const val ONE_G = 4096
     }
 }

@@ -3,13 +3,14 @@ package com.joegec.joycon2android.gamepad.mouse
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.MouseSensor
+import com.joegec.joycon2android.model.Side
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 class JoyconMouseTest {
 
-    private val mouse = JoyconMouse()
+    private val mouse = JoyconMouse(Side.LEFT)
 
     private fun input(
         x: Int = 0,
@@ -18,8 +19,10 @@ class JoyconMouseTest {
         packetId: Int = 0,
         stickY: Int = 2048,
         vararg pressed: JoyconButton,
+        accelX: Int = RAIL_DOWN_LEFT,
     ) = JoyconInput(
         packetId = packetId,
+        accelX = accelX,
         pressed = pressed.map { it.id }.toSet(),
         stickY = stickY,
         mouse = MouseSensor(x, y, distance),
@@ -102,5 +105,27 @@ class JoyconMouseTest {
 
         assertEquals(setOf(JoyconButton.A.id), withheld.pressed)
         assertEquals(2048, withheld.stickY)
+    }
+
+    @Test
+    fun `a Joy-Con held in a grip is no mouse, even with fingers over the sensor`() {
+        assertNull(mouse.read(input(x = 100, accelX = 0)))
+    }
+
+    @Test
+    fun `a sideways Joy-Con's rail faces up, so it is no mouse either`() {
+        assertNull(mouse.read(input(x = 100, accelX = -RAIL_DOWN_LEFT)))
+    }
+
+    @Test
+    fun `a right Joy-Con stands on its rail with gravity the other way`() {
+        val right = JoyconMouse(Side.RIGHT)
+
+        assertEquals(MouseFrame(), right.read(input(accelX = -RAIL_DOWN_LEFT)))
+        assertNull(right.read(input(accelX = RAIL_DOWN_LEFT)))
+    }
+
+    private companion object {
+        const val RAIL_DOWN_LEFT = -4096
     }
 }

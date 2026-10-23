@@ -30,7 +30,7 @@ class MouseRouter(
         )
     }
 
-    private fun mouseOf(joycon: ConnectedJoycon) = mice.getOrPut(joycon.address) { JoyconMouse() }
+    private fun mouseOf(joycon: ConnectedJoycon) = mice.getOrPut(joycon.address) { JoyconMouse(joycon.side) }
 
     private fun ConnectedJoycon.withheldIf(onSurface: Map<String, MouseFrame>) =
         if (address in onSurface) copy(input = JoyconMouse.withheldFrom(input)) else this

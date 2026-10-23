@@ -26,7 +26,14 @@ Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the 
 The **Joy-Con mouse** setting adds one more UHID device, `Joy-Con Virtual Mouse`, shared by every
 Joy-Con 2. `PrivilegedDevicePolicy` keeps it up while the setting is on and Shizuku is running, independent of
 the gamepad and DSU. A Joy-Con drives it while its distance reading says it rests on a surface
-([sensor](protocol.md#mouse-0x100x17)); lifted, it is a plain controller again.
+([sensor](protocol.md#mouse-0x100x17)) **and** it stands on its rail; lifted, it is a plain
+controller again.
+
+- **Distance alone mistakes a hand for a desk.** AYN Thor, 2026-10-23, a pair held to play: fingers
+  round the rail read as a surface in 1–2 s bursts, moving the pointer and taking the stick for the
+  wheel. So `JoyconMouse` also wants raw accel x, which reads +1 g on whichever axis points up, at
+  ≥ 0.71 g away from the rail (−x on a left Joy-Con, +x on a right): within 45° of rail-down. A
+  grip leaves x level, and a sideways hold turns the rail up.
 
 | Input | Mouse | Notes |
 |---|---|---|
