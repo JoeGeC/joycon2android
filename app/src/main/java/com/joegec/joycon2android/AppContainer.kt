@@ -19,7 +19,8 @@ import com.joegec.joycon2android.androidkeys.OutputBindings
 import com.joegec.joycon2android.androidkeys.ShellAndroidKeyPresser
 import com.joegec.joycon2android.buttonmapping.ApplyGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.Console
-import com.joegec.joycon2android.buttonmapping.ObserveButtonBindingsUseCase
+import com.joegec.joycon2android.buttonmapping.KeyBindings
+import com.joegec.joycon2android.buttonmapping.ObserveKeyBindingsUseCase
 import com.joegec.joycon2android.buttonmapping.androidKeyBindings
 import com.joegec.joycon2android.buttonmapping.keyboardKeyBindings
 import com.joegec.joycon2android.buttonmapping.PlayerBody
@@ -116,7 +117,6 @@ import com.joegec.joycon2android.gamepad.mouse.MouseOutput
 import com.joegec.joycon2android.gamepad.mouse.MouseRepository
 import com.joegec.joycon2android.gamepad.mouse.PushMouseFrameUseCase
 import com.joegec.joycon2android.gamepad.mouse.SetMouseEnabledUseCase
-import com.joegec.joycon2android.model.ButtonBindings
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.mouse.MouseRouter
 import com.joegec.joycon2android.update.ApkDownloader
@@ -179,8 +179,9 @@ class AppContainer(context: Context) {
     private val sensitivityRepository: SensitivityRepository = SensitivityDataStore(appContext)
 
     private val observeControllerMapping = ObserveControllerMappingUseCase(controllerMappingRepository)
+    private val observeSidewaysRemote = ObserveSidewaysRemoteUseCase(sidewaysRemoteRepository)
     private val observeRemoteMotion = ObserveRemoteMotionUseCase(
-        ObserveSidewaysRemoteUseCase(sidewaysRemoteRepository),
+        observeSidewaysRemote,
         ObserveThrustUseCase(thrustRepository),
         ObserveSensitivityUseCase(sensitivityRepository),
     )
@@ -273,8 +274,12 @@ class AppContainer(context: Context) {
     private val gamepadConsole = MutableStateFlow(Console.GAMECUBE)
     private val dsuConsole = MutableStateFlow(Console.WIIMOTE_NUNCHUK)
     private val activeBodies = MutableStateFlow(emptyList<PlayerBody>())
-    private val observeAndroidKeyBindings = ObserveButtonBindingsUseCase(observeControllerMapping) { it.androidKeyBindings() }
-    private val observeKeyboardKeyBindings = ObserveButtonBindingsUseCase(observeControllerMapping) { it.keyboardKeyBindings() }
+    private val observeAndroidKeyBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeSidewaysRemote) { entries, _, _ ->
+        entries.androidKeyBindings()
+    }
+    private val observeKeyboardKeyBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeSidewaysRemote) { entries, side, sideways ->
+        entries.keyboardKeyBindings(side, sideways)
+    }
     private val gamepadKeyboardBindings = bindingsFor(gamepadConsole, observeKeyboardKeyBindings)
     private val dsuKeyboardBindings = bindingsFor(dsuConsole, observeKeyboardKeyBindings)
 
@@ -301,8 +306,8 @@ class AppContainer(context: Context) {
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun <K> bindingsFor(
         console: StateFlow<Console>,
-        observe: ObserveButtonBindingsUseCase<K>,
-    ): StateFlow<Map<PlayerNumber, ButtonBindings<K>>> =
+        observe: ObserveKeyBindingsUseCase<K>,
+    ): StateFlow<Map<PlayerNumber, KeyBindings<K>>> =
         combine(console, activeBodies, ::Pair)
             .flatMapLatest { (console, bodies) -> observe(console, bodies) }
             .stateIn(scope, SharingStarted.Eagerly, emptyMap())
@@ -377,7 +382,7 @@ class AppContainer(context: Context) {
     private val keyboardDeclarationPolicy = KeyboardDeclarationPolicy(
         scope = scope,
         bound = combine(gamepadKeyboardBindings, dsuKeyboardBindings) { gamepad, dsu ->
-            (gamepad.values + dsu.values).flatMapTo(mutableSetOf()) { it.buttons.keys }
+            (gamepad.values + dsu.values).flatMapTo(mutableSetOf()) { it.sources.keys }
         },
         declare = DeclareKeyboardKeysUseCase(keyboardRepository)::invoke,
     ).also { it.start() }

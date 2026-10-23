@@ -86,7 +86,7 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
   removes only its name, and the same bindings answer to it again if an identical one is saved.
 - **Android and keyboard keys are mapping targets too** (`ANDROID_HOME`, `KEYBOARD_W`, …), so layouts
   save them and a grip switch keeps them (`DEVICE_KEY_TARGETS`). They act in the app rather than the
-  emulator, parsed into `ButtonBindings`: `AndroidKeyRouter` and `KeyboardKeyRouter` sit between the
+  emulator, parsed into `KeyBindings`: `AndroidKeyRouter` and `KeyboardKeyRouter` sit between the
   coordinator and both outputs ([how](virtual-gamepad.md#android-keys)).
 - **So is Eden's Pro Controller switch** for a lone Joy-Con (`PRO_CONTROLLER`), so layouts carry the
   grip with its bindings ([how](virtual-gamepad.md#single-joy-con)).

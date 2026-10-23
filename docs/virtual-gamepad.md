@@ -69,8 +69,14 @@ gamepad or DSU is on (`PrivilegedDevicePolicy`). It carries the mapping's **Keyb
   devices when `KeyboardDeclarationPolicy` reports the change.
 - **Keys are positions.** `KeyboardUsages` sends HID usages, which Android reads through the system
   layout, so on AZERTY the `Q` binding types `A`.
-- **Buttons only, withheld like Android keys.** `KeyboardKeyRouter` runs after `AndroidKeyRouter`,
-  each output withholding what its own console's mapping binds.
+- **Buttons and stick directions, withheld like Android keys.** `KeyboardKeyRouter` runs after
+  `AndroidKeyRouter`, each output withholding what its own console's mapping binds.
+- **A stick key presses at half tilt and releases below 35%**, so one resting near the threshold
+  doesn't chatter. Diagonals hold both keys.
+- **A bound direction is cut at centre for the game**, its opposite passed through, so binding only
+  up to W leaves down on the stick.
+- **Directions are read in the hardware's own axes** (`PlayerSticks`), as the mapping labels them; a
+  sideways Wii Remote's are turned back from the rail-up frame when parsed (`hardwareDirection`).
 - **Six keys at once**, the boot-keyboard limit; Screenshot takes a slot. Modifiers don't.
 
 AYN Thor, Android 13, 2026-10-23:
@@ -143,20 +149,21 @@ send goes through the [keyboard](#keyboard), or the shell if the keyboard failed
 
 | Key | Virtual gamepad | DSU only |
 |---|---|---|
-| Home | byte 14 bit 0: Consumer `0x223` AC Home → `KEY_HOMEPAGE` → `HOME` | shell `input keyevent` |
-| Back | byte 14 bit 1: Consumer `0x224` AC Back → `KEY_BACK` → `BACK` | shell `input keyevent` |
-| Screenshot | shell `input keyevent 120` (`SYSRQ`), once per press | same |
+| Home | byte 14 bit 0: Consumer `0x223` AC Home → `KEY_HOMEPAGE` → `HOME` | keyboard, Consumer AC Home |
+| Back | byte 14 bit 1: Consumer `0x224` AC Back → `KEY_BACK` → `BACK` | keyboard, Consumer AC Back |
+| Screenshot | keyboard, `0x46` Print Screen → `KEY_SYSRQ` | same |
 
-- **Withheld before either output.** `AndroidKeyBindings.withheldFrom` drops bound buttons from the
+The shell's `input keyevent`, once per press, stands in for the keyboard only if it failed to come up.
+
+- **Withheld before either output.** `KeyBindings.withheldFrom` drops bound buttons from the
   player's input as the controller reports it, so the same rule covers sideways Joy-Cons and both
-  outputs.
+  outputs. Android keys take buttons only.
 - **Home and Back ride the pad when it runs**, even for a DSU binding, so a key bound on both
   screens fires once.
 - **The shell is the slow path.** AYN Thor, Android 13, 2026-10-12: `input keyevent` took 50 ms to
-  1.5 s and twice hung; the pad's Consumer keys are immediate. DSU never reaches Android, so it has
-  no other path, and needs Shizuku.
+  1.5 s and twice hung; the pad's Consumer keys are immediate, and so are the keyboard's.
 - **Screenshot skips the pad.** Retroid Pocket Nova, Android 13, 2026-10-09: a Keyboard `0x46`
-  Print Screen usage on the pad took no screenshot; `input keyevent 120` through the shell did.
+  Print Screen usage on the pad took no screenshot; on the [keyboard](#keyboard) it does.
 - **Android handles `HOME` itself** and never passes it to the app in front, so a bound Home always
   leaves the game.
 

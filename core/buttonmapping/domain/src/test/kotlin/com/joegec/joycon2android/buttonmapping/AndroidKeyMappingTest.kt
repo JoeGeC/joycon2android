@@ -19,8 +19,8 @@ class AndroidKeyMappingTest {
         val entries = mapOf(AndroidKey.HOME.targetKey to "Home|Chat|LEFT_STICK_UP")
 
         assertEquals(
-            mapOf(AndroidKey.HOME to setOf(JoyconButton.Home, JoyconButton.Chat)),
-            entries.androidKeyBindings().buttons,
+            mapOf(AndroidKey.HOME to listOf(MappingSource.Button(JoyconButton.Home), MappingSource.Button(JoyconButton.Chat))),
+            entries.androidKeyBindings().sources,
         )
     }
 
@@ -31,13 +31,17 @@ class AndroidKeyMappingTest {
         mappings.set(Console.GAMECUBE, p2, AndroidKey.BACK.targetKey, "Minus")
         mappings.set(Console.SWITCH_PRO, p1, AndroidKey.SCREENSHOT.targetKey, "Capture")
 
-        val bindings = ObserveButtonBindingsUseCase(ObserveControllerMappingUseCase(mappings)) { it.androidKeyBindings() }(
+        val observe = ObserveKeyBindingsUseCase(
+            ObserveControllerMappingUseCase(mappings),
+            ObserveSidewaysRemoteUseCase(FakeSidewaysRemotes()),
+        ) { entries, _, _ -> entries.androidKeyBindings() }
+        val bindings = observe(
             Console.GAMECUBE,
             listOf(p1, p2),
         ).first()
 
-        assertEquals(mapOf(AndroidKey.HOME to setOf(JoyconButton.Home)), bindings.getValue(PlayerNumber.P1).buttons)
-        assertEquals(mapOf(AndroidKey.BACK to setOf(JoyconButton.Minus)), bindings.getValue(PlayerNumber.P2).buttons)
+        assertEquals(mapOf(AndroidKey.HOME to listOf(MappingSource.Button(JoyconButton.Home))), bindings.getValue(PlayerNumber.P1).sources)
+        assertEquals(mapOf(AndroidKey.BACK to listOf(MappingSource.Button(JoyconButton.Minus))), bindings.getValue(PlayerNumber.P2).sources)
     }
 
     @Test

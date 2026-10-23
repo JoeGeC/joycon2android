@@ -1,9 +1,12 @@
 package com.joegec.joycon2android.androidkeys
 
+import com.joegec.joycon2android.buttonmapping.KeyBindings
+import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.StickDirection
+import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.gamepad.GamepadFrame
 import com.joegec.joycon2android.gamepad.keyboard.KeyboardFrame
 import com.joegec.joycon2android.model.AndroidKey
-import com.joegec.joycon2android.model.ButtonBindings
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
@@ -28,7 +31,7 @@ class KeyboardKeyRouterTest {
     )
 
     private fun bindings(vararg keys: Pair<KeyboardKey, JoyconButton>) =
-        ButtonBindings(keys.associate { (key, button) -> key to setOf(button) })
+        KeyBindings(keys.associate { (key, button) -> key to listOf(MappingSource.Button(button)) })
 
     private fun holding(vararg buttons: JoyconButton): RoutedOutputs {
         val pro = ConnectedJoycon("pro", Side.PRO, "Pro", input = JoyconInput(pressed = buttons.map { it.id }.toSet()))
@@ -61,5 +64,24 @@ class KeyboardKeyRouterTest {
         dsuOn.value = false
 
         assertEquals(setOf(KeyboardKey.ENTER), router.route(holding(JoyconButton.A, JoyconButton.B)).keyboard.keys)
+    }
+
+    @Test
+    fun `a stick key eased back below its press tilt stays held until it falls further`() {
+        gamepadBindings.value = mapOf(
+            PlayerNumber.P1 to KeyBindings(mapOf(KeyboardKey.W to listOf(MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.UP)))),
+        )
+
+        val pressed = router.route(tilted(stickY = 2048 + 1200)).keyboard.keys
+        val eased = router.route(tilted(stickY = 2048 + 800)).keyboard.keys
+        val released = router.route(tilted(stickY = 2048 + 500)).keyboard.keys
+
+        assertEquals(listOf(setOf(KeyboardKey.W), setOf(KeyboardKey.W), emptySet()), listOf(pressed, eased, released))
+    }
+
+    private fun tilted(stickY: Int): RoutedOutputs {
+        val pro = ConnectedJoycon("pro", Side.PRO, "Pro", input = JoyconInput(stickY = stickY))
+        val player = PlayerState(PlayerNumber.P1, left = pro)
+        return RoutedOutputs(gamepad = listOf(GamepadFrame(player)), dsu = emptyList())
     }
 }

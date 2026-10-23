@@ -9,20 +9,45 @@ import org.junit.Test
 class KeyboardKeyMappingTest {
 
     @Test
-    fun `a keyboard key fires on any of its buttons and ignores stick directions`() {
-        val entries = mapOf(KeyboardKey.W.targetKey to "Up|X|LEFT_STICK_UP")
+    fun `a keyboard key fires on its buttons and stick directions`() {
+        val entries = mapOf(KeyboardKey.W.targetKey to "Up|LEFT_STICK_UP")
 
         assertEquals(
-            mapOf(KeyboardKey.W to setOf(JoyconButton.Up, JoyconButton.X)),
-            entries.keyboardKeyBindings().buttons,
+            mapOf(KeyboardKey.W to listOf(MappingSource.Button(JoyconButton.Up), MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.UP))),
+            entries.keyboardKeyBindings(JoyconSide.DUAL, sidewaysRemote = false).sources,
         )
+    }
+
+    @Test
+    fun `off a sideways remote a lone Joy-Con's up stays its own up`() {
+        val entries = mapOf(KeyboardKey.W.targetKey to "LEFT_STICK_UP")
+
+        val source = entries.keyboardKeyBindings(JoyconSide.LEFT, sidewaysRemote = false).sources.getValue(KeyboardKey.W)
+
+        assertEquals(listOf(MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.UP)), source)
+    }
+
+    @Test
+    fun `on a sideways remote up is towards the rail, the hardware's right on a left Joy-Con`() {
+        val entries = mapOf(KeyboardKey.W.targetKey to "LEFT_STICK_UP")
+
+        val source = entries.keyboardKeyBindings(JoyconSide.LEFT, sidewaysRemote = true).sources.getValue(KeyboardKey.W)
+
+        assertEquals(listOf(MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.RIGHT)), source)
+    }
+
+    @Test
+    fun `an Android key ignores stick directions`() {
+        val entries = mapOf(com.joegec.joycon2android.model.AndroidKey.HOME.targetKey to "LEFT_STICK_UP")
+
+        assertEquals(emptyMap<Any, Any>(), entries.androidKeyBindings().sources)
     }
 
     @Test
     fun `keyboard and Android targets never read each other's entries`() {
         val entries = mapOf(KeyboardKey.ESCAPE.targetKey to "B")
 
-        assertEquals(emptyMap<Any, Any>(), entries.androidKeyBindings().buttons)
+        assertEquals(emptyMap<Any, Any>(), entries.androidKeyBindings().sources)
     }
 
     @Test

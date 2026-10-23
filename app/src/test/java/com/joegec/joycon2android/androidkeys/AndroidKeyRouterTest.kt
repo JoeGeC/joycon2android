@@ -1,8 +1,9 @@
 package com.joegec.joycon2android.androidkeys
 
+import com.joegec.joycon2android.buttonmapping.KeyBindings
+import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.model.AndroidKey
 import com.joegec.joycon2android.model.AppUiState
-import com.joegec.joycon2android.model.ButtonBindings
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
@@ -30,7 +31,7 @@ class AndroidKeyRouterTest {
     )
 
     private fun bindings(vararg keys: Pair<AndroidKey, JoyconButton>) =
-        ButtonBindings(keys.associate { (key, button) -> key to setOf(button) })
+        KeyBindings(keys.associate { (key, button) -> key to listOf(MappingSource.Button(button)) })
 
     private fun holding(vararg buttons: JoyconButton): AppUiState {
         val pro = ConnectedJoycon("pro", Side.PRO, "Pro", input = JoyconInput(pressed = buttons.map { it.id }.toSet()))

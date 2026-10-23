@@ -102,12 +102,12 @@ internal object MappingOptions {
             }
         }
 
-    // A device key fires on a button press, so it offers no stick directions.
+    // An Android key fires on a button press, so it offers no stick directions.
     @Composable
     fun sources(side: JoyconSide, section: MappingSection): List<Pair<String, String>> =
         listOf(NONE_ID to stringResource(R.string.source_none)) +
             physicalButtons(side).map { it.name to it.markingOn(side) } +
-            if (section.pressesDeviceKeys) emptyList() else stickDirections(side)
+            if (section == MappingSection.ANDROID) emptyList() else stickDirections(side)
 
     // A lone Joy-Con has one stick, so its directions need no "Left"/"Right" to tell them apart.
     @Composable
@@ -139,9 +139,6 @@ internal object MappingOptions {
             JoyconButton.Home, JoyconButton.Chat, JoyconButton.SrRight, JoyconButton.SlRight,
         )
     }
-
-    private val MappingSection.pressesDeviceKeys
-        get() = this == MappingSection.ANDROID || this == MappingSection.KEYBOARD
 
     private fun JoyconButton.markingOn(side: JoyconSide): String =
         (if (side == JoyconSide.GAMECUBE) GameCubeButtons.marking(this) else null) ?: id

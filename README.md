@@ -139,9 +139,10 @@ target can take **several sources** — tick as many as you like, and any of the
   **Back** and **Screenshot**. A button picked here works as the device's own and never reaches the
   game; Home always leaves it. Like the rest of the mapping it's per player and console, and saved in
   layouts. Over DSU alone it needs Shizuku running.
-- **Keyboard.** Below that, **Add a key** binds a button to a keyboard key — arrows, Enter, Esc,
-  Space, letters, digits, F1–F12, Shift, Ctrl, Alt — for apps and games that take a keyboard. Like
-  Android keys it never reaches the game, and it needs Shizuku running. While a letter is bound,
+- **Keyboard.** Below that, **Add a key** binds a button or a stick direction to a keyboard key —
+  arrows, Enter, Esc, Space, letters, digits, F1–F12, Shift, Ctrl, Alt — for apps and games that take
+  a keyboard; the stick on W, A, S and D walks. A stick presses its key at half tilt. Like Android
+  keys it never reaches the game, and it needs Shizuku running. While a letter is bound,
   Android hides the on-screen keyboard; tap **None** on the letter to bring it back.
 - **Pro Controller.** On Eden, a lone Joy-Con also gets this switch, off by default. Off, Eden sees
   a real left or right Joy-Con and the game handles the grip and motion itself, which games such as
