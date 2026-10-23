@@ -42,8 +42,7 @@ class Joycon2Service : Service() {
     }
 
     override fun onDestroy() {
-        container.disableGamepad()
-        container.disableDsu()
+        container.stopOutputs()
         container.controllerRepository.disconnectAll()
         wakeLock.release()
         serviceScope.cancel()

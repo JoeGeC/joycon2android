@@ -21,15 +21,14 @@ import org.junit.Test
 
 class HeldKeyRouterTest {
 
-    private val gamepadOn = MutableStateFlow(true)
-    private val dsuOn = MutableStateFlow(true)
-    private val gamepadBindings = MutableStateFlow(mapOf(PlayerNumber.P1 to bindings(KeyboardKey.ENTER to JoyconButton.A)))
-    private val dsuBindings = MutableStateFlow(mapOf(PlayerNumber.P1 to bindings(KeyboardKey.ESCAPE to JoyconButton.B)))
+    private val running = MutableStateFlow(true)
+    private val bindings = MutableStateFlow(
+        mapOf(PlayerNumber.P1 to bindings(KeyboardKey.ENTER to JoyconButton.A, KeyboardKey.ESCAPE to JoyconButton.B)),
+    )
 
-    private val router = HeldKeyRouter(
-        gamepad = OutputBindings(gamepadOn, gamepadBindings),
-        dsu = OutputBindings(dsuOn, dsuBindings),
-    ) { held -> copy(keyboard = keyboard.copy(keys = held)) }
+    private val router = HeldKeyRouter(OutputBindings(running, bindings)) { held ->
+        copy(keyboard = keyboard.copy(keys = held))
+    }
 
     private fun bindings(vararg keys: Pair<KeyboardKey, JoyconButton>) =
         KeyBindings(keys.associate { (key, button) -> key to listOf(MappingSource.Button(button)) })
@@ -50,7 +49,7 @@ class HeldKeyRouterTest {
     )
 
     @Test
-    fun `each output holds its own console's keys and the Android keys stay`() {
+    fun `bound buttons hold their keys and the Android keys stay`() {
         val keyboard = route(holding(JoyconButton.A, JoyconButton.B)).keyboard
 
         assertEquals(setOf(KeyboardKey.ENTER, KeyboardKey.ESCAPE), keyboard.keys)
@@ -58,11 +57,11 @@ class HeldKeyRouterTest {
     }
 
     @Test
-    fun `a bound button is withheld only from the output whose mapping binds it`() {
-        val routed = route(holding(JoyconButton.A, JoyconButton.B))
+    fun `a bound button is withheld from both outputs`() {
+        val routed = route(holding(JoyconButton.A, JoyconButton.X))
 
-        assertEquals(setOf(JoyconButton.B.id), routed.gamepad.single().state.left!!.input.pressed)
-        assertEquals(setOf(JoyconButton.A.id), routed.dsu.single().left!!.input.pressed)
+        assertEquals(setOf(JoyconButton.X.id), routed.gamepad.single().state.left!!.input.pressed)
+        assertEquals(setOf(JoyconButton.X.id), routed.dsu.single().left!!.input.pressed)
     }
 
     @Test
@@ -73,15 +72,15 @@ class HeldKeyRouterTest {
     }
 
     @Test
-    fun `an output that is off holds nothing`() {
-        dsuOn.value = false
+    fun `with the output off nothing is held`() {
+        running.value = false
 
-        assertEquals(setOf(KeyboardKey.ENTER), route(holding(JoyconButton.A, JoyconButton.B)).keyboard.keys)
+        assertEquals(emptySet<KeyboardKey>(), route(holding(JoyconButton.A, JoyconButton.B)).keyboard.keys)
     }
 
     @Test
     fun `a stick key eased back below its press tilt stays held until it falls further`() {
-        gamepadBindings.value = mapOf(
+        bindings.value = mapOf(
             PlayerNumber.P1 to KeyBindings(mapOf(KeyboardKey.W to listOf(MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.UP)))),
         )
 

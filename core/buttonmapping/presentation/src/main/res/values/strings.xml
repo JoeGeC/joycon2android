@@ -35,6 +35,8 @@
     <string name="controller_pro">Pro</string>
     <string name="controller_gamecube">GameCube</string>
     <string name="layout_standard">Standard</string>
+    <string name="layout_wasd_mouse">WASD + mouse</string>
+    <string name="layout_wasd_mouse_description">Walk on the stick, ZR clicks, right stick scrolls</string>
     <string name="layout_wii">Wii</string>
     <string name="layout_wii_description">Like a Wiimote, ZR \u2192 B</string>
     <string name="layout_joycon">Joy-Con</string>
@@ -55,6 +57,8 @@
     <string name="console_gamecube">Gamecube</string>
     <string name="console_wiimote_nunchuk">Wiimote &amp; Nunchuck</string>
     <string name="console_switch_pro">Joycons</string>
+    <string name="console_android">Android</string>
+    <string name="console_pc">Mouse &amp; keyboard</string>
     <string name="side_left_short">L</string>
     <string name="side_right_short">R</string>
     <string name="side_dual_short">L/R</string>

@@ -1,11 +1,9 @@
 <resources>
-    <string name="dsu_title">DSU Motion Server</string>
-    <string name="dsu_subtitle_off">Stream motion + pads to emulators (cemuhook)</string>
     <plurals name="dsu_subtitle_on">
-        <item quantity="one">Active — port %1$d · %2$d emulator connected</item>
-        <item quantity="other">Active — port %1$d · %2$d emulators connected</item>
+        <item quantity="one">DSU on port %1$d · %2$d emulator connected</item>
+        <item quantity="other">DSU on port %1$d · %2$d emulators connected</item>
     </plurals>
-    <string name="dsu_subtitle_waiting">Active — port %1$d · waiting for an emulator</string>
+    <string name="dsu_subtitle_waiting">DSU on port %1$d · waiting for an emulator</string>
     <string name="player_label">P%1$d</string>
     <string name="dsu_slot_limit_lead">DSU has only 4 slots.</string>
     <string name="dsu_slot_limit_players">No slot for %1$s.</string>
@@ -13,7 +11,6 @@
     <string name="dsu_manual_setup_title">Manual emulator setup</string>
     <string name="dsu_dolphin_emulator_name">Dolphin (Wii)</string>
     <string name="dsu_setup_body">In the emulator\'s controller settings, point its DSU (cemuhook) input source at:</string>
-    <string name="dsu_auto_setup">Set up</string>
     <string name="dsu_eden_emulator_name">Eden (Switch)</string>
     <string name="dsu_eden_servers">In Eden\'s controller settings, turn on motion and the UDP controller, with the address above as the server.</string>
     <string name="dsu_eden_motion">Then point each player\'s buttons, sticks and motion at the UDP controller. A player holding two Joy-Cons has two motion inputs — the second reads the other hand.</string>

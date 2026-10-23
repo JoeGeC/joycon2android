@@ -24,6 +24,8 @@ internal fun Console.label(): String = when (this) {
     Console.GAMECUBE -> stringResource(R.string.console_gamecube)
     Console.WIIMOTE_NUNCHUK -> stringResource(R.string.console_wiimote_nunchuk)
     Console.SWITCH_PRO -> stringResource(R.string.console_switch_pro)
+    Console.ANDROID -> stringResource(R.string.console_android)
+    Console.PC -> stringResource(R.string.console_pc)
 }
 
 /** Short enough to sit in a list of players, as in "P1 L, P2 R". */

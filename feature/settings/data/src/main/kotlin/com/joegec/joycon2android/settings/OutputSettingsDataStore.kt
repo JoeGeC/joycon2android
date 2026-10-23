@@ -21,7 +21,6 @@ class OutputSettingsDataStore(context: Context) : OutputSettingsRepository {
         OutputSettings(
             fasterUpdates = prefs[FASTER_UPDATES] ?: defaults.fasterUpdates,
             blockDeviceMotion = prefs[BLOCK_DEVICE_MOTION] ?: defaults.blockDeviceMotion,
-            mouse = prefs[MOUSE] ?: defaults.mouse,
         )
     }
 
@@ -33,13 +32,8 @@ class OutputSettingsDataStore(context: Context) : OutputSettingsRepository {
         dataStore.edit { it[BLOCK_DEVICE_MOTION] = enabled }
     }
 
-    override suspend fun setMouse(enabled: Boolean) {
-        dataStore.edit { it[MOUSE] = enabled }
-    }
-
     private companion object {
         val FASTER_UPDATES = booleanPreferencesKey("fast_motion")
         val BLOCK_DEVICE_MOTION = booleanPreferencesKey("block_device_motion")
-        val MOUSE = booleanPreferencesKey("mouse")
     }
 }

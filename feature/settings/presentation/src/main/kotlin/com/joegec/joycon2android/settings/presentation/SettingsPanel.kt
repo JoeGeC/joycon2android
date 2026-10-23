@@ -21,7 +21,6 @@ fun SettingsPanel(
     onViewModeChange: (ConnectionViewMode) -> Unit,
     onFasterUpdatesToggle: (Boolean) -> Unit,
     onBlockDeviceMotionToggle: (Boolean) -> Unit,
-    onMouseToggle: (Boolean) -> Unit,
     onShowTipsToggle: (Boolean) -> Unit,
     onLaunchOnMainScreenToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -76,16 +75,6 @@ fun SettingsPanel(
                 description = stringResource(R.string.settings_block_device_motion_description),
                 checked = state.outputSettings.blockDeviceMotion,
                 onCheckedChange = onBlockDeviceMotionToggle,
-                titleStyle = MaterialTheme.typography.titleMedium,
-                warning = shizukuWarning(state),
-            )
-        }
-        SettingsSection {
-            SettingSwitch(
-                title = stringResource(R.string.settings_mouse_title),
-                description = stringResource(R.string.settings_mouse_description),
-                checked = state.outputSettings.mouse,
-                onCheckedChange = onMouseToggle,
                 titleStyle = MaterialTheme.typography.titleMedium,
                 warning = shizukuWarning(state),
             )

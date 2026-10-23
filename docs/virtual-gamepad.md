@@ -24,11 +24,11 @@ Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the 
 ## Mouse
 
 `Joy-Con Virtual Mouse` is one UHID device, shared by every player, with three buttons and a wheel.
-`PrivilegedDevicePolicy` keeps it up while Shizuku runs and either the **Joy-Con mouse** setting is
-on (independent of the gamepad and DSU) or an output runs with a mouse action mapped.
+`PrivilegedDevicePolicy` keeps it up while Shizuku runs and the [output](architecture.md#output)
+plans it: Mouse & keys mode, a mapped mouse action, or Mouse set On.
 
 **One mouse, two inputs to it.** Clicks and scroll come from each player's **Mouse** mapping, held
-or not. With the setting on, a Joy-Con 2 standing on a surface also moves the pointer. A player whose
+or not. While the mouse is up, a Joy-Con 2 standing on a surface also moves the pointer. A player whose
 mapping binds no mouse action gets default clicks and scroll on a Joy-Con on the surface instead:
 
 | Input | Mouse | Notes |
@@ -68,7 +68,8 @@ the Joy-Con stands on its rail; lifted, it is a plain controller again.
 ## Keyboard
 
 `Joy-Con Virtual Keyboard` is one UHID device shared by every player, up while Shizuku runs and the
-gamepad or DSU is on (`PrivilegedDevicePolicy`). It carries the mapping's **Keyboard** keys, and the
+[output](architecture.md#output) plans it (`PrivilegedDevicePolicy`): Mouse & keys mode, a mapped
+keyboard or Android key, or Keyboard set On. It carries the mapping's **Keyboard** keys, and the
 [Android keys](#android-keys) the pad does not, in place of the shell.
 
 | Report | Bytes | Carries |
@@ -91,6 +92,9 @@ gamepad or DSU is on (`PrivilegedDevicePolicy`). It carries the mapping's **Keyb
 - **Directions are read in the hardware's own axes** (`PlayerSticks`), as the mapping labels them; a
   sideways Wii Remote's are turned back from the rail-up frame when parsed (`hardwareDirection`).
 - **Six keys at once**, the boot-keyboard limit; Screenshot takes a slot. Modifiers don't.
+- **Coming and going changes Android's configuration** (`keyboard`, `keyboardHidden`, `navigation`;
+  the mouse too). `MainActivity` declares those in `configChanges`. AYN Thor, 2026-10-23: without
+  it, each output-mode switch relaunched the activity and cut its animations.
 
 AYN Thor, Android 13, 2026-10-23:
 
@@ -157,8 +161,8 @@ shift:
 
 Each player's mapping, per console, has an **Android** section: buttons bound to Home, Back or
 Screenshot act as the device's own keys and never reach the game. `AndroidKeyRouter` applies the
-mapping of the console each output's card is set to, while that output runs. A key the pad does not
-send goes through the [keyboard](#keyboard), or the shell if the keyboard failed to come up.
+mapping of the [output's](architecture.md#output) console, while it runs. A key the pad does not
+send goes through the [keyboard](#keyboard), which a bound Android key brings up, or the shell while it is down (set Off).
 
 | Key | Virtual gamepad | DSU only |
 |---|---|---|

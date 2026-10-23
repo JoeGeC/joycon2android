@@ -44,13 +44,20 @@ import com.joegec.joycon2android.ui.Joycon2ViewModel
 import com.joegec.joycon2android.ui.JoyconScreen
 import com.joegec.joycon2android.ui.pushTransition
 import com.joegec.joycon2android.dsu.DsuSlots
-import com.joegec.joycon2android.emulator.EmulatorConsoles
 import com.joegec.joycon2android.ui.components.CloseEmulatorDialog
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.StartEmulatorDialog
 import com.joegec.joycon2android.ui.components.ProvideTips
-import com.joegec.joycon2android.dsu.presentation.DsuCardState
-import com.joegec.joycon2android.dsu.presentation.DsuMappingHelpSheet
+import com.joegec.joycon2android.model.PlayerState
+import com.joegec.joycon2android.dsu.presentation.DsuOutputStatus
+import com.joegec.joycon2android.output.EmulatorKind
+import com.joegec.joycon2android.output.OutputDevice
+import com.joegec.joycon2android.gamepad.presentation.GamepadSetupSheet
+import com.joegec.joycon2android.output.presentation.OutputCard
+import com.joegec.joycon2android.output.presentation.OutputCardActions
+import com.joegec.joycon2android.output.presentation.OutputCardState
+import com.joegec.joycon2android.output.presentation.OutputViewModel
+import com.joegec.joycon2android.dsu.presentation.DsuSetupSheet
 import com.joegec.joycon2android.update.presentation.UpdateDialog
 import com.joegec.joycon2android.update.presentation.UpdateViewModel
 import com.joegec.joycon2android.ui.theme.Background
@@ -63,14 +70,7 @@ class MainActivity : ComponentActivity() {
         viewModelFactory {
             initializer {
                 val c = (application as JoyconApplication).container
-                DsuViewModel(
-                    c.observeDsuStatus,
-                    c.enableDsu,
-                    c.disableDsu,
-                    dsuEmulators = c.emulatorSetup.dsuEmulators(),
-                    configureDsu = c.emulatorSetup::configureDsu,
-                    onEmulatorSelected = c::selectDsuEmulator,
-                )
+                DsuViewModel(c.observeDsuStatus)
             }
         }
     }
@@ -81,11 +81,25 @@ class MainActivity : ComponentActivity() {
                 GamepadViewModel(
                     c.observeGamepadStatus,
                     c.observeShizukuAvailability,
-                    c.enableGamepad,
-                    c.disableGamepad,
-                    gamepadEmulators = c.emulatorSetup.gamepadEmulators(),
-                    configureGamepad = c.emulatorSetup::configureGamepad,
-                    onEmulatorSelected = c::selectGamepadEmulator,
+                    c.observeKeyboardEnabled,
+                    c.observeMouseEnabled,
+                )
+            }
+        }
+    }
+    private val outputViewModel: OutputViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val c = (application as JoyconApplication).container
+                OutputViewModel(
+                    c.observeOutputSelection,
+                    c.observeOutputRunning,
+                    c.setOutputRunning,
+                    c.setOutputMode,
+                    c.selectEmulator,
+                    c.setDeviceOverride,
+                    emulators = c.emulatorTargets,
+                    configure = c::configureEmulator,
                 )
             }
         }
@@ -98,7 +112,6 @@ class MainActivity : ComponentActivity() {
                     c.observeOutputSettings,
                     c.setFasterUpdates,
                     c.setBlockDeviceMotion,
-                    c.setMouse,
                     c.observeShowTips,
                     c.setShowTips,
                     c.observeLaunchOnMainScreen,
@@ -252,10 +265,7 @@ class MainActivity : ComponentActivity() {
                 ),
             )
         }
-        if (showDsuHelp) {
-            val dsuStatus by dsuViewModel.status.collectAsState()
-            DsuMappingHelpSheet(address = dsuStatus.address, onDismiss = { showDsuHelp = false })
-        }
+        if (showDsuHelp) DsuSetupSheet(onDismiss = { showDsuHelp = false })
     }
 
     private val mappingActions = MappingActions(
@@ -308,7 +318,6 @@ class MainActivity : ComponentActivity() {
                     onViewModeChange = viewModel::setViewMode,
                     onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
                     onBlockDeviceMotionToggle = settingsViewModel::toggleBlockDeviceMotion,
-                    onMouseToggle = settingsViewModel::toggleMouse,
                     onShowTipsToggle = settingsViewModel::toggleShowTips,
                     onLaunchOnMainScreenToggle = settingsViewModel::toggleLaunchOnMainScreen,
                 )
@@ -321,17 +330,9 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun MainScreen(onScan: () -> Unit, onOpenMapping: (MappingRoute) -> Unit, onOpenSettings: () -> Unit) {
         val state by viewModel.session.collectAsState()
-        val gamepadStatus by gamepadViewModel.status.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
-        val dsuStatus by dsuViewModel.status.collectAsState()
-        val dsuSetupPhase by dsuViewModel.setupPhase.collectAsState()
-        val selectedDsuEmulator by dsuViewModel.selectedEmulator.collectAsState()
-        val dsuEmulatorToClose by dsuViewModel.emulatorToClose.collectAsState()
-        val gamepadEmulatorToClose by gamepadViewModel.emulatorToClose.collectAsState()
-        val dsuEmulatorToStart by dsuViewModel.emulatorToStart.collectAsState()
-        val gamepadEmulatorToStart by gamepadViewModel.emulatorToStart.collectAsState()
-        val gamepadSetupPhase by gamepadViewModel.setupPhase.collectAsState()
-        val selectedEmulator by gamepadViewModel.selectedEmulator.collectAsState()
+        val emulatorToClose by outputViewModel.emulatorToClose.collectAsState()
+        val emulatorToStart by outputViewModel.emulatorToStart.collectAsState()
         val permissionDenied by viewModel.permissionDenied.collectAsState()
         val batteryRestricted by viewModel.batteryRestricted.collectAsState()
         val viewMode by viewModel.viewMode.collectAsState()
@@ -340,42 +341,22 @@ class MainActivity : ComponentActivity() {
         val assignmentKey = state.players.map {
             Triple(it.player.index, it.left?.address, it.right?.address)
         }
-        LaunchedEffect(assignmentKey) {
-            dsuViewModel.resetSetupPhase()
-            gamepadViewModel.resetSetupPhase()
-        }
+        LaunchedEffect(assignmentKey) { outputViewModel.resetSetupPhase() }
 
-        dsuEmulatorToClose?.let { emulator ->
+        emulatorToClose?.let { emulator ->
             CloseEmulatorDialog(
                 emulatorName = emulator.label,
-                onConfirm = { dsuViewModel.closeEmulatorAndConfigure(state.activePlayers) },
-                onDismiss = dsuViewModel::cancelClose,
+                onConfirm = { outputViewModel.closeEmulatorAndSetUp(state.activePlayers) },
+                onDismiss = outputViewModel::cancelClose,
             )
         }
-        gamepadEmulatorToClose?.let { emulator ->
-            CloseEmulatorDialog(
-                emulatorName = emulator.label,
-                onConfirm = { gamepadViewModel.closeEmulatorAndConfigure(state.activePlayers) },
-                onDismiss = gamepadViewModel::cancelClose,
-            )
-        }
-        StartEmulatorPrompt(dsuEmulatorToStart, dsuViewModel::dismissStart)
-        StartEmulatorPrompt(gamepadEmulatorToStart, gamepadViewModel::dismissStart)
+        StartEmulatorPrompt(emulatorToStart, outputViewModel::dismissStart)
+        SetupGuide()
 
         JoyconScreen(
             state = state,
             liveInputs = viewModel.liveInputs,
-            gamepadEnabled = gamepadStatus.enabled,
-            gamepadError = gamepadStatus.error,
-            dsuState = DsuCardState(
-                enabled = dsuStatus.enabled,
-                error = dsuStatus.error,
-                clientCount = dsuStatus.clientCount,
-                coverage = DsuSlots.coverage(state.activePlayers),
-                emulators = dsuViewModel.dsuEmulators,
-                selectedEmulator = selectedDsuEmulator,
-                setupPhase = dsuSetupPhase,
-            ),
+            outputCard = { modifier -> MainOutputCard(state.activePlayers, onOpenMapping, modifier) },
             permissionDenied = permissionDenied,
             batteryRestricted = batteryRestricted,
             onAllowBackgroundRunning = {
@@ -387,27 +368,69 @@ class MainActivity : ComponentActivity() {
             onUnassign = viewModel::unassign,
             onDisconnect = viewModel::disconnect,
             onSetControllerType = viewModel::setControllerType,
-            onGamepadToggle = { enabled ->
-                gamepadViewModel.toggle(enabled, state.activePlayers)
-            },
-            gamepadEmulators = gamepadViewModel.gamepadEmulators,
-            selectedGamepadEmulator = selectedEmulator,
-            onSelectGamepadEmulator = gamepadViewModel::selectEmulator,
-            gamepadSetupPhase = gamepadSetupPhase,
-            onConfigureGamepad = { gamepadViewModel.configureGamepad(state.activePlayers) },
-            onOpenGamepadMapping = {
-                onOpenMapping(MappingRoute(EmulatorConsoles.forGamepad(selectedEmulator), fromDsu = false))
-            },
-            onDsuToggle = dsuViewModel::toggle,
-            onSelectDsuEmulator = dsuViewModel::selectEmulator,
-            onConfigureDsu = { dsuViewModel.configureDsu(state.activePlayers) },
-            onOpenDsuMapping = {
-                onOpenMapping(MappingRoute(EmulatorConsoles.forDsu(selectedDsuEmulator), fromDsu = true))
-            },
             onOpenSystemSettings = { startActivity(viewModel.permissionHandler.buildSettingsIntent()) },
             onOpenSettings = onOpenSettings,
             shizukuAvailable = shizukuAvailable,
             viewMode = viewMode,
         )
+    }
+
+    @Composable
+    private fun SetupGuide() {
+        val guide by outputViewModel.guide.collectAsState()
+        when (guide) {
+            EmulatorKind.OTHER_GAMEPAD -> GamepadSetupSheet(onDismiss = outputViewModel::dismissGuide)
+            EmulatorKind.OTHER_MOTION -> DsuSetupSheet(onDismiss = outputViewModel::dismissGuide)
+            EmulatorKind.DOLPHIN_GAMECUBE, EmulatorKind.DOLPHIN_WII, EmulatorKind.EDEN, null -> Unit
+        }
+    }
+
+    @Composable
+    private fun MainOutputCard(
+        players: List<PlayerState>,
+        onOpenMapping: (MappingRoute) -> Unit,
+        modifier: Modifier,
+    ) {
+        val container = (application as JoyconApplication).container
+        val selection by outputViewModel.selection.collectAsState()
+        val running by outputViewModel.running.collectAsState()
+        val setupPhase by outputViewModel.setupPhase.collectAsState()
+        val gamepadStatus by gamepadViewModel.status.collectAsState()
+        val keyboardEnabled by gamepadViewModel.keyboardEnabled.collectAsState()
+        val mouseEnabled by gamepadViewModel.mouseEnabled.collectAsState()
+        val dsuStatus by dsuViewModel.status.collectAsState()
+        val live = buildSet {
+            if (gamepadStatus.enabled) add(OutputDevice.PAD)
+            if (dsuStatus.enabled) add(OutputDevice.MOTION)
+            if (keyboardEnabled) add(OutputDevice.KEYBOARD)
+            if (mouseEnabled) add(OutputDevice.MOUSE)
+        }
+
+        OutputCard(
+            state = OutputCardState(
+                running = running,
+                selection = selection,
+                emulators = outputViewModel.emulators,
+                selectedEmulator = outputViewModel.selectedEmulatorId(selection),
+                setupPhase = setupPhase,
+                liveDevices = live,
+                error = gamepadStatus.error ?: dsuStatus.error,
+            ),
+            actions = OutputCardActions(
+                toggle = outputViewModel::toggle,
+                setMode = outputViewModel::setMode,
+                selectEmulator = outputViewModel::selectEmulator,
+                setUp = { outputViewModel.setUp(players) },
+                openMapping = {
+                    // Motion alone means the emulator maps DSU inputs, which detection never sees.
+                    val dsuOnly = OutputDevice.MOTION in live && OutputDevice.PAD !in live
+                    onOpenMapping(MappingRoute(container.activeConsole.value, fromDsu = dsuOnly))
+                },
+                setOverride = outputViewModel::setOverride,
+            ),
+            modifier = modifier,
+        ) {
+            DsuOutputStatus(dsuStatus, DsuSlots.coverage(players))
+        }
     }
 }

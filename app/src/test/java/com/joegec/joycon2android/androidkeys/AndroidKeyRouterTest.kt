@@ -16,16 +16,17 @@ import org.junit.Test
 
 class AndroidKeyRouterTest {
 
-    private val gamepadOn = MutableStateFlow(true)
-    private val dsuOn = MutableStateFlow(false)
+    private val running = MutableStateFlow(true)
+    private val padOn = MutableStateFlow(true)
     private val keyboardOn = MutableStateFlow(false)
-    private val gamepadBindings = MutableStateFlow(mapOf(PlayerNumber.P1 to bindings(AndroidKey.HOME to JoyconButton.Home)))
-    private val dsuBindings = MutableStateFlow(mapOf(PlayerNumber.P1 to bindings(AndroidKey.BACK to JoyconButton.Minus)))
+    private val bindings = MutableStateFlow(
+        mapOf(PlayerNumber.P1 to bindings(AndroidKey.HOME to JoyconButton.Home, AndroidKey.BACK to JoyconButton.Minus)),
+    )
     private val pressed = mutableListOf<AndroidKey>()
 
     private val router = AndroidKeyRouter(
-        gamepad = OutputBindings(gamepadOn, gamepadBindings),
-        dsu = OutputBindings(dsuOn, dsuBindings),
+        bindings = OutputBindings(running, bindings),
+        padEnabled = padOn,
         keyboardEnabled = keyboardOn,
         pressKey = { pressed += it },
     )
@@ -49,7 +50,7 @@ class AndroidKeyRouterTest {
 
     @Test
     fun `screenshot goes through the shell once per press however long it is held`() {
-        gamepadBindings.value = mapOf(PlayerNumber.P1 to bindings(AndroidKey.SCREENSHOT to JoyconButton.Capture))
+        bindings.value = mapOf(PlayerNumber.P1 to bindings(AndroidKey.SCREENSHOT to JoyconButton.Capture))
 
         repeat(3) { router.route(holding(JoyconButton.Capture)) }
         router.route(holding())
@@ -59,39 +60,28 @@ class AndroidKeyRouterTest {
     }
 
     @Test
-    fun `with only DSU running every key goes through the shell`() {
-        gamepadOn.value = false
-        dsuOn.value = true
+    fun `without the pad every key goes through the shell and is withheld from DSU`() {
+        padOn.value = false
 
-        val routed = router.route(holding(JoyconButton.Minus, JoyconButton.Home))
+        val routed = router.route(holding(JoyconButton.Minus, JoyconButton.A))
 
         assertEquals(listOf(AndroidKey.BACK), pressed)
-        assertEquals(setOf(JoyconButton.Home.id), routed.dsu.single().left!!.input.pressed)
+        assertEquals(setOf(JoyconButton.A.id), routed.dsu.single().left!!.input.pressed)
     }
 
     @Test
-    fun `with both outputs running the pad sends a DSU binding's Back so it fires once`() {
-        dsuOn.value = true
+    fun `with the output off nothing fires and nothing is withheld`() {
+        running.value = false
 
-        val frame = router.route(holding(JoyconButton.Minus)).gamepad.single()
-
-        assertEquals(setOf(AndroidKey.BACK), frame.androidKeys)
-        assertEquals(emptyList<AndroidKey>(), pressed)
-    }
-
-    @Test
-    fun `an output that is off fires nothing`() {
-        gamepadOn.value = false
-
-        router.route(holding(JoyconButton.Home, JoyconButton.Minus))
+        val routed = router.route(holding(JoyconButton.Home, JoyconButton.Minus))
 
         assertEquals(emptyList<AndroidKey>(), pressed)
+        assertEquals(setOf(JoyconButton.Home.id, JoyconButton.Minus.id), routed.dsu.single().left!!.input.pressed)
     }
 
     @Test
-    fun `with the keyboard up and only DSU running the keyboard holds every key instead of the shell`() {
-        gamepadOn.value = false
-        dsuOn.value = true
+    fun `with the keyboard up and no pad the keyboard holds every key instead of the shell`() {
+        padOn.value = false
         keyboardOn.value = true
 
         val held = router.route(holding(JoyconButton.Minus)).keyboard
@@ -105,7 +95,7 @@ class AndroidKeyRouterTest {
     @Test
     fun `with the keyboard up the pad still sends Home and the keyboard takes screenshot`() {
         keyboardOn.value = true
-        gamepadBindings.value = mapOf(
+        bindings.value = mapOf(
             PlayerNumber.P1 to bindings(AndroidKey.HOME to JoyconButton.Home, AndroidKey.SCREENSHOT to JoyconButton.Capture),
         )
 

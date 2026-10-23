@@ -9,7 +9,6 @@ import com.joegec.joycon2android.settings.OutputSettings
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
 import com.joegec.joycon2android.settings.SetLaunchOnMainScreenUseCase
-import com.joegec.joycon2android.settings.SetMouseUseCase
 import com.joegec.joycon2android.settings.SetShowTipsUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +19,6 @@ class SettingsViewModel(
     observeOutputSettings: ObserveOutputSettingsUseCase,
     private val setFasterUpdates: SetFasterUpdatesUseCase,
     private val setBlockDeviceMotion: SetBlockDeviceMotionUseCase,
-    private val setMouse: SetMouseUseCase,
     observeShowTips: ObserveShowTipsUseCase,
     private val setShowTips: SetShowTipsUseCase,
     observeLaunchOnMainScreen: ObserveLaunchOnMainScreenUseCase,
@@ -44,10 +42,6 @@ class SettingsViewModel(
 
     fun toggleBlockDeviceMotion(enabled: Boolean) {
         viewModelScope.launch { setBlockDeviceMotion(enabled) }
-    }
-
-    fun toggleMouse(enabled: Boolean) {
-        viewModelScope.launch { setMouse(enabled) }
     }
 
     fun toggleShowTips(enabled: Boolean) {

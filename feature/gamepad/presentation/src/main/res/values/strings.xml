@@ -3,4 +3,9 @@
     <string name="shizuku_setup_body">The virtual gamepad needs Shizuku for privileged access. Install the Shizuku app, start its service, then grant this app permission when prompted.</string>
     <string name="shizuku_setup_link_description">Open the Shizuku GitHub page</string>
     <string name="shizuku_url" translatable="false">https://github.com/RikkaApps/Shizuku</string>
+    <string name="gamepad_setup_title">Connect a game or emulator</string>
+    <string name="gamepad_setup_device">Each player is a controller of its own to every app: Joy-Con Virtual Gamepad 1, 2 and so on.</string>
+    <string name="gamepad_setup_map">In the game\'s or emulator\'s controller settings, pick it for that player and map each button by pressing it.</string>
+    <string name="gamepad_setup_order">On a handheld the built-in controller is usually listed first, so Player 1\'s gamepad may be the second controller.</string>
+    <string name="gamepad_setup_motion">The gamepad carries no motion. For gyro, pick Other (Motion) instead if the emulator reads DSU, or turn Motion on in Advanced alongside the gamepad.</string>
 </resources>

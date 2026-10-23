@@ -25,13 +25,15 @@ ViewModel cannot reach a repository implementation.
 | `:app` | `com.android.application` | every feature module + all `:core` |
 | `:konsist` | `joycon.kotlin.jvm` (test-only) | — (scans the whole project) |
 
-…for each feature `<f>` ∈ { `connection`, `assignment`, `gamepad`, `dsu`, `update`, `settings` }.
+…for each feature `<f>` ∈ { `connection`, `assignment`, `gamepad`, `dsu`, `update`, `settings`, `output` }.
 
 ¹ `assignment:data` is pure Kotlin (`joycon.kotlin.jvm`) — it has no Android dependencies.
 
 ² `gamepad:domain` and `dsu:domain` also depend on `:core:emulatorconfig` and
 `:core:buttonmapping:domain` for one-tap emulator setup. Each owns its own config *generators* over
 that shared leaf; no feature depends on another.
+
+`output:domain` also depends on `:core:buttonmapping:domain`, for the `Console` each mode maps.
 
 ³ Not `update`, which only reads GitHub's releases API and hands an APK to the system installer.
 
@@ -96,6 +98,47 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
 - **`GlobalLayout` freezes the whole session** — every player's bindings in full, and the bodies they
   held — so it restores exactly what it saved, but only onto those players.
 
+## Output
+
+One **Output** card picks what runs, in place of a switch per device. `:feature:output` owns the
+choice; `:app` runs it.
+
+| Mode | Devices on Auto | Console mapped |
+|---|---|---|
+| Controller | what the target reads (`EmulatorKind`) | the target's |
+| Mouse & keys | keyboard, mouse | `Console.PC`, WASD + mouse by default |
+
+| Controller target | Devices | Console | Set up through |
+|---|---|---|---|
+| Dolphin (GameCube) | pad | GameCube | pad |
+| Dolphin (Wii) | motion | Wii Remote | DSU |
+| Eden, Eden Nightly | motion | Switch Pro | DSU, or the pad when only the pad runs |
+| Other (Gamepad) | pad | `Console.ANDROID`: device keys only | by hand: `GamepadSetupSheet` |
+| Other (Motion) | motion | `Console.ANDROID` | by hand: `DsuSetupSheet` |
+
+- **The Others are always listed**, after whatever is installed, so Controller mode always has a
+  target. Other (Gamepad) is also the Android-games target; the two share one mapping because a key
+  bound for one is wanted in the other.
+
+- **`OutputPlan` is the one rule**, pure and tested: the devices for a `OutputSelection` (mode,
+  emulator, per-device Auto / On / Off), the console they map, and which setup an emulator gets.
+  On Auto the keyboard and mouse also come up in any mode once the console's mapping uses them: a
+  keyboard key or Android key for the keyboard (the Android keys' fast path), a mouse action for the
+  mouse. Otherwise they stay down, needed by nothing.
+- **Eden runs DSU alone** because DSU carries its buttons and motion together, so Eden sees each
+  controller once. Pad on, Motion off in Advanced sets Eden up through the pad instead.
+- **Dolphin is two targets of one package** (`dolphin-wii`, `dolphin-gamecube`); `EmulatorTarget`
+  keeps the package apart for launching. The Others have none, which is what turns Set up into
+  **How to connect**.
+- **One active console for every device.** The routers read one set of bindings per kind of key, which
+  act while the output runs, whichever devices are up.
+- **`:app` runs it.** `AppContainer` derives the planned devices; `OutputDevicesPolicy` starts the pad
+  (with players to give it, again when one returns) and DSU; `PrivilegedDevicePolicy` the keyboard
+  and mouse, which also need Shizuku.
+- **On as players arrive** (`OutputAutoStartPolicy`): the first player assigned switches it on.
+  Switched off by hand, it stays off until every player leaves and one returns. The switch isn't kept
+  across launches; the mode, emulator and overrides are (`OutputDataStore`).
+
 ## Dependency rules
 
 These are the invariants. They're enforced by the module graph (compile-time) and, where the
@@ -144,8 +187,10 @@ no state of its own.
 One **ViewModel per feature**, in its presentation module, built in `MainActivity` by a
 `viewModelFactory` that pulls use cases off `AppContainer` — so it depends only on its domain.
 
-- `DsuViewModel` — DSU status, enable toggle and emulator auto setup.
-- `GamepadViewModel` — gamepad status, Shizuku availability and emulator auto setup.
+- `OutputViewModel` — the [output](#output): mode, emulator, overrides, the on switch and emulator
+  auto setup.
+- `DsuViewModel` — DSU status.
+- `GamepadViewModel` — the virtual gamepad, keyboard and mouse status, and Shizuku availability.
 - `UpdateViewModel` — the once-per-launch release check and the update prompt.
 - `SettingsViewModel` — the settings that apply to whichever output runs (faster updates, the Eden
   motion block), **Show tips**, which `MainActivity` hands every screen through `LocalTips`, and

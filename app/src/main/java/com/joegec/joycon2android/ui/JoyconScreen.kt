@@ -79,13 +79,7 @@ import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.gamepad.presentation.ShizukuSetupCard
 import com.joegec.joycon2android.assignment.presentation.AssignmentPanel
 import com.joegec.joycon2android.model.ConnectionViewMode
-import com.joegec.joycon2android.ui.components.DolphinSetupPhase
-import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
-import com.joegec.joycon2android.ui.components.EmulatorOption
-import com.joegec.joycon2android.dsu.presentation.DsuCard
-import com.joegec.joycon2android.dsu.presentation.DsuCardState
 import com.joegec.joycon2android.ui.components.ErrorBox
-import com.joegec.joycon2android.ui.components.FeatureToggleCard
 import com.joegec.joycon2android.connection.presentation.PlayerCard
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AppType
@@ -127,9 +121,7 @@ private fun Modifier.scaleLayout(scale: Float): Modifier = layout { measurable, 
 fun JoyconScreen(
     state: AppUiState,
     liveInputs: StateFlow<Map<String, JoyconInput>>,
-    gamepadEnabled: Boolean,
-    gamepadError: String?,
-    dsuState: DsuCardState,
+    outputCard: @Composable (Modifier) -> Unit,
     shizukuAvailable: Boolean,
     permissionDenied: Boolean,
     batteryRestricted: Boolean,
@@ -140,17 +132,6 @@ fun JoyconScreen(
     onUnassign: (String) -> Unit,
     onDisconnect: (String) -> Unit,
     onSetControllerType: (String, ControllerModel?) -> Unit,
-    onGamepadToggle: (Boolean) -> Unit,
-    gamepadEmulators: List<EmulatorOption>,
-    selectedGamepadEmulator: String,
-    onSelectGamepadEmulator: (String) -> Unit,
-    gamepadSetupPhase: DolphinSetupPhase,
-    onConfigureGamepad: () -> Unit,
-    onOpenGamepadMapping: () -> Unit,
-    onDsuToggle: (Boolean) -> Unit,
-    onSelectDsuEmulator: (String) -> Unit,
-    onConfigureDsu: () -> Unit,
-    onOpenDsuMapping: () -> Unit,
     onOpenSystemSettings: () -> Unit,
     onOpenSettings: () -> Unit,
     viewMode: ConnectionViewMode,
@@ -257,12 +238,9 @@ fun JoyconScreen(
                         BatteryRestrictedBanner(batteryRestricted, onAllowBackgroundRunning)
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
-                                state, liveInputs, viewMode, gamepadEnabled, gamepadError, dsuState, shizukuAvailable,
-                                gamepadEmulators, selectedGamepadEmulator, onSelectGamepadEmulator,
-                                gamepadSetupPhase, onConfigureGamepad, onOpenGamepadMapping,
+                                state, liveInputs, viewMode, outputCard, shizukuAvailable,
                                 onScan, onDisconnectAll, onAssign, unassignController, removePlayer, onDisconnect,
                                 onSetControllerType,
-                                onGamepadToggle, onDsuToggle, onSelectDsuEmulator, onConfigureDsu, onOpenDsuMapping,
                             )
                             else -> ScanningContent(state)
                         }
@@ -457,16 +435,8 @@ private fun ConnectedContent(
     state: AppUiState,
     liveInputs: StateFlow<Map<String, JoyconInput>>,
     viewMode: ConnectionViewMode,
-    gamepadEnabled: Boolean,
-    gamepadError: String?,
-    dsuState: DsuCardState,
+    outputCard: @Composable (Modifier) -> Unit,
     shizukuAvailable: Boolean,
-    gamepadEmulators: List<EmulatorOption>,
-    selectedGamepadEmulator: String,
-    onSelectGamepadEmulator: (String) -> Unit,
-    gamepadSetupPhase: DolphinSetupPhase,
-    onConfigureGamepad: () -> Unit,
-    onOpenGamepadMapping: () -> Unit,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
@@ -474,11 +444,6 @@ private fun ConnectedContent(
     onRemovePlayer: (PlayerState) -> Unit,
     onDisconnect: (String) -> Unit,
     onSetControllerType: (String, ControllerModel?) -> Unit,
-    onGamepadToggle: (Boolean) -> Unit,
-    onDsuToggle: (Boolean) -> Unit,
-    onSelectDsuEmulator: (String) -> Unit,
-    onConfigureDsu: () -> Unit,
-    onOpenDsuMapping: () -> Unit,
 ) {
     AnimatedVisibility(
         visible = state.unassignedJoycons.isNotEmpty(),
@@ -529,63 +494,15 @@ private fun ConnectedContent(
         enter = fadeIn() + expandVertically(),
         exit = fadeOut() + shrinkVertically(),
     ) {
-        val gamepadCard: @Composable () -> Unit = {
-            FeatureToggleCard(
-                title = stringResource(R.string.gamepad_title),
-                subtitle = stringResource(
-                    if (gamepadEnabled) R.string.gamepad_subtitle_on
-                    else R.string.gamepad_subtitle_off
-                ),
-                checked = gamepadEnabled,
-                error = gamepadError,
-                onToggle = onGamepadToggle,
+        // Full width in landscape too: the card's mode picker and device lights need the room.
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
+            outputCard(Modifier)
+            AnimatedVisibility(
+                visible = !shizukuAvailable,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
             ) {
-                if (gamepadEnabled && gamepadEmulators.isNotEmpty()) {
-                    Spacer(Modifier.height(Dimens.elementSpacing))
-                    EmulatorAutoSetup(
-                        emulators = gamepadEmulators,
-                        selectedEmulator = selectedGamepadEmulator,
-                        onSelectEmulator = onSelectGamepadEmulator,
-                        phase = gamepadSetupPhase,
-                        setupLabel = stringResource(R.string.gamepad_emulator_setup),
-                        onSetUp = onConfigureGamepad,
-                        onConfigureMapping = onOpenGamepadMapping,
-                    )
-                }
-            }
-        }
-        val shizukuCard: @Composable () -> Unit = { if (!shizukuAvailable) ShizukuSetupCard() }
-        val dsuCard: @Composable () -> Unit = {
-            DsuCard(
-                state = dsuState,
-                onToggle = onDsuToggle,
-                onSelectEmulator = onSelectDsuEmulator,
-                onSetUp = onConfigureDsu,
-                onConfigureMapping = onOpenDsuMapping,
-            )
-        }
-
-        if (landscape) {
-            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
-                Column(
-                    Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
-                ) {
-                    gamepadCard()
-                    shizukuCard()
-                }
-                Column(
-                    Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
-                ) {
-                    dsuCard()
-                }
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
-                gamepadCard()
-                dsuCard()
-                shizukuCard()
+                ShizukuSetupCard()
             }
         }
     }

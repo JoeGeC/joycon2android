@@ -6,9 +6,9 @@ import com.joegec.joycon2android.ui.components.ExpandableInfoSection
 import com.joegec.joycon2android.ui.components.InfoSheet
 
 @Composable
-fun DsuMappingHelpSheet(address: String?, onDismiss: () -> Unit) {
+fun DsuSetupSheet(onDismiss: () -> Unit) {
     InfoSheet(title = stringResource(R.string.dsu_manual_setup_title), onDismiss = onDismiss) {
-        ManualEmulatorSetup(address)
+        ManualEmulatorSetup()
         ExpandableInfoSection(stringResource(R.string.dsu_mapping_trouble_title)) {
             MappingTroubleshooting()
         }

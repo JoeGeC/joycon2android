@@ -45,15 +45,19 @@ fun EmulatorAutoSetup(
     onSetUp: () -> Unit,
     modifier: Modifier = Modifier,
     onConfigureMapping: (() -> Unit)? = null,
+    /** Shown beside the mapping icon where there's room; icon only when null. */
+    mappingLabel: String? = null,
+    /** False for a target set up by hand, whose [onSetUp] opens a guide of its own. */
+    automatic: Boolean = true,
 ) {
     var showInfo by remember { mutableStateOf(false) }
 
     LabeledBorderBox(
-        label = stringResource(R.string.emulator_auto_setup_title),
+        label = stringResource(if (automatic) R.string.emulator_auto_setup_title else R.string.emulator_manual_setup_title),
         borderColor = TextDim,
         labelBackground = CardBg,
         modifier = modifier,
-        onInfoClick = { showInfo = true },
+        onInfoClick = if (automatic) ({ showInfo = true }) else null,
     ) {
         Column {
             EmulatorDropdown(
@@ -70,7 +74,7 @@ fun EmulatorAutoSetup(
             ) {
                 DolphinSetupButton(phase, setupLabel, onSetUp, modifier = Modifier.weight(1f))
                 if (onConfigureMapping != null) {
-                    MappingButton(onConfigureMapping)
+                    MappingButton(onConfigureMapping, mappingLabel)
                 }
             }
             val tips = LocalTips.current
@@ -99,18 +103,23 @@ fun EmulatorAutoSetup(
 }
 
 @Composable
-private fun MappingButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun MappingButton(onClick: () -> Unit, label: String?, modifier: Modifier = Modifier) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.size(Dimens.emulatorSetupButtonHeight),
+        modifier = if (label == null) modifier.size(Dimens.emulatorSetupButtonHeight)
+        else modifier.height(Dimens.emulatorSetupButtonHeight),
         shape = RoundedCornerShape(Dimens.buttonCorner),
-        contentPadding = PaddingValues(0.dp),
+        contentPadding = if (label == null) PaddingValues(0.dp)
+        else PaddingValues(horizontal = Dimens.emulatorPickerPadding),
     ) {
         Icon(
             Icons.Filled.SportsEsports,
-            contentDescription = stringResource(R.string.emulator_auto_setup_configure_mapping),
+            contentDescription = if (label == null) stringResource(R.string.emulator_auto_setup_configure_mapping) else null,
             tint = TextDim,
         )
+        if (label != null) {
+            Text(label, color = TextDim, modifier = Modifier.padding(start = Dimens.elementSpacing))
+        }
     }
 }
 

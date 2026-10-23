@@ -5,17 +5,17 @@ import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import kotlinx.coroutines.flow.StateFlow
 
-/** One output's key bindings, from the mapping of the console its card is set to. */
+/** The active console's key bindings, acting while the output runs. */
 class OutputBindings<K>(
-    private val enabled: StateFlow<Boolean>,
+    private val running: StateFlow<Boolean>,
     private val bindings: StateFlow<Map<PlayerNumber, KeyBindings<K>>>,
 ) {
-    val isEnabled: Boolean get() = enabled.value
+    fun of(player: PlayerState): KeyBindings<K> = of(player.player)
 
-    fun of(player: PlayerState): KeyBindings<K> = bindings.value[player.player] ?: KeyBindings()
+    fun heldKeys(player: PlayerState, wasHeld: Set<K> = emptySet()): Set<K> = of(player).heldKeys(player, wasHeld)
 
-    fun bindsAny(player: PlayerNumber): Boolean = isEnabled && bindings.value[player]?.sources.orEmpty().isNotEmpty()
+    fun bindsAny(player: PlayerNumber): Boolean = of(player).sources.isNotEmpty()
 
-    fun heldKeys(player: PlayerState, wasHeld: Set<K> = emptySet()): Set<K> =
-        if (isEnabled) of(player).heldKeys(player, wasHeld) else emptySet()
+    private fun of(player: PlayerNumber): KeyBindings<K> =
+        if (running.value) bindings.value[player] ?: KeyBindings() else KeyBindings()
 }

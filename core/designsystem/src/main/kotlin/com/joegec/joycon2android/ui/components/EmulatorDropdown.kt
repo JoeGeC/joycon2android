@@ -28,7 +28,7 @@ fun EmulatorDropdown(
     }
 
     OptionDropdown(
-        options = options.map { DropdownOption(it.id, it.label) },
+        options = options.map { DropdownOption(it.id, it.label, it.subLabel) },
         selectedId = selected.id,
         label = selected.label,
         onSelect = onSelect,

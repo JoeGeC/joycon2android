@@ -71,6 +71,9 @@ object Dimens {
     val emulatorSetupRowGap = 4.dp
     val emulatorSetupButtonHeight = 36.dp
 
+    val statusLightDot = 8.dp
+    val statusLightGap = 6.dp
+
     val hintPointerWidth = 14.dp
     val hintPointerHeight = 7.dp
     val hintPaddingHorizontal = 12.dp

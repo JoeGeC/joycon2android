@@ -111,6 +111,17 @@ In `JoyconScreen.kt`:
   say GameCube, and its detailed view is the Pro layout without the buttons it lacks, with ZR marked
   Z and its triggers, L and R, above ZL and Z. `GameCubeButtons` is the one list of what it has, which the mapping editor offers too.
 
+### Output card
+
+- **On by itself.** Assigning a player switches it on, so the usual path is assign and play; the
+  switch is for stopping. A player picks what they're playing, not which devices, and the mode
+  picker, emulator and mapping stay open either way.
+- **Device lights, not switches.** While on, a `StatusLight` per device shows what is actually up, so
+  a device the mode wants but that failed (no Shizuku) reads off rather than hiding.
+- **Overrides live in Advanced**, collapsed: Auto / On / Off per device for the cases a mode can't
+  guess, e.g. Eden through the pad, or the pad alongside the keyboard for Droiddeck.
+- **Each device's own news rides under the lights**, such as DSU's port, clients and slot limits.
+
 ### Mapping editor
 
 - **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order.
@@ -126,7 +137,8 @@ Two-up, to use the wide, short viewport; portrait keeps single columns.
 - **Players** — a two-column grid. Detailed players are shrunk to `LandscapePlayerScale` (0.7) by
   `scaleLayout`, which scales the whole controller uniformly and reflows, so a full player fits the
   short height. Compact rows aren't scaled.
-- **Feature cards** — Virtual Gamepad with its Shizuku card beneath on the left, DSU on the right.
+- **Output card** — full width, not a cell: its mode picker and device lights need the room, and
+  its mapping button is labelled. The Shizuku card, when shown, sits beneath at full width too.
 - **Scanning graphics** — the "Looking for Joy-Con 2" card and sync-button illustration side by side.
 - **Action buttons** — Disconnect All left, Scan right; Disconnect keeps its half while Scan is hidden
   during a scan.
@@ -136,7 +148,9 @@ An odd trailing item takes a half cell, a weighted `Spacer` filling the other ha
 ## Components
 
 Shared in `core/designsystem/.../ui/components/`:
-- `FeatureToggleCard` — the primary on/off feature surface (gamepad, DSU)
+- `FeatureToggleCard` — the primary on/off feature surface (the Output card)
+- `SegmentedChoice` — one of a few options, all in view (output mode, a device's Auto / On / Off)
+- `StatusLight` — a labelled dot, filled when on and hollow when off (output devices)
 - `OptionDropdown` / `DropdownOption` / `PanelDropdownMenu` — the app's picker: an accented current
   value over a panel of alternatives, each row optionally sub-labelled, dimmed or deletable
 - `EmulatorDropdown` / `EmulatorOption` / `EmulatorAutoSetup` — emulator picker + one-tap setup
@@ -156,6 +170,12 @@ Shared in `core/designsystem/.../ui/components/`:
 Minimal and functional: the scroll-away app bar, a fade-through between detailed and compact player cards, and expand/fade
 on error boxes and feature-card content. Ease-out curves, no bounce or elastic, and always honour the
 system's reduced-motion setting.
+
+- **`Motion.easeOut()`** is the one spec for new transitions: 220 ms, decelerating. Compose scales it
+  by the system's animation setting, so turning animations off makes it instant.
+- **Every state change on the Output card moves.** `SegmentedChoice`'s highlight slides to the
+  choice; the mode's content cross-fades as the card eases to its new height; the subtitle
+  cross-fades; the device lights and DSU status expand in and out; a `StatusLight` fills and empties.
 
 ## Open work
 

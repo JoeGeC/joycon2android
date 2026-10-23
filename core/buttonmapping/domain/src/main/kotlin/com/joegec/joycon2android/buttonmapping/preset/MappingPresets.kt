@@ -14,6 +14,8 @@ object MappingPresets {
         SwitchProMapping,
         SwitchProSidewaysMapping,
         SwitchProSidewaysTriggersMapping,
+        AndroidMapping,
+        WasdMouseMapping,
     )
 
     fun forConsole(console: Console): List<MappingPreset> = all.filter { it.console == console }

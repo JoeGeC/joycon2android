@@ -47,8 +47,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Joycon2Android">
+        <!-- The virtual keyboard and mouse come and go with the output mode; a relaunch for each cut the
+             screen's animations, and nothing here reads those configuration values. -->
         <activity
             android:name=".MainActivity"
+            android:configChanges="keyboard|keyboardHidden|navigation"
             android:exported="true"
             android:theme="@style/Theme.Joycon2Android">
             <intent-filter>
