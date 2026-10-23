@@ -22,7 +22,6 @@ class OutputSettingsDataStore(context: Context) : OutputSettingsRepository {
             fasterUpdates = prefs[FASTER_UPDATES] ?: defaults.fasterUpdates,
             blockDeviceMotion = prefs[BLOCK_DEVICE_MOTION] ?: defaults.blockDeviceMotion,
             mouse = prefs[MOUSE] ?: defaults.mouse,
-            keyboard = prefs[KEYBOARD] ?: defaults.keyboard,
         )
     }
 
@@ -38,14 +37,9 @@ class OutputSettingsDataStore(context: Context) : OutputSettingsRepository {
         dataStore.edit { it[MOUSE] = enabled }
     }
 
-    override suspend fun setKeyboard(enabled: Boolean) {
-        dataStore.edit { it[KEYBOARD] = enabled }
-    }
-
     private companion object {
         val FASTER_UPDATES = booleanPreferencesKey("fast_motion")
         val BLOCK_DEVICE_MOTION = booleanPreferencesKey("block_device_motion")
         val MOUSE = booleanPreferencesKey("mouse")
-        val KEYBOARD = booleanPreferencesKey("keyboard")
     }
 }

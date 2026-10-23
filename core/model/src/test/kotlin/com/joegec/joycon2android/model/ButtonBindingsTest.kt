@@ -4,9 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
 
-class AndroidKeyBindingsTest {
+class ButtonBindingsTest {
 
-    private val homeAndBack = AndroidKeyBindings(
+    private val homeAndBack = ButtonBindings(
         mapOf(
             AndroidKey.HOME to setOf(JoyconButton.Home),
             AndroidKey.BACK to setOf(JoyconButton.Chat, JoyconButton.Minus),
@@ -39,7 +39,7 @@ class AndroidKeyBindingsTest {
     fun `nothing bound leaves the state untouched`() {
         val state = pair(JoyconButton.Home)
 
-        assertEquals(emptySet<AndroidKey>(), AndroidKeyBindings().heldKeys(state))
-        assertSame(state, AndroidKeyBindings().withheldFrom(state))
+        assertEquals(emptySet<AndroidKey>(), ButtonBindings<AndroidKey>().heldKeys(state))
+        assertSame(state, ButtonBindings<AndroidKey>().withheldFrom(state))
     }
 }

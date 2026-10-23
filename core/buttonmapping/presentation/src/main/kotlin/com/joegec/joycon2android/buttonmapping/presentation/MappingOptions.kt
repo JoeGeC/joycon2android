@@ -20,6 +20,7 @@ import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.AndroidKey
 import com.joegec.joycon2android.model.GameCubeButtons
 import com.joegec.joycon2android.model.JoyconButton
+import com.joegec.joycon2android.model.KeyboardKey
 
 internal object MappingOptions {
     const val NONE_ID = ""
@@ -43,6 +44,7 @@ internal object MappingOptions {
         classicController: Boolean,
     ): List<Pair<String, String>> = when {
         section == MappingSection.ANDROID -> AndroidKey.entries.map { it.targetKey to it.label() }
+        section == MappingSection.KEYBOARD -> KeyboardKey.entries.map { it.targetKey to it.label() }
         classicController -> classicTargets(section)
         else -> remoteTargets(console, section, side, singleJoycon)
     }
@@ -57,7 +59,7 @@ internal object MappingOptions {
         MappingSection.BUTTONS -> buttonTargets(console, side, singleJoycon)
         MappingSection.STICKS -> stickDirectionTargets(console, side, singleJoycon)
         MappingSection.MOTION -> motionTargets(console)
-        MappingSection.ANDROID -> emptyList()
+        MappingSection.ANDROID, MappingSection.KEYBOARD -> emptyList()
     }
 
     @Composable
@@ -79,7 +81,7 @@ internal object MappingOptions {
     private fun classicTargets(section: MappingSection): List<Pair<String, String>> = when (section) {
         MappingSection.BUTTONS -> ClassicButton.entries.map { it.name to it.label() }
         MappingSection.STICKS -> directionTargets(ClassicStick.entries.map { it to it.label() })
-        MappingSection.MOTION, MappingSection.ANDROID -> emptyList()
+        MappingSection.MOTION, MappingSection.ANDROID, MappingSection.KEYBOARD -> emptyList()
     }
 
     @Composable
@@ -100,12 +102,12 @@ internal object MappingOptions {
             }
         }
 
-    // An Android key fires on a button press, so it offers no stick directions.
+    // A device key fires on a button press, so it offers no stick directions.
     @Composable
     fun sources(side: JoyconSide, section: MappingSection): List<Pair<String, String>> =
         listOf(NONE_ID to stringResource(R.string.source_none)) +
             physicalButtons(side).map { it.name to it.markingOn(side) } +
-            if (section == MappingSection.ANDROID) emptyList() else stickDirections(side)
+            if (section.pressesDeviceKeys) emptyList() else stickDirections(side)
 
     // A lone Joy-Con has one stick, so its directions need no "Left"/"Right" to tell them apart.
     @Composable
@@ -137,6 +139,9 @@ internal object MappingOptions {
             JoyconButton.Home, JoyconButton.Chat, JoyconButton.SrRight, JoyconButton.SlRight,
         )
     }
+
+    private val MappingSection.pressesDeviceKeys
+        get() = this == MappingSection.ANDROID || this == MappingSection.KEYBOARD
 
     private fun JoyconButton.markingOn(side: JoyconSide): String =
         (if (side == JoyconSide.GAMECUBE) GameCubeButtons.marking(this) else null) ?: id

@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.joegec.joycon2android.buttonmapping.body
 import com.joegec.joycon2android.buttonmapping.presentation.ControllerMappingScreen
 import com.joegec.joycon2android.buttonmapping.presentation.ControllerMappingViewModel
+import com.joegec.joycon2android.buttonmapping.presentation.DeviceKeyWarnings
 import com.joegec.joycon2android.buttonmapping.presentation.MappingActions
 import com.joegec.joycon2android.dsu.presentation.DsuViewModel
 import com.joegec.joycon2android.gamepad.presentation.GamepadViewModel
@@ -98,7 +99,6 @@ class MainActivity : ComponentActivity() {
                     c.setFasterUpdates,
                     c.setBlockDeviceMotion,
                     c.setMouse,
-                    c.setKeyboard,
                     c.observeShowTips,
                     c.setShowTips,
                     c.observeLaunchOnMainScreen,
@@ -246,7 +246,10 @@ class MainActivity : ComponentActivity() {
                 actions = mappingActions,
                 onBack = onBack,
                 onInfoClick = if (route.fromDsu) ({ showDsuHelp = true }) else null,
-                androidKeysNeedShizuku = route.fromDsu && !shizukuAvailable,
+                deviceKeyWarnings = DeviceKeyWarnings(
+                    androidNeedsShizuku = route.fromDsu && !shizukuAvailable,
+                    keyboardNeedsShizuku = !shizukuAvailable,
+                ),
             )
         }
         if (showDsuHelp) {
@@ -306,7 +309,6 @@ class MainActivity : ComponentActivity() {
                     onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
                     onBlockDeviceMotionToggle = settingsViewModel::toggleBlockDeviceMotion,
                     onMouseToggle = settingsViewModel::toggleMouse,
-                    onKeyboardToggle = settingsViewModel::toggleKeyboard,
                     onShowTipsToggle = settingsViewModel::toggleShowTips,
                     onLaunchOnMainScreenToggle = settingsViewModel::toggleLaunchOnMainScreen,
                 )

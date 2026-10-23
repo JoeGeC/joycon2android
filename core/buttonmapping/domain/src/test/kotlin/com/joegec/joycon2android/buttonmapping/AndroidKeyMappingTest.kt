@@ -31,7 +31,7 @@ class AndroidKeyMappingTest {
         mappings.set(Console.GAMECUBE, p2, AndroidKey.BACK.targetKey, "Minus")
         mappings.set(Console.SWITCH_PRO, p1, AndroidKey.SCREENSHOT.targetKey, "Capture")
 
-        val bindings = ObserveAndroidKeyBindingsUseCase(ObserveControllerMappingUseCase(mappings))(
+        val bindings = ObserveButtonBindingsUseCase(ObserveControllerMappingUseCase(mappings)) { it.androidKeyBindings() }(
             Console.GAMECUBE,
             listOf(p1, p2),
         ).first()

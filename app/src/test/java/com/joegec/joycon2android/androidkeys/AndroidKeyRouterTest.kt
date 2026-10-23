@@ -1,8 +1,8 @@
 package com.joegec.joycon2android.androidkeys
 
 import com.joegec.joycon2android.model.AndroidKey
-import com.joegec.joycon2android.model.AndroidKeyBindings
 import com.joegec.joycon2android.model.AppUiState
+import com.joegec.joycon2android.model.ButtonBindings
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
@@ -21,18 +21,16 @@ class AndroidKeyRouterTest {
     private val gamepadBindings = MutableStateFlow(mapOf(PlayerNumber.P1 to bindings(AndroidKey.HOME to JoyconButton.Home)))
     private val dsuBindings = MutableStateFlow(mapOf(PlayerNumber.P1 to bindings(AndroidKey.BACK to JoyconButton.Minus)))
     private val pressed = mutableListOf<AndroidKey>()
-    private val onKeyboard = mutableListOf<Set<AndroidKey>>()
 
     private val router = AndroidKeyRouter(
-        gamepad = OutputAndroidKeys(gamepadOn, gamepadBindings),
-        dsu = OutputAndroidKeys(dsuOn, dsuBindings),
+        gamepad = OutputBindings(gamepadOn, gamepadBindings),
+        dsu = OutputBindings(dsuOn, dsuBindings),
         keyboardEnabled = keyboardOn,
-        pushKeyboard = { onKeyboard += it },
         pressKey = { pressed += it },
     )
 
     private fun bindings(vararg keys: Pair<AndroidKey, JoyconButton>) =
-        AndroidKeyBindings(keys.associate { (key, button) -> key to setOf(button) })
+        ButtonBindings(keys.associate { (key, button) -> key to setOf(button) })
 
     private fun holding(vararg buttons: JoyconButton): AppUiState {
         val pro = ConnectedJoycon("pro", Side.PRO, "Pro", input = JoyconInput(pressed = buttons.map { it.id }.toSet()))
@@ -95,10 +93,11 @@ class AndroidKeyRouterTest {
         dsuOn.value = true
         keyboardOn.value = true
 
-        router.route(holding(JoyconButton.Minus))
-        router.route(holding())
+        val held = router.route(holding(JoyconButton.Minus)).keyboard
+        val released = router.route(holding()).keyboard
 
-        assertEquals(listOf(setOf(AndroidKey.BACK), emptySet<AndroidKey>()), onKeyboard)
+        assertEquals(setOf(AndroidKey.BACK), held.androidKeys)
+        assertEquals(emptySet<AndroidKey>(), released.androidKeys)
         assertEquals(emptyList<AndroidKey>(), pressed)
     }
 
@@ -109,9 +108,9 @@ class AndroidKeyRouterTest {
             PlayerNumber.P1 to bindings(AndroidKey.HOME to JoyconButton.Home, AndroidKey.SCREENSHOT to JoyconButton.Capture),
         )
 
-        val frame = router.route(holding(JoyconButton.Home, JoyconButton.Capture)).gamepad.single()
+        val routed = router.route(holding(JoyconButton.Home, JoyconButton.Capture))
 
-        assertEquals(setOf(AndroidKey.HOME), frame.androidKeys)
-        assertEquals(listOf(setOf(AndroidKey.SCREENSHOT)), onKeyboard)
+        assertEquals(setOf(AndroidKey.HOME), routed.gamepad.single().androidKeys)
+        assertEquals(setOf(AndroidKey.SCREENSHOT), routed.keyboard.androidKeys)
     }
 }

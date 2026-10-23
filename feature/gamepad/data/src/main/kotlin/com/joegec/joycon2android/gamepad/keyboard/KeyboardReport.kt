@@ -6,15 +6,20 @@ import com.joegec.joycon2android.model.AndroidKey
 object KeyboardReport {
 
     private const val KEYS_SIZE = 9
-    private const val KEYS_OFFSET = 3
-    private const val PRINT_SCREEN: Byte = 0x46
+    private const val SLOTS_OFFSET = 3
+    private const val SLOTS = 6
 
-    fun build(held: Set<AndroidKey>): List<ByteArray> = listOf(keys(held), consumer(held))
+    fun build(frame: KeyboardFrame): List<ByteArray> = listOf(keys(frame), consumer(frame.androidKeys))
 
-    private fun keys(held: Set<AndroidKey>): ByteArray {
+    private fun keys(frame: KeyboardFrame): ByteArray {
         val report = ByteArray(KEYS_SIZE)
         report[0] = KeyboardDescriptor.KEYS_REPORT_ID
-        if (AndroidKey.SCREENSHOT in held) report[KEYS_OFFSET] = PRINT_SCREEN
+        report[1] = frame.keys.mapNotNull(KeyboardUsages::modifierBit).fold(0) { acc, bit -> acc or (1 shl bit) }.toByte()
+        val screenshot = if (AndroidKey.SCREENSHOT in frame.androidKeys) listOf(KeyboardUsages.PRINT_SCREEN) else emptyList()
+        // Six held at once is the most a boot keyboard reports; the rest wait.
+        (screenshot + frame.keys.mapNotNull(KeyboardUsages::usage)).take(SLOTS).forEachIndexed { slot, usage ->
+            report[SLOTS_OFFSET + slot] = usage.toByte()
+        }
         return report
     }
 

@@ -14,11 +14,14 @@ import com.joegec.joycon2android.connection.StopScanUseCase
 import com.joegec.joycon2android.connection.ViewModePreferences
 import com.joegec.joycon2android.connection.ViewModePreferencesDataStore
 import com.joegec.joycon2android.androidkeys.AndroidKeyRouter
-import com.joegec.joycon2android.androidkeys.OutputAndroidKeys
+import com.joegec.joycon2android.androidkeys.KeyboardKeyRouter
+import com.joegec.joycon2android.androidkeys.OutputBindings
 import com.joegec.joycon2android.androidkeys.ShellAndroidKeyPresser
 import com.joegec.joycon2android.buttonmapping.ApplyGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.Console
-import com.joegec.joycon2android.buttonmapping.ObserveAndroidKeyBindingsUseCase
+import com.joegec.joycon2android.buttonmapping.ObserveButtonBindingsUseCase
+import com.joegec.joycon2android.buttonmapping.androidKeyBindings
+import com.joegec.joycon2android.buttonmapping.keyboardKeyBindings
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.body
 import com.joegec.joycon2android.buttonmapping.ApplyMappingLayoutUseCase
@@ -87,7 +90,6 @@ import com.joegec.joycon2android.settings.OutputSettingsRepository
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.settings.SetDeviceMotionBlockedUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
-import com.joegec.joycon2android.settings.SetKeyboardUseCase
 import com.joegec.joycon2android.settings.SetLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.SetMouseUseCase
 import com.joegec.joycon2android.settings.SetShowTipsUseCase
@@ -107,12 +109,15 @@ import com.joegec.joycon2android.gamepad.privileged.PrivilegedAccess
 import com.joegec.joycon2android.gamepad.PushGamepadStateUseCase
 import com.joegec.joycon2android.gamepad.keyboard.KeyboardOutput
 import com.joegec.joycon2android.gamepad.keyboard.KeyboardRepository
-import com.joegec.joycon2android.gamepad.keyboard.PushKeyboardKeysUseCase
+import com.joegec.joycon2android.gamepad.keyboard.DeclareKeyboardKeysUseCase
+import com.joegec.joycon2android.gamepad.keyboard.PushKeyboardFrameUseCase
 import com.joegec.joycon2android.gamepad.keyboard.SetKeyboardEnabledUseCase
 import com.joegec.joycon2android.gamepad.mouse.MouseOutput
 import com.joegec.joycon2android.gamepad.mouse.MouseRepository
 import com.joegec.joycon2android.gamepad.mouse.PushMouseFrameUseCase
 import com.joegec.joycon2android.gamepad.mouse.SetMouseEnabledUseCase
+import com.joegec.joycon2android.model.ButtonBindings
+import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.mouse.MouseRouter
 import com.joegec.joycon2android.update.ApkDownloader
 import com.joegec.joycon2android.update.ApkUpdateInstaller
@@ -225,7 +230,6 @@ class AppContainer(context: Context) {
     val setFasterUpdates = SetFasterUpdatesUseCase(outputSettings)
     val setBlockDeviceMotion = SetBlockDeviceMotionUseCase(outputSettings)
     val setMouse = SetMouseUseCase(outputSettings)
-    val setKeyboard = SetKeyboardUseCase(outputSettings)
 
     // --- Assignment ---
     val assignmentRepository: AssignmentRepository = PlayerAssignmentManager()
@@ -265,19 +269,26 @@ class AppContainer(context: Context) {
     val emulatorLauncher = EmulatorLauncher(appContext)
     val deviceScreens = DeviceScreens(appContext)
 
-    // --- Android keys (either output, from the mapping of the console each is set to) ---
+    // --- Device keys: Android and keyboard (either output, from the mapping of the console each is set to) ---
     private val gamepadConsole = MutableStateFlow(Console.GAMECUBE)
     private val dsuConsole = MutableStateFlow(Console.WIIMOTE_NUNCHUK)
     private val activeBodies = MutableStateFlow(emptyList<PlayerBody>())
-    private val observeAndroidKeyBindings = ObserveAndroidKeyBindingsUseCase(observeControllerMapping)
+    private val observeAndroidKeyBindings = ObserveButtonBindingsUseCase(observeControllerMapping) { it.androidKeyBindings() }
+    private val observeKeyboardKeyBindings = ObserveButtonBindingsUseCase(observeControllerMapping) { it.keyboardKeyBindings() }
+    private val gamepadKeyboardBindings = bindingsFor(gamepadConsole, observeKeyboardKeyBindings)
+    private val dsuKeyboardBindings = bindingsFor(dsuConsole, observeKeyboardKeyBindings)
 
     private val androidKeyRouter = AndroidKeyRouter(
-        gamepad = OutputAndroidKeys(gamepadRepository.enabled, androidKeyBindingsFor(gamepadConsole)),
-        dsu = OutputAndroidKeys(dsuRepository.enabled, androidKeyBindingsFor(dsuConsole)),
+        gamepad = OutputBindings(gamepadRepository.enabled, bindingsFor(gamepadConsole, observeAndroidKeyBindings)),
+        dsu = OutputBindings(dsuRepository.enabled, bindingsFor(dsuConsole, observeAndroidKeyBindings)),
         keyboardEnabled = keyboardRepository.enabled,
-        pushKeyboard = PushKeyboardKeysUseCase(keyboardRepository)::invoke,
         pressKey = ShellAndroidKeyPresser(scope, privilegedAccess::readyShell)::press,
     )
+    private val keyboardKeyRouter = KeyboardKeyRouter(
+        gamepad = OutputBindings(gamepadRepository.enabled, gamepadKeyboardBindings),
+        dsu = OutputBindings(dsuRepository.enabled, dsuKeyboardBindings),
+    )
+    private val pushKeyboardFrame = PushKeyboardFrameUseCase(keyboardRepository)
 
     fun selectGamepadEmulator(emulatorId: String) {
         gamepadConsole.value = EmulatorConsoles.forGamepad(emulatorId)
@@ -288,9 +299,12 @@ class AppContainer(context: Context) {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun androidKeyBindingsFor(console: StateFlow<Console>) =
+    private fun <K> bindingsFor(
+        console: StateFlow<Console>,
+        observe: ObserveButtonBindingsUseCase<K>,
+    ): StateFlow<Map<PlayerNumber, ButtonBindings<K>>> =
         combine(console, activeBodies, ::Pair)
-            .flatMapLatest { (console, bodies) -> observeAndroidKeyBindings(console, bodies) }
+            .flatMapLatest { (console, bodies) -> observe(console, bodies) }
             .stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
     // --- Updates ---
@@ -315,7 +329,8 @@ class AppContainer(context: Context) {
         comboDetector = ComboAssignmentDetector(),
         onState = { state ->
             activeBodies.value = state.activePlayers.mapNotNull { it.body() }
-            val routed = androidKeyRouter.route(mouseRouter.route(state))
+            val routed = keyboardKeyRouter.route(androidKeyRouter.route(mouseRouter.route(state)))
+            pushKeyboardFrame(routed.keyboard)
             pushGamepadState(
                 routed.gamepad.map { it.copy(state = edenSingleJoycons.markedFor(gamepadConsole.value, it.state)) },
             )
@@ -351,11 +366,20 @@ class AppContainer(context: Context) {
         setEnabled = SetMouseEnabledUseCase(mouseRepository)::invoke,
     ).also { it.start() }
 
+    // Device keys only act while an output runs.
     private val keyboardPolicy = PrivilegedDevicePolicy(
         scope = scope,
-        setting = observeOutputSettings().map { it.keyboard },
+        setting = outputActive,
         privilegedShellAvailable = observeShizukuAvailability(),
         setEnabled = SetKeyboardEnabledUseCase(keyboardRepository)::invoke,
+    ).also { it.start() }
+
+    private val keyboardDeclarationPolicy = KeyboardDeclarationPolicy(
+        scope = scope,
+        bound = combine(gamepadKeyboardBindings, dsuKeyboardBindings) { gamepad, dsu ->
+            (gamepad.values + dsu.values).flatMapTo(mutableSetOf()) { it.buttons.keys }
+        },
+        declare = DeclareKeyboardKeysUseCase(keyboardRepository)::invoke,
     ).also { it.start() }
 
     val observeSession = ObserveSessionUseCase(sessionCoordinator)

@@ -9,7 +9,11 @@ object KeyboardDescriptor {
     const val KEYS_REPORT_ID: Byte = 1
     const val CONSUMER_REPORT_ID: Byte = 2
 
-    val device = UhidDevice(
+    // A letter hides the on-screen keyboard: docs/virtual-gamepad.md#keyboard
+    val withLetters = device(firstUsage = 0x00)
+    val withoutLetters = device(firstUsage = KeyboardUsages.FIRST_NON_LETTER)
+
+    private fun device(firstUsage: Int) = UhidDevice(
         name = "Joy-Con Virtual Keyboard",
         phys = "joycon2android/keyboard",
         uniq = "keyboard",
@@ -32,10 +36,10 @@ object KeyboardDescriptor {
             0x95.toByte(), 0x01,      //   Report Count (1)
             0x81.toByte(), 0x03,      //   Input (Const, Var, Abs)
 
-            // No letters, so Android keeps the on-screen keyboard: docs/virtual-gamepad.md#keyboard
-            0x19, 0x1E,               //   Usage Minimum (1 and !)
+            // An empty slot's 0 falls below a minimum past the letters, so it reads as no key.
+            0x19, firstUsage.toByte(), //  Usage Minimum
             0x29, 0x65,               //   Usage Maximum (Application)
-            0x15, 0x1E,               //   Logical Minimum (30), so an empty slot's 0 is no key
+            0x15, firstUsage.toByte(), //  Logical Minimum
             0x25, 0x65,               //   Logical Maximum (101)
             0x75, 0x08,               //   Report Size (8)
             0x95.toByte(), 0x06,      //   Report Count (6)

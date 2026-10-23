@@ -23,7 +23,8 @@ as an ordinary gamepad.
 - **Motion for emulators** — a DSU (cemuhook) server streams gyro, accelerometer, buttons and sticks
   for players 1–4.
 - **One-tap emulator setup** — writes controller and motion bindings for Eden and Dolphin.
-- **Custom button mapping** — choose which button drives which emulator button, per console.
+- **Custom button mapping** — choose which button drives which emulator button, per console, or a
+  keyboard key or Android's Home, Back and Screenshot.
 - **Joy-Con mouse** — stand a Joy-Con 2 on its rail on a desk and it moves Android's pointer.
 - **Live readout** of buttons, sticks, motion and battery, with each card in the controller's real
   shell colour.
@@ -104,8 +105,6 @@ The gear at the top right opens the settings panel:
   surface and it moves Android's pointer: L or R clicks, ZL or ZR right-clicks, the stick scrolls.
   While it rests there those buttons and the stick never reach the game; lift it and they do again.
   Works with or without the virtual gamepad, and not on Pro, GameCube or third-party controllers.
-- **Virtual keyboard** (experimental, off by default, needs Shizuku) — Home, Back and Screenshot
-  bindings go through a virtual keyboard instead of the shell, so they are quicker with DSU alone.
 
 ### 5. Set up your emulator
 
@@ -140,11 +139,15 @@ target can take **several sources** — tick as many as you like, and any of the
   **Back** and **Screenshot**. A button picked here works as the device's own and never reaches the
   game; Home always leaves it. Like the rest of the mapping it's per player and console, and saved in
   layouts. Over DSU alone it needs Shizuku running.
+- **Keyboard.** Below that, **Add a key** binds a button to a keyboard key — arrows, Enter, Esc,
+  Space, letters, digits, F1–F12, Shift, Ctrl, Alt — for apps and games that take a keyboard. Like
+  Android keys it never reaches the game, and it needs Shizuku running. While a letter is bound,
+  Android hides the on-screen keyboard; tap **None** on the letter to bring it back.
 - **Pro Controller.** On Eden, a lone Joy-Con also gets this switch, off by default. Off, Eden sees
   a real left or right Joy-Con and the game handles the grip and motion itself, which games such as
   Super Mario Party Jamboree's motion games need; you map its own buttons, plus SL and SR. If a game
   won't accept the Joy-Con, or reads it as held upright (Moving Out), turn it on. Switching resets
-  that player's buttons to the grip's standard ones (Android keys stay), and layouts save the switch
+  that player's buttons to the grip's standard ones (Android and keyboard keys stay), and layouts save the switch
   with the rest. Its layouts put SL/SR on L/R, or on ZL/ZR with **Pro Controller (ZL/ZR)**. It needs **Set up** run again (and Eden restarted) after changing it. Dolphin always
   uses the sideways grip.
 - **Sideways Wii Remote.** On the Wii console, a lone Joy-Con also gets this switch, for games that

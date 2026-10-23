@@ -1,11 +1,11 @@
 package com.joegec.joycon2android.model
 
-/** Bound by the buttons the controller reports, before any sideways rotation. */
-data class AndroidKeyBindings(val buttons: Map<AndroidKey, Set<JoyconButton>> = emptyMap()) {
+/** Keys the app presses itself, bound by the buttons the controller reports, before any sideways rotation. */
+data class ButtonBindings<K>(val buttons: Map<K, Set<JoyconButton>> = emptyMap()) {
 
     private val boundIds: Set<String> = buttons.values.flatten().mapTo(mutableSetOf()) { it.id }
 
-    fun heldKeys(state: PlayerState): Set<AndroidKey> =
+    fun heldKeys(state: PlayerState): Set<K> =
         buttons.filterValues { bound -> bound.any { it.id in state.pressed } }.keys
 
     fun withheldFrom(state: PlayerState): PlayerState {

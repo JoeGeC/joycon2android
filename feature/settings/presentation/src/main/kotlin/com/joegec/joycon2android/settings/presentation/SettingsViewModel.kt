@@ -8,7 +8,6 @@ import com.joegec.joycon2android.settings.ObserveShowTipsUseCase
 import com.joegec.joycon2android.settings.OutputSettings
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
-import com.joegec.joycon2android.settings.SetKeyboardUseCase
 import com.joegec.joycon2android.settings.SetLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.SetMouseUseCase
 import com.joegec.joycon2android.settings.SetShowTipsUseCase
@@ -22,7 +21,6 @@ class SettingsViewModel(
     private val setFasterUpdates: SetFasterUpdatesUseCase,
     private val setBlockDeviceMotion: SetBlockDeviceMotionUseCase,
     private val setMouse: SetMouseUseCase,
-    private val setKeyboard: SetKeyboardUseCase,
     observeShowTips: ObserveShowTipsUseCase,
     private val setShowTips: SetShowTipsUseCase,
     observeLaunchOnMainScreen: ObserveLaunchOnMainScreenUseCase,
@@ -50,10 +48,6 @@ class SettingsViewModel(
 
     fun toggleMouse(enabled: Boolean) {
         viewModelScope.launch { setMouse(enabled) }
-    }
-
-    fun toggleKeyboard(enabled: Boolean) {
-        viewModelScope.launch { setKeyboard(enabled) }
     }
 
     fun toggleShowTips(enabled: Boolean) {

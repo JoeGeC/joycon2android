@@ -48,14 +48,23 @@ the gamepad and DSU. A Joy-Con drives it while its distance reading says it rest
 
 ## Keyboard
 
-Experimental. The **Virtual keyboard** setting adds `Joy-Con Virtual Keyboard`, shared by every
-player and kept up like the [mouse](#mouse). While it is up it carries the
+`Joy-Con Virtual Keyboard` is one UHID device shared by every player, up while Shizuku runs and the
+gamepad or DSU is on (`PrivilegedDevicePolicy`). It carries the mapping's **Keyboard** keys, and the
 [Android keys](#android-keys) the pad does not, in place of the shell.
 
 | Report | Bytes | Carries |
 |---|---|---|
-| ID 1, Keyboard | modifiers, reserved, 6 key slots of usages `0x1E`–`0x65` | Screenshot as `0x46` Print Screen → `KEY_SYSRQ` |
+| ID 1, Keyboard | modifiers (Ctrl, Shift, Alt), reserved, 6 key slots | keyboard keys; Screenshot as `0x46` Print Screen → `KEY_SYSRQ` |
 | ID 2, Consumer | bit 0 AC Home, bit 1 AC Back | Home and Back, as on the pad |
+
+- **Two descriptors, one up at a time.** The key slots span `0x1E`–`0x65`, past the letters, until a
+  binding on either output's console uses a letter; then `0x00`–`0x65`. `KeyboardOutput` swaps
+  devices when `KeyboardDeclarationPolicy` reports the change.
+- **Keys are positions.** `KeyboardUsages` sends HID usages, which Android reads through the system
+  layout, so on AZERTY the `Q` binding types `A`.
+- **Buttons only, withheld like Android keys.** `KeyboardKeyRouter` runs after `AndroidKeyRouter`,
+  each output withholding what its own console's mapping binds.
+- **Six keys at once**, the boot-keyboard limit; Screenshot takes a slot. Modifiers don't.
 
 AYN Thor, Android 13, 2026-10-23:
 
@@ -64,9 +73,10 @@ AYN Thor, Android 13, 2026-10-23:
 - **A letter key hides the on-screen keyboard.** Android classes a keyboard with `KEY_Q` as
   alphabetic (`ALPHAKEY`, `KeyboardType: 2`) and Gboard stays hidden, even with
   `show_ime_with_hard_keyboard` on. So the key slots start at `0x1E` (`1`), past the letters;
-  with no `KEY_Q` it is `KeyboardType: 1` and Gboard shows. Binding letters later means declaring
-  them only when bound.
+  with no `KEY_Q` it is `KeyboardType: 1` and Gboard shows.
 - Keys felt as quick as the pad's, with the gamepad or DSU alone. Not timed.
+- Binding a letter swaps to the letters device (`ALPHAKEY`) and hides Gboard; clearing it swaps back
+  and Gboard returns. Bound buttons reach the keyboard and never the pad.
 
 ## Report layout
 
@@ -122,7 +132,7 @@ shift:
 Each player's mapping, per console, has an **Android** section: buttons bound to Home, Back or
 Screenshot act as the device's own keys and never reach the game. `AndroidKeyRouter` applies the
 mapping of the console each output's card is set to, while that output runs. A key the pad does not
-send goes through the [keyboard](#keyboard) while it is up, else the shell.
+send goes through the [keyboard](#keyboard), or the shell if the keyboard failed to come up.
 
 | Key | Virtual gamepad | DSU only |
 |---|---|---|

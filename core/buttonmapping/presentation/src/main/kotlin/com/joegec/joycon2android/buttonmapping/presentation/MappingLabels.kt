@@ -160,6 +160,7 @@ internal fun MappingSection.label(): String = when (this) {
     MappingSection.STICKS -> stringResource(R.string.section_sticks)
     MappingSection.MOTION -> stringResource(R.string.section_motion)
     MappingSection.ANDROID -> stringResource(R.string.section_android)
+    MappingSection.KEYBOARD -> stringResource(R.string.section_keyboard)
 }
 
 @Composable

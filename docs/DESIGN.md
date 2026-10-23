@@ -111,6 +111,13 @@ In `JoyconScreen.kt`:
   say GameCube, and its detailed view is the Pro layout without the buttons it lacks, with ZR marked
   Z and its triggers, L and R, above ZL and Z. `GameCubeButtons` is the one list of what it has, which the mapping editor offers too.
 
+### Mapping editor
+
+- **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order.
+- **Keyboard lists only the keys in use.** Bound keys, then an "Add a key" `OptionDropdown` of the
+  rest; a key added but left on None is gone next visit. Sixty rows of None would bury the few that
+  matter. A bound letter adds a `SettingWarning` that the on-screen keyboard hides.
+
 ### Landscape
 
 Two-up, to use the wide, short viewport; portrait keeps single columns.

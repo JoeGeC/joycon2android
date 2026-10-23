@@ -1,6 +1,6 @@
 package com.joegec.joycon2android.gamepad.keyboard
 
-import com.joegec.joycon2android.model.AndroidKey
+import com.joegec.joycon2android.model.KeyboardKey
 import kotlinx.coroutines.flow.StateFlow
 
 interface KeyboardRepository {
@@ -8,5 +8,8 @@ interface KeyboardRepository {
 
     fun enable()
     fun disable()
-    fun push(held: Set<AndroidKey>)
+
+    /** The keys any binding can press, so the device declares what it needs and no more. */
+    fun declare(bound: Set<KeyboardKey>)
+    fun push(frame: KeyboardFrame)
 }

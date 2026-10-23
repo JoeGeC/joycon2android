@@ -7,5 +7,4 @@ interface OutputSettingsRepository {
     suspend fun setFasterUpdates(enabled: Boolean)
     suspend fun setBlockDeviceMotion(enabled: Boolean)
     suspend fun setMouse(enabled: Boolean)
-    suspend fun setKeyboard(enabled: Boolean)
 }
