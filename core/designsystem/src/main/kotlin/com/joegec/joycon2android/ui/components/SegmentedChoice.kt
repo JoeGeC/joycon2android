@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AccentDim
@@ -73,7 +74,9 @@ fun <T> SegmentedChoice(
                         label,
                         color = color,
                         style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        // A narrow screen wraps a long option rather than cutting it.
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(horizontal = Dimens.buttonHorizontalPadding),
                     )

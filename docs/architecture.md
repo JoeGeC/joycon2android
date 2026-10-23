@@ -100,36 +100,35 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
 
 ## Output
 
-One **Output** card picks what runs, in place of a switch per device. `:feature:output` owns the
-choice; `:app` runs it.
+One **Output** card picks what runs. Each tab is one output, so its setup has one job.
+`:feature:output` owns the choice; `:app` runs it.
 
-| Mode | Devices on Auto | Console mapped |
-|---|---|---|
-| Controller | what the target reads (`EmulatorKind`) | the target's |
-| Mouse & keys | keyboard, mouse | `Console.PC`, WASD + mouse by default |
-
-| Controller target | Devices | Console | Set up through |
+| Tab (`OutputMode`) | Runs | Emulators offered | Set up writes |
 |---|---|---|---|
-| Dolphin (GameCube) | pad | GameCube | pad |
-| Dolphin (Wii) | motion | Wii Remote | DSU |
-| Eden, Eden Nightly | motion | Switch Pro | DSU, or the pad when only the pad runs |
-| Other (Gamepad) | pad | `Console.ANDROID`: device keys only | by hand: `GamepadSetupSheet` |
-| Other (Motion) | motion | `Console.ANDROID` | by hand: `DsuSetupSheet` |
+| Virtual gamepad | pad | Dolphin (GameCube), Eden, Other | the gamepad config |
+| Motion (DSU) | DSU | Dolphin (Wii), Eden, Other | the DSU config |
+| Mouse & keys | keyboard, mouse | — | — |
 
-- **The Others are always listed**, after whatever is installed, so Controller mode always has a
-  target. Other (Gamepad) is also the Android-games target; the two share one mapping because a key
-  bound for one is wanted in the other.
+| Emulator (`EmulatorKind`) | Console mapped |
+|---|---|
+| Dolphin (GameCube) | GameCube |
+| Dolphin (Wii) | Wii Remote |
+| Eden, Eden Nightly | Switch Pro |
+| Other | `Console.ANDROID`: device keys only, shared by both tabs |
+| (Mouse & keys) | `Console.PC`, WASD + mouse by default |
 
-- **`OutputPlan` is the one rule**, pure and tested: the devices for a `OutputSelection` (mode,
-  emulator, per-device Auto / On / Off), the console they map, and which setup an emulator gets.
-  On Auto the keyboard and mouse also come up in any mode once the console's mapping uses them: a
-  keyboard key or Android key for the keyboard (the Android keys' fast path), a mouse action for the
-  mouse. Otherwise they stay down, needed by nothing.
-- **Eden runs DSU alone** because DSU carries its buttons and motion together, so Eden sees each
-  controller once. Pad on, Motion off in Advanced sets Eden up through the pad instead.
-- **Dolphin is two targets of one package** (`dolphin-wii`, `dolphin-gamecube`); `EmulatorTarget`
-  keeps the package apart for launching. The Others have none, which is what turns Set up into
-  **How to connect**.
+- **`OutputPlan` is the one rule**, pure and tested: a tab's devices, plus the keyboard or mouse once
+  the active mapping uses them (a keyboard or Android key for the keyboard, the Android keys' fast
+  path; a mouse action for the mouse), and the console that mapping is.
+- **No per-device overrides.** An emulator that reads gyro from DSU reads its buttons there too, so
+  one device per tab covers it; Eden is on both tabs for the rest.
+- **The emulator box is auto setup alone**: what the tab can set up, then **Other**
+  (`EmulatorTarget.OTHER`, no package, so no Set up). Other is for Android games and emulators set up
+  in their own settings.
+- **The mapping that applies is the box's choice**, device keys included, so a layout carries its
+  own keys (save-state F-keys for Dolphin, say) and Other has a keys-only mapping of its own.
+- **Each tab keeps its own emulator** (`OutputSelection.emulators`), so switching tabs loses neither.
+  Dolphin is two targets of one package (`dolphin-gamecube`, `dolphin-wii`).
 - **One active console for every device.** The routers read one set of bindings per kind of key, which
   act while the output runs, whichever devices are up.
 - **`:app` runs it.** `AppContainer` derives the planned devices; `OutputDevicesPolicy` starts the pad
@@ -137,7 +136,7 @@ choice; `:app` runs it.
   and mouse, which also need Shizuku.
 - **On as players arrive** (`OutputAutoStartPolicy`): the first player assigned switches it on.
   Switched off by hand, it stays off until every player leaves and one returns. The switch isn't kept
-  across launches; the mode, emulator and overrides are (`OutputDataStore`).
+  across launches; the tab and each tab's emulator are (`OutputDataStore`).
 
 ## Dependency rules
 

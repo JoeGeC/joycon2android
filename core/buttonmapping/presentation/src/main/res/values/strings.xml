@@ -58,6 +58,8 @@
     <string name="console_wiimote_nunchuk">Wiimote &amp; Nunchuck</string>
     <string name="console_switch_pro">Joycons</string>
     <string name="console_android">Android</string>
+    <string name="mapping_title_gamepad">Virtual Gamepad</string>
+    <string name="mapping_title_motion">Motion Controller</string>
     <string name="console_pc">Mouse &amp; keyboard</string>
     <string name="side_left_short">L</string>
     <string name="side_right_short">R</string>

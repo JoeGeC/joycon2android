@@ -49,10 +49,10 @@ import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.StartEmulatorDialog
 import com.joegec.joycon2android.ui.components.ProvideTips
 import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.dsu.presentation.DsuOutputStatus
-import com.joegec.joycon2android.output.EmulatorKind
+import com.joegec.joycon2android.dsu.presentation.DsuSlotLimitWarning
+import com.joegec.joycon2android.dsu.presentation.dsuPortText
+import com.joegec.joycon2android.output.OutputMode
 import com.joegec.joycon2android.output.OutputDevice
-import com.joegec.joycon2android.gamepad.presentation.GamepadSetupSheet
 import com.joegec.joycon2android.output.presentation.OutputCard
 import com.joegec.joycon2android.output.presentation.OutputCardActions
 import com.joegec.joycon2android.output.presentation.OutputCardState
@@ -97,7 +97,6 @@ class MainActivity : ComponentActivity() {
                     c.setOutputRunning,
                     c.setOutputMode,
                     c.selectEmulator,
-                    c.setDeviceOverride,
                     emulators = c.emulatorTargets,
                     configure = c::configureEmulator,
                 )
@@ -259,6 +258,7 @@ class MainActivity : ComponentActivity() {
                 actions = mappingActions,
                 onBack = onBack,
                 onInfoClick = if (route.fromDsu) ({ showDsuHelp = true }) else null,
+                viaDsu = route.fromDsu,
                 deviceKeyWarnings = DeviceKeyWarnings(
                     androidNeedsShizuku = route.fromDsu && !shizukuAvailable,
                     keyboardAndMouseNeedShizuku = !shizukuAvailable,
@@ -351,7 +351,6 @@ class MainActivity : ComponentActivity() {
             )
         }
         StartEmulatorPrompt(emulatorToStart, outputViewModel::dismissStart)
-        SetupGuide()
 
         JoyconScreen(
             state = state,
@@ -373,16 +372,6 @@ class MainActivity : ComponentActivity() {
             shizukuAvailable = shizukuAvailable,
             viewMode = viewMode,
         )
-    }
-
-    @Composable
-    private fun SetupGuide() {
-        val guide by outputViewModel.guide.collectAsState()
-        when (guide) {
-            EmulatorKind.OTHER_GAMEPAD -> GamepadSetupSheet(onDismiss = outputViewModel::dismissGuide)
-            EmulatorKind.OTHER_MOTION -> DsuSetupSheet(onDismiss = outputViewModel::dismissGuide)
-            EmulatorKind.DOLPHIN_GAMECUBE, EmulatorKind.DOLPHIN_WII, EmulatorKind.EDEN, null -> Unit
-        }
     }
 
     @Composable
@@ -411,10 +400,10 @@ class MainActivity : ComponentActivity() {
                 running = running,
                 selection = selection,
                 emulators = outputViewModel.emulators,
-                selectedEmulator = outputViewModel.selectedEmulatorId(selection),
                 setupPhase = setupPhase,
                 liveDevices = live,
                 error = gamepadStatus.error ?: dsuStatus.error,
+                motionDetail = if (dsuStatus.enabled) dsuPortText(dsuStatus.clientCount) else null,
             ),
             actions = OutputCardActions(
                 toggle = outputViewModel::toggle,
@@ -422,15 +411,14 @@ class MainActivity : ComponentActivity() {
                 selectEmulator = outputViewModel::selectEmulator,
                 setUp = { outputViewModel.setUp(players) },
                 openMapping = {
-                    // Motion alone means the emulator maps DSU inputs, which detection never sees.
-                    val dsuOnly = OutputDevice.MOTION in live && OutputDevice.PAD !in live
-                    onOpenMapping(MappingRoute(container.activeConsole.value, fromDsu = dsuOnly))
+                    // DSU inputs are picked from a list; detection never sees them.
+                    val fromDsu = selection.mode == OutputMode.MOTION
+                    onOpenMapping(MappingRoute(container.activeConsole.value, fromDsu))
                 },
-                setOverride = outputViewModel::setOverride,
             ),
             modifier = modifier,
         ) {
-            DsuOutputStatus(dsuStatus, DsuSlots.coverage(players))
+            DsuSlotLimitWarning(dsuStatus, DsuSlots.coverage(players))
         }
     }
 }

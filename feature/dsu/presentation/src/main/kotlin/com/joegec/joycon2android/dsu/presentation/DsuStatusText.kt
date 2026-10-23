@@ -5,10 +5,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -17,29 +13,26 @@ import com.joegec.joycon2android.dsu.DsuCoverage
 import com.joegec.joycon2android.dsu.DsuStatus
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.ui.components.WarningBox
-import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.Motion
-import com.joegec.joycon2android.ui.theme.TextDim
 
-/** The DSU server's port and clients, and any player it has no slot for, while it runs. */
+/** The server's port and how many emulators are listening, e.g. "DSU on port 26760 · waiting for an emulator". */
 @Composable
-fun DsuOutputStatus(status: DsuStatus, coverage: DsuCoverage) {
+fun dsuPortText(clientCount: Int): String =
+    if (clientCount == 0) stringResource(R.string.dsu_subtitle_waiting, DsuConfig.PORT)
+    else pluralStringResource(R.plurals.dsu_subtitle_on, clientCount, DsuConfig.PORT, clientCount)
+
+/** Any player the server has no slot for, while it runs. */
+@Composable
+fun DsuSlotLimitWarning(status: DsuStatus, coverage: DsuCoverage) {
+    val text = slotLimitText(coverage)
     AnimatedVisibility(
-        visible = status.enabled,
+        visible = status.enabled && text != null,
         enter = fadeIn(Motion.easeOut()) + expandVertically(Motion.easeOut()),
         exit = fadeOut(Motion.easeOut()) + shrinkVertically(Motion.easeOut()),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
-            Text(clientsText(status.clientCount), color = TextDim, style = MaterialTheme.typography.bodySmall)
-            slotLimitText(coverage)?.let { WarningBox(it) }
-        }
+        WarningBox(text.orEmpty())
     }
 }
-
-@Composable
-private fun clientsText(clientCount: Int): String =
-    if (clientCount == 0) stringResource(R.string.dsu_subtitle_waiting, DsuConfig.PORT)
-    else pluralStringResource(R.plurals.dsu_subtitle_on, clientCount, DsuConfig.PORT, clientCount)
 
 @Composable
 private fun slotLimitText(coverage: DsuCoverage): String? {

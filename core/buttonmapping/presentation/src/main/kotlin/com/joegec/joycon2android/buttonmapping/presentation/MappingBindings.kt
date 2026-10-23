@@ -46,7 +46,7 @@ private fun BindingSection(
     }
 }
 
-// The app's own keys are extras beside an emulator's buttons; on Mouse & keys they're all there is.
+// The app's own keys start collapsed everywhere but Mouse & keys, where they're the point.
 private fun MappingSection.openAtFirst(console: Console) = console == Console.PC ||
     this != MappingSection.ANDROID && this != MappingSection.MOUSE && this != MappingSection.KEYBOARD
 

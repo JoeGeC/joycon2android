@@ -28,6 +28,13 @@ internal fun Console.label(): String = when (this) {
     Console.PC -> stringResource(R.string.console_pc)
 }
 
+/** The mapping screen's title; a keys-only mapping is named for the output it's on. */
+@Composable
+internal fun Console.title(viaDsu: Boolean): String = when (this) {
+    Console.ANDROID -> stringResource(if (viaDsu) R.string.mapping_title_motion else R.string.mapping_title_gamepad)
+    Console.GAMECUBE, Console.WIIMOTE_NUNCHUK, Console.SWITCH_PRO, Console.PC -> label()
+}
+
 /** Short enough to sit in a list of players, as in "P1 L, P2 R". */
 @Composable
 internal fun JoyconSide.shortLabel(): String = when (this) {

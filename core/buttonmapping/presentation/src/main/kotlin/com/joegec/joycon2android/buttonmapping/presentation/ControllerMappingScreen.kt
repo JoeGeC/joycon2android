@@ -63,6 +63,8 @@ fun ControllerMappingScreen(
     modifier: Modifier = Modifier,
     onInfoClick: (() -> Unit)? = null,
     deviceKeyWarnings: DeviceKeyWarnings = DeviceKeyWarnings(),
+    /** Which output this mapping is for: names a keys-only mapping, which both outputs share. */
+    viaDsu: Boolean = false,
 ) {
     BackHandler(onBack = onBack)
     var dialog by remember { mutableStateOf<MappingDialog?>(null) }
@@ -74,7 +76,7 @@ fun ControllerMappingScreen(
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = Dimens.screenPaddingHorizontal),
     ) {
-        ScreenHeader(state, onBack, onInfoClick)
+        ScreenHeader(state.console.title(viaDsu), onBack, onInfoClick)
         Spacer(Modifier.height(Dimens.sectionSpacing))
         Column(
             Modifier
@@ -84,7 +86,8 @@ fun ControllerMappingScreen(
         ) {
             val tips = LocalTips.current
             AnimatedVisibility(
-                visible = tips.visible,
+                // Advice on emulator layouts; a keys-only mapping has none to try.
+                visible = tips.visible && state.console != Console.ANDROID,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
             ) {
@@ -118,7 +121,7 @@ fun ControllerMappingScreen(
 }
 
 @Composable
-private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit, onInfoClick: (() -> Unit)?) {
+private fun ScreenHeader(title: String, onBack: () -> Unit, onInfoClick: (() -> Unit)?) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(
@@ -127,7 +130,7 @@ private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit, on
             )
         }
         Text(
-            state.console.label(),
+            title,
             style = MaterialTheme.typography.headlineSmall,
             color = TextTitle,
             modifier = Modifier.weight(1f),

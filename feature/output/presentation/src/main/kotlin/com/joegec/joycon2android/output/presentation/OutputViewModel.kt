@@ -4,16 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
-import com.joegec.joycon2android.output.DeviceOverride
-import com.joegec.joycon2android.output.EmulatorKind
 import com.joegec.joycon2android.output.EmulatorTarget
 import com.joegec.joycon2android.output.ObserveOutputRunningUseCase
 import com.joegec.joycon2android.output.ObserveOutputSelectionUseCase
-import com.joegec.joycon2android.output.OutputDevice
 import com.joegec.joycon2android.output.OutputMode
 import com.joegec.joycon2android.output.OutputSelection
 import com.joegec.joycon2android.output.SelectEmulatorUseCase
-import com.joegec.joycon2android.output.SetDeviceOverrideUseCase
 import com.joegec.joycon2android.output.SetOutputModeUseCase
 import com.joegec.joycon2android.output.SetOutputRunningUseCase
 import com.joegec.joycon2android.output.selected
@@ -33,8 +29,7 @@ class OutputViewModel(
     private val setOutputRunning: SetOutputRunningUseCase,
     private val setOutputMode: SetOutputModeUseCase,
     private val saveEmulatorChoice: SelectEmulatorUseCase,
-    private val setDeviceOverride: SetDeviceOverrideUseCase,
-    val emulators: List<EmulatorTarget>,
+    val emulators: Map<OutputMode, List<EmulatorTarget>>,
     private val configure: suspend (target: EmulatorTarget, players: List<PlayerState>, closeEmulator: Boolean) -> EmulatorSetupResult,
 ) : ViewModel() {
 
@@ -42,10 +37,6 @@ class OutputViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, OutputSelection())
 
     val running: StateFlow<Boolean> = observeOutputRunning()
-
-    /** The hand-set-up target whose guide is open, in place of writing a config. */
-    private val _guide = MutableStateFlow<EmulatorKind?>(null)
-    val guide: StateFlow<EmulatorKind?> = _guide.asStateFlow()
 
     private val _setupPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
     val setupPhase: StateFlow<DolphinSetupPhase> = _setupPhase.asStateFlow()
@@ -57,7 +48,9 @@ class OutputViewModel(
     private val _emulatorToStart = MutableStateFlow<EmulatorOption?>(null)
     val emulatorToStart: StateFlow<EmulatorOption?> = _emulatorToStart.asStateFlow()
 
-    fun selectedEmulatorId(selection: OutputSelection): String? = emulators.selected(selection.emulatorId)?.id
+    fun emulatorsFor(mode: OutputMode): List<EmulatorTarget> = emulators[mode].orEmpty()
+
+    private fun selectedIn(selection: OutputSelection) = emulatorsFor(selection.mode).selected(selection.emulatorId)
 
     fun toggle(running: Boolean) = setOutputRunning(running)
 
@@ -67,13 +60,9 @@ class OutputViewModel(
     }
 
     fun selectEmulator(id: String) {
-        viewModelScope.launch { saveEmulatorChoice(id) }
+        val mode = selection.value.mode
+        viewModelScope.launch { saveEmulatorChoice(mode, id) }
         _emulatorToClose.value = null
-        resetSetupPhase()
-    }
-
-    fun setOverride(device: OutputDevice, override: DeviceOverride) {
-        viewModelScope.launch { setDeviceOverride(device, override) }
         resetSetupPhase()
     }
 
@@ -83,14 +72,7 @@ class OutputViewModel(
         _emulatorToStart.value = null
     }
 
-    fun setUp(players: List<PlayerState>) {
-        val target = emulators.selected(selection.value.emulatorId) ?: return
-        if (target.packageName == null) _guide.value = target.kind else write(players, closeEmulator = false)
-    }
-
-    fun dismissGuide() {
-        _guide.value = null
-    }
+    fun setUp(players: List<PlayerState>) = write(players, closeEmulator = false)
 
     fun closeEmulatorAndSetUp(players: List<PlayerState>) {
         _emulatorToClose.value = null
@@ -107,7 +89,7 @@ class OutputViewModel(
     }
 
     private fun write(players: List<PlayerState>, closeEmulator: Boolean) {
-        val target = emulators.selected(selection.value.emulatorId) ?: return
+        val target = selectedIn(selection.value) ?: return
         val packageName = target.packageName ?: return
         val name = target.name ?: return
         if (_setupPhase.value == DolphinSetupPhase.WORKING) return

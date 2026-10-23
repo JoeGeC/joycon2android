@@ -133,7 +133,7 @@ import com.joegec.joycon2android.output.OutputRepository
 import com.joegec.joycon2android.output.OutputSelection
 import com.joegec.joycon2android.output.SelectEmulatorUseCase
 import com.joegec.joycon2android.output.selected
-import com.joegec.joycon2android.output.SetDeviceOverrideUseCase
+import com.joegec.joycon2android.output.OutputMode
 import com.joegec.joycon2android.output.SetOutputModeUseCase
 import com.joegec.joycon2android.output.SetOutputRunningUseCase
 import com.joegec.joycon2android.mouse.MouseRouter
@@ -302,18 +302,20 @@ class AppContainer(context: Context) {
     val setOutputRunning = SetOutputRunningUseCase(outputRepository)
     val setOutputMode = SetOutputModeUseCase(outputRepository)
     val selectEmulator = SelectEmulatorUseCase(outputRepository)
-    val setDeviceOverride = SetDeviceOverrideUseCase(outputRepository)
-    val emulatorTargets: List<EmulatorTarget> by lazy { emulatorSetup.targets() }
+    val emulatorTargets: Map<OutputMode, List<EmulatorTarget>> by lazy {
+        OutputMode.entries.associateWith(emulatorSetup::targets)
+    }
 
     private val outputSelection = observeOutputSelection().stateIn(scope, SharingStarted.Eagerly, OutputSelection())
     val activeConsole: StateFlow<Console> = outputSelection
         .map { OutputPlan.console(it.mode, targetOf(it)?.kind) }
         .stateIn(scope, SharingStarted.Eagerly, OutputPlan.console(OutputSelection().mode, null))
 
-    private fun targetOf(selection: OutputSelection): EmulatorTarget? = emulatorTargets.selected(selection.emulatorId)
+    private fun targetOf(selection: OutputSelection): EmulatorTarget? =
+        emulatorTargets[selection.mode].orEmpty().selected(selection.emulatorId)
 
     suspend fun configureEmulator(target: EmulatorTarget, players: List<PlayerState>, closeEmulator: Boolean) =
-        emulatorSetup.configure(target, plannedDevices.value, players, closeEmulator)
+        emulatorSetup.configure(target, outputSelection.value.mode, players, closeEmulator)
 
     // --- Device keys: Android, keyboard and mouse, from the active console's mapping ---
     private val activeBodies = MutableStateFlow(emptyList<PlayerBody>())
@@ -352,7 +354,7 @@ class AppContainer(context: Context) {
     }
     private val plannedDevices: StateFlow<Set<OutputDevice>> =
         combine(outputRepository.running, outputSelection, mappedDevices) { running, selection, mapped ->
-            if (running) OutputPlan.devices(selection, targetOf(selection)?.kind, mapped) else emptySet()
+            if (running) OutputPlan.devices(selection.mode, mapped) else emptySet()
         }.stateIn(scope, SharingStarted.Eagerly, emptySet())
 
     private fun Map<PlayerNumber, KeyBindings<*>>.anyBound() = values.any { it.sources.isNotEmpty() }

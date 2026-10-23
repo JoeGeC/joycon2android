@@ -1,26 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="output_title">Output</string>
-    <string name="output_subtitle_off">Pick what you\'re playing, then turn it on</string>
-    <string name="output_subtitle_on">Active</string>
+    <string name="output_subtitle_off">Off — switch on to play</string>
     <string name="output_subtitle_on_for">Active — %1$s</string>
-    <string name="output_mode_controller">Controller</string>
-    <string name="output_other_gamepad">Other (Gamepad)</string>
-    <string name="output_other_gamepad_use">Android games, any emulator</string>
-    <string name="output_other_motion">Other (Motion)</string>
-    <string name="output_other_motion_use">Any emulator that reads DSU</string>
-    <string name="output_how_to_connect">How to connect</string>
+    <string name="output_mode_gamepad">Virtual gamepad</string>
+    <string name="output_mode_motion">Motion (DSU)</string>
     <string name="output_mode_mouse_keyboard">Mouse &amp; keys</string>
-    <string name="output_mode_mouse_keyboard_description">Buttons press keys and click. Stand a Joy-Con on its rail on a desk to move the pointer.</string>
     <string name="output_set_up">Set up</string>
+    <string name="output_other">Other</string>
     <string name="output_mapping">Mapping</string>
     <string name="output_device_pad">Gamepad</string>
     <string name="output_device_motion">Motion (DSU)</string>
     <string name="output_device_keyboard">Keyboard</string>
     <string name="output_device_mouse">Mouse</string>
-    <string name="output_advanced">Advanced</string>
-    <string name="output_advanced_note">Auto runs what the mode needs. On or Off overrides it.</string>
-    <string name="output_override_auto">Auto</string>
-    <string name="output_override_on">On</string>
-    <string name="output_override_off">Off</string>
 </resources>

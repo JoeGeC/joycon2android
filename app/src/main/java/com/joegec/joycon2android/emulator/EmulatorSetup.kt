@@ -23,8 +23,7 @@ import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.gamepad.privileged.PrivilegedShell
 import com.joegec.joycon2android.output.EmulatorKind
 import com.joegec.joycon2android.output.EmulatorTarget
-import com.joegec.joycon2android.output.OutputDevice
-import com.joegec.joycon2android.output.OutputPlan
+import com.joegec.joycon2android.output.OutputMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -63,32 +62,39 @@ class EmulatorSetup(
 
     private fun bodiesOf(players: List<PlayerState>) = players.mapNotNull { it.body() }.distinct()
 
-    fun targets(): List<EmulatorTarget> = buildList {
+    /** The installed emulators [mode]'s tab can set up, then [EmulatorTarget.OTHER]. */
+    fun targets(mode: OutputMode): List<EmulatorTarget> = buildList {
         if (isInstalled(DolphinPaths.PACKAGE)) {
-            add(EmulatorTarget(DOLPHIN_WII, DolphinPaths.PACKAGE, "Dolphin (Wii)", EmulatorKind.DOLPHIN_WII))
-            add(EmulatorTarget(DOLPHIN_GAMECUBE, DolphinPaths.PACKAGE, "Dolphin (GameCube)", EmulatorKind.DOLPHIN_GAMECUBE))
+            when (mode) {
+                OutputMode.GAMEPAD ->
+                    add(EmulatorTarget(DOLPHIN_GAMECUBE, DolphinPaths.PACKAGE, "Dolphin (GameCube)", EmulatorKind.DOLPHIN_GAMECUBE))
+                OutputMode.MOTION ->
+                    add(EmulatorTarget(DOLPHIN_WII, DolphinPaths.PACKAGE, "Dolphin (Wii)", EmulatorKind.DOLPHIN_WII))
+                OutputMode.MOUSE_KEYBOARD -> return@buildList
+            }
         }
+        if (mode == OutputMode.MOUSE_KEYBOARD) return@buildList
         if (isInstalled(EdenPaths.PACKAGE)) {
             add(EmulatorTarget(EdenPaths.PACKAGE, EdenPaths.PACKAGE, "Eden", EmulatorKind.EDEN))
         }
         if (isInstalled(EdenPaths.NIGHTLY_PACKAGE)) {
             add(EmulatorTarget(EdenPaths.NIGHTLY_PACKAGE, EdenPaths.NIGHTLY_PACKAGE, "Eden Nightly", EmulatorKind.EDEN))
         }
-        addAll(EmulatorTarget.OTHERS)
+        add(EmulatorTarget.OTHER)
     }
 
-    /** Writes [target]'s config for the device it reads: [OutputPlan.setUpThrough]. */
+    /** Writes [target]'s config for [mode]'s device. */
     suspend fun configure(
         target: EmulatorTarget,
-        devices: Set<OutputDevice>,
+        mode: OutputMode,
         players: List<PlayerState>,
         closeEmulator: Boolean,
     ): EmulatorSetupResult {
         val packageName = target.packageName ?: return EmulatorSetupResult.FAILED
-        return when (OutputPlan.setUpThrough(target.kind, devices)) {
-            OutputDevice.PAD -> configureGamepad(packageName, players, closeEmulator)
-            OutputDevice.MOTION -> configureDsu(packageName, players, closeEmulator)
-            OutputDevice.KEYBOARD, OutputDevice.MOUSE, null -> EmulatorSetupResult.FAILED
+        return when (mode) {
+            OutputMode.GAMEPAD -> configureGamepad(packageName, players, closeEmulator)
+            OutputMode.MOTION -> configureDsu(packageName, players, closeEmulator)
+            OutputMode.MOUSE_KEYBOARD -> EmulatorSetupResult.FAILED
         }
     }
 

@@ -24,10 +24,7 @@ class OutputDataStore(context: Context) : OutputRepository {
     override val selection: Flow<OutputSelection> = dataStore.data.map { prefs ->
         OutputSelection(
             mode = prefs[MODE]?.let(::modeOrNull) ?: OutputSelection().mode,
-            emulatorId = prefs[EMULATOR],
-            overrides = OutputDevice.entries.mapNotNull { device ->
-                prefs[overrideKey(device)]?.let(::overrideOrNull)?.let { device to it }
-            }.toMap(),
+            emulators = OutputMode.entries.mapNotNull { mode -> prefs[emulatorKey(mode)]?.let { mode to it } }.toMap(),
         )
     }
 
@@ -35,25 +32,19 @@ class OutputDataStore(context: Context) : OutputRepository {
         dataStore.edit { it[MODE] = mode.name }
     }
 
-    override suspend fun selectEmulator(id: String) {
-        dataStore.edit { it[EMULATOR] = id }
-    }
-
-    override suspend fun setOverride(device: OutputDevice, override: DeviceOverride) {
-        dataStore.edit { it[overrideKey(device)] = override.name }
+    override suspend fun selectEmulator(mode: OutputMode, id: String) {
+        dataStore.edit { it[emulatorKey(mode)] = id }
     }
 
     override fun setRunning(running: Boolean) {
         _running.value = running
     }
 
-    // A name from a later build reads as the default rather than failing.
+    // A name from another build reads as the default rather than failing.
     private fun modeOrNull(name: String) = OutputMode.entries.firstOrNull { it.name == name }
-    private fun overrideOrNull(name: String) = DeviceOverride.entries.firstOrNull { it.name == name }
 
     private companion object {
         val MODE = stringPreferencesKey("mode")
-        val EMULATOR = stringPreferencesKey("emulator")
-        fun overrideKey(device: OutputDevice) = stringPreferencesKey("override_${device.name}")
+        fun emulatorKey(mode: OutputMode) = stringPreferencesKey("emulator_${mode.name}")
     }
 }

@@ -10,68 +10,33 @@ import org.junit.Test
 
 class OutputPlanTest {
 
-    private fun devices(
-        mode: OutputMode,
-        emulator: EmulatorKind? = null,
-        mapped: Set<OutputDevice> = emptySet(),
-        vararg overrides: Pair<OutputDevice, DeviceOverride>,
-    ) = OutputPlan.devices(OutputSelection(mode, overrides = overrides.toMap()), emulator, mapped)
-
     @Test
-    fun `each emulator runs only what it reads`() {
-        assertEquals(setOf(PAD), devices(OutputMode.CONTROLLER, EmulatorKind.DOLPHIN_GAMECUBE))
-        assertEquals(setOf(MOTION), devices(OutputMode.CONTROLLER, EmulatorKind.DOLPHIN_WII))
-        assertEquals(setOf(MOTION), devices(OutputMode.CONTROLLER, EmulatorKind.EDEN))
+    fun `each tab runs the device it is named for`() {
+        assertEquals(setOf(PAD), OutputPlan.devices(OutputMode.GAMEPAD, emptySet()))
+        assertEquals(setOf(MOTION), OutputPlan.devices(OutputMode.MOTION, emptySet()))
+        assertEquals(setOf(KEYBOARD, MOUSE), OutputPlan.devices(OutputMode.MOUSE_KEYBOARD, emptySet()))
     }
 
     @Test
-    fun `the other targets run the device they name, and mouse and keyboard games no pad at all`() {
-        assertEquals(setOf(PAD), devices(OutputMode.CONTROLLER, EmulatorKind.OTHER_GAMEPAD))
-        assertEquals(setOf(MOTION), devices(OutputMode.CONTROLLER, EmulatorKind.OTHER_MOTION))
-        assertEquals(setOf(KEYBOARD, MOUSE), devices(OutputMode.MOUSE_KEYBOARD, EmulatorKind.DOLPHIN_GAMECUBE))
+    fun `a mapping that presses keys or clicks brings that device up too`() {
+        assertEquals(setOf(MOTION, KEYBOARD), OutputPlan.devices(OutputMode.MOTION, setOf(KEYBOARD)))
+        assertEquals(setOf(PAD, MOUSE), OutputPlan.devices(OutputMode.GAMEPAD, setOf(MOUSE)))
     }
 
     @Test
-    fun `the other targets are set up by hand`() {
-        assertEquals(null, OutputPlan.setUpThrough(EmulatorKind.OTHER_GAMEPAD, setOf(PAD)))
-        assertEquals(null, OutputPlan.setUpThrough(EmulatorKind.OTHER_MOTION, setOf(MOTION)))
+    fun `each tab maps its emulator's console, and with none only the app's keys`() {
+        assertEquals(Console.WIIMOTE_NUNCHUK, OutputPlan.console(OutputMode.MOTION, EmulatorKind.DOLPHIN_WII))
+        assertEquals(Console.SWITCH_PRO, OutputPlan.console(OutputMode.GAMEPAD, EmulatorKind.EDEN))
+        assertEquals(Console.ANDROID, OutputPlan.console(OutputMode.GAMEPAD, EmulatorKind.OTHER))
+        assertEquals(Console.ANDROID, OutputPlan.console(OutputMode.GAMEPAD, null))
+        assertEquals(Console.PC, OutputPlan.console(OutputMode.MOUSE_KEYBOARD, EmulatorKind.EDEN))
     }
 
     @Test
-    fun `a mapping that presses keys or clicks brings that device up in any mode`() {
-        assertEquals(setOf(PAD, MOUSE), devices(OutputMode.CONTROLLER, EmulatorKind.OTHER_GAMEPAD, setOf(MOUSE)))
-        assertEquals(setOf(MOTION, KEYBOARD), devices(OutputMode.CONTROLLER, EmulatorKind.EDEN, mapped = setOf(KEYBOARD)))
-    }
+    fun `each tab keeps its own emulator`() {
+        val selection = OutputSelection(OutputMode.MOTION, mapOf(OutputMode.GAMEPAD to "eden", OutputMode.MOTION to "dolphin-wii"))
 
-    @Test
-    fun `Off beats the mapping`() {
-        assertEquals(setOf(PAD), devices(OutputMode.CONTROLLER, EmulatorKind.OTHER_GAMEPAD, setOf(MOUSE), MOUSE to DeviceOverride.OFF))
-    }
-
-    @Test
-    fun `overrides beat the mode`() {
-        val edenByPad = devices(OutputMode.CONTROLLER, EmulatorKind.EDEN, emptySet(), PAD to DeviceOverride.ON, MOTION to DeviceOverride.OFF)
-
-        assertEquals(setOf(PAD), edenByPad)
-    }
-
-    @Test
-    fun `Eden is set up through DSU, or the pad when only the pad runs`() {
-        assertEquals(MOTION, OutputPlan.setUpThrough(EmulatorKind.EDEN, setOf(PAD, MOTION)))
-        assertEquals(PAD, OutputPlan.setUpThrough(EmulatorKind.EDEN, setOf(PAD)))
-        assertEquals(null, OutputPlan.setUpThrough(EmulatorKind.EDEN, setOf(KEYBOARD)))
-    }
-
-    @Test
-    fun `Dolphin is set up for the console its entry names`() {
-        assertEquals(PAD, OutputPlan.setUpThrough(EmulatorKind.DOLPHIN_GAMECUBE, setOf(MOTION)))
-        assertEquals(MOTION, OutputPlan.setUpThrough(EmulatorKind.DOLPHIN_WII, setOf(PAD)))
-    }
-
-    @Test
-    fun `each mode maps its own console`() {
-        assertEquals(Console.WIIMOTE_NUNCHUK, OutputPlan.console(OutputMode.CONTROLLER, EmulatorKind.DOLPHIN_WII))
-        assertEquals(Console.ANDROID, OutputPlan.console(OutputMode.CONTROLLER, EmulatorKind.OTHER_GAMEPAD))
-        assertEquals(Console.PC, OutputPlan.console(OutputMode.MOUSE_KEYBOARD, null))
+        assertEquals("dolphin-wii", selection.emulatorId)
+        assertEquals("eden", selection.copy(mode = OutputMode.GAMEPAD).emulatorId)
     }
 }

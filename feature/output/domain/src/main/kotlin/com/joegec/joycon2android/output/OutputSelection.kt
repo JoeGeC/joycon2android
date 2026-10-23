@@ -1,9 +1,9 @@
 package com.joegec.joycon2android.output
 
+/** The tab, and the emulator each tab last had, so switching tabs keeps both choices. */
 data class OutputSelection(
-    val mode: OutputMode = OutputMode.CONTROLLER,
-    val emulatorId: String? = null,
-    val overrides: Map<OutputDevice, DeviceOverride> = emptyMap(),
+    val mode: OutputMode = OutputMode.GAMEPAD,
+    val emulators: Map<OutputMode, String> = emptyMap(),
 ) {
-    fun override(device: OutputDevice): DeviceOverride = overrides[device] ?: DeviceOverride.AUTO
+    val emulatorId: String? get() = emulators[mode]
 }

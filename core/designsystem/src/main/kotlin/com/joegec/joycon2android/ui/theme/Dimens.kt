@@ -70,6 +70,7 @@ object Dimens {
     val emulatorPickerPadding = 12.dp
     val emulatorSetupRowGap = 4.dp
     val emulatorSetupButtonHeight = 36.dp
+    val emulatorMappingIconWidth = 44.dp
 
     val statusLightDot = 8.dp
     val statusLightGap = 6.dp

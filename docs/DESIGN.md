@@ -114,24 +114,31 @@ In `JoyconScreen.kt`:
 ### Output card
 
 - **On by itself.** Assigning a player switches it on, so the usual path is assign and play; the
-  switch is for stopping. A player picks what they're playing, not which devices, and the mode
-  picker, emulator and mapping stay open either way.
-- **Device lights, not switches.** While on, a `StatusLight` per device shows what is actually up, so
-  a device the mode wants but that failed (no Shizuku) reads off rather than hiding.
-- **Overrides live in Advanced**, collapsed: Auto / On / Off per device for the cases a mode can't
-  guess, e.g. Eden through the pad, or the pad alongside the keyboard for Droiddeck.
-- **Each device's own news rides under the lights**, such as DSU's port, clients and slot limits.
+  switch is for stopping. Tabs, emulator and mapping stay open either way.
+- **A tab per output, so setup has one job.** Virtual gamepad, Motion (DSU), Mouse & keys; the
+  emulator box under a tab is auto setup only, for that output. **Other** ends its list: Set up hides
+  and a labelled Mapping button eases out to fill the row (`SplitRow`; weights in a `Row` snap), for
+  the keys-only mapping.
+- **Device lights under the switch, not switches.** While on, a `StatusLight` per device shows what
+  is actually up, so a device the tab wants but that failed (no Shizuku) reads off rather than hiding.
+  The keyboard and mouse light up on the other tabs too once the mapping uses them.
+- **The subtitle names what is running:** "Active — Virtual gamepad", "Active — Mouse & keys", or
+  DSU's port and listening emulators on the Motion tab. A warning, such as DSU's slot limit, sits at
+  the bottom.
+- **Long tab names wrap** to two centred lines at phone width rather than cut off.
 
 ### Mapping editor
 
 - **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order:
   the console's own, then Android, Mouse, Keyboard.
-- **Every section collapses.** The app's own keys (Android, Mouse, Keyboard) start collapsed for a
-  Controller target, as extras beside its buttons; on Mouse & keys they're all there is, so open.
+- **Every section collapses.** The app's own keys (Android, Mouse, Keyboard) start collapsed, Other's
+  included, and open only on Mouse & keys, where they're the point.
 - **Keyboard lists only the keys in use.** Bound keys, then an "Add a key" `OptionDropdown` of the
   rest; a key added but left on None is gone next visit. Sixty rows of None would bury the few that
   matter. A bound letter adds a `SettingWarning` that the on-screen keyboard hides.
 - **Mouse is five plain rows**, like Android: few enough to show whole.
+- **Other's keys-only mapping is named for its output**, "Virtual Gamepad" or "Motion Controller",
+  though both share it, and skips the layouts tip, which is about emulator layouts.
 
 ### Landscape
 
