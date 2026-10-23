@@ -11,7 +11,7 @@
     <string name="output_other_motion_use">Any emulator that reads DSU</string>
     <string name="output_how_to_connect">How to connect</string>
     <string name="output_mode_mouse_keyboard">Mouse &amp; keys</string>
-    <string name="output_mode_mouse_keyboard_description">Buttons press keys and click, WASD + mouse to start. Stand a Joy-Con on its rail on a desk to move the pointer.</string>
+    <string name="output_mode_mouse_keyboard_description">Buttons press keys and click. Stand a Joy-Con on its rail on a desk to move the pointer.</string>
     <string name="output_set_up">Set up</string>
     <string name="output_mapping">Mapping</string>
     <string name="output_device_pad">Gamepad</string>

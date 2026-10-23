@@ -19,11 +19,12 @@ fun MappingBindings(
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
         MappingSection.entries.forEach { section ->
             val targets = MappingOptions.targets(console, section, state.body.side, state.singleJoycon, state.classicController)
+            val open = section.openAtFirst(console)
             when {
                 targets.isEmpty() -> Unit
                 section == MappingSection.KEYBOARD ->
-                    KeyboardBindingSection(targets, state, actions, warnings.keyboardAndMouseNeedShizuku)
-                else -> BindingSection(section, targets, state, actions, shizukuWarning(section, warnings))
+                    KeyboardBindingSection(targets, state, actions, warnings.keyboardAndMouseNeedShizuku, open)
+                else -> BindingSection(section, targets, state, actions, shizukuWarning(section, warnings), open)
             }
         }
     }
@@ -36,14 +37,18 @@ private fun BindingSection(
     state: PlayerMappingUiState,
     actions: MappingActions,
     shizukuWarning: String?,
+    open: Boolean,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
-        SectionHeader(section)
+    MappingSectionBox(section, open) {
         shizukuWarning?.let { SettingWarning(it) }
         val sources = MappingOptions.sources(state.body.side, section)
         targets.forEach { (key, label) -> BindingRow(label, key, sources, state, actions) }
     }
 }
+
+// The app's own keys are extras beside an emulator's buttons; on Mouse & keys they're all there is.
+private fun MappingSection.openAtFirst(console: Console) = console == Console.PC ||
+    this != MappingSection.ANDROID && this != MappingSection.MOUSE && this != MappingSection.KEYBOARD
 
 @Composable
 private fun shizukuWarning(section: MappingSection, warnings: DeviceKeyWarnings): String? = when {

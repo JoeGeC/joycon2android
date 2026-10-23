@@ -1,29 +1,27 @@
 package com.joegec.joycon2android.buttonmapping.presentation
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.joegec.joycon2android.buttonmapping.sourceIdOf
 import com.joegec.joycon2android.buttonmapping.sourceIdsOf
+import com.joegec.joycon2android.ui.components.ExpandableInfoSection
 import com.joegec.joycon2android.ui.components.MultiSelectDropdown
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
-import com.joegec.joycon2android.ui.theme.TextTitle
 
+/** A section's header, tapped to show or hide its rows. */
 @Composable
-internal fun SectionHeader(section: MappingSection) {
-    Text(
-        section.label(),
-        color = TextTitle,
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.padding(top = Dimens.mappingHeaderTopPadding),
-    )
+internal fun MappingSectionBox(section: MappingSection, open: Boolean, content: @Composable () -> Unit) {
+    ExpandableInfoSection(section.label(), Modifier.padding(top = Dimens.mappingHeaderTopPadding), initiallyExpanded = open) {
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) { content() }
+    }
 }
 
 /** One target and every source bound to it, stored as [targetKey] in the player's mapping. */

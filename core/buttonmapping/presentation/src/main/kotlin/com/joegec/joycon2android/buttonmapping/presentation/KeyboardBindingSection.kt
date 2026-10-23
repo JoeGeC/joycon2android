@@ -1,7 +1,5 @@
 package com.joegec.joycon2android.buttonmapping.presentation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,7 +14,6 @@ import com.joegec.joycon2android.model.KeyboardKey
 import com.joegec.joycon2android.ui.components.DropdownOption
 import com.joegec.joycon2android.ui.components.OptionDropdown
 import com.joegec.joycon2android.ui.components.SettingWarning
-import com.joegec.joycon2android.ui.theme.Dimens
 
 /** Lists only the keys in use, since a row for every key would bury them: docs/DESIGN.md#mapping */
 @Composable
@@ -25,13 +22,13 @@ internal fun KeyboardBindingSection(
     state: PlayerMappingUiState,
     actions: MappingActions,
     needsShizuku: Boolean,
+    open: Boolean,
 ) {
     var added by rememberSaveable(state.body) { mutableStateOf(listOf<String>()) }
     val bound = targets.filter { (key, _) -> state.mapping[key].orEmpty().isNotEmpty() }.map { it.first }.toSet()
     val shown = targets.filter { (key, _) -> key in bound || key in added }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
-        SectionHeader(MappingSection.KEYBOARD)
+    MappingSectionBox(MappingSection.KEYBOARD, open) {
         if (needsShizuku) SettingWarning(stringResource(R.string.keyboard_keys_need_shizuku))
         if (LETTER_KEYS.any { it in bound }) SettingWarning(stringResource(R.string.keyboard_letters_hide_ime))
         val sources = MappingOptions.sources(state.body.side, MappingSection.KEYBOARD)

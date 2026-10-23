@@ -124,7 +124,10 @@ In `JoyconScreen.kt`:
 
 ### Mapping editor
 
-- **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order.
+- **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order:
+  the console's own, then Android, Mouse, Keyboard.
+- **Every section collapses.** The app's own keys (Android, Mouse, Keyboard) start collapsed for a
+  Controller target, as extras beside its buttons; on Mouse & keys they're all there is, so open.
 - **Keyboard lists only the keys in use.** Bound keys, then an "Add a key" `OptionDropdown` of the
   rest; a key added but left on None is gone next visit. Sixty rows of None would bury the few that
   matter. A bound letter adds a `SettingWarning` that the on-screen keyboard hides.
