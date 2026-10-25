@@ -93,8 +93,9 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
   ([how](virtual-gamepad.md#android-keys)).
 - **So is Eden's Pro Controller switch** for a lone Joy-Con (`PRO_CONTROLLER`), so layouts carry the
   grip with its bindings ([how](virtual-gamepad.md#single-joy-con)).
-- **And the Wii's Classic Controller** (`CLASSIC_CONTROLLER`), set by its layout
-  ([how](dsu-motion.md#classic-controller)).
+- **The Wii controller is not a binding** (`WiiController`: remote, sideways or Classic). Like
+  Thrust and Sensitivity it is a per-player setting the layout seeds
+  ([how](dsu-motion.md#wii-controller)).
 - **`GlobalLayout` freezes the whole session** — every player's bindings in full, and the bodies they
   held — so it restores exactly what it saved, but only onto those players.
 

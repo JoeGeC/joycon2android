@@ -57,7 +57,7 @@ class EmulatorSetup(
         players: List<PlayerState>,
     ): (PlayerBody) -> RemoteMotion {
         val stored = bodiesOf(players).associateWith { getRemoteMotion(console, it) }
-        return { body -> stored[body] ?: MappingPresets.default(console).motion }
+        return { body -> stored[body] ?: MappingPresets.default(console).motion(body.side) }
     }
 
     private fun bodiesOf(players: List<PlayerState>) = players.mapNotNull { it.body() }.distinct()
@@ -142,15 +142,15 @@ class EmulatorSetup(
         shell.writeText(DolphinDsuConfig.path, dsuMerged)
         val dsuOk = shell.readText(DolphinDsuConfig.path)?.contains("127.0.0.1:${DsuConfig.PORT}") == true
 
-        val mapping = mappingLookup(Console.WIIMOTE_NUNCHUK, players)
-        val configurable = players.any { DolphinWiimoteConfig.writesFor(it, mapping) }
+        val motion = motionLookup(Console.WIIMOTE_NUNCHUK, players)
+        val configurable = players.any { DolphinWiimoteConfig.writesFor(it, motion) }
         val wiimoteOk = !configurable || shell.writeText(
             DolphinWiimoteConfig.path,
             DolphinWiimoteConfig.merge(
                 shell.readText(DolphinWiimoteConfig.path),
                 players,
-                motionLookup(Console.WIIMOTE_NUNCHUK, players),
-                mapping,
+                motion,
+                mappingLookup(Console.WIIMOTE_NUNCHUK, players),
             ),
         )
 

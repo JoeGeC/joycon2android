@@ -4,6 +4,7 @@ import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.LayoutFamily
 import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconButton.A
@@ -29,7 +30,7 @@ object MarioKartWheelMapping : MappingPreset {
     override val console = Console.WIIMOTE_NUNCHUK
     override val family = LayoutFamily.MARIO_KART
     override val sides = setOf(JoyconSide.LEFT, JoyconSide.RIGHT)
-    override val sidewaysRemote = true
+    override val wiiController = WiiController.SIDEWAYS_REMOTE
 
     override fun entries(side: JoyconSide) =
         buttons(side).buttonEntries() + dPadSticks(side).sourceEntries()

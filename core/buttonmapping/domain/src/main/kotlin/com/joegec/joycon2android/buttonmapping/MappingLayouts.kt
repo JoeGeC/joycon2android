@@ -21,7 +21,7 @@ object MappingLayouts {
         motion: RemoteMotion,
         saved: List<SavedLayout>,
     ): MappingLayout? = forBody(console, side, saved).firstOrNull {
-        it.motion == motion && entriesOf(console, side, it).bound() == entries.bound()
+        it.motion(side) == motion && entriesOf(console, side, it).bound() == entries.bound()
     }
 
     // A target cleared back to "None" is stored as empty, which a layout that never bound it omits.

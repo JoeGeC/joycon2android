@@ -168,11 +168,14 @@ target can take **several sources** — tick as many as you like, and any of the
   that player's buttons to the grip's standard ones (Android and keyboard keys stay), and layouts save the switch
   with the rest. Its layouts put SL/SR on L/R, or on ZL/ZR with **Pro Controller (ZL/ZR)**. It needs **Set up** run again (and Eden restarted) after changing it. Dolphin always
   uses the sideways grip.
-- **Sideways Wii Remote.** On the Wii console, a lone Joy-Con also gets this switch, for games that
-  steer by tilting a sideways remote. On, up on the stick is towards the rail; off, towards L or R.
-  The layout sets it (on for Mario Kart) and you can override it until you next pick a layout.
+- **Wii controller.** On the Wii console, pick what each player holds: **Wiimote**, a
+  **Sideways** remote (a lone Joy-Con only), or a **Classic** Controller. Sideways is for games that steer by
+  tilting a sideways remote; up on the stick is then towards the rail rather than L or R. Classic
+  plugs a Classic Controller into the remote, which still points for menus; the first time you pick
+  it, its buttons start where a Pro Controller has them. The layout sets it (Sideways for Mario Kart,
+  Classic for Classic Controller) and you can override it until you next pick a layout.
 - **Thrusts.** On the Wii console, turn this on for games that measure a push, like Wii Play
-  Billiards' cue. Leave it off for swings: with it on, Wii Sports Golf putts too hard and Bowling
+  Billiards' cue. Not offered with Classic. Leave it off for swings: with it on, Wii Sports Golf putts too hard and Bowling
   misses your swing. Every layout starts with it off; saved layouts remember it.
 - **Motion sensitivity.** On the Wii console, a slider from 50% to 200% scales swings and shakes
   without changing tilt. Every layout starts at 110%, which suits Wii Sports; 100% passes motion
@@ -186,7 +189,7 @@ The layouts the app ships:
 | Joy-Con | The same, with the Joy-Con's own B as B, 1 and 2 on the shoulders so your thumb stays on the stick, and Recenter on the stick click. A GameCube controller has no stick click or −, so Recenter is on Y and − on X |
 | Mario Kart Wheel | A lone Joy-Con held sideways as a wheel, laid out the way Mario Kart 8 uses one — 2 accelerates, 1 brakes, SR hops and tricks, and SL throws an item alongside the stick. Steers by **tilt**, so it plays as a sideways Wii Remote: the d-pad turns with it and a right Joy-Con aims from its tail |
 | Mario Kart Nunchuck | The remote-and-nunchuk scheme, which steers by **stick** instead. A pair splits the halves across the hands, each index finger on the shoulder its controller keeps a trigger on; a lone Joy-Con plays both halves itself, its own stick standing in for the Nunchuk's and its rails carrying C and Z |
-| Classic Controller | A Classic Controller in place of the remote and Nunchuk, for any controller, buttons where a Pro Controller has them. A lone Joy-Con plays it sideways, its stick as the left stick. The only layout that sets up a Pro or GameCube controller on Dolphin (Wii) |
+| Classic Controller | Plays as a Classic Controller in place of the Nunchuk, for any controller, buttons where a Pro Controller has them. A lone Joy-Con plays it sideways, its stick as the left stick. Only a player on Classic sets up a Pro or GameCube controller on Dolphin (Wii) |
 
 > [!NOTE]
 > Auto setup needs Shizuku, and some devices block writing into another app's `Android/data` — use

@@ -2,7 +2,7 @@ package com.joegec.joycon2android.buttonmapping
 
 class ApplyPlayerMappingUseCase(
     private val mappingRepository: ControllerMappingRepository,
-    private val sidewaysRemoteRepository: SidewaysRemoteRepository,
+    private val wiiControllerRepository: WiiControllerRepository,
     private val thrustRepository: ThrustRepository,
     private val sensitivityRepository: SensitivityRepository,
 ) {
@@ -13,7 +13,7 @@ class ApplyPlayerMappingUseCase(
         motion: RemoteMotion,
     ) {
         mappingRepository.replace(console, body, entries)
-        sidewaysRemoteRepository.set(console, body, motion.sideways)
+        wiiControllerRepository.set(console, body, motion.controller)
         thrustRepository.set(console, body, motion.thrust)
         sensitivityRepository.set(console, body, motion.sensitivityPercent)
     }

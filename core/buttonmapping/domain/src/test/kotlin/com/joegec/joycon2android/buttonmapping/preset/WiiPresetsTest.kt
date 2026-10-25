@@ -4,6 +4,7 @@ import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.MappingSource
+import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.emittedFor
 import com.joegec.joycon2android.buttonmapping.sourceIdsOf
 import com.joegec.joycon2android.buttonmapping.toMappingSources
@@ -168,10 +169,10 @@ class WiiPresetsTest {
 
     @Test
     fun `only the Mario Kart layouts play as a sideways Wii Remote`() {
-        assertTrue(MarioKartWheelMapping.sidewaysRemote)
-        assertTrue(MarioKartNunchukMapping.sidewaysRemote)
-        assertFalse(WiiMapping.sidewaysRemote)
-        assertFalse(JoyconWiiMapping.sidewaysRemote)
+        assertEquals(WiiController.SIDEWAYS_REMOTE, MarioKartWheelMapping.wiiController)
+        assertEquals(WiiController.SIDEWAYS_REMOTE, MarioKartNunchukMapping.wiiController)
+        assertEquals(WiiController.REMOTE, WiiMapping.wiiController)
+        assertEquals(WiiController.REMOTE, JoyconWiiMapping.wiiController)
     }
 
     @Test

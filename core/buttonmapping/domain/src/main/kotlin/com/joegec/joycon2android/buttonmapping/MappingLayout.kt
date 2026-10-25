@@ -4,8 +4,8 @@ package com.joegec.joycon2android.buttonmapping
 interface MappingLayout {
     val id: String
 
-    /** docs/dsu-motion.md#playing-as-a-sideways-wii-remote */
-    val sidewaysRemote: Boolean get() = false
+    /** docs/dsu-motion.md#wii-controller */
+    val wiiController: WiiController get() = WiiController.REMOTE
 
     /** docs/dsu-motion.md#thrusts */
     val thrust: Boolean get() = false
@@ -13,7 +13,7 @@ interface MappingLayout {
     /** docs/dsu-motion.md#motion-sensitivity */
     val sensitivityPercent: Int get() = RemoteMotion.DEFAULT_SENSITIVITY_PERCENT
 
-    val motion: RemoteMotion get() = RemoteMotion(sidewaysRemote, thrust, sensitivityPercent)
+    fun motion(side: JoyconSide) = RemoteMotion(wiiController.heldBy(side), thrust, sensitivityPercent)
 
     fun entries(side: JoyconSide): Map<String, String>
 }

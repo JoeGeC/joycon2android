@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.first
 /** The editor's use cases wired over in-memory stores, the way the composition root wires them. */
 internal class MappingFixture(val console: Console = Console.WIIMOTE_NUNCHUK) {
     private val mappings = FakeControllerMappings()
-    private val sidewaysRemotes = FakeSidewaysRemotes()
+    private val wiiControllers = FakeWiiControllers()
     private val thrusts = FakeThrusts()
     private val sensitivities = FakeSensitivities()
     private val savedLayouts = FakeSavedLayouts()
@@ -14,16 +14,16 @@ internal class MappingFixture(val console: Console = Console.WIIMOTE_NUNCHUK) {
 
     private val observeMapping = ObserveControllerMappingUseCase(mappings)
     private val observeMotion = ObserveRemoteMotionUseCase(
-        ObserveSidewaysRemoteUseCase(sidewaysRemotes),
+        ObserveWiiControllerUseCase(wiiControllers),
         ObserveThrustUseCase(thrusts),
         ObserveSensitivityUseCase(sensitivities),
     )
-    private val applyPlayerMapping = ApplyPlayerMappingUseCase(mappings, sidewaysRemotes, thrusts, sensitivities)
+    private val applyPlayerMapping = ApplyPlayerMappingUseCase(mappings, wiiControllers, thrusts, sensitivities)
 
     val observePlayerMapping = ObservePlayerMappingUseCase(observeMapping, observeMotion, savedLayouts)
     val applyLayout = ApplyMappingLayoutUseCase(savedLayouts, applyPlayerMapping)
     val setMapping = SetControllerMappingUseCase(mappings)
-    val setSidewaysRemote = SetSidewaysRemoteUseCase(sidewaysRemotes)
+    val setWiiController = SetWiiControllerUseCase(wiiControllers, observeMapping, mappings)
     val setThrust = SetThrustUseCase(thrusts)
     val setSensitivity = SetSensitivityUseCase(sensitivities)
     val saveCustomLayout = SaveCustomLayoutUseCase(savedLayouts, observePlayerMapping)

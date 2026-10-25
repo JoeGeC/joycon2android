@@ -7,7 +7,7 @@ import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.PlayerMapping
 import com.joegec.joycon2android.buttonmapping.SavedLayout
-import com.joegec.joycon2android.buttonmapping.classicController
+import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.proController
 
 data class ControllerMappingUiState(
@@ -21,17 +21,19 @@ data class PlayerMappingUiState(
     val body: PlayerBody,
     val layouts: List<MappingLayout>,
     val layout: MappingLayout?,
-    val sidewaysRemote: Boolean,
-    val offersSidewaysRemote: Boolean,
+    val wiiController: WiiController,
+    /** Empty off the Wii. */
+    val wiiControllers: List<WiiController>,
     val thrust: Boolean,
-    val offersRemoteMotion: Boolean,
+    val offersThrust: Boolean,
     val sensitivityPercent: Int,
+    val offersSensitivity: Boolean,
     val proController: Boolean,
-    val classicController: Boolean,
     val offersProController: Boolean,
     val mapping: Map<String, String>,
 ) {
     val singleJoycon: Boolean get() = offersProController && !proController
+    val classicController: Boolean get() = wiiController == WiiController.CLASSIC
 }
 
 internal fun controllerMappingUiState(
@@ -54,13 +56,13 @@ private fun PlayerMapping.uiState(
     body = body,
     layouts = layouts,
     layout = layout,
-    sidewaysRemote = motion.sideways,
-    offersSidewaysRemote = MappingOptions.offersSidewaysRemote(console, body.side, entries.classicController),
+    wiiController = motion.controller,
+    wiiControllers = MappingOptions.wiiControllers(console, body.side),
     thrust = motion.thrust,
+    offersThrust = MappingOptions.offersThrust(console, motion.controller),
     sensitivityPercent = motion.sensitivityPercent,
-    offersRemoteMotion = MappingOptions.offersRemoteMotion(console, entries.classicController),
+    offersSensitivity = console == Console.WIIMOTE_NUNCHUK,
     proController = entries.proController,
-    classicController = entries.classicController,
     offersProController = MappingOptions.offersProController(console, body.side),
     mapping = entries,
 )

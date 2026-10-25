@@ -38,10 +38,10 @@ class PlayerMappingTest {
     }
 
     @Test
-    fun `the sideways-remote switch counts as a change of its own`() = runBlocking {
+    fun `the Wii controller choice counts as a change of its own`() = runBlocking {
         fixture.applyLayout(fixture.console, body, MarioKartWheelMapping.id)
 
-        fixture.setSidewaysRemote(fixture.console, body, false)
+        fixture.setWiiController(fixture.console, body, WiiController.REMOTE)
 
         assertNull(fixture.playerMapping(body).layout)
     }

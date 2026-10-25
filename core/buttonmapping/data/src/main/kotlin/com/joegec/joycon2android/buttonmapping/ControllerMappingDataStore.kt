@@ -9,7 +9,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.controllerMappingDataStore: DataStore<Preferences> by preferencesDataStore(
+internal val Context.controllerMappingDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "controller_mapping",
     produceMigrations = { listOf(PerPlayerMigration(::perPlayerMappingNames), LegacyGripMigration()) },
 )
@@ -30,6 +30,8 @@ class ControllerMappingDataStore(context: Context) : ControllerMappingRepository
             prefs.asMap().entries
                 .filter { (key, _) -> key.name.startsWith(prefix) }
                 .associate { (key, value) -> key.name.removePrefix(prefix) to value.toString() }
+                // WiiControllerMigration carried it over; it leaves on the body's next replace.
+                .minus(LEGACY_CLASSIC_CONTROLLER_KEY)
         }
 
     override suspend fun set(console: Console, body: PlayerBody, targetKey: String, sourceId: String) {

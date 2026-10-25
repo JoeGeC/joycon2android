@@ -88,11 +88,25 @@ if the nose pointed at the screen.
   hold an "aim up", a player makes a different rotation from the one they make while playing, so
   compare a captured session against candidate tables by how much cursor travel each yields.
 
-### Playing as a sideways Wii Remote
+### Wii controller
 
-A per-player switch in the mapping editor, seeded by the layout (`MappingLayout.sidewaysRemote`, on
-for both Mario Kart layouts) and overridable (`SidewaysRemoteRepository`; applying a layout clears
-the override).
+What a Wii player holds (`WiiController`): **Wiimote**, **Sideways** (a
+[sideways remote](#playing-as-a-sideways-wii-remote)) or **Classic** (a
+[Classic Controller](#classic-controller) in the remote). One choice, as the three exclude each other.
+
+- **Seeded by the layout, overridable per player** (`MappingLayout.wiiController`,
+  `WiiControllerRepository`; applying a layout clears the override). Sideways for both Mario Kart
+  layouts, Classic for the Classic Controller layout.
+- **Only a lone Joy-Con turns sideways.** A pair is offered Wiimote and Classic, and a
+  layout's Sideways reads as Wiimote on it (`WiiController.heldBy`), so the layout still matches.
+- **Classic holds a lone Joy-Con sideways too** (`heldSideways`): its stick, keyboard and mouse
+  directions and its pointer axes turn as Sideways's do.
+- **A first Classic gets the Classic Controller layout's bindings**; after that, both the remote's and
+  the Classic's targets stay stored, so switching back and forth loses neither.
+- **Stored in the `sideways_remote` DataStore**, which it replaced in place. `WiiControllerMigration`
+  turned its booleans and the old `CLASSIC_CONTROLLER` binding entry into the enum.
+
+### Playing as a sideways Wii Remote
 
 - **Only a right Joy-Con turns.** A game written for that grip reads gravity against a remote whose
   nose points left, where a left Joy-Con's L/ZL edge already points. A right Joy-Con gives up its own
@@ -209,12 +223,16 @@ What `DolphinWiimoteConfig` writes, and why:
 
 ### Classic Controller
 
-The **Classic Controller** layout sets `CLASSIC_CONTROLLER` among a body's bindings
-(`ClassicControllerEntry`), and `DolphinClassicController` writes that remote instead:
+[Wii controller](#wii-controller) **Classic** plugs one into the remote, and
+`DolphinClassicController` writes that remote instead:
 
 - **`Extension = Classic`, its own targets only.** Classic targets are stored as `ClassicA`,
-  `ClassicLeftStick_UP`, …, beside the remote's, which stay stored but aren't written. No motion
-  lines: the remote's IMU, pointer and swing are left at Dolphin's defaults.
+  `ClassicLeftStick_UP`, …, beside the remote's, which stay stored but aren't written.
+- **The remote still points.** A real Classic Controller hangs off a remote that keeps its IR and
+  accelerometer, and the Wii Menu and some games point in their menus, so the IMU lines are written
+  as for a remote, with Sensitivity. No Swing or flick trick: no Classic game reads one, and Swing
+  would jolt with every press. A GameCube controller has no motion, so it gets none. Pointing with
+  Classic on is untested on hardware.
 - **L and R are digital** (`Classic/Triggers/L`). DSU carries no trigger travel; Dolphin's mixed
   trigger reads a press as fully pulled.
 - **Pro and GameCube controllers are written too**, but only in this layout. Otherwise setup leaves

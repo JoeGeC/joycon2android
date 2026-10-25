@@ -118,7 +118,7 @@ class GlobalMappingTest {
 
         val restored = fixture.playerMapping(first)
         assertEquals("Up", restored.entries["A"])
-        assertTrue(restored.motion.sideways)
+        assertEquals(WiiController.SIDEWAYS_REMOTE, restored.motion.controller)
         assertEquals(WiiMapping.id, fixture.playerMapping(second).layout?.id)
     }
 

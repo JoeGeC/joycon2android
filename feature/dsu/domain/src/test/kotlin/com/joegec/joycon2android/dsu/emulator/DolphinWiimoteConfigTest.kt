@@ -4,6 +4,7 @@ import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.RemoteMotion
+import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.preset.ClassicControllerMapping
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.emulatorconfig.IniEditor
@@ -21,8 +22,6 @@ private fun defaultWiimoteMapping(side: JoyconSide) = MappingPresets.default(Con
 
 private val wiimoteMapping: (PlayerBody) -> Map<String, String> = { defaultWiimoteMapping(it.side) }
 
-private fun wiimoteMappingFor(body: PlayerBody) = defaultWiimoteMapping(body.side)
-
 private val unscaled = RemoteMotion(sensitivityPercent = RemoteMotion.UNSCALED_SENSITIVITY_PERCENT)
 
 class DolphinWiimoteConfigTest {
@@ -32,13 +31,13 @@ class DolphinWiimoteConfigTest {
     private fun merge(
         existing: String?,
         players: List<PlayerState>,
-        sidewaysRemote: Boolean = false,
+        controller: WiiController = WiiController.REMOTE,
         thrust: Boolean = false,
         sensitivityPercent: Int = RemoteMotion.UNSCALED_SENSITIVITY_PERCENT,
     ) = DolphinWiimoteConfig.merge(
         existing,
         players,
-        { RemoteMotion(sidewaysRemote, thrust, sensitivityPercent) },
+        { RemoteMotion(controller, thrust, sensitivityPercent) },
         wiimoteMapping,
     )
 
@@ -303,7 +302,7 @@ class DolphinWiimoteConfigTest {
     fun `a left Joy-Con reads the same either way`() {
         val player = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT)))
 
-        listOf(merge(null, player), merge(null, player, sidewaysRemote = true)).forEach { result ->
+        listOf(merge(null, player), merge(null, player, controller = WiiController.SIDEWAYS_REMOTE)).forEach { result ->
             assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left`"))
             assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`"))
         }
@@ -315,7 +314,7 @@ class DolphinWiimoteConfigTest {
     fun `playing sideways turns a right Joy-Con onto the sideways remote's frame`() {
         val player = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
 
-        val result = merge(null, player, sidewaysRemote = true)
+        val result = merge(null, player, controller = WiiController.SIDEWAYS_REMOTE)
 
         assertTrue(result.contains("IMUAccelerometer/Up = `Accel Up`"))
         assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Left`"))
@@ -336,8 +335,8 @@ class DolphinWiimoteConfigTest {
 
     @Test
     fun `playing sideways turns the d-pad a quarter, on both bodies`() {
-        val right = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
-        val left = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))), sidewaysRemote = true)
+        val right = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), controller = WiiController.SIDEWAYS_REMOTE)
+        val left = merge(null, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT))), controller = WiiController.SIDEWAYS_REMOTE)
 
         listOf(right, left).forEach { result ->
             assertTrue(result.contains("D-Pad/Right = `Left Y+`")) // the stick's up is the remote's right
@@ -351,7 +350,7 @@ class DolphinWiimoteConfigTest {
     fun `a pair is held like a remote already, so it never turns`() {
         val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
 
-        val result = merge(null, listOf(both), sidewaysRemote = true)
+        val result = merge(null, listOf(both), controller = WiiController.SIDEWAYS_REMOTE)
 
         assertTrue(result.contains("IMUAccelerometer/Forward = `Accel Forward`"))
         assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Pitch Up`"))
@@ -360,7 +359,7 @@ class DolphinWiimoteConfigTest {
 
     @Test
     fun `playing sideways turns a wrist flick into a jerk the way it was flicked`() {
-        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), controller = WiiController.SIDEWAYS_REMOTE)
 
         val up = "(`Gyro Pitch Up` / 9) & not(pulse(`Gyro Pitch Down` / 9, 0.4))"
         assertTrue(
@@ -374,7 +373,7 @@ class DolphinWiimoteConfigTest {
 
     @Test
     fun `each flick direction locks the other out`() {
-        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), controller = WiiController.SIDEWAYS_REMOTE)
 
         assertTrue(result.contains("IMUAccelerometer/Down = `Accel Down` + pulse((`Gyro Pitch Down` / 9) & " +
             "not(pulse(`Gyro Pitch Up` / 9, 0.4))"))
@@ -382,7 +381,7 @@ class DolphinWiimoteConfigTest {
 
     @Test
     fun `the jerks all go the way the flick did`() {
-        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), sidewaysRemote = true)
+        val result = merge(null, listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))), controller = WiiController.SIDEWAYS_REMOTE)
 
         assertEquals(2, result.split("pulse((`Gyro").size - 1) // one per direction, nothing sideways
         assertFalse(result.contains("3.1416")) // no antiphase left to cancel it
@@ -413,15 +412,17 @@ class DolphinWiimoteConfigTest {
         assertFalse(result.contains("[Wiimote1]"))
     }
 
-    private fun mergeClassic(players: List<PlayerState>) = DolphinWiimoteConfig.merge(
+    private val classic = unscaled.copy(controller = WiiController.CLASSIC)
+
+    private fun mergeClassic(players: List<PlayerState>, motion: RemoteMotion = classic) = DolphinWiimoteConfig.merge(
         null,
         players,
-        { unscaled },
+        { motion },
         { ClassicControllerMapping.entries(it.side) },
     )
 
     @Test
-    fun `a Classic Controller replaces the nunchuk and binds no remote buttons or motion`() {
+    fun `a Classic Controller replaces the nunchuk and binds no remote buttons`() {
         val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
 
         val result = mergeClassic(listOf(both))
@@ -436,7 +437,27 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("Classic/Right Stick/Left = `Right X-`"))
         assertFalse(result.contains("Buttons/A = `Cross`"))
         assertFalse(result.contains("Nunchuk/"))
-        assertFalse(result.contains("IMUAccelerometer"))
+    }
+
+    @Test
+    fun `the remote a Classic Controller plugs into still points, but never thrusts or flicks`() {
+        val right = PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))
+
+        val result = mergeClassic(listOf(right), classic.copy(thrust = true))
+
+        assertTrue(result.contains("IMUIR/Enabled = True"))
+        assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`")) // held sideways
+        assertFalse(result.contains("Swing/"))
+        assertFalse(result.contains("pulse("))
+    }
+
+    @Test
+    fun `a GameCube controller's Classic Controller has nothing to point with`() {
+        val gameCube = ConnectedJoycon(address = "GC", side = Side.PRO, model = ControllerModel.GAMECUBE, deviceName = "GameCube")
+
+        val result = mergeClassic(listOf(PlayerState(PlayerNumber.P1, left = gameCube)))
+
+        assertFalse(result.contains("IMU"))
     }
 
     @Test
@@ -448,8 +469,8 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("[Wiimote1]"))
         assertTrue(result.contains("Device = DSUClient/0/Joycon2"))
         assertTrue(result.contains("Classic/Buttons/B = `Cross`"))
-        assertTrue(DolphinWiimoteConfig.writesFor(pro) { ClassicControllerMapping.entries(it.side) })
-        assertFalse(DolphinWiimoteConfig.writesFor(pro, ::wiimoteMappingFor))
+        assertTrue(DolphinWiimoteConfig.writesFor(pro) { classic })
+        assertFalse(DolphinWiimoteConfig.writesFor(pro) { unscaled })
     }
 
     @Test

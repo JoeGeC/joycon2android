@@ -137,7 +137,7 @@ class MainActivity : ComponentActivity() {
                     c.applyMappingLayout,
                     c.applyGlobalLayout,
                     c.setControllerMapping,
-                    c.setSidewaysRemote,
+                    c.setWiiController,
                     c.setThrust,
                     c.setSensitivity,
                     c.setProController,
@@ -276,9 +276,7 @@ class MainActivity : ComponentActivity() {
         setMapping = { body, targetKey, sourceId ->
             controllerMappingViewModel.setMapping(body, targetKey, sourceId)
         },
-        setSidewaysRemote = { body, enabled ->
-            controllerMappingViewModel.setSidewaysRemoteEnabled(body, enabled)
-        },
+        setWiiController = { body, controller -> controllerMappingViewModel.selectWiiController(body, controller) },
         setThrust = { body, enabled -> controllerMappingViewModel.setThrustEnabled(body, enabled) },
         setSensitivity = { body, percent -> controllerMappingViewModel.setSensitivityPercent(body, percent) },
         setProController = { body, enabled -> controllerMappingViewModel.setProControllerEnabled(body, enabled) },

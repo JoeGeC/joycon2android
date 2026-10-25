@@ -7,6 +7,7 @@ import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
+import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.targetKey
 import com.joegec.joycon2android.buttonmapping.directionKey
 import com.joegec.joycon2android.buttonmapping.target.ClassicButton
@@ -26,15 +27,19 @@ import com.joegec.joycon2android.model.MouseAction
 internal object MappingOptions {
     const val NONE_ID = ""
 
-    fun offersSidewaysRemote(console: Console, side: JoyconSide, classicController: Boolean) =
-        offersRemoteMotion(console, classicController) && side.isLone
+    // Only a lone Joy-Con can be held sideways.
+    fun wiiControllers(console: Console, side: JoyconSide): List<WiiController> = when {
+        console != Console.WIIMOTE_NUNCHUK -> emptyList()
+        side.isLone -> WiiController.entries
+        else -> WiiController.entries - WiiController.SIDEWAYS_REMOTE
+    }
 
     fun offersProController(console: Console, side: JoyconSide) =
         console == Console.SWITCH_PRO && side.isLone
 
-    // A Classic Controller has no motion of its own.
-    fun offersRemoteMotion(console: Console, classicController: Boolean) =
-        console == Console.WIIMOTE_NUNCHUK && !classicController
+    // No Classic Controller game reads a thrust, and Swing would jolt with every press.
+    fun offersThrust(console: Console, controller: WiiController) =
+        console == Console.WIIMOTE_NUNCHUK && controller != WiiController.CLASSIC
 
     @Composable
     fun targets(

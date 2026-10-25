@@ -22,13 +22,13 @@ internal class FakeControllerMappings : ControllerMappingRepository {
     }
 }
 
-internal class FakeSidewaysRemotes : SidewaysRemoteRepository {
-    private val stored = MutableStateFlow(emptyMap<BodyKey, Boolean>())
+internal class FakeWiiControllers : WiiControllerRepository {
+    private val stored = MutableStateFlow(emptyMap<BodyKey, WiiController>())
 
-    override fun observe(console: Console, body: PlayerBody): Flow<Boolean?> = stored.map { it[console to body] }
+    override fun observe(console: Console, body: PlayerBody): Flow<WiiController?> = stored.map { it[console to body] }
 
-    override suspend fun set(console: Console, body: PlayerBody, enabled: Boolean) {
-        stored.update { it + ((console to body) to enabled) }
+    override suspend fun set(console: Console, body: PlayerBody, controller: WiiController) {
+        stored.update { it + ((console to body) to controller) }
     }
 }
 

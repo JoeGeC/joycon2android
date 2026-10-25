@@ -4,8 +4,8 @@ import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.RemoteMotion
+import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.body
-import com.joegec.joycon2android.buttonmapping.classicController
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
 import com.joegec.joycon2android.buttonmapping.toSourceMap
@@ -102,16 +102,16 @@ object DolphinWiimoteConfig {
     private fun trickTrigger(
         side: JoyconSide,
         control: String,
-        sidewaysRemote: Boolean,
+        flicks: Boolean,
         bound: List<MappingSource>?,
     ): String? {
         val (own, opposite) = TRICK_AXES[control] ?: return null
-        val flick = if (sidewaysRemote) {
+        val flick = if (flicks) {
             "(`Gyro $own` / $FLICK_RADIANS) & not(pulse(`Gyro $opposite` / $FLICK_RADIANS, $FLICK_LOCKOUT_SECONDS))"
         } else {
             null
         }
-        val pressed = bound?.takeIf { control == UP }?.let { DolphinDsuInputs.expressionFor(side, sidewaysRemote, it) }
+        val pressed = bound?.takeIf { control == UP }?.let { DolphinDsuInputs.expressionFor(side, flicks, it) }
         return listOfNotNull(flick, pressed).takeIf { it.isNotEmpty() }?.joinToString(" | ")
     }
 
@@ -125,11 +125,12 @@ object DolphinWiimoteConfig {
         motion: RemoteMotion,
         bound: List<MappingSource>?,
     ): List<String> {
-        val bodyInputs = bodyInputs(side, motion.sideways)
+        val bodyInputs = bodyInputs(side, motion.heldSideways)
         return IMU_CONTROLS.map { (control, input) ->
             val read = "`${bodyInputs[input] ?: input}`"
             val boost = sensitivityBoost(control, motion.sensitivityPercent) { "`${bodyInputs["Accel $it"] ?: "Accel $it"}`" }
-            val shake = trickShake(trickTrigger(side, control, motion.sideways, bound))?.let { "+ $it" }
+            val flicks = motion.controller == WiiController.SIDEWAYS_REMOTE
+            val shake = trickShake(trickTrigger(side, control, flicks, bound))?.let { "+ $it" }
             "$control = " + listOfNotNull(read, boost, shake).joinToString(" ")
         } + listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
     }
@@ -154,7 +155,7 @@ object DolphinWiimoteConfig {
     // Dolphin adds the swing it emulates to the accelerometer, so only a game that wants thrusts gets one.
     private fun swingLines(side: JoyconSide, motion: RemoteMotion): List<String> {
         if (!motion.thrust) return emptyList()
-        val body = bodyInputs(side, motion.sideways)
+        val body = bodyInputs(side, motion.heldSideways)
         val thrust = body["Accel Forward"] ?: "Accel Forward"
         val pull = body["Accel Backward"] ?: "Accel Backward"
         val signed = "(`$thrust` - `$pull`)"
@@ -186,9 +187,10 @@ object DolphinWiimoteConfig {
     }
 
     /** Pro and GameCube controllers are left to the player's own Dolphin mapping, unless they play a Classic Controller. */
-    fun writesFor(player: PlayerState, mappingFor: (PlayerBody) -> Map<String, String>): Boolean {
+    fun writesFor(player: PlayerState, motionFor: (PlayerBody) -> RemoteMotion): Boolean {
         val body = player.body() ?: return false
-        return player.player.index - 1 in 0 until DsuSlots.COUNT && (!player.hasPro || mappingFor(body).classicController)
+        return player.player.index - 1 in 0 until DsuSlots.COUNT &&
+            (!player.hasPro || motionFor(body).controller == WiiController.CLASSIC)
     }
 
     private fun sections(
@@ -197,7 +199,7 @@ object DolphinWiimoteConfig {
         mappingFor: (PlayerBody) -> Map<String, String>,
     ): Map<String, String> {
         val secondHands = DsuSlots.secondHands(players).associate { it.state.player to it.slot }
-        return players.filter { writesFor(it, mappingFor) }.mapNotNull { it.body() }.associate { body ->
+        return players.filter { writesFor(it, motionFor) }.mapNotNull { it.body() }.associate { body ->
             "[Wiimote${body.player.index}]" to bodyFor(body, secondHands[body.player], motionFor, mappingFor)
         }
     }
@@ -212,11 +214,12 @@ object DolphinWiimoteConfig {
         val mapping = mappingFor(body)
         // Source = 1 forces this Wii Remote slot to Emulated, so the mappings actually apply
         val header = listOf("Source = 1", "Device = DSUClient/${body.player.index - 1}/Joycon2")
-        if (mapping.classicController) {
-            return (header + DolphinClassicController.lines(side, mapping)).joinToString("\n", postfix = "\n")
-        }
         val motion = motionFor(body)
-        val sidewaysRemote = motion.sideways
+        if (motion.controller == WiiController.CLASSIC) {
+            return (header + DolphinClassicController.lines(side, mapping) + classicPointerLines(side, motion))
+                .joinToString("\n", postfix = "\n")
+        }
+        val sidewaysRemote = motion.heldSideways
         val nunchukImu = if (side == JoyconSide.DUAL && secondHandSlot != null) {
             nunchukImuLines(secondHandSlot, motion.sensitivityPercent)
         } else {
@@ -227,6 +230,10 @@ object DolphinWiimoteConfig {
             swingLines(side, motion) + nunchukImu)
             .joinToString("\n", postfix = "\n")
     }
+
+    // The remote still points for menus; a GameCube controller has no motion to point with.
+    private fun classicPointerLines(side: JoyconSide, motion: RemoteMotion): List<String> =
+        if (side == JoyconSide.GAMECUBE) emptyList() else imuLines(side, motion, bound = null)
 
     private fun lines(side: JoyconSide, sidewaysRemote: Boolean, mapping: Map<String, String>): List<String> {
         val sideways = sidewaysRemote && side.isLone

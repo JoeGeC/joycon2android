@@ -6,7 +6,7 @@ data class SavedLayout(
     val console: Console,
     val side: JoyconSide,
     val bindings: Map<String, String>,
-    override val sidewaysRemote: Boolean = false,
+    override val wiiController: WiiController = WiiController.REMOTE,
     override val thrust: Boolean = false,
     override val sensitivityPercent: Int = RemoteMotion.DEFAULT_SENSITIVITY_PERCENT,
 ) : MappingLayout {

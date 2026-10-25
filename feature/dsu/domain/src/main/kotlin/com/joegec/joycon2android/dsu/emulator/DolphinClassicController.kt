@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.target.ClassicButton
 import com.joegec.joycon2android.buttonmapping.target.ClassicStick
 import com.joegec.joycon2android.buttonmapping.toSourceMap
@@ -33,8 +34,7 @@ internal object DolphinClassicController {
         ClassicStick.ClassicRightStick to "Classic/Right Stick",
     )
 
-    // A lone Joy-Con plays it held sideways, the way the relay already reports its stick.
-    private const val SIDEWAYS = true
+    private val SIDEWAYS = WiiController.CLASSIC.heldSideways
 
     fun lines(side: JoyconSide, mapping: Map<String, String>): List<String> =
         listOf("Extension = Classic") + buttonLines(side, mapping) + stickLines(side, mapping)

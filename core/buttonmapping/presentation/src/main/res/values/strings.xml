@@ -19,9 +19,13 @@
     <string name="controller_mapping_delete_layout_body">Only the name goes — everyone playing on it keeps their buttons, and reads as \"Custom\" until you save it again.</string>
     <string name="controller_mapping_delete">Delete</string>
     <string name="controller_mapping_no_players">Connect a controller to map it.</string>
-    <string name="controller_mapping_sideways_remote">Sideways Wii Remote</string>
-    <string name="controller_mapping_sideways_remote_description">Fixes motion steering. Up is towards the rail.</string>
-    <string name="controller_mapping_sideways_remote_warning">When enabled, a right Joy-Con points from its tail rather than its R edge.</string>
+    <string name="wii_controller_remote">Wiimote</string>
+    <string name="wii_controller_remote_description">Points and swings like a Wii Remote.</string>
+    <string name="wii_controller_sideways_remote">Sideways</string>
+    <string name="wii_controller_sideways_remote_description">Fixes motion steering. Up is towards the rail.</string>
+    <string name="wii_controller_sideways_remote_warning">A right Joy-Con points from its tail rather than its R edge.</string>
+    <string name="wii_controller_classic">Classic</string>
+    <string name="wii_controller_classic_description">A Classic Controller plugged into the remote.</string>
     <string name="controller_mapping_pro_controller">Pro Controller</string>
     <string name="controller_mapping_pro_controller_description">Eden will recognise it as a Pro Controller instead of a single Joy-Con.</string>
     <string name="controller_mapping_thrust">Thrusts</string>

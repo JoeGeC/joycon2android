@@ -43,7 +43,7 @@ import com.joegec.joycon2android.buttonmapping.ObserveSavedLayoutsUseCase
 import com.joegec.joycon2android.buttonmapping.ObservePlayerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveRemoteMotionUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveSensitivityUseCase
-import com.joegec.joycon2android.buttonmapping.ObserveSidewaysRemoteUseCase
+import com.joegec.joycon2android.buttonmapping.ObserveWiiControllerUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveThrustUseCase
 import com.joegec.joycon2android.buttonmapping.SaveCustomLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SaveGlobalLayoutUseCase
@@ -55,10 +55,10 @@ import com.joegec.joycon2android.buttonmapping.ObserveSingleJoyconBodiesUseCase
 import com.joegec.joycon2android.buttonmapping.SetProControllerUseCase
 import com.joegec.joycon2android.buttonmapping.SensitivityRepository
 import com.joegec.joycon2android.buttonmapping.SetSensitivityUseCase
-import com.joegec.joycon2android.buttonmapping.SetSidewaysRemoteUseCase
+import com.joegec.joycon2android.buttonmapping.SetWiiControllerUseCase
 import com.joegec.joycon2android.buttonmapping.SetThrustUseCase
-import com.joegec.joycon2android.buttonmapping.SidewaysRemoteDataStore
-import com.joegec.joycon2android.buttonmapping.SidewaysRemoteRepository
+import com.joegec.joycon2android.buttonmapping.WiiControllerDataStore
+import com.joegec.joycon2android.buttonmapping.WiiControllerRepository
 import com.joegec.joycon2android.buttonmapping.ThrustDataStore
 import com.joegec.joycon2android.buttonmapping.ThrustRepository
 import com.joegec.joycon2android.assignment.AssignmentRepository
@@ -192,14 +192,14 @@ class AppContainer(context: Context) {
     private val controllerMappingRepository: ControllerMappingRepository = ControllerMappingDataStore(appContext)
     private val savedLayoutRepository: SavedLayoutRepository = SavedLayoutDataStore(appContext)
     private val globalLayoutRepository: GlobalLayoutRepository = GlobalLayoutDataStore(appContext)
-    private val sidewaysRemoteRepository: SidewaysRemoteRepository = SidewaysRemoteDataStore(appContext)
+    private val wiiControllerRepository: WiiControllerRepository = WiiControllerDataStore(appContext)
     private val thrustRepository: ThrustRepository = ThrustDataStore(appContext)
     private val sensitivityRepository: SensitivityRepository = SensitivityDataStore(appContext)
 
     private val observeControllerMapping = ObserveControllerMappingUseCase(controllerMappingRepository)
-    private val observeSidewaysRemote = ObserveSidewaysRemoteUseCase(sidewaysRemoteRepository)
+    private val observeWiiController = ObserveWiiControllerUseCase(wiiControllerRepository)
     private val observeRemoteMotion = ObserveRemoteMotionUseCase(
-        observeSidewaysRemote,
+        observeWiiController,
         ObserveThrustUseCase(thrustRepository),
         ObserveSensitivityUseCase(sensitivityRepository),
     )
@@ -208,7 +208,7 @@ class AppContainer(context: Context) {
     private val applyPlayerMapping =
         ApplyPlayerMappingUseCase(
             controllerMappingRepository,
-            sidewaysRemoteRepository,
+            wiiControllerRepository,
             thrustRepository,
             sensitivityRepository,
         )
@@ -216,7 +216,8 @@ class AppContainer(context: Context) {
     val observeGlobalMapping = ObserveGlobalMappingUseCase(observePlayerMapping, globalLayoutRepository)
     val observeSavedLayouts = ObserveSavedLayoutsUseCase(savedLayoutRepository)
     val setControllerMapping = SetControllerMappingUseCase(controllerMappingRepository)
-    val setSidewaysRemote = SetSidewaysRemoteUseCase(sidewaysRemoteRepository)
+    val setWiiController =
+        SetWiiControllerUseCase(wiiControllerRepository, observeControllerMapping, controllerMappingRepository)
     val setThrust = SetThrustUseCase(thrustRepository)
     val setSensitivity = SetSensitivityUseCase(sensitivityRepository)
     val setProController = SetProControllerUseCase(observeControllerMapping, controllerMappingRepository)
@@ -319,13 +320,13 @@ class AppContainer(context: Context) {
 
     // --- Device keys: Android, keyboard and mouse, from the active console's mapping ---
     private val activeBodies = MutableStateFlow(emptyList<PlayerBody>())
-    private val observeAndroidKeyBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeSidewaysRemote) { entries, _, _ ->
+    private val observeAndroidKeyBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeWiiController) { entries, _, _ ->
         entries.androidKeyBindings()
     }
-    private val observeKeyboardKeyBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeSidewaysRemote) { entries, side, sideways ->
+    private val observeKeyboardKeyBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeWiiController) { entries, side, sideways ->
         entries.keyboardKeyBindings(side, sideways)
     }
-    private val observeMouseActionBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeSidewaysRemote) { entries, side, sideways ->
+    private val observeMouseActionBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeWiiController) { entries, side, sideways ->
         entries.mouseActionBindings(side, sideways)
     }
     private val androidBindings = bindingsFor(observeAndroidKeyBindings)

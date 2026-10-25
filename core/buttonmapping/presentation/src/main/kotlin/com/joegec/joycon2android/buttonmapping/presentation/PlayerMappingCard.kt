@@ -35,7 +35,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import kotlin.math.roundToInt
 import com.joegec.joycon2android.buttonmapping.Console
-import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.RemoteMotion
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.ConnectedJoycon
@@ -88,13 +87,13 @@ fun PlayerMappingCard(
                 if (state.offersProController) {
                     ProControllerSwitch(state.proController) { actions.setProController(state.body, it) }
                 }
-                if (state.offersSidewaysRemote) {
-                    SidewaysRemoteSwitch(state.body.side, state.sidewaysRemote) {
-                        actions.setSidewaysRemote(state.body, it)
+                if (state.wiiControllers.isNotEmpty()) {
+                    WiiControllerChoice(state.body.side, state.wiiControllers, state.wiiController) {
+                        actions.setWiiController(state.body, it)
                     }
                 }
-                if (state.offersRemoteMotion) {
-                    ThrustSwitch(state.thrust) { actions.setThrust(state.body, it) }
+                if (state.offersThrust) ThrustSwitch(state.thrust) { actions.setThrust(state.body, it) }
+                if (state.offersSensitivity) {
                     SensitivitySlider(state.sensitivityPercent) { actions.setSensitivity(state.body, it) }
                 }
                 MappingBindings(console, state, actions, deviceKeyWarnings)
@@ -186,21 +185,6 @@ private fun PlayerLayoutPicker(
             text = stringResource(R.string.controller_mapping_save_player_hint),
         )
     }
-}
-
-/** A right Joy-Con aims from its tail: docs/dsu-motion.md#playing-as-a-sideways-wii-remote */
-@Composable
-private fun SidewaysRemoteSwitch(side: JoyconSide, enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
-    val aimsFromItsTail = side == JoyconSide.RIGHT
-    SettingSwitch(
-        title = stringResource(R.string.controller_mapping_sideways_remote),
-        description = stringResource(R.string.controller_mapping_sideways_remote_description),
-        warning = stringResource(R.string.controller_mapping_sideways_remote_warning)
-            .takeIf { aimsFromItsTail },
-        checked = enabled,
-        onCheckedChange = onSetEnabled,
-        modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
-    )
 }
 
 /** docs/virtual-gamepad.md#single-joy-con */

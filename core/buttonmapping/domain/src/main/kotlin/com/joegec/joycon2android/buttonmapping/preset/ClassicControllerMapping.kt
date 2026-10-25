@@ -1,10 +1,9 @@
 package com.joegec.joycon2android.buttonmapping.preset
 
-import com.joegec.joycon2android.buttonmapping.CLASSIC_CONTROLLER_KEY
-import com.joegec.joycon2android.buttonmapping.CLASSIC_CONTROLLER_ON
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.StickSource
+import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.StickSource.LEFT_STICK
 import com.joegec.joycon2android.buttonmapping.StickSource.RIGHT_STICK
 import com.joegec.joycon2android.buttonmapping.target.ClassicButton
@@ -36,9 +35,9 @@ object ClassicControllerMapping : MappingPreset {
     override val id = "CLASSIC"
     override val console = Console.WIIMOTE_NUNCHUK
 
-    override fun entries(side: JoyconSide) =
-        buttons(side).buttonEntries() + sticks(side).stickEntries() +
-            (CLASSIC_CONTROLLER_KEY to CLASSIC_CONTROLLER_ON)
+    override val wiiController = WiiController.CLASSIC
+
+    override fun entries(side: JoyconSide) = buttons(side).buttonEntries() + sticks(side).stickEntries()
 
     private val PAIR_BUTTONS = mapOf(
         ClassicButton.ClassicA to A,

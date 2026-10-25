@@ -13,10 +13,11 @@ import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.SaveCustomLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SaveGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
-import com.joegec.joycon2android.buttonmapping.SetSidewaysRemoteUseCase
 import com.joegec.joycon2android.buttonmapping.SetProControllerUseCase
 import com.joegec.joycon2android.buttonmapping.SetSensitivityUseCase
 import com.joegec.joycon2android.buttonmapping.SetThrustUseCase
+import com.joegec.joycon2android.buttonmapping.SetWiiControllerUseCase
+import com.joegec.joycon2android.buttonmapping.WiiController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +36,7 @@ class ControllerMappingViewModel(
     private val applyMappingLayout: ApplyMappingLayoutUseCase,
     private val applyGlobalLayout: ApplyGlobalLayoutUseCase,
     private val setControllerMapping: SetControllerMappingUseCase,
-    private val setSidewaysRemote: SetSidewaysRemoteUseCase,
+    private val setWiiController: SetWiiControllerUseCase,
     private val setThrust: SetThrustUseCase,
     private val setSensitivity: SetSensitivityUseCase,
     private val setProController: SetProControllerUseCase,
@@ -67,8 +68,8 @@ class ControllerMappingViewModel(
         setControllerMapping(it.console, body, targetKey, sourceId)
     }
 
-    fun setSidewaysRemoteEnabled(body: PlayerBody, enabled: Boolean) = onTarget {
-        setSidewaysRemote(it.console, body, enabled)
+    fun selectWiiController(body: PlayerBody, controller: WiiController) = onTarget {
+        setWiiController(it.console, body, controller)
     }
 
     fun setThrustEnabled(body: PlayerBody, enabled: Boolean) = onTarget {

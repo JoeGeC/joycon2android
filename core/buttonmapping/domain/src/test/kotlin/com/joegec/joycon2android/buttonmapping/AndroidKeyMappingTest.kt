@@ -33,7 +33,7 @@ class AndroidKeyMappingTest {
 
         val observe = ObserveKeyBindingsUseCase(
             ObserveControllerMappingUseCase(mappings),
-            ObserveSidewaysRemoteUseCase(FakeSidewaysRemotes()),
+            ObserveWiiControllerUseCase(FakeWiiControllers()),
         ) { entries, _, _ -> entries.androidKeyBindings() }
         val bindings = observe(
             Console.GAMECUBE,

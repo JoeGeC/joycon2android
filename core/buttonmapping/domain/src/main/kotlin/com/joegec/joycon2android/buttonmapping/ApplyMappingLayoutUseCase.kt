@@ -12,7 +12,7 @@ class ApplyMappingLayoutUseCase(
             console,
             body,
             MappingLayouts.entriesOf(console, body.side, layout),
-            layout.motion,
+            layout.motion(body.side),
         )
     }
 }

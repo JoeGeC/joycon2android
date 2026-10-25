@@ -16,7 +16,7 @@ class SaveCustomLayoutUseCase(
                 console = console,
                 side = body.side,
                 bindings = current.entries,
-                sidewaysRemote = current.motion.sideways,
+                wiiController = current.motion.controller,
                 thrust = current.motion.thrust,
                 sensitivityPercent = current.motion.sensitivityPercent,
             ),

@@ -131,6 +131,10 @@ In `JoyconScreen.kt`:
 
 - **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order:
   the console's own, then Android, Mouse, Keyboard.
+- **The Wii controller is one untitled `SegmentedChoice`, not switches**, on the Wii console:
+  Wiimote, Sideways (lone Joy-Con only) and Classic exclude each other, so two switches
+  would offer a combination that can't exist. The options name themselves, so it needs no title. The
+  chosen one's description cross-fades beneath it, and Thrusts hides on Classic.
 - **Each section sits on its own panel**, `SectionBg` rounded inside the card, so scrolling shows
   where one ends and the next begins.
 - **Every section collapses.** The app's own keys (Android, Mouse, Keyboard) start collapsed, Other's
