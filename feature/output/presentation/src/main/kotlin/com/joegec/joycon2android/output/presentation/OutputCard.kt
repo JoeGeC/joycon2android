@@ -2,17 +2,13 @@ package com.joegec.joycon2android.output.presentation
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,13 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
-import com.joegec.joycon2android.output.OutputDevice
 import com.joegec.joycon2android.output.OutputMode
 import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
 import com.joegec.joycon2android.ui.components.SegmentedChoice
-import com.joegec.joycon2android.ui.components.StatusLight
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.Motion
 import com.joegec.joycon2android.ui.theme.TextDim
@@ -57,17 +51,11 @@ fun OutputCard(
             Modifier.padding(top = Dimens.elementSpacing),
             verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         ) {
-            AnimatedVisibility(
-                visible = state.running,
-                enter = fadeIn(Motion.easeOut()) + expandVertically(Motion.easeOut()),
-                exit = fadeOut(Motion.easeOut()) + shrinkVertically(Motion.easeOut()),
-            ) {
-                DeviceLights(state.liveDevices)
-            }
             SegmentedChoice(
                 options = OutputMode.entries.map { it to it.label() },
                 selected = state.selection.mode,
                 onSelect = actions.setMode,
+                lit = OutputMode.entries.filterTo(mutableSetOf()) { mode -> mode.devices.any { it in state.liveDevices } },
             )
             ModeContent(state, actions)
             status()
@@ -135,15 +123,5 @@ private fun MappingButton(onClick: () -> Unit) {
     ) {
         Icon(Icons.Filled.SportsEsports, contentDescription = null, tint = TextDim, modifier = Modifier.size(Dimens.iconSizeSmall))
         Text(stringResource(R.string.output_mapping), color = TextDim, modifier = Modifier.padding(start = Dimens.elementSpacing))
-    }
-}
-
-@Composable
-private fun DeviceLights(live: Set<OutputDevice>) {
-    FlowRow(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
-    ) {
-        OutputDevice.entries.forEach { StatusLight(it.label(), lit = it in live) }
     }
 }

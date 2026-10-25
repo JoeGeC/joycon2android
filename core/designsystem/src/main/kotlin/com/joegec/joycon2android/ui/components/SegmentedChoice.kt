@@ -22,9 +22,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.joegec.joycon2android.core.designsystem.R
 import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.AccentDim
 import com.joegec.joycon2android.ui.theme.ButtonOff
@@ -33,14 +37,19 @@ import com.joegec.joycon2android.ui.theme.Motion
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextTitle
 
-/** One of a few options, all in view, the highlight sliding to the choice: output mode, Auto / On / Off. */
+/**
+ * One of a few options, all in view, the highlight sliding to the choice. A [lit] option's label
+ * takes the accent: the Output card's tabs, lit while their output runs.
+ */
 @Composable
 fun <T> SegmentedChoice(
     options: List<Pair<T, String>>,
     selected: T,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
+    lit: Set<T> = emptySet(),
 ) {
+    val running = stringResource(R.string.segment_running)
     val shape = RoundedCornerShape(Dimens.buttonCorner)
     BoxWithConstraints(
         modifier
@@ -62,12 +71,23 @@ fun <T> SegmentedChoice(
         Row(Modifier.fillMaxWidth().selectableGroup()) {
             options.forEach { (value, label) ->
                 val chosen = value == selected
-                val color by animateColorAsState(if (chosen) TextTitle else TextDim, Motion.easeOut(), label = "label")
+                val on = value in lit
+                val color by animateColorAsState(
+                    when {
+                        on -> Accent
+                        chosen -> TextTitle
+                        else -> TextDim
+                    },
+                    Motion.easeOut(),
+                    label = "label",
+                )
                 Box(
                     Modifier
                         .width(segment)
                         .fillMaxHeight()
-                        .selectable(selected = chosen, role = Role.RadioButton, onClick = { onSelect(value) }),
+                        .selectable(selected = chosen, role = Role.RadioButton, onClick = { onSelect(value) })
+                        // The accent alone can't say it, so a screen reader hears it.
+                        .semantics { if (on) stateDescription = running },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(

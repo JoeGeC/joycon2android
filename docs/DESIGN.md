@@ -119,9 +119,9 @@ In `JoyconScreen.kt`:
   emulator box under a tab is auto setup only, for that output. **Other** ends its list: Set up hides
   and a labelled Mapping button eases out to fill the row (`SplitRow`; weights in a `Row` snap), for
   the keys-only mapping.
-- **Device lights under the switch, not switches.** While on, a `StatusLight` per device shows what
-  is actually up, so a device the tab wants but that failed (no Shizuku) reads off rather than hiding.
-  The keyboard and mouse light up on the other tabs too once the mapping uses them.
+- **A tab's label lights while its output runs**, in the accent: what is actually up, so an output
+  that failed (no Shizuku) stays dim. Mouse & keys lights for the keyboard or mouse, on other tabs too
+  once the mapping uses them. A lit tab tells a screen reader it's running, as colour alone can't.
 - **The subtitle names what is running:** "Active — Virtual gamepad", "Active — Mouse & keys", or
   DSU's port and listening emulators on the Motion tab. A warning, such as DSU's slot limit, sits at
   the bottom.
@@ -148,7 +148,7 @@ Two-up, to use the wide, short viewport; portrait keeps single columns.
 - **Players** — a two-column grid. Detailed players are shrunk to `LandscapePlayerScale` (0.7) by
   `scaleLayout`, which scales the whole controller uniformly and reflows, so a full player fits the
   short height. Compact rows aren't scaled.
-- **Output card** — full width, not a cell: its mode picker and device lights need the room, and
+- **Output card** — full width, not a cell: its tabs need the room, and
   its mapping button is labelled. The Shizuku card, when shown, sits beneath at full width too.
 - **Scanning graphics** — the "Looking for Joy-Con 2" card and sync-button illustration side by side.
 - **Action buttons** — Disconnect All left, Scan right; Disconnect keeps its half while Scan is hidden
@@ -160,8 +160,8 @@ An odd trailing item takes a half cell, a weighted `Spacer` filling the other ha
 
 Shared in `core/designsystem/.../ui/components/`:
 - `FeatureToggleCard` — the primary on/off feature surface (the Output card)
-- `SegmentedChoice` — one of a few options, all in view (output mode, a device's Auto / On / Off)
-- `StatusLight` — a labelled dot, filled when on and hollow when off (output devices)
+- `SegmentedChoice` — one of a few options, all in view, any of them lit in the accent (the Output
+  card's tabs)
 - `OptionDropdown` / `DropdownOption` / `PanelDropdownMenu` — the app's picker: an accented current
   value over a panel of alternatives, each row optionally sub-labelled, dimmed or deletable
 - `EmulatorDropdown` / `EmulatorOption` / `EmulatorAutoSetup` — emulator picker + one-tap setup
@@ -185,8 +185,8 @@ system's reduced-motion setting.
 - **`Motion.easeOut()`** is the one spec for new transitions: 220 ms, decelerating. Compose scales it
   by the system's animation setting, so turning animations off makes it instant.
 - **Every state change on the Output card moves.** `SegmentedChoice`'s highlight slides to the
-  choice; the mode's content cross-fades as the card eases to its new height; the subtitle
-  cross-fades; the device lights and DSU status expand in and out; a `StatusLight` fills and empties.
+  choice and its labels fade to lit or dim; the tab's content cross-fades as the card eases to its
+  new height; the subtitle cross-fades; DSU's slot warning expands in and out.
 
 ## Open work
 

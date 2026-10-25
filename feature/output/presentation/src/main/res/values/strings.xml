@@ -9,8 +9,4 @@
     <string name="output_set_up">Set up</string>
     <string name="output_other">Other</string>
     <string name="output_mapping">Mapping</string>
-    <string name="output_device_pad">Gamepad</string>
-    <string name="output_device_motion">Motion (DSU)</string>
-    <string name="output_device_keyboard">Keyboard</string>
-    <string name="output_device_mouse">Mouse</string>
 </resources>

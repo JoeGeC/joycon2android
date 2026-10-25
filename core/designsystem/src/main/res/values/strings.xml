@@ -21,6 +21,5 @@
     <string name="tips_turn_off_dismiss">Keep</string>
     <string name="dropdown_delete_option">Delete</string>
     <string name="setting_warning">Warning</string>
-    <string name="status_light_on">Running</string>
-    <string name="status_light_off">Off</string>
+    <string name="segment_running">Running</string>
 </resources>

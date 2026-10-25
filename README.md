@@ -86,7 +86,7 @@ gamepad in its controller settings, or point it at DSU: [manual setup](#manual-s
 **Mapping** holds just the app's own keys (Android, mouse, keyboard). Each tab remembers its pick,
 and the mapping that applies is the one for whatever it's set to.
 
-Lights under the switch show what is running: **Gamepad**, **Motion (DSU)**, **Keyboard**, **Mouse**.
+A tab's name lights up while its output is running.
 The app stays connected in the background while its notification is showing.
 
 - **Motion.** DSU streams gyro, buttons and sticks to emulators on the same device at
@@ -305,7 +305,7 @@ shoulder buttons its body lacks.
 | Emulator won't detect DSU presses | Pick inputs from the list — detection never sees DSU — with the virtual gamepad off |
 | Motion aiming stutters | Settings (gear, top right): keep **Ignore this device's motion in Eden** and **Faster controller updates** on |
 | Tilting the device moves the aim in Eden | Turn on **Ignore this device's motion in Eden** |
-| Joy-Con mouse doesn't move the pointer | The Output card's **Mouse** light must be on: the **Mouse & keys** tab, or a mapped mouse action on the others. Stand the Joy-Con on its rail, not its back, on a flat, non-glossy surface |
+| Joy-Con mouse doesn't move the pointer | The Output card's **Mouse & keys** tab name must be lit: the **Mouse & keys** tab, or a mapped mouse action on the others. Stand the Joy-Con on its rail, not its back, on a flat, non-glossy surface |
 | Pointer drifts or starts off-screen | Rest the controller for ~2 s, then press Recenter |
 | Sticks feel twitchy in Dolphin (hard to walk or aim) | Tap **Set up** for Dolphin again. A Pro Controller: map it in Dolphin first, then tap **Set up** once to add the calibration |
 | MotionPlus tutorial replays every boot (Dolphin) | Set `MPLS.MOVIE` in `Wii/shared2/sys/SYSCONF` with Dolphin closed ([why](docs/dsu-motion.md#motionplus-tutorial-replays)) |
