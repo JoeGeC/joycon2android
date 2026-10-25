@@ -131,6 +131,8 @@ In `JoyconScreen.kt`:
 
 - **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order:
   the console's own, then Android, Mouse, Keyboard.
+- **Each section sits on its own panel**, `SectionBg` rounded inside the card, so scrolling shows
+  where one ends and the next begins.
 - **Every section collapses.** The app's own keys (Android, Mouse, Keyboard) start collapsed, Other's
   included, and open only on Mouse & keys, where they're the point.
 - **Keyboard lists only the keys in use.** Bound keys, then an "Add a key" `OptionDropdown` of the

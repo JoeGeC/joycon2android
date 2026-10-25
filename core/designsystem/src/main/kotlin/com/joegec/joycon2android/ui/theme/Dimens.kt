@@ -17,7 +17,7 @@ object Dimens {
     val featureCardTitleGap = 4.dp
     val featureCardSwitchGap = 12.dp
     val mappingSwitchBottomPadding = 8.dp
-    val mappingHeaderTopPadding = 8.dp
+    val mappingSectionPadding = 12.dp
 
     val buttonCorner = 12.dp
     val controllerButtonCorner = 6.dp // tighter corner for the on-controller button glyphs

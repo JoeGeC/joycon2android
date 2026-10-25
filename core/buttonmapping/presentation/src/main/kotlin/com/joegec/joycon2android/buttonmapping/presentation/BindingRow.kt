@@ -1,25 +1,35 @@
 package com.joegec.joycon2android.buttonmapping.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import com.joegec.joycon2android.buttonmapping.sourceIdOf
 import com.joegec.joycon2android.buttonmapping.sourceIdsOf
 import com.joegec.joycon2android.ui.components.ExpandableInfoSection
 import com.joegec.joycon2android.ui.components.MultiSelectDropdown
 import com.joegec.joycon2android.ui.theme.Dimens
+import com.joegec.joycon2android.ui.theme.SectionBg
 import com.joegec.joycon2android.ui.theme.TextDim
 
-/** A section's header, tapped to show or hide its rows. */
+/** A section on its own panel, its header tapped to show or hide its rows. */
 @Composable
 internal fun MappingSectionBox(section: MappingSection, open: Boolean, content: @Composable () -> Unit) {
-    ExpandableInfoSection(section.label(), Modifier.padding(top = Dimens.mappingHeaderTopPadding), initiallyExpanded = open) {
+    ExpandableInfoSection(
+        section.label(),
+        Modifier
+            .clip(RoundedCornerShape(Dimens.buttonCorner))
+            .background(SectionBg),
+        initiallyExpanded = open,
+        insidePadding = Dimens.mappingSectionPadding,
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) { content() }
     }
 }
