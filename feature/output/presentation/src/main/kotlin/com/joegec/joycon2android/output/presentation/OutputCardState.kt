@@ -17,6 +17,8 @@ data class OutputCardState(
     val error: String? = null,
     /** DSU's own line for the subtitle on the Motion tab: its port and listening emulators. */
     val motionDetail: String? = null,
+    /** Some controller is connected, but none has the Joy-Con 2's mouse sensor. */
+    val noPointerController: Boolean = false,
 ) {
     fun emulatorsFor(mode: OutputMode): List<EmulatorTarget> = emulators[mode].orEmpty()
 

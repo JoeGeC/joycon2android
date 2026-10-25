@@ -2,11 +2,17 @@ package com.joegec.joycon2android.model
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LiveInputTest {
 
-    private fun session(packetId: Int, stickX: Int, battery: BatteryCharge? = BatteryCharge(80)) = AppUiState(
+    private fun session(
+        packetId: Int,
+        stickX: Int,
+        battery: BatteryCharge? = BatteryCharge(80),
+        mouse: MouseSensor? = null,
+    ) = AppUiState(
         players = listOf(
             PlayerState(
                 PlayerNumber.P1,
@@ -14,7 +20,7 @@ class LiveInputTest {
                     address = "R",
                     side = Side.RIGHT,
                     deviceName = "Joy-Con",
-                    input = JoyconInput(packetId = packetId, stickX = stickX, battery = battery),
+                    input = JoyconInput(packetId = packetId, stickX = stickX, battery = battery, mouse = mouse),
                 ),
             ),
         ),
@@ -28,6 +34,13 @@ class LiveInputTest {
     @Test
     fun `without live input a battery change still shows`() {
         assertNotEquals(session(1, 100).withoutLiveInput(), session(1, 100, BatteryCharge(20)).withoutLiveInput())
+    }
+
+    @Test
+    fun `without live input a Joy-Con still reads as able to move the pointer`() {
+        val stripped = session(1, 100, mouse = MouseSensor(x = 5, y = 0, distance = 150)).withoutLiveInput()
+
+        assertTrue(stripped.players.single().canMovePointer)
     }
 
     @Test

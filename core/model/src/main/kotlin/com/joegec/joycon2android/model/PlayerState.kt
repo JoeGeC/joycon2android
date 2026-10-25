@@ -15,6 +15,7 @@ data class PlayerState(
     val isSingleJoycon: Boolean get() = isLone && asSingleJoycon
     val hasAnalogTriggers: Boolean get() = hasPro && left!!.model.hasAnalogTriggers
     val hasGameCube: Boolean get() = hasPro && left!!.model == ControllerModel.GAMECUBE
+    val canMovePointer: Boolean get() = listOfNotNull(left, right).any { it.input.hasMouseSensor }
 
     // As the hardware reports it, before any sideways rotation or rail remap ([gamepad]).
     val pressed: Set<String>

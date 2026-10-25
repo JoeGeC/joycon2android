@@ -19,4 +19,6 @@ data class JoyconInput(
     val triggerLeft: Int = 0,
     val triggerRight: Int = 0,
     val mouse: MouseSensor? = null,
+    // Outlives [mouse], which the UI's copy drops each packet.
+    val hasMouseSensor: Boolean = mouse != null,
 )

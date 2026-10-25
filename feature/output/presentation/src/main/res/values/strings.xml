@@ -9,4 +9,5 @@
     <string name="output_set_up">Set up</string>
     <string name="output_other">Other</string>
     <string name="output_mapping">Mapping</string>
+    <string name="output_no_pointer">Clicks and keys work on any controller, but only a Joy-Con 2 standing on its rail moves the pointer.</string>
 </resources>

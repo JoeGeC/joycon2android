@@ -96,7 +96,8 @@ The app stays connected in the background while its notification is showing.
 - **Mouse.** Stand a Joy-Con 2 on its rail on a flat surface and it moves the pointer while the mouse
   is up. It clicks and scrolls with the player's **Mouse** mapping; with none, L or R clicks, ZL or ZR
   right-clicks and the stick scrolls, and those never reach the game while it rests there. Not on Pro,
-  GameCube or third-party controllers.
+  GameCube or third-party controllers: their mapped clicks and keys still work, and the Mouse & keys
+  tab and that player's Mouse mapping warn that it can't move the pointer.
 - **Keyboard and mouse on the other tabs** come up by themselves once the mapping uses them: a
   keyboard key or Android key, or a mouse input. Otherwise they stay off.
 

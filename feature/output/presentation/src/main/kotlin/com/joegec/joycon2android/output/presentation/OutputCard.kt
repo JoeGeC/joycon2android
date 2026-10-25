@@ -27,6 +27,7 @@ import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.FeatureToggleCard
 import com.joegec.joycon2android.ui.components.SegmentedChoice
+import com.joegec.joycon2android.ui.components.SettingWarning
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.Motion
 import com.joegec.joycon2android.ui.theme.TextDim
@@ -77,7 +78,10 @@ private fun ModeContent(state: OutputCardState, actions: OutputCardActions) {
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
             when (mode) {
                 OutputMode.GAMEPAD, OutputMode.MOTION -> TargetSetup(mode, state, actions)
-                OutputMode.MOUSE_KEYBOARD -> MappingButton(actions.openMapping)
+                OutputMode.MOUSE_KEYBOARD -> {
+                    MappingButton(actions.openMapping)
+                    if (state.noPointerController) SettingWarning(stringResource(R.string.output_no_pointer))
+                }
             }
         }
     }

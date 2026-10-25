@@ -264,6 +264,7 @@ class MainActivity : ComponentActivity() {
                 deviceKeyWarnings = DeviceKeyWarnings(
                     androidNeedsShizuku = route.fromDsu && !shizukuAvailable,
                     keyboardAndMouseNeedShizuku = !shizukuAvailable,
+                    pointerlessBodies = players.filterNot { it.canMovePointer }.mapNotNull { it.body() }.toSet(),
                 ),
             )
         }
@@ -405,6 +406,7 @@ class MainActivity : ComponentActivity() {
                 liveDevices = live,
                 error = gamepadStatus.error ?: dsuStatus.error,
                 motionDetail = if (dsuStatus.enabled) dsuPortText(dsuStatus.clientCount) else null,
+                noPointerController = players.any { it.hasController } && players.none { it.canMovePointer },
             ),
             actions = OutputCardActions(
                 toggle = outputViewModel::toggle,

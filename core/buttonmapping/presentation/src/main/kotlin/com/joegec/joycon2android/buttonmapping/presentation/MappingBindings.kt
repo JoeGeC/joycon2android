@@ -25,7 +25,7 @@ fun MappingBindings(
                 targets.isEmpty() -> Unit
                 section == MappingSection.KEYBOARD ->
                     KeyboardBindingSection(targets, state, controller, actions, warnings.keyboardAndMouseNeedShizuku, open)
-                else -> BindingSection(section, targets, state, controller, actions, shizukuWarning(section, warnings), open)
+                else -> BindingSection(section, targets, state, controller, actions, sectionWarnings(section, state, warnings), open)
             }
         }
     }
@@ -38,11 +38,11 @@ private fun BindingSection(
     state: PlayerMappingUiState,
     controller: LiveController,
     actions: MappingActions,
-    shizukuWarning: String?,
+    warnings: List<String>,
     open: Boolean,
 ) {
     MappingSectionBox(section, open) {
-        shizukuWarning?.let { SettingWarning(it) }
+        warnings.forEach { SettingWarning(it) }
         val sources = MappingOptions.sources(state.body.side, section)
         targets.forEach { (key, label) -> BindingRow(label, key, sources, state, controller, actions) }
     }
@@ -53,8 +53,17 @@ private fun MappingSection.openAtFirst(console: Console) = console == Console.PC
     this != MappingSection.ANDROID && this != MappingSection.MOUSE && this != MappingSection.KEYBOARD
 
 @Composable
-private fun shizukuWarning(section: MappingSection, warnings: DeviceKeyWarnings): String? = when {
-    section == MappingSection.ANDROID && warnings.androidNeedsShizuku -> stringResource(R.string.android_keys_need_shizuku)
-    section == MappingSection.MOUSE && warnings.keyboardAndMouseNeedShizuku -> stringResource(R.string.mouse_needs_shizuku)
-    else -> null
+private fun sectionWarnings(
+    section: MappingSection,
+    state: PlayerMappingUiState,
+    warnings: DeviceKeyWarnings,
+): List<String> = buildList {
+    when (section) {
+        MappingSection.ANDROID -> if (warnings.androidNeedsShizuku) add(stringResource(R.string.android_keys_need_shizuku))
+        MappingSection.MOUSE -> {
+            if (warnings.keyboardAndMouseNeedShizuku) add(stringResource(R.string.mouse_needs_shizuku))
+            if (state.body in warnings.pointerlessBodies) add(stringResource(R.string.mouse_no_pointer))
+        }
+        else -> Unit
+    }
 }

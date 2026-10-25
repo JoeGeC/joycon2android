@@ -17,7 +17,13 @@ data class ConnectedJoycon(
 
     /** Keeps what a packet rarely changes, so the result is equal from one packet to the next. */
     fun withoutLiveInput(): ConnectedJoycon =
-        copy(input = JoyconInput(battery = input.battery, motionSupport = input.motionSupport))
+        copy(
+            input = JoyconInput(
+                battery = input.battery,
+                motionSupport = input.motionSupport,
+                hasMouseSensor = input.hasMouseSensor,
+            ),
+        )
 
     fun withLiveInput(inputs: Map<String, JoyconInput>): ConnectedJoycon = copy(input = inputs[address] ?: input)
 }

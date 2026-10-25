@@ -126,6 +126,10 @@ In `JoyconScreen.kt`:
   DSU's port and listening emulators on the Motion tab. A warning, such as DSU's slot limit, sits at
   the bottom.
 - **Long tab names wrap** to two centred lines at phone width rather than cut off.
+- **Mouse & keys warns when nothing can move the pointer**: a `SettingWarning` under Mapping while
+  every connected controller lacks the Joy-Con 2's mouse sensor (Pro, GameCube, third-party), so
+  clicks that work without a moving pointer don't read as broken. The mapping editor's Mouse section
+  warns the same per player.
 
 ### Mapping editor
 
