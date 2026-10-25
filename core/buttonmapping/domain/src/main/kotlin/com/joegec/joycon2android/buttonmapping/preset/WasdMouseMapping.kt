@@ -26,48 +26,48 @@ object WasdMouseMapping : MappingPreset {
             KeyboardKey.R to button(JoyconButton.X),
             KeyboardKey.F to button(JoyconButton.Y),
             KeyboardKey.Q to button(JoyconButton.L),
-            KeyboardKey.TAB to button(JoyconButton.R),
+            KeyboardKey.TAB to button(JoyconButton.ZL),
             KeyboardKey.LEFT_SHIFT to button(JoyconButton.LS),
             KeyboardKey.LEFT_CTRL to button(JoyconButton.RS),
-            KeyboardKey.ESCAPE to button(JoyconButton.Minus),
-            KeyboardKey.ENTER to button(JoyconButton.Plus),
+            KeyboardKey.ESCAPE to button(JoyconButton.Plus),
+            KeyboardKey.ENTER to button(JoyconButton.Minus),
             KeyboardKey.DIGIT_1 to button(JoyconButton.Up),
             KeyboardKey.DIGIT_2 to button(JoyconButton.Right),
             KeyboardKey.DIGIT_3 to button(JoyconButton.Down),
             KeyboardKey.DIGIT_4 to button(JoyconButton.Left),
         )
         JoyconSide.LEFT -> walk(StickSource.LEFT_STICK) + mapOf(
-            KeyboardKey.SPACE to button(JoyconButton.L),
-            KeyboardKey.E to button(JoyconButton.ZL),
+            KeyboardKey.SPACE to button(JoyconButton.Left),
+            KeyboardKey.E to button(JoyconButton.Right),
             KeyboardKey.LEFT_SHIFT to button(JoyconButton.LS),
             KeyboardKey.ESCAPE to button(JoyconButton.Minus),
-            KeyboardKey.DIGIT_1 to button(JoyconButton.Up),
-            KeyboardKey.DIGIT_2 to button(JoyconButton.Right),
-            KeyboardKey.DIGIT_3 to button(JoyconButton.Down),
-            KeyboardKey.DIGIT_4 to button(JoyconButton.Left),
         )
-        JoyconSide.RIGHT -> mapOf(
-            KeyboardKey.SPACE to button(JoyconButton.B),
-            KeyboardKey.E to button(JoyconButton.A),
-            KeyboardKey.R to button(JoyconButton.X),
-            KeyboardKey.F to button(JoyconButton.Y),
+        JoyconSide.RIGHT -> walk(StickSource.RIGHT_STICK) + mapOf(
+            KeyboardKey.SPACE to button(JoyconButton.A),
+            KeyboardKey.E to button(JoyconButton.Y),
+            KeyboardKey.LEFT_SHIFT to button(JoyconButton.RS),
             KeyboardKey.ESCAPE to button(JoyconButton.Plus),
         )
     }
 
     private fun mouse(side: JoyconSide): Map<MouseAction, MappingSource> = when (side) {
         JoyconSide.DUAL, JoyconSide.GAMECUBE -> mapOf(
-            MouseAction.LEFT_CLICK to button(JoyconButton.ZR),
-            MouseAction.RIGHT_CLICK to button(JoyconButton.ZL),
+            MouseAction.LEFT_CLICK to button(JoyconButton.R),
+            MouseAction.RIGHT_CLICK to button(JoyconButton.ZR),
             MouseAction.SCROLL_UP to MappingSource.Stick(StickSource.RIGHT_STICK, StickDirection.UP),
             MouseAction.SCROLL_DOWN to MappingSource.Stick(StickSource.RIGHT_STICK, StickDirection.DOWN),
         )
-        JoyconSide.LEFT -> emptyMap()
+        JoyconSide.LEFT -> mapOf(
+            MouseAction.LEFT_CLICK to button(JoyconButton.L),
+            MouseAction.RIGHT_CLICK to button(JoyconButton.ZL),
+            MouseAction.SCROLL_UP to button(JoyconButton.Up),
+            MouseAction.SCROLL_DOWN to button(JoyconButton.Down),
+        )
         JoyconSide.RIGHT -> mapOf(
-            MouseAction.LEFT_CLICK to button(JoyconButton.ZR),
-            MouseAction.RIGHT_CLICK to button(JoyconButton.R),
-            MouseAction.SCROLL_UP to MappingSource.Stick(StickSource.RIGHT_STICK, StickDirection.UP),
-            MouseAction.SCROLL_DOWN to MappingSource.Stick(StickSource.RIGHT_STICK, StickDirection.DOWN),
+            MouseAction.LEFT_CLICK to button(JoyconButton.R),
+            MouseAction.RIGHT_CLICK to button(JoyconButton.ZR),
+            MouseAction.SCROLL_UP to button(JoyconButton.X),
+            MouseAction.SCROLL_DOWN to button(JoyconButton.B),
         )
     }
 

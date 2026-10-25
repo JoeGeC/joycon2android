@@ -21,6 +21,16 @@ class MouseOnlyMappingTest {
     }
 
     @Test
+    fun `R clicks and ZR right-clicks, L and ZL on a left Joy-Con`() {
+        listOf(JoyconSide.DUAL, JoyconSide.RIGHT).forEach { side ->
+            assertEquals("$side", listOf(MappingSource.Button(JoyconButton.R)), mouse(side)[MouseAction.LEFT_CLICK])
+            assertEquals("$side", listOf(MappingSource.Button(JoyconButton.ZR)), mouse(side)[MouseAction.RIGHT_CLICK])
+        }
+        assertEquals(listOf(MappingSource.Button(JoyconButton.L)), mouse(JoyconSide.LEFT)[MouseAction.LEFT_CLICK])
+        assertEquals(listOf(MappingSource.Button(JoyconButton.ZL)), mouse(JoyconSide.LEFT)[MouseAction.RIGHT_CLICK])
+    }
+
+    @Test
     fun `a pair and a right Joy-Con middle-click on RS`() {
         assertEquals(listOf(MappingSource.Button(JoyconButton.RS)), mouse(JoyconSide.DUAL)[MouseAction.MIDDLE_CLICK])
         assertEquals(listOf(MappingSource.Button(JoyconButton.RS)), mouse(JoyconSide.RIGHT)[MouseAction.MIDDLE_CLICK])

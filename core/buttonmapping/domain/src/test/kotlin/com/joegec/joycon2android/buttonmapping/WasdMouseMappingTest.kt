@@ -18,12 +18,26 @@ class WasdMouseMappingTest {
     }
 
     @Test
-    fun `the left stick walks and ZR clicks`() {
+    fun `the left stick walks and R clicks`() {
         val keys = pair.keyboardKeyBindings(JoyconSide.DUAL, sidewaysRemote = false).sources
         val mouse = pair.mouseActionBindings(JoyconSide.DUAL, sidewaysRemote = false).sources
 
         assertEquals(listOf(MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.UP)), keys[KeyboardKey.W])
-        assertEquals(listOf(MappingSource.Button(JoyconButton.ZR)), mouse[MouseAction.LEFT_CLICK])
+        assertEquals(listOf(MappingSource.Button(JoyconButton.R)), mouse[MouseAction.LEFT_CLICK])
+        assertEquals(listOf(MappingSource.Button(JoyconButton.ZR)), mouse[MouseAction.RIGHT_CLICK])
+    }
+
+    @Test
+    fun `a lone Joy-Con walks on its stick, clicks on its shoulders and scrolls on its buttons`() {
+        val left = WasdMouseMapping.entries(JoyconSide.LEFT)
+        val keys = left.keyboardKeyBindings(JoyconSide.LEFT, sidewaysRemote = false).sources
+        val mouse = left.mouseActionBindings(JoyconSide.LEFT, sidewaysRemote = false).sources
+
+        assertEquals(listOf(MappingSource.Stick(StickSource.LEFT_STICK, StickDirection.UP)), keys[KeyboardKey.W])
+        assertEquals(listOf(MappingSource.Button(JoyconButton.LS)), keys[KeyboardKey.LEFT_SHIFT])
+        assertEquals(listOf(MappingSource.Button(JoyconButton.L)), mouse[MouseAction.LEFT_CLICK])
+        assertEquals(listOf(MappingSource.Button(JoyconButton.ZL)), mouse[MouseAction.RIGHT_CLICK])
+        assertEquals(listOf(MappingSource.Button(JoyconButton.Up)), mouse[MouseAction.SCROLL_UP])
     }
 
     @Test

@@ -17,10 +17,10 @@ object MouseOnlyMapping : MappingPreset {
         mouse(side).entries.associate { (action, source) -> action.targetKey to source.id }
 
     private fun mouse(side: JoyconSide): Map<MouseAction, MappingSource> = when (side) {
-        JoyconSide.DUAL, JoyconSide.GAMECUBE -> clicks(JoyconButton.ZR, JoyconButton.ZL, JoyconButton.RS) +
+        JoyconSide.DUAL, JoyconSide.GAMECUBE -> clicks(JoyconButton.R, JoyconButton.ZR, JoyconButton.RS) +
             scroll(StickSource.RIGHT_STICK)
-        JoyconSide.LEFT -> clicks(JoyconButton.ZL, JoyconButton.L, JoyconButton.LS) + scroll(StickSource.LEFT_STICK)
-        JoyconSide.RIGHT -> clicks(JoyconButton.ZR, JoyconButton.R, JoyconButton.RS) + scroll(StickSource.RIGHT_STICK)
+        JoyconSide.LEFT -> clicks(JoyconButton.L, JoyconButton.ZL, JoyconButton.LS) + scroll(StickSource.LEFT_STICK)
+        JoyconSide.RIGHT -> clicks(JoyconButton.R, JoyconButton.ZR, JoyconButton.RS) + scroll(StickSource.RIGHT_STICK)
     }
 
     private fun clicks(left: JoyconButton, right: JoyconButton, middle: JoyconButton) = mapOf(
