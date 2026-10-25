@@ -20,6 +20,8 @@ import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.AndroidKey
 import com.joegec.joycon2android.model.GameCubeButtons
 import com.joegec.joycon2android.model.JoyconButton
+import com.joegec.joycon2android.model.KeyboardKey
+import com.joegec.joycon2android.model.MouseAction
 
 internal object MappingOptions {
     const val NONE_ID = ""
@@ -43,6 +45,8 @@ internal object MappingOptions {
         classicController: Boolean,
     ): List<Pair<String, String>> = when {
         section == MappingSection.ANDROID -> AndroidKey.entries.map { it.targetKey to it.label() }
+        section == MappingSection.KEYBOARD -> KeyboardKey.entries.map { it.targetKey to it.label() }
+        section == MappingSection.MOUSE -> MouseAction.entries.map { it.targetKey to it.label() }
         classicController -> classicTargets(section)
         else -> remoteTargets(console, section, side, singleJoycon)
     }
@@ -57,7 +61,7 @@ internal object MappingOptions {
         MappingSection.BUTTONS -> buttonTargets(console, side, singleJoycon)
         MappingSection.STICKS -> stickDirectionTargets(console, side, singleJoycon)
         MappingSection.MOTION -> motionTargets(console)
-        MappingSection.ANDROID -> emptyList()
+        MappingSection.ANDROID, MappingSection.KEYBOARD, MappingSection.MOUSE -> emptyList()
     }
 
     @Composable
@@ -66,6 +70,7 @@ internal object MappingOptions {
             Console.GAMECUBE -> GameCubeButton.entries.map { it.name to it.label() }
             Console.WIIMOTE_NUNCHUK -> (WiimoteButton.entries - MOTION_TARGETS).map { it.name to it.label() }
             Console.SWITCH_PRO -> SwitchProTargets.buttons(side, singleJoycon).map { it.name to it.label() }
+            Console.ANDROID, Console.PC -> emptyList()
         }
 
     // Not buttons on the remote, so they get their own section.
@@ -79,7 +84,7 @@ internal object MappingOptions {
     private fun classicTargets(section: MappingSection): List<Pair<String, String>> = when (section) {
         MappingSection.BUTTONS -> ClassicButton.entries.map { it.name to it.label() }
         MappingSection.STICKS -> directionTargets(ClassicStick.entries.map { it to it.label() })
-        MappingSection.MOTION, MappingSection.ANDROID -> emptyList()
+        MappingSection.MOTION, MappingSection.ANDROID, MappingSection.KEYBOARD, MappingSection.MOUSE -> emptyList()
     }
 
     @Composable
@@ -89,6 +94,7 @@ internal object MappingOptions {
                 Console.GAMECUBE -> GameCubeStick.entries.map { it to it.label() }
                 Console.WIIMOTE_NUNCHUK -> WiimoteStick.entries.map { it to it.label() }
                 Console.SWITCH_PRO -> SwitchProTargets.sticks(side, singleJoycon).map { it to it.label() }
+                Console.ANDROID, Console.PC -> emptyList()
             },
         )
 

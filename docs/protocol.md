@@ -158,6 +158,7 @@ No wrap was seen (X stayed within −3527 to 13625); the counters are int16, so 
 Cross-talk between X and Y was ~25% on the left but ~4% on the right, so it is most likely the hand,
 not the sensor. The right side's longer slide read ~13,500, consistent with the same resolution. The 15 ms
 rate is the high connection priority that **Faster controller updates** requests while an output runs.
+What the app does with it: [virtual-gamepad.md](virtual-gamepad.md#mouse).
 
 ## Player LEDs
 

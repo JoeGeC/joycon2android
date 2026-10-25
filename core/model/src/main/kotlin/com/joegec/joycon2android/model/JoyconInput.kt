@@ -18,4 +18,5 @@ data class JoyconInput(
     val motionSupport: MotionSupport = MotionSupport.Full,
     val triggerLeft: Int = 0,
     val triggerRight: Int = 0,
+    val mouse: MouseSensor? = null,
 )

@@ -1,5 +1,7 @@
 package com.joegec.joycon2android.dsu.presentation
 
+import com.joegec.joycon2android.dsu.DsuConfig
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -11,14 +13,12 @@ import com.joegec.joycon2android.ui.components.ExpandableInfoSection
 import com.joegec.joycon2android.ui.theme.Dimens
 
 @Composable
-internal fun ManualEmulatorSetup(address: String?) {
+internal fun ManualEmulatorSetup() {
     Column {
         GuideStep(stringResource(R.string.dsu_setup_body))
         Spacer(Modifier.height(Dimens.elementSpacing))
-        if (address != null) {
-            CopyableCode(address)
-            Spacer(Modifier.height(Dimens.elementSpacing))
-        }
+        CopyableCode(DsuConfig.LOCAL_ADDRESS)
+        Spacer(Modifier.height(Dimens.elementSpacing))
         ExpandableInfoSection(stringResource(R.string.dsu_dolphin_emulator_name)) {
             DolphinManualSteps()
         }

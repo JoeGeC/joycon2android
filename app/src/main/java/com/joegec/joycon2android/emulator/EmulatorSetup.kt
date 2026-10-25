@@ -21,7 +21,9 @@ import com.joegec.joycon2android.gamepad.emulator.EdenGamepadConfig
 import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.gamepad.privileged.PrivilegedShell
-import com.joegec.joycon2android.ui.components.EmulatorOption
+import com.joegec.joycon2android.output.EmulatorKind
+import com.joegec.joycon2android.output.EmulatorTarget
+import com.joegec.joycon2android.output.OutputMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -60,26 +62,39 @@ class EmulatorSetup(
 
     private fun bodiesOf(players: List<PlayerState>) = players.mapNotNull { it.body() }.distinct()
 
-    fun gamepadEmulators(): List<EmulatorOption> = buildList {
+    /** The installed emulators [mode]'s tab can set up, then [EmulatorTarget.OTHER]. */
+    fun targets(mode: OutputMode): List<EmulatorTarget> = buildList {
         if (isInstalled(DolphinPaths.PACKAGE)) {
-            add(EmulatorOption(DolphinPaths.PACKAGE, "Dolphin (GameCube)"))
+            when (mode) {
+                OutputMode.GAMEPAD ->
+                    add(EmulatorTarget(DOLPHIN_GAMECUBE, DolphinPaths.PACKAGE, "Dolphin (GameCube)", EmulatorKind.DOLPHIN_GAMECUBE))
+                OutputMode.MOTION ->
+                    add(EmulatorTarget(DOLPHIN_WII, DolphinPaths.PACKAGE, "Dolphin (Wii)", EmulatorKind.DOLPHIN_WII))
+                OutputMode.MOUSE_KEYBOARD -> return@buildList
+            }
         }
-        addAll(edenOptions())
-    }
-
-    fun dsuEmulators(): List<EmulatorOption> = buildList {
-        if (isInstalled(DolphinPaths.PACKAGE)) {
-            add(EmulatorOption(DolphinPaths.PACKAGE, "Dolphin (Wii)"))
-        }
-        addAll(edenOptions())
-    }
-
-    private fun edenOptions(): List<EmulatorOption> = buildList {
+        if (mode == OutputMode.MOUSE_KEYBOARD) return@buildList
         if (isInstalled(EdenPaths.PACKAGE)) {
-            add(EmulatorOption(EdenPaths.PACKAGE, "Eden"))
+            add(EmulatorTarget(EdenPaths.PACKAGE, EdenPaths.PACKAGE, "Eden", EmulatorKind.EDEN))
         }
         if (isInstalled(EdenPaths.NIGHTLY_PACKAGE)) {
-            add(EmulatorOption(EdenPaths.NIGHTLY_PACKAGE, "Eden Nightly"))
+            add(EmulatorTarget(EdenPaths.NIGHTLY_PACKAGE, EdenPaths.NIGHTLY_PACKAGE, "Eden Nightly", EmulatorKind.EDEN))
+        }
+        add(EmulatorTarget.OTHER)
+    }
+
+    /** Writes [target]'s config for [mode]'s device. */
+    suspend fun configure(
+        target: EmulatorTarget,
+        mode: OutputMode,
+        players: List<PlayerState>,
+        closeEmulator: Boolean,
+    ): EmulatorSetupResult {
+        val packageName = target.packageName ?: return EmulatorSetupResult.FAILED
+        return when (mode) {
+            OutputMode.GAMEPAD -> configureGamepad(packageName, players, closeEmulator)
+            OutputMode.MOTION -> configureDsu(packageName, players, closeEmulator)
+            OutputMode.MOUSE_KEYBOARD -> EmulatorSetupResult.FAILED
         }
     }
 
@@ -207,6 +222,10 @@ class EmulatorSetup(
     private companion object {
         const val TAG = "EmulatorSetup"
         const val OPERATION_TIMEOUT_MS = 20_000L
+
+        // Dolphin is one package with two controller setups, so each needs an id of its own.
+        const val DOLPHIN_WII = "dolphin-wii"
+        const val DOLPHIN_GAMECUBE = "dolphin-gamecube"
     }
 }
 

@@ -32,6 +32,14 @@ fun MappingSource.Stick.emittedDirection(side: JoyconSide, sidewaysRemote: Boole
     else -> direction
 }
 
+/** Back from the sideways remote's frame to the hardware's, where a lone Joy-Con's up is its L/R edge. */
+fun MappingSource.Stick.hardwareDirection(side: JoyconSide, sidewaysRemote: Boolean): StickDirection = when {
+    !sidewaysRemote -> direction
+    side == JoyconSide.LEFT -> UPRIGHT_LEFT.entries.first { it.value == direction }.key
+    side == JoyconSide.RIGHT -> UPRIGHT_RIGHT.entries.first { it.value == direction }.key
+    else -> direction
+}
+
 private val UPRIGHT_LEFT = mapOf(
     StickDirection.UP to StickDirection.LEFT,
     StickDirection.RIGHT to StickDirection.UP,

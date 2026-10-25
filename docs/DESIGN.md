@@ -111,6 +111,36 @@ In `JoyconScreen.kt`:
   say GameCube, and its detailed view is the Pro layout without the buttons it lacks, with ZR marked
   Z and its triggers, L and R, above ZL and Z. `GameCubeButtons` is the one list of what it has, which the mapping editor offers too.
 
+### Output card
+
+- **On by itself.** Assigning a player switches it on, so the usual path is assign and play; the
+  switch is for stopping. Tabs, emulator and mapping stay open either way.
+- **A tab per output, so setup has one job.** Virtual gamepad, Motion (DSU), Mouse & keys; the
+  emulator box under a tab is auto setup only, for that output. **Other** ends its list: Set up hides
+  and a labelled Mapping button eases out to fill the row (`SplitRow`; weights in a `Row` snap), for
+  the keys-only mapping.
+- **A tab's label lights while its output runs**, in the accent: what is actually up, so an output
+  that failed (no Shizuku) stays dim. Mouse & keys lights for the keyboard or mouse, on other tabs too
+  once the mapping uses them. A lit tab tells a screen reader it's running, as colour alone can't.
+- **The subtitle names what is running:** "Active — Virtual gamepad", "Active — Mouse & keys", or
+  DSU's port and listening emulators on the Motion tab. A warning, such as DSU's slot limit, sits at
+  the bottom.
+- **Long tab names wrap** to two centred lines at phone width rather than cut off.
+
+### Mapping editor
+
+- **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order:
+  the console's own, then Android, Mouse, Keyboard.
+- **Every section collapses.** The app's own keys (Android, Mouse, Keyboard) start collapsed, Other's
+  included, and open only on Mouse & keys, where they're the point.
+- **Keyboard lists only the keys in use.** Bound keys, then an "Add a key" `OptionDropdown` of the
+  rest; a key added but left on None is gone next visit. Sixty rows of None would bury the few that
+  matter. A bound letter adds a `SettingWarning` that the on-screen keyboard hides.
+- **Mouse is five plain rows**, like Android: few enough to show whole.
+- **Other's keys-only mapping is named for its output**, "Virtual Gamepad" or "Motion Controller",
+  though both share it. Its tip says how to map by hand in place of trying another layout; like every
+  tip it hides with **Show tips** off.
+
 ### Landscape
 
 Two-up, to use the wide, short viewport; portrait keeps single columns.
@@ -118,7 +148,8 @@ Two-up, to use the wide, short viewport; portrait keeps single columns.
 - **Players** — a two-column grid. Detailed players are shrunk to `LandscapePlayerScale` (0.7) by
   `scaleLayout`, which scales the whole controller uniformly and reflows, so a full player fits the
   short height. Compact rows aren't scaled.
-- **Feature cards** — Virtual Gamepad with its Shizuku card beneath on the left, DSU on the right.
+- **Output card** — full width, not a cell: its tabs need the room, and
+  its mapping button is labelled. The Shizuku card, when shown, sits beneath at full width too.
 - **Scanning graphics** — the "Looking for Joy-Con 2" card and sync-button illustration side by side.
 - **Action buttons** — Disconnect All left, Scan right; Disconnect keeps its half while Scan is hidden
   during a scan.
@@ -128,7 +159,9 @@ An odd trailing item takes a half cell, a weighted `Spacer` filling the other ha
 ## Components
 
 Shared in `core/designsystem/.../ui/components/`:
-- `FeatureToggleCard` — the primary on/off feature surface (gamepad, DSU)
+- `FeatureToggleCard` — the primary on/off feature surface (the Output card)
+- `SegmentedChoice` — one of a few options, all in view, any of them lit in the accent (the Output
+  card's tabs)
 - `OptionDropdown` / `DropdownOption` / `PanelDropdownMenu` — the app's picker: an accented current
   value over a panel of alternatives, each row optionally sub-labelled, dimmed or deletable
 - `EmulatorDropdown` / `EmulatorOption` / `EmulatorAutoSetup` — emulator picker + one-tap setup
@@ -148,6 +181,12 @@ Shared in `core/designsystem/.../ui/components/`:
 Minimal and functional: the scroll-away app bar, a fade-through between detailed and compact player cards, and expand/fade
 on error boxes and feature-card content. Ease-out curves, no bounce or elastic, and always honour the
 system's reduced-motion setting.
+
+- **`Motion.easeOut()`** is the one spec for new transitions: 220 ms, decelerating. Compose scales it
+  by the system's animation setting, so turning animations off makes it instant.
+- **Every state change on the Output card moves.** `SegmentedChoice`'s highlight slides to the
+  choice and its labels fade to lit or dim; the tab's content cross-fades as the card eases to its
+  new height; the subtitle cross-fades; DSU's slot warning expands in and out.
 
 ## Open work
 

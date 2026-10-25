@@ -60,7 +60,7 @@ fun PlayerMappingCard(
     onSaveLayout: () -> Unit,
     onDeleteLayout: (DropdownOption) -> Unit,
     modifier: Modifier = Modifier,
-    androidKeysNeedShizuku: Boolean = false,
+    deviceKeyWarnings: DeviceKeyWarnings = DeviceKeyWarnings(),
 ) {
     var expanded by rememberSaveable(state.body) { mutableStateOf(false) }
 
@@ -97,7 +97,7 @@ fun PlayerMappingCard(
                     ThrustSwitch(state.thrust) { actions.setThrust(state.body, it) }
                     SensitivitySlider(state.sensitivityPercent) { actions.setSensitivity(state.body, it) }
                 }
-                MappingBindings(console, state, actions, androidKeysNeedShizuku)
+                MappingBindings(console, state, actions, deviceKeyWarnings)
             }
         }
     }

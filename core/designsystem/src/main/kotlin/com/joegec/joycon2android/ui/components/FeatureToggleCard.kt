@@ -1,6 +1,9 @@
 package com.joegec.joycon2android.ui.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,6 +24,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +32,7 @@ import com.joegec.joycon2android.ui.theme.Accent
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.ErrorText
+import com.joegec.joycon2android.ui.theme.Motion
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextTitle
 
@@ -59,11 +64,14 @@ fun FeatureToggleCard(
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Spacer(Modifier.height(Dimens.featureCardTitleGap))
-                Text(
-                    subtitle,
-                    color = if (checked) Accent else TextDim,
-                    style = MaterialTheme.typography.bodySmall,
-                )
+                val subtitleColor by animateColorAsState(if (checked) Accent else TextDim, Motion.easeOut(), label = "subtitle")
+                AnimatedContent(
+                    targetState = subtitle,
+                    transitionSpec = { fadeIn(Motion.easeOut()) togetherWith fadeOut(Motion.easeOut()) },
+                    label = "subtitle",
+                ) { text ->
+                    Text(text, color = subtitleColor, style = MaterialTheme.typography.bodySmall)
+                }
             }
             Spacer(Modifier.width(Dimens.featureCardSwitchGap))
             Switch(

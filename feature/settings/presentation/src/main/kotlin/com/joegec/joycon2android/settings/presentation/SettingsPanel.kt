@@ -76,9 +76,12 @@ fun SettingsPanel(
                 checked = state.outputSettings.blockDeviceMotion,
                 onCheckedChange = onBlockDeviceMotionToggle,
                 titleStyle = MaterialTheme.typography.titleMedium,
-                warning = if (state.deviceMotionBlockAvailable) null
-                else stringResource(R.string.settings_block_device_motion_needs_shizuku),
+                warning = shizukuWarning(state),
             )
         }
     }
 }
+
+@Composable
+private fun shizukuWarning(state: SettingsPanelState): String? =
+    if (state.shizukuAvailable) null else stringResource(R.string.settings_needs_shizuku)

@@ -15,7 +15,8 @@ of the way.
 The primary jobs:
 - **Connect** — pair one or more Joy-Con 2 over BLE and confirm they're live.
 - **Assign** — map controllers to player slots (P1–P8), single or dual (L+R) layouts.
-- **Enable output** — turn on the virtual gamepad and/or DSU motion server.
+- **Enable output** — pick the output (virtual gamepad, DSU motion, or mouse and keyboard) and the
+  emulator it's for; it turns on once a player is assigned.
 - **Configure an emulator** — one-tap write of controller/motion bindings (Eden, Dolphin).
 - **Verify** — glance at live button/stick/IMU/battery state to confirm everything works.
 

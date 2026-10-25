@@ -3,6 +3,7 @@ package com.joegec.joycon2android.connection
 import com.joegec.joycon2android.model.BatteryCharge
 import com.joegec.joycon2android.model.JoyconButton
 import com.joegec.joycon2android.model.JoyconInput
+import com.joegec.joycon2android.model.MouseSensor
 import com.joegec.joycon2android.model.Side
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -52,8 +53,12 @@ object PacketParser {
             battery = BatteryCharge.fromVolts((bb.getShort(0x1F).toInt() and 0xFFFF) / 1000f),
             triggerLeft = uint8OrZero(data, TRIGGER_LEFT),
             triggerRight = uint8OrZero(data, TRIGGER_RIGHT),
+            mouse = if (side == Side.LEFT || side == Side.RIGHT) decodeMouse(bb) else null,
         )
     }
+
+    private fun decodeMouse(bb: ByteBuffer) =
+        MouseSensor(x = bb.getShort(0x10).toInt(), y = bb.getShort(0x12).toInt(), distance = bb.getShort(0x16).toInt())
 
     private fun resolveStick(data: ByteArray, side: Side): Pair<Int, Int> {
         if (side == Side.LEFT || side == Side.PRO) return decodeStick(data, 0x0A)

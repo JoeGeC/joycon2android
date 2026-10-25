@@ -62,7 +62,9 @@ fun ControllerMappingScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     onInfoClick: (() -> Unit)? = null,
-    androidKeysNeedShizuku: Boolean = false,
+    deviceKeyWarnings: DeviceKeyWarnings = DeviceKeyWarnings(),
+    /** Which output this mapping is for: names a keys-only mapping, which both outputs share. */
+    viaDsu: Boolean = false,
 ) {
     BackHandler(onBack = onBack)
     var dialog by remember { mutableStateOf<MappingDialog?>(null) }
@@ -74,7 +76,7 @@ fun ControllerMappingScreen(
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = Dimens.screenPaddingHorizontal),
     ) {
-        ScreenHeader(state, onBack, onInfoClick)
+        ScreenHeader(state.console.title(viaDsu), onBack, onInfoClick)
         Spacer(Modifier.height(Dimens.sectionSpacing))
         Column(
             Modifier
@@ -88,7 +90,7 @@ fun ControllerMappingScreen(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
             ) {
-                InfoBox(stringResource(R.string.controller_mapping_tips), onClick = tips.onTap)
+                InfoBox(state.console.tip(viaDsu), onClick = tips.onTap)
             }
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
@@ -106,7 +108,7 @@ fun ControllerMappingScreen(
                         actions = actions,
                         onSaveLayout = { dialog = MappingDialog.Save(player.body) },
                         onDeleteLayout = { dialog = MappingDialog.Delete(listOf(it.id), it.label, global = false) },
-                        androidKeysNeedShizuku = androidKeysNeedShizuku,
+                        deviceKeyWarnings = deviceKeyWarnings,
                     )
                 }
             }
@@ -118,7 +120,7 @@ fun ControllerMappingScreen(
 }
 
 @Composable
-private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit, onInfoClick: (() -> Unit)?) {
+private fun ScreenHeader(title: String, onBack: () -> Unit, onInfoClick: (() -> Unit)?) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) {
             Icon(
@@ -127,7 +129,7 @@ private fun ScreenHeader(state: ControllerMappingUiState, onBack: () -> Unit, on
             )
         }
         Text(
-            state.console.label(),
+            title,
             style = MaterialTheme.typography.headlineSmall,
             color = TextTitle,
             modifier = Modifier.weight(1f),

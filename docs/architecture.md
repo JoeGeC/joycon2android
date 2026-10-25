@@ -25,13 +25,15 @@ ViewModel cannot reach a repository implementation.
 | `:app` | `com.android.application` | every feature module + all `:core` |
 | `:konsist` | `joycon.kotlin.jvm` (test-only) | — (scans the whole project) |
 
-…for each feature `<f>` ∈ { `connection`, `assignment`, `gamepad`, `dsu`, `update`, `settings` }.
+…for each feature `<f>` ∈ { `connection`, `assignment`, `gamepad`, `dsu`, `update`, `settings`, `output` }.
 
 ¹ `assignment:data` is pure Kotlin (`joycon.kotlin.jvm`) — it has no Android dependencies.
 
 ² `gamepad:domain` and `dsu:domain` also depend on `:core:emulatorconfig` and
 `:core:buttonmapping:domain` for one-tap emulator setup. Each owns its own config *generators* over
 that shared leaf; no feature depends on another.
+
+`output:domain` also depends on `:core:buttonmapping:domain`, for the `Console` each mode maps.
 
 ³ Not `update`, which only reads GitHub's releases API and hands an APK to the system installer.
 
@@ -84,15 +86,57 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
   `MappingLayouts.matching` reads the name back by comparing a body's bindings with every shipped
   layout and every one the user saved for that body; no match is "Custom". So deleting a layout
   removes only its name, and the same bindings answer to it again if an identical one is saved.
-- **Android keys are mapping targets too** (`ANDROID_HOME`, …), so layouts save them. They act in
-  the app rather than the emulator: `AndroidKeyRouter` sits between the coordinator and both
-  outputs ([how](virtual-gamepad.md#android-keys)).
+- **Android keys, keyboard keys and mouse actions are mapping targets too** (`ANDROID_HOME`,
+  `KEYBOARD_W`, `MOUSE_LEFT_CLICK`, …), so layouts save them and a grip switch keeps them
+  (`DEVICE_KEY_TARGETS`). They act in the app rather than the emulator, parsed into `KeyBindings`:
+  `AndroidKeyRouter` and a `HeldKeyRouter` per kind sit between the coordinator and both outputs
+  ([how](virtual-gamepad.md#android-keys)).
 - **So is Eden's Pro Controller switch** for a lone Joy-Con (`PRO_CONTROLLER`), so layouts carry the
   grip with its bindings ([how](virtual-gamepad.md#single-joy-con)).
 - **And the Wii's Classic Controller** (`CLASSIC_CONTROLLER`), set by its layout
   ([how](dsu-motion.md#classic-controller)).
 - **`GlobalLayout` freezes the whole session** — every player's bindings in full, and the bodies they
   held — so it restores exactly what it saved, but only onto those players.
+
+## Output
+
+One **Output** card picks what runs. Each tab is one output, so its setup has one job.
+`:feature:output` owns the choice; `:app` runs it.
+
+| Tab (`OutputMode`) | Runs | Emulators offered | Set up writes |
+|---|---|---|---|
+| Virtual gamepad | pad | Dolphin (GameCube), Eden, Other | the gamepad config |
+| Motion (DSU) | DSU | Dolphin (Wii), Eden, Other | the DSU config |
+| Mouse & keys | keyboard, mouse | — | — |
+
+| Emulator (`EmulatorKind`) | Console mapped |
+|---|---|
+| Dolphin (GameCube) | GameCube |
+| Dolphin (Wii) | Wii Remote |
+| Eden, Eden Nightly | Switch Pro |
+| Other | `Console.ANDROID`: device keys only, shared by both tabs |
+| (Mouse & keys) | `Console.PC`, WASD + mouse by default |
+
+- **`OutputPlan` is the one rule**, pure and tested: a tab's devices, plus the keyboard or mouse once
+  the active mapping uses them (a keyboard or Android key for the keyboard, the Android keys' fast
+  path; a mouse action for the mouse), and the console that mapping is.
+- **No per-device overrides.** An emulator that reads gyro from DSU reads its buttons there too, so
+  one device per tab covers it; Eden is on both tabs for the rest.
+- **The emulator box is auto setup alone**: what the tab can set up, then **Other**
+  (`EmulatorTarget.OTHER`, no package, so no Set up). Other is for Android games and emulators set up
+  in their own settings.
+- **The mapping that applies is the box's choice**, device keys included, so a layout carries its
+  own keys (save-state F-keys for Dolphin, say) and Other has a keys-only mapping of its own.
+- **Each tab keeps its own emulator** (`OutputSelection.emulators`), so switching tabs loses neither.
+  Dolphin is two targets of one package (`dolphin-gamecube`, `dolphin-wii`).
+- **One active console for every device.** The routers read one set of bindings per kind of key, which
+  act while the output runs, whichever devices are up.
+- **`:app` runs it.** `AppContainer` derives the planned devices; `OutputDevicesPolicy` starts the pad
+  (with players to give it, again when one returns) and DSU; `PrivilegedDevicePolicy` the keyboard
+  and mouse, which also need Shizuku.
+- **On as players arrive** (`OutputAutoStartPolicy`): the first player assigned switches it on.
+  Switched off by hand, it stays off until every player leaves and one returns. The switch isn't kept
+  across launches; the tab and each tab's emulator are (`OutputDataStore`).
 
 ## Dependency rules
 
@@ -142,8 +186,10 @@ no state of its own.
 One **ViewModel per feature**, in its presentation module, built in `MainActivity` by a
 `viewModelFactory` that pulls use cases off `AppContainer` — so it depends only on its domain.
 
-- `DsuViewModel` — DSU status, enable toggle and emulator auto setup.
-- `GamepadViewModel` — gamepad status, Shizuku availability and emulator auto setup.
+- `OutputViewModel` — the [output](#output): mode, emulator, overrides, the on switch and emulator
+  auto setup.
+- `DsuViewModel` — DSU status.
+- `GamepadViewModel` — the virtual gamepad, keyboard and mouse status, and Shizuku availability.
 - `UpdateViewModel` — the once-per-launch release check and the update prompt.
 - `SettingsViewModel` — the settings that apply to whichever output runs (faster updates, the Eden
   motion block), **Show tips**, which `MainActivity` hands every screen through `LocalTips`, and
@@ -180,9 +226,13 @@ BLE notify ─→ Joycon2Manager (connection/data, ControllerRepository)
                    ▼
             SessionCoordinator (core/session) ── combines connections + assignments
                    │  onState(state)
-                   ├─→ AndroidKeyRouter (withholds Android-key buttons, presses keys via shell)
-                   │      ├─→ PushGamepadStateUseCase ─→ GamepadOutput ─→ UHID relay ─→ /dev/uhid
-                   │      └─→ PushDsuPadDataUseCase   ─→ DsuServer    ─→ UDP :26760 ─→ emulators
+                   ├─→ MouseRouter (pointer from Joy-Cons on a surface; default clicks if unmapped) ─→ MouseMix
+                   │      └─→ AndroidKeyRouter (withholds Android-key buttons; keys the pad lacks ─→ keyboard, else shell)
+                   │             └─→ HeldKeyRouter × 2 (keyboard keys, mouse actions; withholds their sources)
+                   │                    ├─→ PushKeyboardFrameUseCase ─→ KeyboardOutput ─→ UHID relay
+                   │                    ├─→ MouseMix ─→ PushMouseFrameUseCase ─→ MouseOutput ─→ UHID relay
+                   │                    ├─→ PushGamepadStateUseCase  ─→ GamepadOutput  ─→ UHID relay ─→ /dev/uhid
+                   │                    └─→ PushDsuPadDataUseCase    ─→ DsuServer     ─→ UDP :26760 ─→ emulators
                    └─→ ObserveSessionUseCase   ─→ Joycon2ViewModel ─→ AppUiState ─→ Compose
 ```
 

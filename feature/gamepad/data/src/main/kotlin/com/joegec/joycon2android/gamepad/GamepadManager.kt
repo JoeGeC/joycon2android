@@ -21,7 +21,7 @@ class GamepadManager(private val scope: CoroutineScope, private val context: Con
     suspend fun createGamepad(player: PlayerNumber, shell: PrivilegedShell): Boolean = withContext(Dispatchers.IO) {
         if (player in devices) return@withContext true
 
-        val device = UhidRelay("Joy-Con Virtual Gamepad", player.index)
+        val device = UhidRelay(GamepadDescriptor.device(player.index))
         val success = device.create(context, shell)
 
         if (success) {

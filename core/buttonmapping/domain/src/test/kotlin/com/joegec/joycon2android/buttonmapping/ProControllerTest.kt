@@ -4,6 +4,7 @@ import com.joegec.joycon2android.buttonmapping.preset.SwitchProMapping
 import com.joegec.joycon2android.buttonmapping.preset.SwitchProSidewaysMapping
 import com.joegec.joycon2android.buttonmapping.preset.SwitchProSidewaysTriggersMapping
 import com.joegec.joycon2android.model.AndroidKey
+import com.joegec.joycon2android.model.KeyboardKey
 import com.joegec.joycon2android.model.PlayerNumber
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -27,8 +28,9 @@ class ProControllerTest {
     }
 
     @Test
-    fun `turning on Pro Controller swaps to the sideways layout and keeps the Android keys`() = runBlocking {
+    fun `turning on Pro Controller swaps to the sideways layout and keeps the device keys`() = runBlocking {
         fixture.setMapping(Console.SWITCH_PRO, body, AndroidKey.HOME.targetKey, "Capture")
+        fixture.setMapping(Console.SWITCH_PRO, body, KeyboardKey.ENTER.targetKey, "ZL")
         fixture.setMapping(Console.SWITCH_PRO, body, "DPadUp", "Down")
 
         fixture.setProController(Console.SWITCH_PRO, body, true)
@@ -36,6 +38,7 @@ class ProControllerTest {
         val mapping = fixture.playerMapping(body)
         assertTrue(mapping.entries.proController)
         assertEquals("Capture", mapping.entries[AndroidKey.HOME.targetKey])
+        assertEquals("ZL", mapping.entries[KeyboardKey.ENTER.targetKey])
         assertEquals("", mapping.entries["DPadUp"])
         assertEquals("Down", mapping.entries["A"])
         assertEquals(null, mapping.layout)

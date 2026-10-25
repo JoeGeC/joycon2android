@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="output_title">Output</string>
+    <string name="output_subtitle_off">Off — switch on to play</string>
+    <string name="output_subtitle_on_for">Active — %1$s</string>
+    <string name="output_mode_gamepad">Virtual gamepad</string>
+    <string name="output_mode_motion">Motion (DSU)</string>
+    <string name="output_mode_mouse_keyboard">Mouse &amp; keys</string>
+    <string name="output_set_up">Set up</string>
+    <string name="output_other">Other</string>
+    <string name="output_mapping">Mapping</string>
+</resources>

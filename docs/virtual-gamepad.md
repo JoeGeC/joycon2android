@@ -14,12 +14,99 @@ The app creates gamepads through Linux's UHID (user-space HID) interface:
 - **`ReportMapper`** — turns a `PlayerState` into a HID input report.
 - **`GamepadManager`** — owns one relay per player and drives reports at input rate.
 
-The device uses `BUS_USB` with generic IDs `0x1234:0x5678` so the kernel's `hid-generic` driver
+The device uses `BUS_USB` with generic IDs `0x1234:0x5678` (the [mouse](#mouse) `0x5679`, the [keyboard](#keyboard) `0x567A`) so the kernel's `hid-generic` driver
 binds it. Nintendo's IDs would let `hid-nintendo` claim it and reject it.
 
 Each assigned player gets its own device, `Joy-Con Virtual Gamepad <N>`, named by player number.
 Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the third pad,
 `Android/3/Joy-Con Virtual Gamepad 4` ([Device identity](#device-identity)).
+
+## Mouse
+
+`Joy-Con Virtual Mouse` is one UHID device, shared by every player, with three buttons and a wheel.
+`PrivilegedDevicePolicy` keeps it up while Shizuku runs and the [output](architecture.md#output)
+plans it: Mouse & keys mode, a mapped mouse action, or Mouse set On.
+
+**One mouse, two inputs to it.** Clicks and scroll come from each player's **Mouse** mapping, held
+or not. While the mouse is up, a Joy-Con 2 standing on a surface also moves the pointer. A player whose
+mapping binds no mouse action gets default clicks and scroll on a Joy-Con on the surface instead:
+
+| Input | Mouse | Notes |
+|---|---|---|
+| X/Y counters | REL_X / REL_Y, one count a unit | always; the change since the last report, int16-wrapped; +Y is towards the player, down the screen |
+| L, R | primary button | default |
+| ZL, ZR | secondary button | default |
+| Stick Y | wheel | default; rate set by tilt, up to 20 detents/s past a 25% dead zone, timed by the packet clock |
+
+**On a surface** means the distance reading says so ([sensor](protocol.md#mouse-0x100x17)) **and**
+the Joy-Con stands on its rail; lifted, it is a plain controller again.
+
+- **Distance alone mistakes a hand for a desk.** AYN Thor, 2026-10-23, a pair held to play: fingers
+  round the rail read as a surface in 1–2 s bursts, moving the pointer and taking the stick for the
+  wheel. So `JoyconMouse` also wants raw accel x, which reads +1 g on whichever axis points up, at
+  ≥ 0.71 g away from the rail (−x on a left Joy-Con, +x on a right): within 45° of rail-down. A
+  grip leaves x level, and a sideways hold turns the rail up.
+- **The mapping replaces the defaults whole**, not per button, once it binds any mouse action on a
+  running output. Two sets of clicks on one Joy-Con would fight.
+- **What the mouse spends, the game never sees.** The defaults are withheld by `MouseRouter`, before
+  `AndroidKeyRouter`; mapped actions by their `HeldKeyRouter`, like [keyboard keys](#keyboard).
+- **One report a packet.** A report's buttons replace the last's, so `MouseMix` adds the mapped
+  frame to the surface Joy-Cons' before pushing.
+- **Movement is summed, never conflated.** A pad report replaces the last; a mouse delta skipped is
+  lost, so `PendingMouseFrame` adds deltas up until the relay writes.
+- **A mapped scroll steps once on press, then every 100 ms while held** (`MappedMouse`, by uptime),
+  whatever a stick's tilt.
+- **A click lands where the pointer is.** Games that capture the mouse (most PC games under
+  Winlator) read the clicks alone.
+- **A separate device, not a collection on the pad.** Pointer axes on the gamepad's evdev node would
+  have Android class it as a mouse too.
+- Only `PacketParser` (Joy-Con 2, `Side.LEFT`/`RIGHT`) fills the sensor; Pro, GameCube and
+  console-protocol controllers have none.
+- **Faster controller updates** counts the mouse as an output, doubling its report rate.
+- `UhidOutput` owns the shared-device lifecycle for the mouse and the [keyboard](#keyboard).
+
+## Keyboard
+
+`Joy-Con Virtual Keyboard` is one UHID device shared by every player, up while Shizuku runs and the
+[output](architecture.md#output) plans it (`PrivilegedDevicePolicy`): Mouse & keys mode, a mapped
+keyboard or Android key, or Keyboard set On. It carries the mapping's **Keyboard** keys, and the
+[Android keys](#android-keys) the pad does not, in place of the shell.
+
+| Report | Bytes | Carries |
+|---|---|---|
+| ID 1, Keyboard | modifiers (Ctrl, Shift, Alt), reserved, 6 key slots | keyboard keys; Screenshot as `0x46` Print Screen → `KEY_SYSRQ` |
+| ID 2, Consumer | bit 0 AC Home, bit 1 AC Back | Home and Back, as on the pad |
+
+- **Two descriptors, one up at a time.** The key slots span `0x1E`–`0x65`, past the letters, until a
+  binding on either output's console uses a letter; then `0x00`–`0x65`. `KeyboardOutput` swaps
+  devices when `KeyboardDeclarationPolicy` reports the change.
+- **Keys are positions.** `KeyboardUsages` sends HID usages, which Android reads through the system
+  layout, so on AZERTY the `Q` binding types `A`.
+- **Buttons and stick directions, withheld like Android keys.** `HeldKeyRouter` runs after
+  `AndroidKeyRouter`, each output withholding what its own console's mapping binds. It reads what is
+  held from the state before any key withholding, so one button bound to Home and Enter fires both.
+- **A stick key presses at half tilt and releases below 35%**, so one resting near the threshold
+  doesn't chatter. Diagonals hold both keys.
+- **A bound direction is cut at centre for the game**, its opposite passed through, so binding only
+  up to W leaves down on the stick.
+- **Directions are read in the hardware's own axes** (`PlayerSticks`), as the mapping labels them; a
+  sideways Wii Remote's are turned back from the rail-up frame when parsed (`hardwareDirection`).
+- **Six keys at once**, the boot-keyboard limit; Screenshot takes a slot. Modifiers don't.
+- **Coming and going changes Android's configuration** (`keyboard`, `keyboardHidden`, `navigation`;
+  the mouse too). `MainActivity` declares those in `configChanges`. AYN Thor, 2026-10-23: without
+  it, each output-mode switch relaunched the activity and cut its animations.
+
+AYN Thor, Android 13, 2026-10-23:
+
+- **Print Screen takes a screenshot here**, unlike on the pad. Home, Back and Screenshot all fire,
+  bound with either output.
+- **A letter key hides the on-screen keyboard.** Android classes a keyboard with `KEY_Q` as
+  alphabetic (`ALPHAKEY`, `KeyboardType: 2`) and Gboard stays hidden, even with
+  `show_ime_with_hard_keyboard` on. So the key slots start at `0x1E` (`1`), past the letters;
+  with no `KEY_Q` it is `KeyboardType: 1` and Gboard shows.
+- Keys felt as quick as the pad's, with the gamepad or DSU alone. Not timed.
+- Binding a letter swaps to the letters device (`ALPHAKEY`) and hides Gboard; clearing it swaps back
+  and Gboard returns. Bound buttons reach the keyboard and never the pad.
 
 ## Report layout
 
@@ -74,24 +161,26 @@ shift:
 
 Each player's mapping, per console, has an **Android** section: buttons bound to Home, Back or
 Screenshot act as the device's own keys and never reach the game. `AndroidKeyRouter` applies the
-mapping of the console each output's card is set to, while that output runs.
+mapping of the [output's](architecture.md#output) console, while it runs. A key the pad does not
+send goes through the [keyboard](#keyboard), which a bound Android key brings up, or the shell while it is down (set Off).
 
 | Key | Virtual gamepad | DSU only |
 |---|---|---|
-| Home | byte 14 bit 0: Consumer `0x223` AC Home → `KEY_HOMEPAGE` → `HOME` | shell `input keyevent` |
-| Back | byte 14 bit 1: Consumer `0x224` AC Back → `KEY_BACK` → `BACK` | shell `input keyevent` |
-| Screenshot | shell `input keyevent 120` (`SYSRQ`), once per press | same |
+| Home | byte 14 bit 0: Consumer `0x223` AC Home → `KEY_HOMEPAGE` → `HOME` | keyboard, Consumer AC Home |
+| Back | byte 14 bit 1: Consumer `0x224` AC Back → `KEY_BACK` → `BACK` | keyboard, Consumer AC Back |
+| Screenshot | keyboard, `0x46` Print Screen → `KEY_SYSRQ` | same |
 
-- **Withheld before either output.** `AndroidKeyBindings.withheldFrom` drops bound buttons from the
+The shell's `input keyevent`, once per press, stands in for the keyboard only if it failed to come up.
+
+- **Withheld before either output.** `KeyBindings.withheldFrom` drops bound buttons from the
   player's input as the controller reports it, so the same rule covers sideways Joy-Cons and both
-  outputs.
+  outputs. Android keys take buttons only.
 - **Home and Back ride the pad when it runs**, even for a DSU binding, so a key bound on both
   screens fires once.
 - **The shell is the slow path.** AYN Thor, Android 13, 2026-10-12: `input keyevent` took 50 ms to
-  1.5 s and twice hung; the pad's Consumer keys are immediate. DSU never reaches Android, so it has
-  no other path, and needs Shizuku.
+  1.5 s and twice hung; the pad's Consumer keys are immediate, and so are the keyboard's.
 - **Screenshot skips the pad.** Retroid Pocket Nova, Android 13, 2026-10-09: a Keyboard `0x46`
-  Print Screen usage on the pad took no screenshot; `input keyevent 120` through the shell did.
+  Print Screen usage on the pad took no screenshot; on the [keyboard](#keyboard) it does.
 - **Android handles `HOME` itself** and never passes it to the app in front, so a bound Home always
   leaves the game.
 
