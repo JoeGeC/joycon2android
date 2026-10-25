@@ -56,7 +56,7 @@ object MarioKartNunchukMapping : MappingPreset {
         WiimoteButton.NunchukZ to listOf(L),
     ).sources()
 
-    private fun loneButtons(side: JoyconSide) = (loneFaces(side) + UNBOUND).sources()
+    private fun loneButtons(side: JoyconSide) = loneFaces(side).sources()
 
     private fun loneFaces(side: JoyconSide) = when (side) {
         JoyconSide.LEFT -> mapOf(
@@ -67,6 +67,7 @@ object MarioKartNunchukMapping : MappingPreset {
             WiimoteButton.Plus to listOf(Minus),
             WiimoteButton.Home to listOf(Capture),
             WiimoteButton.Shake to listOf(SrLeft),
+            WiimoteButton.Recenter to listOf(L),
         )
         else -> mapOf(
             WiimoteButton.A to listOf(X),
@@ -76,19 +77,10 @@ object MarioKartNunchukMapping : MappingPreset {
             WiimoteButton.Plus to listOf(Plus),
             WiimoteButton.Home to listOf(Home),
             WiimoteButton.Shake to listOf(SrRight),
+            WiimoteButton.Recenter to listOf(R),
         )
     }
 
-    // Listed rather than omitted, or they keep the console default's bindings ([MappingLayouts.entriesOf]).
-    private val UNBOUND = listOf(
-        WiimoteButton.DPadUp,
-        WiimoteButton.DPadDown,
-        WiimoteButton.DPadLeft,
-        WiimoteButton.DPadRight,
-        WiimoteButton.One,
-        WiimoteButton.Two,
-        WiimoteButton.Minus,
-    ).associateWith { emptyList<JoyconButton>() }
 
     private fun nunchukStick(side: JoyconSide): Map<WiimoteStick, StickSource> =
         mapOf(WiimoteStick.NunchukStick to if (side == JoyconSide.LEFT) LEFT_STICK else RIGHT_STICK)

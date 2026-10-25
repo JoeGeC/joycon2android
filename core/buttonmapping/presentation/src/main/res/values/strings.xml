@@ -44,6 +44,8 @@
     <string name="layout_standard">Standard</string>
     <string name="layout_wasd_mouse">WASD + Mouse</string>
     <string name="layout_wasd_mouse_description">Walk on the stick, ZR clicks, right stick scrolls</string>
+    <string name="layout_mouse_only">Mouse only</string>
+    <string name="layout_mouse_only_description">Clicks and scroll, no keys; press the stick to middle-click</string>
     <string name="layout_wii">Wii</string>
     <string name="layout_wii_description">Like a Wiimote, ZR \u2192 B</string>
     <string name="layout_joycon">Joy-Con</string>

@@ -30,14 +30,16 @@ import com.joegec.joycon2android.model.JoyconButton.Y
 import com.joegec.joycon2android.model.JoyconButton.ZL
 import com.joegec.joycon2android.model.JoyconButton.ZR
 
-/** Plugs in a Classic Controller in place of the Nunchuk, its buttons where a Pro Controller has them. */
+/** Plugs in a Classic Controller in place of the Nunchuk, its buttons where a Pro Controller has them; the remote keeps its own. */
 object ClassicControllerMapping : MappingPreset {
     override val id = "CLASSIC"
     override val console = Console.WIIMOTE_NUNCHUK
 
     override val wiiController = WiiController.CLASSIC
 
-    override fun entries(side: JoyconSide) = buttons(side).buttonEntries() + sticks(side).stickEntries()
+    override fun entries(side: JoyconSide) = WiiMapping.entries(side) + controllerEntries(side)
+
+    fun controllerEntries(side: JoyconSide) = buttons(side).buttonEntries() + sticks(side).stickEntries()
 
     private val PAIR_BUTTONS = mapOf(
         ClassicButton.ClassicA to A,

@@ -4,9 +4,7 @@ import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.PRO_CONTROLLER_KEY
 import com.joegec.joycon2android.buttonmapping.PRO_CONTROLLER_ON
-import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
-import com.joegec.joycon2android.buttonmapping.directionKey
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
 import com.joegec.joycon2android.model.JoyconButton
@@ -38,13 +36,8 @@ sealed class SwitchProSidewaysLayout(
     override val console = Console.SWITCH_PRO
     override val sides = setOf(JoyconSide.LEFT, JoyconSide.RIGHT)
 
-    // Every target cleared first, so the Standard bindings layered beneath can't fire too.
     override fun entries(side: JoyconSide) =
-        cleared() + buttons(side).buttonEntries() + sticks(side).stickEntries() + (PRO_CONTROLLER_KEY to PRO_CONTROLLER_ON)
-
-    private fun cleared(): Map<String, String> =
-        SwitchProButton.entries.associate { it.name to "" } +
-            SwitchProStick.entries.flatMap { stick -> StickDirection.entries.map { stick.directionKey(it) to "" } }
+        buttons(side).buttonEntries() + sticks(side).stickEntries() + (PRO_CONTROLLER_KEY to PRO_CONTROLLER_ON)
 
     private fun buttons(side: JoyconSide): Map<SwitchProButton, JoyconButton> = when (side) {
         JoyconSide.LEFT -> mapOf(

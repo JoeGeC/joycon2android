@@ -12,9 +12,11 @@ import com.joegec.joycon2android.model.JoyconButton.B
 import com.joegec.joycon2android.model.JoyconButton.Capture
 import com.joegec.joycon2android.model.JoyconButton.Down
 import com.joegec.joycon2android.model.JoyconButton.Home
+import com.joegec.joycon2android.model.JoyconButton.L
 import com.joegec.joycon2android.model.JoyconButton.Left
 import com.joegec.joycon2android.model.JoyconButton.Minus
 import com.joegec.joycon2android.model.JoyconButton.Plus
+import com.joegec.joycon2android.model.JoyconButton.R
 import com.joegec.joycon2android.model.JoyconButton.Right
 import com.joegec.joycon2android.model.JoyconButton.SlLeft
 import com.joegec.joycon2android.model.JoyconButton.SlRight
@@ -45,6 +47,7 @@ object MarioKartWheelMapping : MappingPreset {
             WiimoteButton.Plus to Minus,
             WiimoteButton.Minus to Up,
             WiimoteButton.Shake to SrLeft,
+            WiimoteButton.Recenter to L,
         )
         else -> mapOf(
             WiimoteButton.A to Y,
@@ -55,6 +58,7 @@ object MarioKartWheelMapping : MappingPreset {
             WiimoteButton.Plus to Plus,
             WiimoteButton.Minus to B,
             WiimoteButton.Shake to SrRight,
+            WiimoteButton.Recenter to R,
         )
     }
 

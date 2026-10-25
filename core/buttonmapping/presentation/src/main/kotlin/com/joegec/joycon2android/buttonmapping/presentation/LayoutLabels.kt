@@ -17,6 +17,7 @@ import com.joegec.joycon2android.buttonmapping.preset.MappingPreset
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.buttonmapping.preset.MarioKartNunchukMapping
 import com.joegec.joycon2android.buttonmapping.preset.MarioKartWheelMapping
+import com.joegec.joycon2android.buttonmapping.preset.MouseOnlyMapping
 import com.joegec.joycon2android.buttonmapping.preset.SwitchProMapping
 import com.joegec.joycon2android.buttonmapping.preset.SwitchProSidewaysMapping
 import com.joegec.joycon2android.buttonmapping.preset.SwitchProSidewaysTriggersMapping
@@ -58,6 +59,7 @@ internal fun rememberLayoutLabels(): LayoutLabels {
 private fun nameOf(preset: MappingPreset): String = when (preset) {
     GameCubeMapping, SwitchProMapping, AndroidMapping -> stringResource(R.string.layout_standard)
     WasdMouseMapping -> stringResource(R.string.layout_wasd_mouse)
+    MouseOnlyMapping -> stringResource(R.string.layout_mouse_only)
     WiiMapping -> stringResource(R.string.layout_wii)
     JoyconWiiMapping -> stringResource(R.string.layout_joycon)
     MarioKartWheelMapping -> stringResource(R.string.layout_mario_kart_wheel)
@@ -71,6 +73,7 @@ private fun nameOf(preset: MappingPreset): String = when (preset) {
 private fun descriptionOf(preset: MappingPreset): String? = when (preset) {
     GameCubeMapping, SwitchProMapping, AndroidMapping -> null
     WasdMouseMapping -> stringResource(R.string.layout_wasd_mouse_description)
+    MouseOnlyMapping -> stringResource(R.string.layout_mouse_only_description)
     WiiMapping -> stringResource(R.string.layout_wii_description)
     JoyconWiiMapping -> stringResource(R.string.layout_joycon_description)
     MarioKartWheelMapping -> stringResource(R.string.layout_mario_kart_wheel_description)

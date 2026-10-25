@@ -9,9 +9,9 @@ object MappingLayouts {
         MappingPresets.forConsole(console).filter { side in it.sides } +
             saved.filter { it.console == console && it.side == side }
 
-    /** Layered over the console default, so a target the layout omits is still bound. */
+    /** Clears every target first, as the console default fills any the stored mapping omits. */
     fun entriesOf(console: Console, side: JoyconSide, layout: MappingLayout): Map<String, String> =
-        MappingPresets.default(console).entries(side) + layout.entries(side)
+        MappingPresets.default(console).entries(side).mapValues { "" } + layout.entries(side)
 
     /** Matched by bindings, never a stored choice: docs/architecture.md#button-mapping. Null is "Custom". */
     fun matching(

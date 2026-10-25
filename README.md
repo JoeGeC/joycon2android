@@ -78,7 +78,7 @@ player is assigned; its switch stops it. Grant Shizuku permission the first time
 |---|---|---|
 | **Virtual gamepad** | Android games and any emulator | each player appears to every app as `Joy-Con Virtual Gamepad <N>` |
 | **Motion (DSU)** | emulators that read DSU (cemuhook) | gyro, buttons and sticks over DSU |
-| **Mouse & keys** | PC games under Winlator, Droiddeck and the like | a virtual keyboard and mouse, mapped **WASD + mouse** to start |
+| **Mouse & keys** | PC games under Winlator, Droiddeck and the like | a virtual keyboard and mouse, mapped **WASD + mouse** to start, or **Mouse only** (clicks and scroll; a stick click middle-clicks, RS on a pair or right Joy-Con, LS on a left) |
 
 The first two tabs have **Emulator auto setup** (step 5): Dolphin or Eden once installed, then
 **Other**. Pick **Other** for Android games or any other emulator, set up in its own settings (pick the

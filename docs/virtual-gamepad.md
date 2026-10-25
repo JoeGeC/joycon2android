@@ -244,8 +244,7 @@ The Eden mapping card's **Pro Controller** switch (off by default) sets up the s
 - **The switch is a mapping entry.** `PRO_CONTROLLER` = `true` among the body's bindings
   (`ProControllerEntry`), so layouts, saved sets and matching carry it with no extra store. The two
   grips bind different targets, so flipping it (`SetProControllerUseCase`) applies that grip's
-  shipped layout — `SwitchProMapping` (Standard) or `SwitchProSidewaysMapping` (Pro Controller,
-  which clears every other target so Standard's bindings layered beneath can't fire) — keeping the
+  shipped layout — `SwitchProMapping` (Standard) or `SwitchProSidewaysMapping` (Pro Controller) — keeping the
   Android keys. `SwitchProSidewaysTriggersMapping` is the same grip with SL/SR on ZL/ZR, not L/R.
 - **Targets** (`SwitchProTargets`): only the body's own buttons — left: D-pad, L, ZL, −, stick click,
   Capture; right: A/B/X/Y, R, ZR, +, stick click, Home — plus **SL/SR**, which `EdenControls.buttonKey`

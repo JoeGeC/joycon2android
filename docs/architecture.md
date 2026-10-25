@@ -82,7 +82,8 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
 - **A target holds every source bound to it.** Dolphin ORs them into one expression; Eden binds one
   input per key, so it keeps the first the body can emit.
 - **A layout is a name for a set of bindings, never a stored reference.** Applying one copies out
-  everything it says, layered over the console default so a target it omits is still bound.
+  everything it says over a cleared mapping, so a target it omits is unbound (stored empty, since
+  the console default fills any target the stored mapping lacks).
   `MappingLayouts.matching` reads the name back by comparing a body's bindings with every shipped
   layout and every one the user saved for that body; no match is "Custom". So deleting a layout
   removes only its name, and the same bindings answer to it again if an identical one is saved.
@@ -116,7 +117,7 @@ One **Output** card picks what runs. Each tab is one output, so its setup has on
 | Dolphin (Wii) | Wii Remote |
 | Eden, Eden Nightly | Switch Pro |
 | Other | `Console.ANDROID`: device keys only, shared by both tabs |
-| (Mouse & keys) | `Console.PC`, WASD + mouse by default |
+| (Mouse & keys) | `Console.PC`, WASD + mouse by default, or Mouse only |
 
 - **`OutputPlan` is the one rule**, pure and tested: a tab's devices, plus the keyboard or mouse once
   the active mapping uses them (a keyboard or Android key for the keyboard, the Android keys' fast

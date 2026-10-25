@@ -16,7 +16,7 @@ class SetWiiControllerUseCase(
 
     private suspend fun bindClassicControllerIfUnbound(console: Console, body: PlayerBody) {
         val current = observeControllerMapping(console, body).first()
-        val classic = ClassicControllerMapping.entries(body.side)
+        val classic = ClassicControllerMapping.controllerEntries(body.side)
         if (classic.keys.any { it in current }) return
         mappingRepository.replace(console, body, current + classic)
     }

@@ -107,16 +107,15 @@ class WiiPresetsTest {
     @Test
     fun `a lone Joy-Con on the Nunchuck layout plays both halves itself`() {
         JoyconSide.entries.filter { it.isLone }.forEach { side ->
-            val lone = MarioKartNunchukMapping.entries(side)
+            val lone = MappingLayouts.entriesOf(Console.WIIMOTE_NUNCHUK, side, MarioKartNunchukMapping)
             val rail = if (side == JoyconSide.LEFT) "SlLeft" else "SlRight"
 
             assertEquals("$side", rail, lone.getValue(WiimoteButton.NunchukZ.name))
             assertTrue("$side steers from its own stick", lone.keys.any { it.startsWith(WiimoteStick.NunchukStick.name) })
-            // Unbound on purpose; omitted, each would keep the Wii layout's binding.
             listOf(
                 WiimoteButton.DPadUp, WiimoteButton.DPadDown, WiimoteButton.DPadLeft, WiimoteButton.DPadRight,
                 WiimoteButton.One, WiimoteButton.Two, WiimoteButton.Minus,
-            ).forEach { assertEquals("$side ${it.name}", "", lone.getValue(it.name)) }
+            ).forEach { assertTrue("$side ${it.name}", lone[it.name].isNullOrEmpty()) }
         }
     }
 

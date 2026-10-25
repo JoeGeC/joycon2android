@@ -62,17 +62,17 @@ class ProControllerTest {
         assertTrue(mapping.entries.proController)
         assertEquals("SlLeft", mapping.entries["ZL"])
         assertEquals("SrLeft", mapping.entries["ZR"])
-        assertEquals("", mapping.entries["L"])
-        assertEquals("", mapping.entries["R"])
+        assertTrue(mapping.entries["L"].isNullOrEmpty())
+        assertTrue(mapping.entries["R"].isNullOrEmpty())
         assertEquals(SwitchProSidewaysTriggersMapping, mapping.layout)
     }
 
     @Test
     fun `both sideways layouts put a left Joy-Con's minus on plus`() {
         listOf(SwitchProSidewaysMapping, SwitchProSidewaysTriggersMapping).forEach { layout ->
-            val entries = layout.entries(JoyconSide.LEFT)
+            val entries = MappingLayouts.entriesOf(Console.SWITCH_PRO, JoyconSide.LEFT, layout)
             assertEquals("Minus", entries["Plus"])
-            assertEquals("", entries["Minus"])
+            assertTrue(entries["Minus"].isNullOrEmpty())
         }
     }
 
