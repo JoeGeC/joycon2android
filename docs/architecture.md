@@ -131,7 +131,8 @@ One **Output** card picks what runs. Each tab is one output, so its setup has on
 - **Each tab keeps its own emulator** (`OutputSelection.emulators`), so switching tabs loses neither.
   Dolphin is two targets of one package (`dolphin-gamecube`, `dolphin-wii`).
 - **One active console for every device.** The routers read one set of bindings per kind of key, which
-  act while the output runs, whichever devices are up.
+  act while the output runs, whichever devices are up, unless paused (`DeviceKeysPause`, while the
+  mapping editor listens for a press).
 - **`:app` runs it.** `AppContainer` derives the planned devices; `OutputDevicesPolicy` starts the pad
   (with players to give it, again when one returns) and DSU; `PrivilegedDevicePolicy` the keyboard
   and mouse, which also need Shizuku.

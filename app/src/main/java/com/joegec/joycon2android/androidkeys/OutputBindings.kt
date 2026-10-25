@@ -5,9 +5,9 @@ import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import kotlinx.coroutines.flow.StateFlow
 
-/** The active console's key bindings, acting while the output runs. */
+/** The active console's key bindings, while [acting]: the output runs and they aren't paused. */
 class OutputBindings<K>(
-    private val running: StateFlow<Boolean>,
+    private val acting: StateFlow<Boolean>,
     private val bindings: StateFlow<Map<PlayerNumber, KeyBindings<K>>>,
 ) {
     fun of(player: PlayerState): KeyBindings<K> = of(player.player)
@@ -17,5 +17,5 @@ class OutputBindings<K>(
     fun bindsAny(player: PlayerNumber): Boolean = of(player).sources.isNotEmpty()
 
     private fun of(player: PlayerNumber): KeyBindings<K> =
-        if (running.value) bindings.value[player] ?: KeyBindings() else KeyBindings()
+        if (acting.value) bindings.value[player] ?: KeyBindings() else KeyBindings()
 }

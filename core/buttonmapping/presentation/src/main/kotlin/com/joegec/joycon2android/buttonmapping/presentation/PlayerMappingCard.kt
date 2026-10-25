@@ -52,7 +52,7 @@ import com.joegec.joycon2android.ui.theme.joyconBorderColor
 @Composable
 fun PlayerMappingCard(
     console: Console,
-    player: PlayerState,
+    controller: LiveController,
     state: PlayerMappingUiState,
     labels: LayoutLabels,
     actions: MappingActions,
@@ -69,7 +69,7 @@ fun PlayerMappingCard(
             .clip(RoundedCornerShape(Dimens.cardCorner))
             .background(CardBg),
     ) {
-        CardHeader(player, state.layout?.let(labels::name), expanded) { expanded = !expanded }
+        CardHeader(controller.player, state.layout?.let(labels::name), expanded) { expanded = !expanded }
         AnimatedVisibility(
             visible = expanded,
             enter = fadeIn() + expandVertically(),
@@ -96,7 +96,7 @@ fun PlayerMappingCard(
                 if (state.offersSensitivity) {
                     SensitivitySlider(state.sensitivityPercent) { actions.setSensitivity(state.body, it) }
                 }
-                MappingBindings(console, state, actions, deviceKeyWarnings)
+                MappingBindings(console, state, controller, actions, deviceKeyWarnings)
             }
         }
     }

@@ -15,6 +15,7 @@ import com.joegec.joycon2android.connection.StopScanUseCase
 import com.joegec.joycon2android.connection.ViewModePreferences
 import com.joegec.joycon2android.connection.ViewModePreferencesDataStore
 import com.joegec.joycon2android.androidkeys.AndroidKeyRouter
+import com.joegec.joycon2android.androidkeys.DeviceKeysPause
 import com.joegec.joycon2android.androidkeys.HeldKeyRouter
 import com.joegec.joycon2android.androidkeys.OutputBindings
 import com.joegec.joycon2android.androidkeys.ShellAndroidKeyPresser
@@ -55,6 +56,7 @@ import com.joegec.joycon2android.buttonmapping.ObserveSingleJoyconBodiesUseCase
 import com.joegec.joycon2android.buttonmapping.SetProControllerUseCase
 import com.joegec.joycon2android.buttonmapping.SensitivityRepository
 import com.joegec.joycon2android.buttonmapping.SetSensitivityUseCase
+import com.joegec.joycon2android.buttonmapping.SetDeviceKeysPausedUseCase
 import com.joegec.joycon2android.buttonmapping.SetWiiControllerUseCase
 import com.joegec.joycon2android.buttonmapping.SetThrustUseCase
 import com.joegec.joycon2android.buttonmapping.WiiControllerDataStore
@@ -329,20 +331,25 @@ class AppContainer(context: Context) {
     private val observeMouseActionBindings = ObserveKeyBindingsUseCase(observeControllerMapping, observeWiiController) { entries, side, sideways ->
         entries.mouseActionBindings(side, sideways)
     }
+    private val deviceKeysPause = DeviceKeysPause()
+    val setDeviceKeysPaused = SetDeviceKeysPausedUseCase(deviceKeysPause)
+    private val deviceKeysActing = combine(outputRepository.running, deviceKeysPause.paused) { running, paused ->
+        running && !paused
+    }.stateIn(scope, SharingStarted.Eagerly, false)
     private val androidBindings = bindingsFor(observeAndroidKeyBindings)
     private val keyboardBindings = bindingsFor(observeKeyboardKeyBindings)
     private val mouseBindings = bindingsFor(observeMouseActionBindings)
 
     private val androidKeyRouter = AndroidKeyRouter(
-        bindings = OutputBindings(outputRepository.running, androidBindings),
+        bindings = OutputBindings(deviceKeysActing, androidBindings),
         padEnabled = gamepadRepository.enabled,
         keyboardEnabled = keyboardRepository.enabled,
         pressKey = ShellAndroidKeyPresser(scope, privilegedAccess::readyShell)::press,
     )
-    private val keyboardKeyRouter = HeldKeyRouter(OutputBindings(outputRepository.running, keyboardBindings)) { held ->
+    private val keyboardKeyRouter = HeldKeyRouter(OutputBindings(deviceKeysActing, keyboardBindings)) { held ->
         copy(keyboard = keyboard.copy(keys = held))
     }
-    private val mouseActions = OutputBindings(outputRepository.running, mouseBindings)
+    private val mouseActions = OutputBindings(deviceKeysActing, mouseBindings)
     private val mouseActionRouter = HeldKeyRouter(mouseActions) { held -> copy(mouseActions = held) }
     private val pushKeyboardFrame = PushKeyboardFrameUseCase(keyboardRepository)
 
@@ -392,6 +399,7 @@ class AppContainer(context: Context) {
             activeBodies.value = state.activePlayers.mapNotNull { it.body() }
             activePlayers = state.activePlayers
             hasActivePlayers.value = state.activePlayers.isNotEmpty()
+            deviceKeysPause.onFrame(state.activePlayers)
             val onDesk = mouseRouter.route(state)
             val routed = mouseActionRouter.route(onDesk, keyboardKeyRouter.route(onDesk, androidKeyRouter.route(onDesk)))
             pushKeyboardFrame(routed.keyboard)

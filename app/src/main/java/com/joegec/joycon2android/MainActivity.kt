@@ -141,6 +141,7 @@ class MainActivity : ComponentActivity() {
                     c.setThrust,
                     c.setSensitivity,
                     c.setProController,
+                    c.setDeviceKeysPaused,
                     c.saveCustomLayout,
                     c.saveGlobalLayout,
                     c.deleteCustomLayout,
@@ -255,6 +256,7 @@ class MainActivity : ComponentActivity() {
             ControllerMappingScreen(
                 state = it,
                 players = players,
+                liveInputs = viewModel.liveInputs,
                 actions = mappingActions,
                 onBack = onBack,
                 onInfoClick = if (route.fromDsu) ({ showDsuHelp = true }) else null,
@@ -280,6 +282,7 @@ class MainActivity : ComponentActivity() {
         setThrust = { body, enabled -> controllerMappingViewModel.setThrustEnabled(body, enabled) },
         setSensitivity = { body, percent -> controllerMappingViewModel.setSensitivityPercent(body, percent) },
         setProController = { body, enabled -> controllerMappingViewModel.setProControllerEnabled(body, enabled) },
+        setDeviceKeysPaused = { controllerMappingViewModel.pauseDeviceKeys(it) },
     )
 
     @Composable

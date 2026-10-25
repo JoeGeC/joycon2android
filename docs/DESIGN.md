@@ -131,6 +131,13 @@ In `JoyconScreen.kt`:
 
 - **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order:
   the console's own, then Android, Mouse, Keyboard.
+- **Tapping a row listens first** (`PressToMapDialog`): the next button or half-way stick push on
+  that player's controller replaces the row's sources, which is what pressing to bind means
+  everywhere else. **Choose from list** opens the dropdown, the only way to bind several. A press
+  the row doesn't offer (a stick on Android) is ignored. Live input reaches only the dialog
+  (`LiveController`), so the screen doesn't recompose per frame. Android, keyboard and mouse keys
+  pause while it's open and until the controller lets go, so a button bound to Back binds rather
+  than acting as it lifts.
 - **The Wii controller is one untitled `SegmentedChoice`, not switches**, on the Wii console:
   Wiimote, Sideways (lone Joy-Con only) and Classic exclude each other, so two switches
   would offer a combination that can't exist. The options name themselves, so it needs no title. The

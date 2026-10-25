@@ -20,6 +20,7 @@ import com.joegec.joycon2android.ui.components.SettingWarning
 internal fun KeyboardBindingSection(
     targets: List<Pair<String, String>>,
     state: PlayerMappingUiState,
+    controller: LiveController,
     actions: MappingActions,
     needsShizuku: Boolean,
     open: Boolean,
@@ -32,7 +33,7 @@ internal fun KeyboardBindingSection(
         if (needsShizuku) SettingWarning(stringResource(R.string.keyboard_keys_need_shizuku))
         if (LETTER_KEYS.any { it in bound }) SettingWarning(stringResource(R.string.keyboard_letters_hide_ime))
         val sources = MappingOptions.sources(state.body.side, MappingSection.KEYBOARD)
-        shown.forEach { (key, label) -> BindingRow(label, key, sources, state, actions) }
+        shown.forEach { (key, label) -> BindingRow(label, key, sources, state, controller, actions) }
         OptionDropdown(
             options = (targets - shown.toSet()).map { (key, label) -> DropdownOption(key, label) },
             selectedId = null,

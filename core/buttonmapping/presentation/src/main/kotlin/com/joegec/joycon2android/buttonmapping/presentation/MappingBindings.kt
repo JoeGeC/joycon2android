@@ -13,6 +13,7 @@ import com.joegec.joycon2android.ui.theme.Dimens
 fun MappingBindings(
     console: Console,
     state: PlayerMappingUiState,
+    controller: LiveController,
     actions: MappingActions,
     warnings: DeviceKeyWarnings = DeviceKeyWarnings(),
 ) {
@@ -23,8 +24,8 @@ fun MappingBindings(
             when {
                 targets.isEmpty() -> Unit
                 section == MappingSection.KEYBOARD ->
-                    KeyboardBindingSection(targets, state, actions, warnings.keyboardAndMouseNeedShizuku, open)
-                else -> BindingSection(section, targets, state, actions, shizukuWarning(section, warnings), open)
+                    KeyboardBindingSection(targets, state, controller, actions, warnings.keyboardAndMouseNeedShizuku, open)
+                else -> BindingSection(section, targets, state, controller, actions, shizukuWarning(section, warnings), open)
             }
         }
     }
@@ -35,6 +36,7 @@ private fun BindingSection(
     section: MappingSection,
     targets: List<Pair<String, String>>,
     state: PlayerMappingUiState,
+    controller: LiveController,
     actions: MappingActions,
     shizukuWarning: String?,
     open: Boolean,
@@ -42,7 +44,7 @@ private fun BindingSection(
     MappingSectionBox(section, open) {
         shizukuWarning?.let { SettingWarning(it) }
         val sources = MappingOptions.sources(state.body.side, section)
-        targets.forEach { (key, label) -> BindingRow(label, key, sources, state, actions) }
+        targets.forEach { (key, label) -> BindingRow(label, key, sources, state, controller, actions) }
     }
 }
 

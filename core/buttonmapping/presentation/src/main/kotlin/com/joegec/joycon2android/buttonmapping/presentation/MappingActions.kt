@@ -15,4 +15,5 @@ class MappingActions(
     val setThrust: (body: PlayerBody, enabled: Boolean) -> Unit,
     val setSensitivity: (body: PlayerBody, percent: Int) -> Unit,
     val setProController: (body: PlayerBody, enabled: Boolean) -> Unit,
+    val setDeviceKeysPaused: (paused: Boolean) -> Unit,
 )

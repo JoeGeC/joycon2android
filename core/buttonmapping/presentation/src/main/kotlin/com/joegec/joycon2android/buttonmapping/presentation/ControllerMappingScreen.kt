@@ -46,7 +46,9 @@ import com.joegec.joycon2android.ui.components.InfoBox
 import com.joegec.joycon2android.ui.components.LocalTips
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
+import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerState
+import kotlinx.coroutines.flow.StateFlow
 import com.joegec.joycon2android.ui.components.ConfirmDialog
 import com.joegec.joycon2android.ui.components.TextInputDialog
 import com.joegec.joycon2android.ui.theme.CardBg
@@ -58,6 +60,7 @@ import com.joegec.joycon2android.ui.theme.TextTitle
 fun ControllerMappingScreen(
     state: ControllerMappingUiState,
     players: List<PlayerState>,
+    liveInputs: StateFlow<Map<String, JoyconInput>>,
     actions: MappingActions,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -102,7 +105,7 @@ fun ControllerMappingScreen(
                 if (connected != null) {
                     PlayerMappingCard(
                         console = state.console,
-                        player = connected,
+                        controller = LiveController(connected, liveInputs),
                         state = player,
                         labels = labels,
                         actions = actions,

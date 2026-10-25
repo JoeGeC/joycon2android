@@ -13,6 +13,7 @@ import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.SaveCustomLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SaveGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
+import com.joegec.joycon2android.buttonmapping.SetDeviceKeysPausedUseCase
 import com.joegec.joycon2android.buttonmapping.SetProControllerUseCase
 import com.joegec.joycon2android.buttonmapping.SetSensitivityUseCase
 import com.joegec.joycon2android.buttonmapping.SetThrustUseCase
@@ -40,6 +41,7 @@ class ControllerMappingViewModel(
     private val setThrust: SetThrustUseCase,
     private val setSensitivity: SetSensitivityUseCase,
     private val setProController: SetProControllerUseCase,
+    private val setDeviceKeysPaused: SetDeviceKeysPausedUseCase,
     private val saveCustomLayout: SaveCustomLayoutUseCase,
     private val saveGlobalLayout: SaveGlobalLayoutUseCase,
     private val deleteCustomLayout: DeleteCustomLayoutUseCase,
@@ -83,6 +85,8 @@ class ControllerMappingViewModel(
     fun setProControllerEnabled(body: PlayerBody, enabled: Boolean) = onTarget {
         setProController(it.console, body, enabled)
     }
+
+    fun pauseDeviceKeys(paused: Boolean) = setDeviceKeysPaused(paused)
 
     /** Null means the whole session. */
     fun saveLayout(body: PlayerBody?, name: String) = onTarget { target ->

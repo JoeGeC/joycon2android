@@ -8,6 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,16 +38,19 @@ internal fun MappingSectionBox(section: MappingSection, open: Boolean, content: 
     }
 }
 
-/** One target and every source bound to it, stored as [targetKey] in the player's mapping. */
+/** One target and every source bound to it, stored as [targetKey]. A tap listens for a press first; a press replaces them all. */
 @Composable
 internal fun BindingRow(
     label: String,
     targetKey: String,
     sources: List<Pair<String, String>>,
     state: PlayerMappingUiState,
+    controller: LiveController,
     actions: MappingActions,
 ) {
     val selectedIds = sourceIdsOf(state.mapping[targetKey].orEmpty())
+    var listening by remember { mutableStateOf(false) }
+    var picking by remember { mutableStateOf(false) }
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
@@ -56,7 +63,28 @@ internal fun BindingRow(
             onToggle = { toggled ->
                 actions.setMapping(state.body, targetKey, sourceIdOf(selectedIds.toggling(toggled)))
             },
+            expanded = picking,
+            onExpandedChange = { open -> if (open) listening = true else picking = false },
             modifier = Modifier.weight(1f),
+        )
+    }
+    if (listening) {
+        PressToMapDialog(
+            targetLabel = label,
+            controller = controller,
+            side = state.body.side,
+            heldSideways = state.wiiController.heldSideways,
+            offeredIds = sources.mapTo(mutableSetOf()) { it.first },
+            pauseDeviceKeys = actions.setDeviceKeysPaused,
+            onPressed = { sourceId ->
+                listening = false
+                actions.setMapping(state.body, targetKey, sourceIdOf(listOf(sourceId)))
+            },
+            onChooseFromList = {
+                listening = false
+                picking = true
+            },
+            onDismiss = { listening = false },
         )
     }
 }
