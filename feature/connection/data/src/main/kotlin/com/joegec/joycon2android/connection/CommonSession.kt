@@ -87,6 +87,10 @@ internal class CommonSession(
         if (ready) sendPlayerLed()
     }
 
+    override fun vibrate(sample: VibrationSample) {
+        if (ready) ops.enqueue { write(ControllerCommands.vibrationSample(sample)) }
+    }
+
     override fun setHighPriority(enabled: Boolean) {
         val priority = if (enabled) {
             BluetoothGatt.CONNECTION_PRIORITY_HIGH

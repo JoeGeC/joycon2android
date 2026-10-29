@@ -16,6 +16,7 @@ interface ControllerRepository {
     fun disconnect(address: String)
     fun disconnectAll()
     fun setPlayerLed(address: String, player: PlayerNumber?)
+    fun vibrate(address: String, sample: VibrationSample)
 
     /** Null returns the controller to the type its advertisement named. */
     fun setControllerType(address: String, model: ControllerModel?)

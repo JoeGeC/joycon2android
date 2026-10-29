@@ -6,6 +6,7 @@ import android.util.Log
 import com.joegec.joycon2android.connection.ControllerCommands
 import com.joegec.joycon2android.connection.ControllerProtocol
 import com.joegec.joycon2android.connection.GattOpQueue
+import com.joegec.joycon2android.connection.VibrationSample
 import com.joegec.joycon2android.connection.SpiColorParser
 import com.joegec.joycon2android.model.JoyconInput
 import java.util.UUID
@@ -72,6 +73,10 @@ internal class ConsoleSession(
     override fun setPlayerLed(bitmask: Byte) {
         ledBitmask = bitmask
         submit { transport.send(ControllerCommands.playerLed(bitmask)) }
+    }
+
+    override fun vibrate(sample: VibrationSample) {
+        submit { transport.send(ControllerCommands.vibrationSample(sample)) }
     }
 
     override fun onCharacteristicChanged(uuid: UUID, value: ByteArray) {

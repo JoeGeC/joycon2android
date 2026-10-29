@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.session
 
 import com.joegec.joycon2android.connection.ControllerRepository
+import com.joegec.joycon2android.connection.VibrationSample
 import com.joegec.joycon2android.assignment.AssignmentRepository
 import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerStateResolver
@@ -51,6 +52,7 @@ class SessionCoordinator(
         val side = controllers.controllers.value.find { it.address == address }?.side ?: return
         if (!assignments.assign(address, side, player)) return
         controllers.setPlayerLed(address, player)
+        controllers.vibrate(address, VibrationSample.CLICK)
         onPlayerAssigned(player)
     }
 

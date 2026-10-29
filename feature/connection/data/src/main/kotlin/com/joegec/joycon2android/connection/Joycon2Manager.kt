@@ -96,6 +96,10 @@ class Joycon2Manager(
         if (player != null) connection.setPlayerLed(player) else connection.clearPlayerLed()
     }
 
+    override fun vibrate(address: String, sample: VibrationSample) {
+        pool.get(address)?.vibrate(sample)
+    }
+
     override fun setControllerType(address: String, model: ControllerModel?) {
         scope.launch { typePreferences.set(address, model) }
         val connection = pool.get(address) ?: return

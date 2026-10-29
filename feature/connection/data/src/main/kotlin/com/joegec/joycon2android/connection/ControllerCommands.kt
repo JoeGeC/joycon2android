@@ -27,6 +27,13 @@ internal object ControllerCommands {
 
     fun playerLed(bitmask: Byte) = command(0x09, 0x07, byteArrayOf(bitmask) + ByteArray(7))
 
+    fun vibrationSample(sample: VibrationSample) = command(0x0A, 0x02, byteArrayOf(sample.id, 0x00, 0x00, 0x00))
+
+    private val VibrationSample.id: Byte
+        get() = when (this) {
+            VibrationSample.CLICK -> 0x03
+        }
+
     fun spiRead(length: Int, address: Int, transport: Int = BLUETOOTH) = command(
         0x02, 0x04,
         byteArrayOf(length.toByte(), 0x7E, 0x00, 0x00) + littleEndian(address),

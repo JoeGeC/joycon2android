@@ -8,6 +8,7 @@ internal interface ControllerProtocol {
     fun stop()
     fun onCharacteristicChanged(uuid: UUID, value: ByteArray)
     fun setPlayerLed(bitmask: Byte)
+    fun vibrate(sample: VibrationSample)
     fun setHighPriority(enabled: Boolean)
     fun onPairingFailed() {}
 }

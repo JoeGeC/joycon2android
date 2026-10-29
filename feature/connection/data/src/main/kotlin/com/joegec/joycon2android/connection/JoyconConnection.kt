@@ -131,6 +131,10 @@ class JoyconConnection(
         protocol?.setPlayerLed(ControllerCommands.LED_ALL_ON)
     }
 
+    fun vibrate(sample: VibrationSample) {
+        protocol?.vibrate(sample)
+    }
+
     /** A scan found this controller while it was awaited, so connect now rather than on its own time. */
     fun reconnect(device: BluetoothDevice) {
         if (!awaitingReturn) return

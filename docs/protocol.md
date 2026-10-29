@@ -169,6 +169,29 @@ What the app does with it: [virtual-gamepad.md](virtual-gamepad.md#mouse).
 The mask's low nibble lights P1–P4 solid (`0x01`, `0x02`, `0x04`, `0x08`), its high nibble flashes
 them (`0x10` … `0x80`). `0xF0`, all flashing, is the controller's default cycling animation.
 
+## Vibration
+
+Stored effects, from [ndeadly/switch2_controller_research](https://github.com/ndeadly/switch2_controller_research/blob/master/commands.md#command-0x0a---vibration):
+
+```
+0A 91 01 02 00 04 00 00 <sample> 00 00 00
+```
+
+| Sample | Effect | The console's use |
+|---|---|---|
+| `0x00` | silence, stops a playing sample | |
+| `0x01` | low buzz, ~1 s | |
+| `0x02` | high buzz, then a beep-beep alarm | Search for controllers |
+| `0x03` | soft click-click | connection |
+| `0x04` | rising beep-beep | low battery? |
+| `0x05` | `0x03`, stronger | |
+| `0x06` | short high beep | |
+| `0x07` | short higher beep | |
+
+The app plays `0x03` when a controller is assigned to a player. Free-form HD rumble goes to a
+separate vibration characteristic (`289326cb-…` left, `fa19b0fb-…` right) as 16 packed bytes whose
+encoding is not documented.
+
 ### Analog triggers
 
 The NSO GameCube controller's L and R travel to a **first stop**, where analog travel ends, then

@@ -4,6 +4,7 @@ import com.joegec.joycon2android.assignment.AssignmentRepository
 import com.joegec.joycon2android.assignment.ComboAssignmentDetector
 import com.joegec.joycon2android.assignment.PlayerStateResolver
 import com.joegec.joycon2android.connection.ControllerRepository
+import com.joegec.joycon2android.connection.VibrationSample
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
@@ -61,6 +62,7 @@ class SessionCoordinatorTypeTest {
         override fun disconnect(address: String) = Unit
         override fun disconnectAll() = Unit
         override fun setPlayerLed(address: String, player: PlayerNumber?) = Unit
+        override fun vibrate(address: String, sample: VibrationSample) = Unit
         override fun setControllerType(address: String, model: ControllerModel?) {
             typeChanges += address to model
         }
