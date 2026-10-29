@@ -19,8 +19,9 @@ class ConnectionPool(private val context: Context) {
 
     var onPoolChanged: (() -> Unit)? = null
 
-    val all: Map<String, JoyconConnection> get() = connections.toMap()
-    val addresses: Set<String> get() = connections.keys.toSet()
+    // Copied by iterating: Kotlin's toMap and toSet trust a size read first, which a disconnect can falsify.
+    val all: Map<String, JoyconConnection> get() = HashMap(connections)
+    val addresses: Set<String> get() = HashSet(connections.keys)
     val size: Int get() = connections.size
 
     /** Null for an address already in the pool; one awaiting its controller's return reconnects instead. */
