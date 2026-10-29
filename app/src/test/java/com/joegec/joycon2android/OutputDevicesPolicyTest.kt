@@ -14,11 +14,12 @@ class OutputDevicesPolicyTest {
     private val scope = CoroutineScope(Dispatchers.Unconfined)
     private val devices = MutableStateFlow(emptySet<OutputDevice>())
     private val hasPlayers = MutableStateFlow(true)
+    private val shellUp = MutableStateFlow(true)
     private val pad = mutableListOf<Boolean>()
     private val motion = mutableListOf<Boolean>()
 
     init {
-        OutputDevicesPolicy(scope, devices, hasPlayers, { pad += it }, { motion += it }).start()
+        OutputDevicesPolicy(scope, devices, hasPlayers, shellUp, { pad += it }, { motion += it }).start()
     }
 
     @After
@@ -42,5 +43,24 @@ class OutputDevicesPolicyTest {
         hasPlayers.value = true
 
         assertEquals(listOf(false, true, false, true), pad)
+    }
+
+    @Test
+    fun `the pad tries again when Shizuku comes up`() {
+        devices.value = setOf(OutputDevice.PAD)
+        shellUp.value = false
+        pad.clear()
+        shellUp.value = true
+
+        assertEquals(listOf(true), pad)
+    }
+
+    @Test
+    fun `the pad stops and tries again when Shizuku goes`() {
+        devices.value = setOf(OutputDevice.PAD)
+        pad.clear()
+        shellUp.value = false
+
+        assertEquals(listOf(false, true), pad)
     }
 }

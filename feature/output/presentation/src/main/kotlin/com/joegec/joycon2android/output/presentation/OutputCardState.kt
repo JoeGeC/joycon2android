@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.output.presentation
 
+import com.joegec.joycon2android.output.DeviceKeyKind
 import com.joegec.joycon2android.output.EmulatorTarget
 import com.joegec.joycon2android.output.OutputDevice
 import com.joegec.joycon2android.output.OutputMode
@@ -19,6 +20,9 @@ data class OutputCardState(
     val motionDetail: String? = null,
     /** Some controller is connected, but none has the Joy-Con 2's mouse sensor. */
     val noPointerController: Boolean = false,
+    val shizukuAvailable: Boolean = true,
+    /** What the active mapping presses besides the tab's own output. */
+    val mappedKeys: Set<DeviceKeyKind> = emptySet(),
 ) {
     fun emulatorsFor(mode: OutputMode): List<EmulatorTarget> = emulators[mode].orEmpty()
 

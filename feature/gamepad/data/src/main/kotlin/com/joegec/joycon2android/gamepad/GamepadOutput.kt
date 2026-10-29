@@ -41,6 +41,7 @@ class GamepadOutput(
 
     override fun disable() {
         _enabled.value = false
+        _error.value = null
         shell = null
         gamepadManager.destroyAll()
     }

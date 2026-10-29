@@ -391,6 +391,8 @@ class MainActivity : ComponentActivity() {
         val keyboardEnabled by gamepadViewModel.keyboardEnabled.collectAsState()
         val mouseEnabled by gamepadViewModel.mouseEnabled.collectAsState()
         val dsuStatus by dsuViewModel.status.collectAsState()
+        val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
+        val mappedKeys by container.mappedKeys.collectAsState()
         val live = buildSet {
             if (gamepadStatus.enabled) add(OutputDevice.PAD)
             if (dsuStatus.enabled) add(OutputDevice.MOTION)
@@ -408,6 +410,8 @@ class MainActivity : ComponentActivity() {
                 error = gamepadStatus.error ?: dsuStatus.error,
                 motionDetail = if (dsuStatus.enabled) dsuPortText(dsuStatus.clientCount) else null,
                 noPointerController = players.any { it.hasController } && players.none { it.canMovePointer },
+                shizukuAvailable = shizukuAvailable,
+                mappedKeys = mappedKeys,
             ),
             actions = OutputCardActions(
                 toggle = outputViewModel::toggle,

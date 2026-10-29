@@ -135,7 +135,7 @@ One **Output** card picks what runs. Each tab is one output, so its setup has on
   act while the output runs, whichever devices are up, unless paused (`DeviceKeysPause`, while the
   mapping editor listens for a press).
 - **`:app` runs it.** `AppContainer` derives the planned devices; `OutputDevicesPolicy` starts the pad
-  (with players to give it, again when one returns) and DSU; `PrivilegedDevicePolicy` the keyboard
+  (with players to give it, again when one returns or Shizuku comes or goes) and DSU; `PrivilegedDevicePolicy` the keyboard
   and mouse, which also need Shizuku.
 - **On as players arrive** (`OutputAutoStartPolicy`): the first player assigned switches it on.
   Switched off by hand, it stays off until every player leaves and one returns. The switch isn't kept

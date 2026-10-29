@@ -125,6 +125,10 @@ In `JoyconScreen.kt`:
 - **The subtitle names what is running:** "Active — Virtual gamepad", "Active — Mouse & keys", or
   DSU's port and listening emulators on the Motion tab. A warning, such as DSU's slot limit, sits at
   the bottom.
+- **A tab whose output needs Shizuku says so** in the card's red error line while it runs without
+  Shizuku: the virtual gamepad from its failed start, Mouse & keys from Shizuku's absence, since the
+  keyboard and mouse wait for Shizuku rather than fail. Motion names what its mapping presses that
+  needs it ("Shizuku is needed for mouse and keyboard"). The line follows Shizuku and the tab.
 - **Long tab names wrap** to two centred lines at phone width rather than cut off.
 - **Mouse & keys warns when nothing can move the pointer**: a `SettingWarning` under Mapping while
   every connected controller lacks the Joy-Con 2's mouse sensor (Pro, GameCube, third-party), so

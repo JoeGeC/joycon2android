@@ -44,7 +44,7 @@ fun OutputCard(
         title = stringResource(R.string.output_title),
         subtitle = subtitle(state),
         checked = state.running,
-        error = state.error,
+        error = state.error ?: shizukuError(state),
         onToggle = actions.toggle,
         modifier = modifier,
     ) {

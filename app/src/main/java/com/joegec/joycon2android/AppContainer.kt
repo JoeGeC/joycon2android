@@ -125,6 +125,7 @@ import com.joegec.joycon2android.gamepad.mouse.SetMouseEnabledUseCase
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.mouse.MouseMix
 import com.joegec.joycon2android.model.PlayerState
+import com.joegec.joycon2android.output.DeviceKeyKind
 import com.joegec.joycon2android.output.EmulatorTarget
 import com.joegec.joycon2android.output.ObserveOutputRunningUseCase
 import com.joegec.joycon2android.output.ObserveOutputSelectionUseCase
@@ -353,11 +354,20 @@ class AppContainer(context: Context) {
     private val mouseActionRouter = HeldKeyRouter(mouseActions) { held -> copy(mouseActions = held) }
     private val pushKeyboardFrame = PushKeyboardFrameUseCase(keyboardRepository)
 
+    val mappedKeys: StateFlow<Set<DeviceKeyKind>> =
+        combine(androidBindings, keyboardBindings, mouseBindings) { android, keyboard, mouse ->
+            buildSet {
+                if (mouse.anyBound()) add(DeviceKeyKind.MOUSE)
+                if (keyboard.anyBound()) add(DeviceKeyKind.KEYBOARD)
+                if (android.anyBound()) add(DeviceKeyKind.ANDROID)
+            }
+        }.stateIn(scope, SharingStarted.Eagerly, emptySet())
+
     // The keyboard is the Android keys' fast path, so they need it as keyboard keys do.
-    private val mappedDevices = combine(androidBindings, keyboardBindings, mouseBindings) { android, keyboard, mouse ->
+    private val mappedDevices = mappedKeys.map { kinds ->
         buildSet {
-            if (android.anyBound() || keyboard.anyBound()) add(OutputDevice.KEYBOARD)
-            if (mouse.anyBound()) add(OutputDevice.MOUSE)
+            if (DeviceKeyKind.ANDROID in kinds || DeviceKeyKind.KEYBOARD in kinds) add(OutputDevice.KEYBOARD)
+            if (DeviceKeyKind.MOUSE in kinds) add(OutputDevice.MOUSE)
         }
     }
     private val plannedDevices: StateFlow<Set<OutputDevice>> =
@@ -424,6 +434,7 @@ class AppContainer(context: Context) {
         scope = scope,
         devices = plannedDevices,
         hasPlayers = hasActivePlayers,
+        privilegedShellAvailable = observeShizukuAvailability(),
         setPad = { on -> if (on) enableGamepad(activePlayers) else disableGamepad() },
         setMotion = { on -> if (on) enableDsu() else disableDsu() },
     ).also { it.start() }
