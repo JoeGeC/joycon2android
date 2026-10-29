@@ -20,6 +20,7 @@ as an ordinary gamepad.
 - **Up to 8 players** — each with a sideways Joy-Con, a pair, or a Pro Controller.
 - **A gamepad per player** — every app sees one standard controller per player, so multiplayer just
   works.
+- **Rumble** — a game's rumble reaches the controller as HD rumble, through the virtual gamepad.
 - **Motion for emulators** — a DSU (cemuhook) server streams gyro, accelerometer, buttons and sticks
   for players 1–4.
 - **One-tap emulator setup** — writes controller and motion bindings for Eden and Dolphin.
@@ -127,7 +128,7 @@ the emulator afterwards — it only reads its config when it starts.
 
 | Tab | Emulators | What it writes |
 |---|---|---|
-| Virtual gamepad | Dolphin (GameCube), Eden, Eden Nightly | buttons and sticks; analog L/R for a GameCube controller |
+| Virtual gamepad | Dolphin (GameCube), Eden, Eden Nightly | buttons, sticks and rumble; analog L/R for a GameCube controller |
 | Motion (DSU) | Dolphin (Wii), Eden, Eden Nightly | buttons, sticks and motion |
 
 The gamepad button beside **Set up** (**Mapping** on Mouse & keys) opens the mapping editor, with a card per connected player —
@@ -309,6 +310,8 @@ shoulder buttons its body lacks.
 | Controller shows "Connection lost" | Press SYNC on it and it reconnects to the same player by itself, or tap Scan. After two minutes it's removed |
 | Controllers drop when a game starts | Some phones clear background apps when a game launches. Tap the yellow banner at the top to let the app run in the background (or set its battery use to unrestricted), and exclude it from the game launcher's cleanup |
 | Gamepad doesn't show up in games | Check `adb shell getevent -p` lists "Joy-Con Virtual Gamepad" |
+| No rumble in Eden, or the phone vibrates instead | Tap **Set up** for Eden again, or turn off **Use system vibrator** in Eden's controller settings |
+| No rumble on an AYN Thor or Odin | Switch the output off and on: the firmware swaps in a copy of the gamepad that can't rumble, and the app stops that only as it creates the gamepad |
 | No DSUClient device in the emulator | Check the server address, restart the emulator and open a mapping screen; `adb logcat -s DsuServer` shows whether it's connecting |
 | Emulator won't detect DSU presses | Pick inputs from the list — detection never sees DSU — with the virtual gamepad off |
 | Motion aiming stutters | Settings (gear, top right): keep **Ignore this device's motion in Eden** and **Faster controller updates** on |
@@ -330,7 +333,7 @@ Start with [CONTRIBUTING.md](CONTRIBUTING.md), then the [docs](docs/README.md):
 
 - [Architecture](docs/architecture.md) and [adding a feature](docs/adding-a-feature.md)
 - [BLE protocol](docs/protocol.md) — identifiers, packets, Android BLE gotchas
-- [Virtual gamepad](docs/virtual-gamepad.md) — UHID, keycodes, sideways Joy-Cons
+- [Virtual gamepad](docs/virtual-gamepad.md) — uinput, keycodes, rumble, sideways Joy-Cons
 - [DSU motion](docs/dsu-motion.md) — slots, motion frames, emulator mapping details
 - [Debug tools](tools/README.md) — a DSU client for inspecting the stream
 
@@ -360,6 +363,9 @@ Built on the community's reverse-engineering work, in particular:
 - **[cemuhook protocol docs](https://v1993.github.io/cemuhook-protocol/)** by v1993 — the DSU wire
   format.
 - **[Shizuku](https://shizuku.rikka.app/)** by RikkaApps — privileged access without root.
+- **[switch2_controller_research](https://github.com/ndeadly/switch2_controller_research)** by
+  ndeadly, **[switch2-controllers](https://github.com/Nadeflore/switch2-controllers)** by Nadeflore and
+  **[SDL](https://github.com/libsdl-org/SDL)** — the Switch 2 vibration commands and HD rumble format.
 
 ## License
 

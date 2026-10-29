@@ -7,12 +7,13 @@ import com.joegec.joycon2android.connection.data.R
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.Rumble
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -98,6 +99,10 @@ class Joycon2Manager(
 
     override fun vibrate(address: String, sample: VibrationSample) {
         pool.get(address)?.vibrate(sample)
+    }
+
+    override fun rumble(address: String, rumble: Rumble) {
+        pool.get(address)?.rumble(rumble)
     }
 
     override fun setControllerType(address: String, model: ControllerModel?) {

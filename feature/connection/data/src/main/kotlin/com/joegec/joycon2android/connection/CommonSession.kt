@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothStatusCodes
 import android.os.Build
 import android.util.Log
 import com.joegec.joycon2android.model.JoyconInput
+import com.joegec.joycon2android.model.Rumble
 import com.joegec.joycon2android.model.Side
 import java.util.UUID
 
@@ -46,6 +47,10 @@ internal class CommonSession(
     @Volatile private var ledBitmask = initialLedBitmask
     private var ledSentAfterFirstPacket = false
     private var rumbleCounter = 0
+    private val rumbleStream = RumbleStream(::sendRumble)
+
+    // A frame still queued is dropped, so a slow link falls behind by one frame, not a backlog.
+    @Volatile private var rumbleQueued = false
 
     override fun start() {
         channel.write.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
@@ -65,6 +70,7 @@ internal class CommonSession(
     }
 
     override fun stop() {
+        rumbleStream.set(Rumble.OFF)
         ready = false
     }
 
@@ -94,12 +100,24 @@ internal class CommonSession(
         VibrationPlayback.steps(sample).forEach { step -> ops.enqueue(step.gapMs) { play(step) } }
     }
 
+    override fun rumble(rumble: Rumble) = rumbleStream.set(rumble)
+
+    private fun sendRumble(rumble: Rumble) {
+        if (!ready || rumbleQueued) return
+        rumbleQueued = true
+        ops.enqueue {
+            rumbleQueued = false
+            writeRumble(HdRumble.packet(rumbleCounter++, rumble, channel.rumbleMotors))
+        }
+    }
+
     private fun play(step: VibrationPlayback.Step): Boolean = when (step) {
         is VibrationPlayback.Sample -> write(step.command)
-        is VibrationPlayback.Rumble -> channel.vibration?.let {
-            write(it, HdRumble.packet(rumbleCounter++, step.amplitude, channel.rumbleMotors))
-        } ?: false
+        is VibrationPlayback.Rumble ->
+            writeRumble(HdRumble.packet(rumbleCounter++, step.amplitude, step.amplitude, channel.rumbleMotors))
     }
+
+    private fun writeRumble(packet: ByteArray): Boolean = channel.vibration?.let { write(it, packet) } ?: false
 
     override fun setHighPriority(enabled: Boolean) {
         val priority = if (enabled) {

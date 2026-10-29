@@ -4,6 +4,7 @@ import com.joegec.joycon2android.gamepad.privileged.PrivilegedShell
 import android.content.Context
 import android.util.Log
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.Rumble
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -11,17 +12,24 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class GamepadManager(private val scope: CoroutineScope, private val context: Context) {
+class GamepadManager(
+    private val scope: CoroutineScope,
+    private val context: Context,
+    private val onRumble: (PlayerNumber, Rumble) -> Unit,
+) {
 
-    private val devices = mutableMapOf<PlayerNumber, UhidRelay>()
+    private val devices = mutableMapOf<PlayerNumber, UinputRelay>()
     private val reportJobs = mutableMapOf<PlayerNumber, Job>()
 
     val activeCount: Int get() = devices.size
 
     suspend fun createGamepad(player: PlayerNumber, shell: PrivilegedShell): Boolean = withContext(Dispatchers.IO) {
         if (player in devices) return@withContext true
+        AynPadRepublishing.skipNextPad(shell)
 
-        val device = UhidRelay(GamepadDescriptor.device(player.index))
+        val device = UinputRelay(GamepadDescriptor.device(player.index)) { strong, weak ->
+            onRumble(player, Rumble(strong / MAX_MAGNITUDE, weak / MAX_MAGNITUDE))
+        }
         val success = device.create(context, shell)
 
         if (success) {
@@ -37,7 +45,7 @@ class GamepadManager(private val scope: CoroutineScope, private val context: Con
         reportJobs[player]?.cancel()
         val device = devices[player] ?: return
         reportJobs[player] = scope.launch(Dispatchers.Default) {
-            frames.collect { device.sendReport(ReportMapper.buildReport(it)) }
+            frames.collect { device.send(GamepadEvents.of(it)) }
         }
     }
 
@@ -45,6 +53,7 @@ class GamepadManager(private val scope: CoroutineScope, private val context: Con
         reportJobs.remove(player)?.cancel()
         // Teardown writes a shutdown packet; over ADB that's a TLS socket, so off-main
         val device = devices.remove(player) ?: return
+        onRumble(player, Rumble.OFF)
         scope.launch(Dispatchers.IO) { device.destroy() }
         Log.i(TAG, "Destroyed virtual gamepad for ${player.name}")
     }
@@ -53,6 +62,7 @@ class GamepadManager(private val scope: CoroutineScope, private val context: Con
         reportJobs.values.forEach { it.cancel() }
         reportJobs.clear()
         val toDestroy = devices.values.toList()
+        devices.keys.forEach { onRumble(it, Rumble.OFF) }
         devices.clear()
         if (toDestroy.isNotEmpty()) scope.launch(Dispatchers.IO) { toDestroy.forEach { it.destroy() } }
         Log.i(TAG, "Destroyed all virtual gamepads")
@@ -60,5 +70,6 @@ class GamepadManager(private val scope: CoroutineScope, private val context: Con
 
     companion object {
         private const val TAG = "GamepadManager"
+        private const val MAX_MAGNITUDE = 65535f
     }
 }

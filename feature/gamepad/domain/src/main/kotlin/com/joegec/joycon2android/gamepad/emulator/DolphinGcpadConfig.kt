@@ -78,6 +78,10 @@ object DolphinGcpadConfig {
         "Triggers/R-Analog = `Axis 22+`",
     )
 
+    // The pad's first vibrator: docs/virtual-gamepad.md#rumble
+    private const val RUMBLE_KEY = "Rumble/Motor"
+    private const val RUMBLE_LINE = "$RUMBLE_KEY = `Motor 0`"
+
     fun merge(
         existing: String?,
         players: List<PlayerState>,
@@ -88,19 +92,22 @@ object DolphinGcpadConfig {
         return calibrateHandMapped(merged, players)
     }
 
-    // Setup leaves a Pro Controller's section to the player, so it only adds the calibration, and only
-    // to a section the player has already made.
+    // Setup leaves a Pro Controller's section to the player, so it only adds the calibration and a
+    // missing rumble, and only to a section the player has already made.
     private fun calibrateHandMapped(ini: String, players: List<PlayerState>): String =
         players.filter { !it.isSetUpByApp && it.player.index in 1..4 }
             .map { sectionFor(it.player.index) }
             .filter { IniEditor.hasSection(ini, it) }
             .fold(ini) { result, section ->
-                IniEditor.setKeys(result, section, calibrationFor(result, section, STICK_PREFIXES.values))
+                IniEditor.setKeys(result, section, calibrationFor(result, section, STICK_PREFIXES.values) + rumbleFor(result, section))
             }
 
     private fun calibrationFor(existing: String?, section: String, sticks: Collection<String>): Map<String, String> =
         sticks.map { "$it/Calibration" }
             .associateWith { IniEditor.valueOf(existing, section, it) ?: FULL_CIRCLE_CALIBRATION }
+
+    private fun rumbleFor(existing: String?, section: String): Map<String, String> =
+        mapOf(RUMBLE_KEY to (IniEditor.valueOf(existing, section, RUMBLE_KEY) ?: "`Motor 0`"))
 
     fun mergeCore(existing: String?, players: List<PlayerState>): String {
         val siDevices = players
@@ -145,7 +152,7 @@ object DolphinGcpadConfig {
         val calibration = calibrationFor(existing, sectionFor(index), boundSticks)
             .map { (key, value) -> "$key = $value" }
         val analogTriggers = if (player.hasAnalogTriggers) ANALOG_TRIGGER_LINES else emptyList()
-        return (listOf(device) + bindings + calibration + analogTriggers).joinToString("\n", postfix = "\n")
+        return (listOf(device) + bindings + calibration + analogTriggers + RUMBLE_LINE).joinToString("\n", postfix = "\n")
     }
 
     private fun lines(side: JoyconSide, mapping: Map<String, String>): List<String> {

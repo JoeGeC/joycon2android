@@ -48,7 +48,7 @@ plugins in `build-logic/convention/` ([which to use](adding-a-feature.md#the-con
 - domain-only transforms (e.g. `SideInference`, `ComboAssignmentDetector`)
 
 **`data`** — the repository **implementations** and everything they need: BLE/GATT, the UHID
-relay, the DSU UDP server, byte/wire parsers, framework access. Depends only on its own domain.
+and uinput relays, the DSU UDP server, byte/wire parsers, framework access. Depends only on its own domain.
 
 **`presentation`** — the feature's `ViewModel` and Compose UI. Depends only on its own domain
 (for the use cases + models) and `:core:designsystem`. Cannot see `data`.
@@ -234,7 +234,7 @@ BLE notify ─→ Joycon2Manager (connection/data, ControllerRepository)
                    │             └─→ HeldKeyRouter × 2 (keyboard keys, mouse actions; withholds their sources)
                    │                    ├─→ PushKeyboardFrameUseCase ─→ KeyboardOutput ─→ UHID relay
                    │                    ├─→ MouseMix ─→ PushMouseFrameUseCase ─→ MouseOutput ─→ UHID relay
-                   │                    ├─→ PushGamepadStateUseCase  ─→ GamepadOutput  ─→ UHID relay ─→ /dev/uhid
+                   │                    ├─→ PushGamepadStateUseCase  ─→ GamepadOutput  ─→ uinput relay ─→ /dev/uinput
                    │                    └─→ PushDsuPadDataUseCase    ─→ DsuServer     ─→ UDP :26760 ─→ emulators
                    └─→ ObserveSessionUseCase   ─→ Joycon2ViewModel ─→ AppUiState ─→ Compose
 ```

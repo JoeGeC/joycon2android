@@ -212,6 +212,12 @@ Switch 2 codec, bit packing and frequencies from SDL's `SDL_hidapi_switch2.c`:
 - The GameCube controller takes 4 bytes in another format, on `3f8fb670-ab25-45bf-b540-38c72834d064`;
   the app doesn't rumble it.
 
+A virtual gamepad's rumble ([virtual-gamepad.md](virtual-gamepad.md#rumble)) streams through
+`RumbleStream`: a packet every 12 ms while either motor is on, then one at zero. A packet still
+waiting in the GATT queue is skipped rather than stacked. A game's 0–1 scales to `0x060`: at SDL's
+cap, `0x1C4`, and at `0x0C0` and `0x080`, Dolphin's and Eden's rumble felt too strong (AYN Thor, Joy-Con 2,
+2026-10-29).
+
 When the mapping editor binds a press, the app plays three packets at amplitude `0x040` 12 ms apart, then
 silence: a ~36 ms faint buzz (`VibrationPlayback`). Clones are untested.
 

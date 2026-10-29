@@ -260,7 +260,11 @@ class AppContainer(context: Context) {
     // --- Gamepad + privileged access ---
     private val privilegedAccess = PrivilegedAccess()
     private val gamepadRepository: GamepadRepository =
-        GamepadOutput(scope, GamepadManager(scope, appContext), privilegedAccess::acquire)
+        GamepadOutput(
+            scope,
+            GamepadManager(scope, appContext, ControllerRumble(controllerRepository) { activePlayers }::play),
+            privilegedAccess::acquire,
+        )
 
     private val enableGamepad = EnableGamepadUseCase(gamepadRepository)
     private val disableGamepad = DisableGamepadUseCase(gamepadRepository)

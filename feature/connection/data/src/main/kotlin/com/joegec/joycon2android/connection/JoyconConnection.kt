@@ -17,11 +17,12 @@ import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.JoyconConnectionState
 import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.Rumble
 import com.joegec.joycon2android.model.Side
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.UUID
 
 @SuppressLint("MissingPermission")
 class JoyconConnection(
@@ -133,6 +134,10 @@ class JoyconConnection(
 
     fun vibrate(sample: VibrationSample) {
         protocol?.vibrate(sample)
+    }
+
+    fun rumble(rumble: Rumble) {
+        protocol?.rumble(rumble)
     }
 
     /** A scan found this controller while it was awaited, so connect now rather than on its own time. */

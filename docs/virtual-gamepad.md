@@ -2,20 +2,45 @@
 
 How each player becomes a system gamepad, and why emulator bindings look the way they do.
 
-## UHID
+## uinput
 
-The app creates gamepads through Linux's UHID (user-space HID) interface:
+Each player's gamepad is a Linux uinput device, so it can declare rumble (`FF_RUMBLE`), which
+Android then offers apps as two vibrators. The [mouse](#mouse) and [keyboard](#keyboard) are UHID
+devices.
 
-- **`uhid_relay.c`** (`app/src/main/cpp`) — a small native binary that opens `/dev/uhid` and writes
-  UHID events. It runs as the shell user (`u:r:shell:s0`), which has `/dev/uhid` access.
-- **`UhidRelay`** — launches the relay through a `PrivilegedShell`, sends `UHID_CREATE2` (a
-  4380-byte struct holding the HID descriptor), then streams `UHID_INPUT2` events over stdin.
-  `PrivilegedAccess` supplies the shell via Shizuku's `IShizukuService.newProcess()`.
-- **`ReportMapper`** — turns a `PlayerState` into a HID input report.
-- **`GamepadManager`** — owns one relay per player and drives reports at input rate.
+- **`uinput_relay.c`** (`app/src/main/cpp`) — a native binary that creates the device and writes its
+  events. It runs as the shell user (`u:r:shell:s0`), which can open `/dev/uinput`.
+- **`UinputRelay`** — launches the relay through a `PrivilegedShell`, sends the device's setup, then
+  event batches; reads rumble back. `PrivilegedAccess` supplies the shell via Shizuku's
+  `IShizukuService.newProcess()`.
+- **`GamepadEvents`** — turns a `PlayerState` into the pad's whole state as evdev events. Linux drops
+  a repeated value, so only changes reach Android.
+- **`GamepadManager`** — owns one relay per player and sends a frame per controller packet.
 
-The device uses `BUS_USB` with generic IDs `0x1234:0x5678` (the [mouse](#mouse) `0x5679`, the [keyboard](#keyboard) `0x567A`) so the kernel's `hid-generic` driver
-binds it. Nintendo's IDs would let `hid-nintendo` claim it and reject it.
+`BUS_USB`, generic IDs `0x1234:0x5678`, version 1 (the [mouse](#mouse) `0x5679`, the
+[keyboard](#keyboard) `0x567A`). Nintendo's IDs would have `hid-nintendo` claim a UHID device and
+reject it. A uinput device has no `uniq`, so Android's `UniqueId` for the pad is empty.
+
+**Why not UHID with a rumble driver.** `hid-generic` has no force feedback. The kernel's
+rumble-capable HID drivers (`hid-microsoft`, `hid-playstation`, `hid-sony`) bind only their vendor's
+IDs and layouts, and the PlayStation ones read feature reports at probe that we would have to answer.
+
+### uinput relay
+
+Messages on stdin, each a little-endian `u32` length then that many bytes; length 0 shuts down.
+The first byte is the kind:
+
+| Kind | Body |
+|---|---|
+| `1` setup | `u16` bus, vendor, product, version; name and phys, each a `u8` length then bytes; `u16` key count, `u16` codes; `u16` axis count, per axis `u16` code and `s32` min, max, fuzz, flat, resolution; `u8` rumble effects (0 = none) |
+| `2` events | `u16` count, per event `u16` type, `u16` code, `s32` value. The relay adds `SYN_REPORT`. |
+
+On stdout: `OK` once the device exists, then `R <strong> <weak>` (0–65535 each) whenever the rumble
+changes.
+
+- **The relay keeps each effect's length.** A uinput device has no `ff-memless`, so nothing else
+  stops an effect whose length runs out; the relay does, and reports the change.
+- **Overlapping effects play as the strongest of each motor.**
 
 Each assigned player gets its own device, `Joy-Con Virtual Gamepad <N>`, named by player number.
 Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the third pad,
@@ -108,54 +133,73 @@ AYN Thor, Android 13, 2026-10-23:
 - Binding a letter swaps to the letters device (`ALPHAKEY`) and hides Gboard; clearing it swaps back
   and Gboard returns. Bound buttons reach the keyboard and never the pad.
 
-## Report layout
-
-15 bytes:
-
-| Bytes | Content |
-|---|---|
-| 0–1 | 15 button bits, then one padding bit |
-| 2 | hat switch (low nibble: 0 = N … 7 = NW, `0xF` = centre), padding |
-| 3–10 | left X, left Y, right X, right Y — int16, −32767..32767, Y inverted (up is negative) |
-| 11 | left trigger / brake — ZL as 0 or 255, or analog L travel ([below](#analog-triggers)) |
-| 12 | right trigger / accelerator — ZR as 0 or 255, or analog R travel |
-| 13 | overflow buttons, in a trailing vendor-defined collection: bit 0 GR, bit 1 C |
-| 14 | Android keys, in a trailing Consumer Control collection: bit 0 Home, bit 1 Back ([below](#android-keys)) |
-
 ## Buttons and keycodes
 
-Linux maps HID `Button n` in a Game Pad collection to `BTN_GAMEPAD + n - 1` (`BTN_A, BTN_B, BTN_C,
-BTN_X, BTN_Y, BTN_Z, BTN_TL…`), and Android's key layout names that fixed sequence. `ReportMapper`
-gives each button the bit whose keycode carries its own name, so nothing downstream deals in a
-shift:
+The codes are the ones Linux's HID layer gives a HID Game Pad's buttons, which the app's emulator
+configs are written against. Android's `Generic.kl` names each code; `GamepadEvents` gives each
+button the code whose keycode carries its own name:
 
-| Button | Bit | Keycode | Button | Bit | Keycode |
+| Button | Code | Keycode | Button | Code | Keycode |
 |---|---|---|---|---|---|
-| A | 0 | 96 `BUTTON_A` | ZL | 8 | 104 `BUTTON_L2` |
-| B | 1 | 97 `BUTTON_B` | ZR | 9 | 105 `BUTTON_R2` |
-| Capture | 2 | 98 `BUTTON_C` | − | 10 | 109 `BUTTON_SELECT` |
-| X | 3 | 99 `BUTTON_X` | + | 11 | 108 `BUTTON_START` |
-| Y | 4 | 100 `BUTTON_Y` | Home | 12 | 110 `BUTTON_MODE` |
-| GL | 5 | 101 `BUTTON_Z` | LS | 13 | 106 `BUTTON_THUMBL` |
-| L | 6 | 102 `BUTTON_L1` | RS | 14 | 107 `BUTTON_THUMBR` |
-| R | 7 | 103 `BUTTON_R1` | | | |
+| A | `BTN_A` | 96 `BUTTON_A` | ZL | `BTN_TL2` | 104 `BUTTON_L2` |
+| B | `BTN_B` | 97 `BUTTON_B` | ZR | `BTN_TR2` | 105 `BUTTON_R2` |
+| Capture | `BTN_C` | 98 `BUTTON_C` | − | `BTN_SELECT` | 109 `BUTTON_SELECT` |
+| X | `BTN_X` | 99 `BUTTON_X` | + | `BTN_START` | 108 `BUTTON_START` |
+| Y | `BTN_Y` | 100 `BUTTON_Y` | Home | `BTN_MODE` | 110 `BUTTON_MODE` |
+| GL | `BTN_Z` | 101 `BUTTON_Z` | LS | `BTN_THUMBL` | 106 `BUTTON_THUMBL` |
+| L | `BTN_TL` | 102 `BUTTON_L1` | RS | `BTN_THUMBR` | 107 `BUTTON_THUMBR` |
+| R | `BTN_TR` | 103 `BUTTON_R1` | GR | `BTN_0` | 188 `BUTTON_1` |
+| | | | C | `BTN_1` | 189 `BUTTON_2` |
 
 - **Capture and GL** take `BUTTON_C` / `BUTTON_Z`, the two slots with no Switch equivalent.
 - **A controller with analog triggers moves its shoulders:** ZL/ZR onto L1/R1, the trigger clicks onto
   the stick clicks ([below](#analog-triggers)).
-- **GR and C overflow.** One gamepad collection carries 15 buttons — a 16th lands on `0x13F`, which
-  no key layout names — and the Switch 2 controllers have 17. For a Button usage outside a
-  pointer/joystick/gamepad collection Linux falls back to `BTN_MISC + n - 1`, which key layouts name
-  `BUTTON_1..16`: GR is **188**, C is **189**. The collection is vendor-defined so nothing
-  interprets it. Firmware that re-publishes pads (see
+- **GR and C sit past the gamepad range.** `BTN_A`–`BTN_THUMBR` is 15 codes; the next, `0x13F`, has
+  no keycode, and the Switch 2 controllers have 17 buttons. Firmware that re-publishes pads (see
   [Device identity](#device-identity)) forwards only keys it knows, so it may drop these two.
 - **Triggers are Brake (left) and Accelerator (right)**, never reversed. On Android 14+ these arrive
   as `AXIS_LTRIGGER`/`AXIS_RTRIGGER` with compat copies as `AXIS_BRAKE` (23) and `AXIS_GAS` (22);
   Android 7–13 report only 23 and 22. Re-publishing firmware synthesises `L2`/`R2` from those axes —
   reversed, a ZR pull arrives as L2.
-- **D-pad** is the hat (`AXIS_HAT_X` 15, `AXIS_HAT_Y` 16). Sticks are axes 0/1 (left) and 11/14
-  (right). Eden's config uses numeric keycodes; Dolphin's uses names (`Button L2` = ZL,
+- **D-pad** is the hat (`AXIS_HAT_X` 15, `AXIS_HAT_Y` 16), one direction winning a conflict. Sticks
+  are axes 0/1 (left) and 11/14 (right). Eden's config uses numeric keycodes; Dolphin's uses names (`Button L2` = ZL,
   `Select` = −, …).
+
+## Axes
+
+The values Linux's HID layer (`hid-input.c`) gives the same axes on a HID Game Pad, so Android's
+dead zones match a HID pad's: a gamepad axis gets fuzz `(max − min) >> 8` and flat `(max − min) >> 4`.
+
+| Axis | Code | Range | Fuzz | Flat | Resolution |
+|---|---|---|---|---|---|
+| Left stick | `ABS_X`, `ABS_Y` | ±32767, up negative | 255 | 4095 | 0 |
+| Right stick | `ABS_Z`, `ABS_RZ` | ±32767, up negative | 255 | 4095 | 0, 11921 |
+| ZL / ZR | `ABS_BRAKE`, `ABS_GAS` | 0–255 | 0 | 15 | 0 |
+| D-pad | `ABS_HAT0X`, `ABS_HAT0Y` | −1–1 | 0 | 0 | 0 |
+
+`ABS_RZ`'s resolution is what a HID descriptor declaring the hat (unit degrees) before the sticks
+leaves on it.
+
+## Rumble
+
+An app vibrates the pad; the relay reports each motor's strength, and `GamepadManager` hands it to
+`ControllerRumble` (`:app`), which plays it on the player's controllers as
+[HD rumble](protocol.md#hd-rumble): strong on the low band, weak on the high.
+
+- **Dolphin** lists the pad's vibrators as `Motor 0` and `Motor 1`; setup writes
+  ``Rumble/Motor = `Motor 0` `` to each section it builds, and to a hand-made Pro Controller section
+  without one. GameCube rumble arrives as on/off pulses of 15–200 ms at 49152.
+- **Eden** sends rumble to the pad unless a player's `use_system_vibrator` is on, which is its default
+  for player 1 and vibrates the phone instead; setup writes `player_<n>_use_system_vibrator=false`.
+- Confirmed in Dolphin (GameCube) and Eden on an AYN Thor, Android 13, with a Joy-Con 2 pair,
+  2026-10-29.
+- Destroying a pad stops its rumble.
+- **AYN's Odin/Thor firmware hides the pad** and republishes it ([below](#device-identity)), and the
+  copy has no vibrators. It skips a pad created while the system setting
+  `no_create_gamepad_button_layout` is `1`, and resets the setting to `0` at every app switch; a pad
+  already created keeps its node. So `AynPadRepublishing` sets it to `1` before each pad, where it
+  reads `0`. AYN Thor, Android 13, 2026-10-29: set, then the pad created, then Dolphin opened and the
+  setting went back to `0`; the pad stayed visible and rumbled.
 
 ## Android keys
 
@@ -166,8 +210,8 @@ send goes through the [keyboard](#keyboard), which a bound Android key brings up
 
 | Key | Virtual gamepad | DSU only |
 |---|---|---|
-| Home | byte 14 bit 0: Consumer `0x223` AC Home → `KEY_HOMEPAGE` → `HOME` | keyboard, Consumer AC Home |
-| Back | byte 14 bit 1: Consumer `0x224` AC Back → `KEY_BACK` → `BACK` | keyboard, Consumer AC Back |
+| Home | `KEY_HOMEPAGE` → `HOME` | keyboard, Consumer AC Home |
+| Back | `KEY_BACK` → `BACK` | keyboard, Consumer AC Back |
 | Screenshot | keyboard, `0x46` Print Screen → `KEY_SYSRQ` | same |
 
 The shell's `input keyevent`, once per press, stands in for the keyboard only if it failed to come up.
@@ -178,7 +222,7 @@ The shell's `input keyevent`, once per press, stands in for the keyboard only if
 - **Home and Back ride the pad when it runs**, even for a DSU binding, so a key bound on both
   screens fires once.
 - **The shell is the slow path.** AYN Thor, Android 13, 2026-10-12: `input keyevent` took 50 ms to
-  1.5 s and twice hung; the pad's Consumer keys are immediate, and so are the keyboard's.
+  1.5 s and twice hung; the pad's keys are immediate, and so are the keyboard's.
 - **Screenshot skips the pad.** Retroid Pocket Nova, Android 13, 2026-10-09: a Keyboard `0x46`
   Print Screen usage on the pad took no screenshot; on the [keyboard](#keyboard) it does.
 - **Android handles `HOME` itself** and never passes it to the app in front, so a bound Home always
@@ -256,7 +300,7 @@ The Eden mapping card's **Pro Controller** switch (off by default) sets up the s
 - **No rotation.** `GamepadState` passes buttons and stick through; a right Joy-Con's stick stays on
   the right-stick axes. `SidewaysMotion` leaves motion alone (`DsuStream.heldSideways` is false).
 - **SL/SR ride the shoulders the body lacks** (`SingleJoyconMapper`), the same keycodes the sideways
-  grip uses: left SL/SR → R/ZR (103/105), right SL/SR → L/ZL (102/104). The HID report is unchanged.
+  grip uses: left SL/SR → R/ZR (103/105), right SL/SR → L/ZL (102/104). The pad's codes are unchanged.
 - **Npad type** `LeftJoycon` (2) / `RightJoycon` (3). Eden masks by type, which is why only the
   body's own buttons are targets.
 - **Games that need one Joy-Con per player** (Super Mario Party Jamboree's motion games) won't take a
@@ -270,14 +314,14 @@ The Eden mapping card's **Pro Controller** switch (off by default) sets up the s
 ### Analog triggers
 
 A controller with analog triggers (`ControllerModel.hasAnalogTriggers`, the NSO GameCube controller)
-drives bytes 11/12 with its calibrated L/R travel instead of ZL/ZR
+drives `ABS_BRAKE`/`ABS_GAS` with its calibrated L/R travel instead of ZL/ZR
 ([calibration](protocol.md#analog-triggers)). `AnalogTriggerMapper` moves its other shoulder buttons
 so each lands where Android expects that control:
 
-| Button | Bits | Keycodes |
+| Button | Codes | Keycodes |
 |---|---|---|
-| ZL / Z (the ZR bit) | 6 / 7 | `BUTTON_L1` / `BUTTON_R1` |
-| L / R click at the bottom | 13 / 14 | `BUTTON_THUMBL` / `BUTTON_THUMBR` |
+| ZL / Z (the ZR button) | `BTN_TL` / `BTN_TR` | `BUTTON_L1` / `BUTTON_R1` |
+| L / R click at the bottom | `BTN_THUMBL` / `BTN_THUMBR` | `BUTTON_THUMBL` / `BUTTON_THUMBR` |
 
 Confirmed in Dolphin on a Retroid Pocket Nova (Android 13) with an NSO GameCube controller,
 2026-10-13. Eden is untested on hardware.
@@ -285,7 +329,7 @@ Confirmed in Dolphin on a Retroid Pocket Nova (Android 13) with an NSO GameCube 
 - **Nothing goes on `BUTTON_L2`/`BUTTON_R2`:** they can follow the trigger axes. Retroid Pocket Nova,
   Android 13, 2026-10-08: with Z on R2, pulling R fired Dolphin's `Button R2` and Z fired nothing.
   The Nova's L2/R2 setting wasn't the cause.
-- **The stick-click bits are free to reuse:** the controller has no stick clicks. So no binding of
+- **The stick-click codes are free to reuse:** the controller has no stick clicks. So no binding of
   its can use LS/RS: `emittedFor` resolves them to nothing for it, and its Switch Pro layout leaves
   the stick-click targets unbound.
 - **DSU carries no trigger travel.** Its packet has analog L2/R2 bytes, but `DsuPacketEncoder` fills
@@ -331,10 +375,10 @@ in `VirtualGamepadIdentity`:
   a port, which `edenGamepads` reproduces.
 
 Eden's `guid` is product then vendor ID, each a 16-digit hex half. Some handheld firmware
-re-publishes an external gamepad under the built-in controller's IDs (AYN's Odin/Thor line does),
-leaving two devices with our name, and a binding with the wrong guid is silently ignored. So every
-field of a player's identity comes from one `InputDevice`: the last match, the republished one where
-that happens.
+re-publishes an external gamepad under the built-in controller's IDs. AYN's Odin/Thor line removes
+our device's `/dev/input` node and adds a copy with our name and its own IDs (`2020:0111`), keys and
+axes, but no rumble. A binding with the wrong guid is silently ignored, so every field of a player's
+identity comes from one `InputDevice`: the last match, the republished one where that happens.
 
 Each setup also clears the player's old keys, so a layout or port change can't leave a stale
 binding firing on another player's port.

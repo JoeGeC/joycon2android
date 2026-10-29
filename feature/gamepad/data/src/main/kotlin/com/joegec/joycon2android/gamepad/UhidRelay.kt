@@ -20,7 +20,7 @@ class UhidRelay(private val device: UhidDevice) {
 
     fun create(context: Context, shell: PrivilegedShell): Boolean {
         return try {
-            val relayPath = deployRelay(context, shell)
+            val relayPath = BINARY.deploy(context, shell)
             val remoteProcess = shell.newProcess(arrayOf(relayPath))
                 ?: run {
                     Log.e(TAG, "Privileged shell returned no process")
@@ -129,23 +129,7 @@ class UhidRelay(private val device: UhidDevice) {
 
     companion object {
         private const val TAG = "UhidRelay"
-        private const val RELAY_REMOTE_PATH = "/data/local/tmp/.uhid_relay"
-
-        @Volatile
-        private var relayDeployed = false
-
-        private fun deployRelay(context: Context, shell: PrivilegedShell): String {
-            if (relayDeployed) return RELAY_REMOTE_PATH
-
-            val localPath = context.applicationInfo.nativeLibraryDir + "/libuhid_relay.so"
-
-            // Copy from app's native lib dir to /data/local/tmp/ (shell-accessible)
-            shell.newProcess(
-                arrayOf("sh", "-c", "cp $localPath $RELAY_REMOTE_PATH && chmod 755 $RELAY_REMOTE_PATH"),
-            )?.waitFor()
-            relayDeployed = true
-            return RELAY_REMOTE_PATH
-        }
+        private val BINARY = RelayBinary("uhid_relay", "/data/local/tmp/.uhid_relay")
 
         private const val UHID_CREATE2 = 11
         private const val UHID_INPUT2 = 12

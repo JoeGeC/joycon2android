@@ -8,6 +8,7 @@ import com.joegec.joycon2android.connection.VibrationSample
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.PlayerNumber
+import com.joegec.joycon2android.model.Rumble
 import com.joegec.joycon2android.model.Side
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +64,7 @@ class SessionCoordinatorTypeTest {
         override fun disconnectAll() = Unit
         override fun setPlayerLed(address: String, player: PlayerNumber?) = Unit
         override fun vibrate(address: String, sample: VibrationSample) = Unit
+        override fun rumble(address: String, rumble: Rumble) = Unit
         override fun setControllerType(address: String, model: ControllerModel?) {
             typeChanges += address to model
         }

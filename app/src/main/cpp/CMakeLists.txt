@@ -9,3 +9,10 @@ set_target_properties(uhid_relay PROPERTIES
     SUFFIX ".so"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
 )
+
+add_executable(uinput_relay uinput_relay.c)
+set_target_properties(uinput_relay PROPERTIES
+    OUTPUT_NAME "libuinput_relay"
+    SUFFIX ".so"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
+)

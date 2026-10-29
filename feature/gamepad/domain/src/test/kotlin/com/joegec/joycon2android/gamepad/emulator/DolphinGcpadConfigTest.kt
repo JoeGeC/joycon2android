@@ -125,7 +125,23 @@ class DolphinGcpadConfigTest {
     }
 
     @Test
-    fun `a pro controller's hand-made section keeps its bindings and gains only the calibration`() {
+    fun `the pad's first motor drives rumble`() {
+        val pair = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
+
+        assertTrue(merge(null, pair).contains("Rumble/Motor = `Motor 0`"))
+    }
+
+    @Test
+    fun `a pro controller's hand-made rumble is kept`() {
+        val handMade = "[GCPad1]\nDevice = Android/5/Pro\nRumble/Motor = `Motor 1`\n"
+        val result = merge(handMade, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
+
+        assertTrue(result.contains("Rumble/Motor = `Motor 1`"))
+        assertFalse(result.contains("Rumble/Motor = `Motor 0`"))
+    }
+
+    @Test
+    fun `a pro controller's hand-made section keeps its bindings and gains only calibration and rumble`() {
         val handMade = "[GCPad1]\nDevice = Android/5/Pro\nButtons/A = `Button A`\n"
         val result = merge(handMade, listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.PRO))))
 
@@ -133,6 +149,7 @@ class DolphinGcpadConfigTest {
         assertTrue(result.contains("Buttons/A = `Button A`"))
         assertTrue(result.contains("Main Stick/Calibration = 100.00"))
         assertTrue(result.contains("C-Stick/Calibration = 100.00"))
+        assertTrue(result.contains("Rumble/Motor = `Motor 0`"))
     }
 
     @Test

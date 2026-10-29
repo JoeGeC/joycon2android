@@ -7,10 +7,12 @@ import com.joegec.joycon2android.connection.ControllerCommands
 import com.joegec.joycon2android.connection.ControllerProtocol
 import com.joegec.joycon2android.connection.GattOpQueue
 import com.joegec.joycon2android.connection.HdRumble
+import com.joegec.joycon2android.connection.RumbleStream
+import com.joegec.joycon2android.connection.SpiColorParser
 import com.joegec.joycon2android.connection.VibrationPlayback
 import com.joegec.joycon2android.connection.VibrationSample
-import com.joegec.joycon2android.connection.SpiColorParser
 import com.joegec.joycon2android.model.JoyconInput
+import com.joegec.joycon2android.model.Rumble
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
@@ -44,6 +46,8 @@ internal class ConsoleSession(
     private var lastCounter = -1
     private var packetId = 0
     private var rumbleCounter = 0
+    private val rumbleStream = RumbleStream(::sendRumble)
+    @Volatile private var rumbleQueued = false
 
     override fun start() {
         Log.i(TAG, "[$label] Using the console protocol")
@@ -52,6 +56,7 @@ internal class ConsoleSession(
     }
 
     override fun stop() {
+        rumbleStream.set(Rumble.OFF)
         stopped = true
         linkHolder.stop()
         transport.close()
@@ -87,12 +92,27 @@ internal class ConsoleSession(
         }
     }
 
-    // The command frame's prefix is the rumble slot, so rumble alone is that slot with no command.
+    override fun rumble(rumble: Rumble) = rumbleStream.set(rumble)
+
+    private fun sendRumble(rumble: Rumble) {
+        if (rumbleQueued) return
+        rumbleQueued = true
+        submit {
+            rumbleQueued = false
+            writeRumble(HdRumble.packet(rumbleCounter++, rumble))
+        }
+    }
+
     private fun play(step: VibrationPlayback.Step) {
         when (step) {
             is VibrationPlayback.Sample -> transport.send(step.command)
-            is VibrationPlayback.Rumble -> transport.write(channel.command, HdRumble.packet(rumbleCounter++, step.amplitude))
+            is VibrationPlayback.Rumble -> writeRumble(HdRumble.packet(rumbleCounter++, step.amplitude, step.amplitude))
         }
+    }
+
+    // The command frame's prefix is the rumble slot, so rumble alone is that slot with no command.
+    private fun writeRumble(packet: ByteArray) {
+        transport.write(channel.command, packet)
     }
 
     override fun onCharacteristicChanged(uuid: UUID, value: ByteArray) {

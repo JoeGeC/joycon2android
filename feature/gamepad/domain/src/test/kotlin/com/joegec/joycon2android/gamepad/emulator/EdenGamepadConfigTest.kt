@@ -56,6 +56,20 @@ class EdenGamepadConfigTest {
     }
 
     @Test
+    fun `every player rumbles the pad, not the phone`() {
+        val players = listOf(
+            PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)),
+            PlayerState(PlayerNumber.P2, left = joycon(Side.LEFT)),
+        )
+
+        val result = merge(null, players, mapOf(1 to 0, 2 to 1))
+
+        assertTrue(result.contains("player_0_use_system_vibrator=false"))
+        assertTrue(result.contains("player_0_use_system_vibrator\\default=false"))
+        assertTrue(result.contains("player_1_use_system_vibrator=false"))
+    }
+
+    @Test
     fun `dual binds every button to the keycode of the same name`() {
         val players = listOf(PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT)))
 
@@ -263,7 +277,7 @@ class EdenGamepadConfigTest {
     }
 
     private companion object {
-        // The ids UhidRelay creates our virtual gamepads with.
+        // The ids GamepadDescriptor creates our virtual gamepads with.
         const val VENDOR_ID = 0x1234
         const val PRODUCT_ID = 0x5678
         const val GUID = "00000000000056780000000000001234"

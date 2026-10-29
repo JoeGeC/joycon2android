@@ -92,6 +92,8 @@ object EdenGamepadConfig {
 
             keys.defineEdenKey("player_${p}_type", type.toString())
             keys.defineEdenKey("player_${p}_connected", "true")
+            // Eden's default for player 1 rumbles the phone instead of the pad.
+            keys.defineEdenKey("player_${p}_use_system_vibrator", "false")
             layout.buttons.forEach { (key, input) ->
                 keys.defineEdenKey("player_${p}_$key", EdenControls.quote("$device,${input.spec()},display:$display"))
             }
