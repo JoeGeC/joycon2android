@@ -32,7 +32,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.joegec.joycon2android.buttonmapping.Console
-import com.joegec.joycon2android.buttonmapping.RemoteMotion
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerState
@@ -87,10 +86,6 @@ fun PlayerMappingCard(
                     WiiControllerChoice(state.body.side, state.wiiControllers, state.wiiController) {
                         actions.setWiiController(state.body, it)
                     }
-                }
-                if (state.offersThrust) ThrustSwitch(state.thrust) { actions.setThrust(state.body, it) }
-                if (state.offersSensitivity) {
-                    SensitivitySlider(state.sensitivityPercent) { actions.setSensitivity(state.body, it) }
                 }
                 MappingBindings(console, state, controller, actions, deviceKeyWarnings)
             }
@@ -195,28 +190,3 @@ private fun ProControllerSwitch(enabled: Boolean, onSetEnabled: (Boolean) -> Uni
     )
 }
 
-/** docs/dsu-motion.md#thrusts */
-@Composable
-private fun ThrustSwitch(enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
-    SettingSwitch(
-        title = stringResource(R.string.controller_mapping_thrust),
-        description = stringResource(R.string.controller_mapping_thrust_description),
-        checked = enabled,
-        onCheckedChange = onSetEnabled,
-        modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
-    )
-}
-
-/** docs/dsu-motion.md#motion-sensitivity */
-@Composable
-private fun SensitivitySlider(percent: Int, onSetPercent: (Int) -> Unit) {
-    PercentSlider(
-        title = stringResource(R.string.controller_mapping_sensitivity),
-        description = stringResource(R.string.controller_mapping_sensitivity_description),
-        percent = percent,
-        range = RemoteMotion.SENSITIVITY_PERCENT_RANGE,
-        step = RemoteMotion.SENSITIVITY_PERCENT_STEP,
-        valueLabel = { stringResource(R.string.controller_mapping_percent_value, it) },
-        onSetPercent = onSetPercent,
-    )
-}

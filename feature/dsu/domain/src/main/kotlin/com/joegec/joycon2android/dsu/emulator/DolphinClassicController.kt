@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.dsu.emulator
 
 import com.joegec.joycon2android.buttonmapping.JoyconSide
+import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.target.ClassicButton
 import com.joegec.joycon2android.buttonmapping.target.ClassicStick
@@ -27,6 +28,7 @@ internal object DolphinClassicController {
         ClassicButton.ClassicDPadDown to "Classic/D-Pad/Down",
         ClassicButton.ClassicDPadLeft to "Classic/D-Pad/Left",
         ClassicButton.ClassicDPadRight to "Classic/D-Pad/Right",
+        ClassicButton.ClassicRecenter to "IMUIR/Recenter",
     )
 
     private val STICK_GROUPS = mapOf(
@@ -39,8 +41,11 @@ internal object DolphinClassicController {
     fun lines(side: JoyconSide, mapping: Map<String, String>): List<String> =
         listOf("Extension = Classic") + buttonLines(side, mapping) + stickLines(side, mapping)
 
+    /** Shake isn't a line of its own: it rides the remote's accelerometer, as the remote's does. */
+    fun shake(mapping: Map<String, String>): List<MappingSource>? = mapping.toSourceMap<ClassicButton>()[ClassicButton.ClassicShake]
+
     private fun buttonLines(side: JoyconSide, mapping: Map<String, String>): List<String> =
-        mapping.toSourceMap<ClassicButton>().mapNotNull { (target, sources) ->
+        (mapping.toSourceMap<ClassicButton>() - ClassicButton.ClassicShake).mapNotNull { (target, sources) ->
             DolphinDsuInputs.expressionFor(side, SIDEWAYS, sources)?.let { "${DOLPHIN_KEYS.getValue(target)} = $it" }
         }
 

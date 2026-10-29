@@ -135,6 +135,8 @@ internal fun ClassicButton.label(): String = when (this) {
     ClassicButton.ClassicDPadDown -> stringResource(R.string.button_dpad_down)
     ClassicButton.ClassicDPadLeft -> stringResource(R.string.button_dpad_left)
     ClassicButton.ClassicDPadRight -> stringResource(R.string.button_dpad_right)
+    ClassicButton.ClassicShake -> stringResource(R.string.button_shake)
+    ClassicButton.ClassicRecenter -> stringResource(R.string.button_recenter)
 }
 
 @Composable

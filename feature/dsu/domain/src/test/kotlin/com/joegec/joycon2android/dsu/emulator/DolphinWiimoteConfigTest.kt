@@ -7,6 +7,7 @@ import com.joegec.joycon2android.buttonmapping.RemoteMotion
 import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.preset.ClassicControllerMapping
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
+import com.joegec.joycon2android.buttonmapping.target.ClassicButton
 import com.joegec.joycon2android.emulatorconfig.IniEditor
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.ControllerModel
@@ -449,6 +450,27 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("IMUGyroscope/Pitch Up = `Gyro Roll Right`")) // held sideways
         assertFalse(result.contains("Swing/"))
         assertFalse(result.contains("pulse("))
+    }
+
+    @Test
+    fun `the remote a Classic Controller plugs into recenters on its own binding, not the remote's`() {
+        val both = PlayerState(PlayerNumber.P1, left = joycon(Side.LEFT), right = joycon(Side.RIGHT))
+        val mapping = ClassicControllerMapping.entries(JoyconSide.DUAL) + (ClassicButton.ClassicRecenter.name to "RS")
+
+        val result = DolphinWiimoteConfig.merge(null, listOf(both), { classic }, { mapping })
+
+        assertEquals(listOf("IMUIR/Recenter = `R3`"), result.lines().filter { it.startsWith("IMUIR/Recenter") })
+    }
+
+    @Test
+    fun `a bound Classic shake jerks the remote's accelerometer`() {
+        val right = PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT))
+        val mapping = ClassicControllerMapping.entries(JoyconSide.RIGHT) + (ClassicButton.ClassicShake.name to "ZR")
+
+        val result = DolphinWiimoteConfig.merge(null, listOf(right), { classic }, { mapping })
+
+        assertTrue(result.lines().single { it.startsWith("IMUAccelerometer/Up =") }.contains("pulse("))
+        assertFalse(result.contains("Classic/Buttons/Shake"))
     }
 
     @Test

@@ -59,9 +59,10 @@ object ClassicControllerMapping : MappingPreset {
         ClassicButton.ClassicDPadRight to Right,
     )
 
-    // Sideways, as SwitchProSidewaysLayout holds a lone Joy-Con.
+    // Sideways, as SwitchProSidewaysLayout holds a lone Joy-Con. Recenter is where the remote's is, on
+    // Classic R too; a GameCube controller has no motion to recenter.
     private fun buttons(side: JoyconSide): Map<ClassicButton, JoyconButton> = when (side) {
-        JoyconSide.DUAL -> PAIR_BUTTONS
+        JoyconSide.DUAL -> PAIR_BUTTONS + (ClassicButton.ClassicRecenter to R)
         // No −, so Capture takes it.
         JoyconSide.GAMECUBE -> PAIR_BUTTONS + (ClassicButton.ClassicMinus to Capture)
         JoyconSide.LEFT -> mapOf(
@@ -73,6 +74,7 @@ object ClassicControllerMapping : MappingPreset {
             ClassicButton.ClassicR to SrLeft,
             ClassicButton.ClassicPlus to Minus,
             ClassicButton.ClassicHome to Capture,
+            ClassicButton.ClassicRecenter to SrLeft,
         )
         JoyconSide.RIGHT -> mapOf(
             ClassicButton.ClassicA to X,
@@ -83,6 +85,7 @@ object ClassicControllerMapping : MappingPreset {
             ClassicButton.ClassicR to SrRight,
             ClassicButton.ClassicPlus to Plus,
             ClassicButton.ClassicHome to Home,
+            ClassicButton.ClassicRecenter to SrRight,
         )
     }
 

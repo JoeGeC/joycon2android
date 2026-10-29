@@ -227,11 +227,15 @@ What `DolphinWiimoteConfig` writes, and why:
 `DolphinClassicController` writes that remote instead:
 
 - **`Extension = Classic`, its own targets only.** Classic targets are stored as `ClassicA`,
-  `ClassicLeftStick_UP`, …, beside the remote's, which stay stored but aren't written.
+  `ClassicLeftStick_UP`, …, beside the remote's, which stay stored but aren't written. That includes
+  the remote's Shake and Recenter: `ClassicShake` and `ClassicRecenter` stand in for them, so a change
+  to one mode's binding leaves the other's alone.
 - **The remote still points.** A real Classic Controller hangs off a remote that keeps its IR and
   accelerometer, and the Wii Menu and some games point in their menus, so the IMU lines are written
-  as for a remote, with Sensitivity. No Swing or flick trick: no Classic game reads one, and Swing
-  would jolt with every press. A GameCube controller has no motion, so it gets none. Pointing with
+  as for a remote, with Sensitivity, Recenter and a bound Shake. No Swing or flick trick: no Classic
+  game reads one, and Swing would jolt with every press. The layout puts Recenter where the remote's
+  is, R (SR on a lone Joy-Con), which also presses the Classic Controller's R: no Classic game reads
+  the pointer in play. Shake is left unbound. A GameCube controller has no motion, so it gets none. Pointing with
   Classic on is untested on hardware.
 - **L and R are digital** (`Classic/Triggers/L`). DSU carries no trigger travel; Dolphin's mixed
   trigger reads a press as fully pulled.
@@ -242,7 +246,7 @@ What `DolphinWiimoteConfig` writes, and why:
 
 ### Thrusts
 
-A per-player switch in the mapping editor (`MappingLayout.thrust`, `ThrustRepository`), off in
+A per-player switch in the mapping editor's Motion section (`MappingLayout.thrust`, `ThrustRepository`), off in
 every shipped layout and overridable like [Sideways](#playing-as-a-sideways-wii-remote). On, it binds
 Dolphin's Swing to the thrust axis.
 
@@ -265,7 +269,7 @@ Dolphin's Swing to the thrust axis.
 
 ### Motion sensitivity
 
-A per-player slider in the mapping editor, 50–200% in steps of 5 (`RemoteMotion.sensitivityPercent`,
+A per-player slider in the mapping editor's Motion section, 50–200% in steps of 5 (`RemoteMotion.sensitivityPercent`,
 `SensitivityRepository`), 110% in every shipped layout and saved with custom ones. Below or above
 100%, `DolphinWiimoteConfig` adds a [high-passed](#high-pass-without-smooth) copy of each
 accelerometer axis to that axis:

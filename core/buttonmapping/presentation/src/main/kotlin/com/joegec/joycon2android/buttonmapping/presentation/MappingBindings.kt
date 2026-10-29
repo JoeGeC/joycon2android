@@ -24,6 +24,8 @@ fun MappingBindings(
             when {
                 section == MappingSection.RUMBLE ->
                     if (state.offersRumble) RumbleSection(state.rumblePercent, open) { actions.setRumble(state.body, it) }
+                section == MappingSection.MOTION ->
+                    if (targets.isNotEmpty() || state.offersSensitivity) MotionSection(targets, state, controller, actions, open)
                 targets.isEmpty() -> Unit
                 section == MappingSection.KEYBOARD ->
                     KeyboardBindingSection(targets, state, controller, actions, warnings.keyboardAndMouseNeedShizuku, open)

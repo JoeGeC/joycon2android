@@ -55,7 +55,7 @@ internal object MappingOptions {
         section == MappingSection.ANDROID -> AndroidKey.entries.map { it.targetKey to it.label() }
         section == MappingSection.KEYBOARD -> KeyboardKey.entries.map { it.targetKey to it.label() }
         section == MappingSection.MOUSE -> MouseAction.entries.map { it.targetKey to it.label() }
-        classicController -> classicTargets(section)
+        classicController -> classicTargets(section, side)
         else -> remoteTargets(console, section, side, singleJoycon)
     }
 
@@ -88,12 +88,16 @@ internal object MappingOptions {
     private fun motionTargets(console: Console): List<Pair<String, String>> =
         if (console == Console.WIIMOTE_NUNCHUK) MOTION_TARGETS.map { it.name to it.label() } else emptyList()
 
+    private val CLASSIC_MOTION_TARGETS = setOf(ClassicButton.ClassicShake, ClassicButton.ClassicRecenter)
+
+    // The remote a Classic Controller plugs into still points; a GameCube controller has no motion.
     @Composable
-    private fun classicTargets(section: MappingSection): List<Pair<String, String>> = when (section) {
-        MappingSection.BUTTONS -> ClassicButton.entries.map { it.name to it.label() }
+    private fun classicTargets(section: MappingSection, side: JoyconSide): List<Pair<String, String>> = when (section) {
+        MappingSection.BUTTONS -> (ClassicButton.entries - CLASSIC_MOTION_TARGETS).map { it.name to it.label() }
         MappingSection.STICKS -> directionTargets(ClassicStick.entries.map { it to it.label() })
-        MappingSection.RUMBLE, MappingSection.MOTION, MappingSection.ANDROID, MappingSection.KEYBOARD,
-        MappingSection.MOUSE -> emptyList()
+        MappingSection.MOTION ->
+            if (side == JoyconSide.GAMECUBE) emptyList() else CLASSIC_MOTION_TARGETS.map { it.name to it.label() }
+        MappingSection.RUMBLE, MappingSection.ANDROID, MappingSection.KEYBOARD, MappingSection.MOUSE -> emptyList()
     }
 
     @Composable

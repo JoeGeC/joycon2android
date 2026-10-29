@@ -177,17 +177,18 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
 - **Wii controller.** On the Wii console, pick what each player holds: **Wiimote**, a
   **Sideways** remote (a lone Joy-Con only), or a **Classic** Controller. Sideways is for games that steer by
   tilting a sideways remote; up on the stick is then towards the rail rather than L or R. Classic
-  plugs a Classic Controller into the remote, which still points for menus; the first time you pick
+  plugs a Classic Controller into the remote, which still points for menus, with its own Shake and
+  Recenter in the Motion section (Recenter on R, or SR on a lone Joy-Con); the first time you pick
   it, its buttons start where a Pro Controller has them. The layout sets it (Sideways for Mario Kart,
   Classic for Classic Controller) and you can override it until you next pick a layout.
-- **Thrusts.** On the Wii console, turn this on for games that measure a push, like Wii Play
+- **Thrusts.** On the Wii console, in the **Motion** section, turn this on for games that measure a push, like Wii Play
   Billiards' cue. Not offered with Classic. Leave it off for swings: with it on, Wii Sports Golf putts too hard and Bowling
   misses your swing. Every layout starts with it off; saved layouts remember it.
 - **Rumble strength.** In each player's **Rumble** section, a slider from Off to 100% of what the controller can safely do sets how
   strongly a game's rumble plays on that player's controllers. It starts at 20%. Saved layouts
   remember it. Wii and Mouse & keys have none: rumble comes
   back only through the virtual gamepad.
-- **Motion sensitivity.** On the Wii console, a slider from 50% to 200% scales swings and shakes
+- **Motion sensitivity.** On the Wii console, in the **Motion** section, a slider from 50% to 200% scales swings and shakes
   without changing tilt. Every layout starts at 110%, which suits Wii Sports; 100% passes motion
   through unscaled. Saved layouts remember it.
 

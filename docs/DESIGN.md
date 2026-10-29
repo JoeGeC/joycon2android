@@ -139,6 +139,8 @@ In `JoyconScreen.kt`:
 
 - **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order:
   the console's own, then Android, Mouse, Keyboard.
+- **Thrusts and Motion sensitivity open the Motion section**, above Shake and Recenter: they shape the
+  motion those rows act on. On Classic, with no rows, the section holds Sensitivity alone.
 - **Rumble is a section of its own under Sticks**, holding the strength slider: it describes what
   comes back to the controller, beside what goes out of it. Off the Wii and Mouse & keys only.
 - **Tapping a row listens first** (`PressToMapDialog`): the next button or half-way stick push on

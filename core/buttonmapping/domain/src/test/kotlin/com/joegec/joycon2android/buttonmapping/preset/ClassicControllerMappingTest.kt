@@ -47,6 +47,21 @@ class ClassicControllerMappingTest {
     }
 
     @Test
+    fun `the remote recenters on R, or SR on a lone Joy-Con, and doesn't shake`() {
+        assertEquals("R", ClassicControllerMapping.entries(JoyconSide.DUAL)[ClassicButton.ClassicRecenter.name])
+        assertEquals("SrRight", ClassicControllerMapping.entries(JoyconSide.RIGHT)[ClassicButton.ClassicRecenter.name])
+        assertEquals("SrLeft", ClassicControllerMapping.entries(JoyconSide.LEFT)[ClassicButton.ClassicRecenter.name])
+        JoyconSide.entries.forEach { side ->
+            assertFalse("$side", ClassicButton.ClassicShake.name in ClassicControllerMapping.entries(side))
+        }
+    }
+
+    @Test
+    fun `a GameCube controller has no motion to recenter`() {
+        assertFalse(ClassicButton.ClassicRecenter.name in ClassicControllerMapping.entries(JoyconSide.GAMECUBE))
+    }
+
+    @Test
     fun `a GameCube controller has no minus, so Capture takes it`() {
         val gameCube = ClassicControllerMapping.entries(JoyconSide.GAMECUBE)
 

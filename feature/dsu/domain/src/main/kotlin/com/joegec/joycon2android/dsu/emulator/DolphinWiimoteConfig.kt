@@ -103,6 +103,7 @@ object DolphinWiimoteConfig {
         side: JoyconSide,
         control: String,
         flicks: Boolean,
+        sideways: Boolean,
         bound: List<MappingSource>?,
     ): String? {
         val (own, opposite) = TRICK_AXES[control] ?: return null
@@ -111,7 +112,7 @@ object DolphinWiimoteConfig {
         } else {
             null
         }
-        val pressed = bound?.takeIf { control == UP }?.let { DolphinDsuInputs.expressionFor(side, flicks, it) }
+        val pressed = bound?.takeIf { control == UP }?.let { DolphinDsuInputs.expressionFor(side, sideways, it) }
         return listOfNotNull(flick, pressed).takeIf { it.isNotEmpty() }?.joinToString(" | ")
     }
 
@@ -130,7 +131,7 @@ object DolphinWiimoteConfig {
             val read = "`${bodyInputs[input] ?: input}`"
             val boost = sensitivityBoost(control, motion.sensitivityPercent) { "`${bodyInputs["Accel $it"] ?: "Accel $it"}`" }
             val flicks = motion.controller == WiiController.SIDEWAYS_REMOTE
-            val shake = trickShake(trickTrigger(side, control, flicks, bound))?.let { "+ $it" }
+            val shake = trickShake(trickTrigger(side, control, flicks, motion.heldSideways, bound))?.let { "+ $it" }
             "$control = " + listOfNotNull(read, boost, shake).joinToString(" ")
         } + listOf("IMUIR/Enabled = True", "IMUIR/Total Yaw = $IMU_TOTAL_YAW_DEGREES")
     }
@@ -216,7 +217,7 @@ object DolphinWiimoteConfig {
         val header = listOf("Source = 1", "Device = DSUClient/${body.player.index - 1}/Joycon2")
         val motion = motionFor(body)
         if (motion.controller == WiiController.CLASSIC) {
-            return (header + DolphinClassicController.lines(side, mapping) + classicPointerLines(side, motion))
+            return (header + DolphinClassicController.lines(side, mapping) + classicPointerLines(side, motion, mapping))
                 .joinToString("\n", postfix = "\n")
         }
         val sidewaysRemote = motion.heldSideways
@@ -232,8 +233,8 @@ object DolphinWiimoteConfig {
     }
 
     // The remote still points for menus; a GameCube controller has no motion to point with.
-    private fun classicPointerLines(side: JoyconSide, motion: RemoteMotion): List<String> =
-        if (side == JoyconSide.GAMECUBE) emptyList() else imuLines(side, motion, bound = null)
+    private fun classicPointerLines(side: JoyconSide, motion: RemoteMotion, mapping: Map<String, String>): List<String> =
+        if (side == JoyconSide.GAMECUBE) emptyList() else imuLines(side, motion, DolphinClassicController.shake(mapping))
 
     private fun lines(side: JoyconSide, sidewaysRemote: Boolean, mapping: Map<String, String>): List<String> {
         val sideways = sidewaysRemote && side.isLone
