@@ -30,11 +30,12 @@
     <!-- Hand a downloaded release APK to the system installer -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
-    <!-- Detect emulators so we can offer to write their config (Android 11+ package visibility) -->
+    <!-- Detect emulators to offer config writes, and Shizuku to open it (Android 11+ package visibility) -->
     <queries>
         <package android:name="org.dolphinemu.dolphinemu" />
         <package android:name="dev.eden.eden_emulator" />
         <package android:name="dev.eden.eden_emulator.nightly" />
+        <package android:name="moe.shizuku.privileged.api" />
     </queries>
 
     <application

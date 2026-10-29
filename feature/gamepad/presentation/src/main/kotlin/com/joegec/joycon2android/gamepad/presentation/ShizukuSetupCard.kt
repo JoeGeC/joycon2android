@@ -1,5 +1,7 @@
 package com.joegec.joycon2android.gamepad.presentation
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -19,7 +21,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.gamepad.presentation.R
 import com.joegec.joycon2android.ui.theme.Accent
@@ -31,14 +35,16 @@ import com.joegec.joycon2android.ui.theme.TextTitle
 /** Shown while Shizuku isn't running. */
 @Composable
 fun ShizukuSetupCard(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     val url = stringResource(R.string.shizuku_url)
+    val packageName = stringResource(R.string.shizuku_package)
 
     Column(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Dimens.buttonCorner))
-            .clickable { uriHandler.openUri(url) }
+            .clickable { context.openAppOrUri(packageName, uriHandler, url) }
             .background(CardBg)
             .padding(Dimens.cardPadding),
     ) {
@@ -63,4 +69,9 @@ fun ShizukuSetupCard(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodySmall,
         )
     }
+}
+
+private fun Context.openAppOrUri(packageName: String, uriHandler: UriHandler, url: String) {
+    val launch = packageManager.getLaunchIntentForPackage(packageName)
+    if (launch == null) uriHandler.openUri(url) else startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
 }
