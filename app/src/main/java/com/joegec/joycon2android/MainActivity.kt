@@ -344,6 +344,7 @@ class MainActivity : ComponentActivity() {
             Triple(it.player.index, it.left?.address, it.right?.address)
         }
         LaunchedEffect(assignmentKey) { outputViewModel.resetSetupPhase() }
+        LaunchedEffect(shizukuAvailable) { if (shizukuAvailable) outputViewModel.resetSetupPhase() }
 
         emulatorToClose?.let { emulator ->
             CloseEmulatorDialog(
