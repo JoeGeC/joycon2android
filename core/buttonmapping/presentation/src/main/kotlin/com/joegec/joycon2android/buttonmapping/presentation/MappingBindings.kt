@@ -22,6 +22,8 @@ fun MappingBindings(
             val targets = MappingOptions.targets(console, section, state.body.side, state.singleJoycon, state.classicController)
             val open = section.openAtFirst(console)
             when {
+                section == MappingSection.RUMBLE ->
+                    if (state.offersRumble) RumbleSection(state.rumblePercent, open) { actions.setRumble(state.body, it) }
                 targets.isEmpty() -> Unit
                 section == MappingSection.KEYBOARD ->
                     KeyboardBindingSection(targets, state, controller, actions, warnings.keyboardAndMouseNeedShizuku, open)

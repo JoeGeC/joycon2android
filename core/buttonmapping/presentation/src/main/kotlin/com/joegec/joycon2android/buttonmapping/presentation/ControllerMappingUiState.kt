@@ -9,6 +9,7 @@ import com.joegec.joycon2android.buttonmapping.PlayerMapping
 import com.joegec.joycon2android.buttonmapping.SavedLayout
 import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.buttonmapping.proController
+import com.joegec.joycon2android.buttonmapping.rumblePercent
 
 data class ControllerMappingUiState(
     val console: Console,
@@ -30,6 +31,8 @@ data class PlayerMappingUiState(
     val offersSensitivity: Boolean,
     val proController: Boolean,
     val offersProController: Boolean,
+    val rumblePercent: Int,
+    val offersRumble: Boolean,
     val mapping: Map<String, String>,
 ) {
     val singleJoycon: Boolean get() = offersProController && !proController
@@ -64,6 +67,8 @@ private fun PlayerMapping.uiState(
     offersSensitivity = console == Console.WIIMOTE_NUNCHUK,
     proController = entries.proController,
     offersProController = MappingOptions.offersProController(console, body.side),
+    rumblePercent = entries.rumblePercent,
+    offersRumble = MappingOptions.offersRumble(console),
     mapping = entries,
 )
 

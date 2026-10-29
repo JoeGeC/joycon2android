@@ -214,9 +214,12 @@ Switch 2 codec, bit packing and frequencies from SDL's `SDL_hidapi_switch2.c`:
 
 A virtual gamepad's rumble ([virtual-gamepad.md](virtual-gamepad.md#rumble)) streams through
 `RumbleStream`: a packet every 12 ms while either motor is on, then one at zero. A packet still
-waiting in the GATT queue is skipped rather than stacked. A game's 0–1 scales to `0x060`: at SDL's
-cap, `0x1C4`, and at `0x0C0` and `0x080`, Dolphin's and Eden's rumble felt too strong (AYN Thor, Joy-Con 2,
-2026-10-29).
+waiting in the GATT queue is skipped rather than stacked.
+
+A game's 0–1, times the player's [rumble strength](virtual-gamepad.md#rumble), maps 1 to SDL's cap,
+`0x1C4`. Game rumble at full strength felt too strong in Dolphin and Eden at `0x1C4`, `0x0C0` and
+`0x080`, and right at `0x060`, 21% of the cap (AYN Thor, Joy-Con 2, 2026-10-29): hence the 20%
+default.
 
 When the mapping editor binds a press, the app plays three packets at amplitude `0x040` 12 ms apart, then
 silence: a ~36 ms faint buzz (`VibrationPlayback`). Clones are untested.

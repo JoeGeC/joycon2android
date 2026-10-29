@@ -37,6 +37,9 @@ internal object MappingOptions {
     fun offersProController(console: Console, side: JoyconSide) =
         console == Console.SWITCH_PRO && side.isLone
 
+    // Rumble comes back only through the virtual gamepad: not over DSU (Wii) or Mouse & keys (PC).
+    fun offersRumble(console: Console) = console != Console.WIIMOTE_NUNCHUK && console != Console.PC
+
     // No Classic Controller game reads a thrust, and Swing would jolt with every press.
     fun offersThrust(console: Console, controller: WiiController) =
         console == Console.WIIMOTE_NUNCHUK && controller != WiiController.CLASSIC
@@ -66,7 +69,7 @@ internal object MappingOptions {
         MappingSection.BUTTONS -> buttonTargets(console, side, singleJoycon)
         MappingSection.STICKS -> stickDirectionTargets(console, side, singleJoycon)
         MappingSection.MOTION -> motionTargets(console)
-        MappingSection.ANDROID, MappingSection.KEYBOARD, MappingSection.MOUSE -> emptyList()
+        MappingSection.RUMBLE, MappingSection.ANDROID, MappingSection.KEYBOARD, MappingSection.MOUSE -> emptyList()
     }
 
     @Composable
@@ -89,7 +92,8 @@ internal object MappingOptions {
     private fun classicTargets(section: MappingSection): List<Pair<String, String>> = when (section) {
         MappingSection.BUTTONS -> ClassicButton.entries.map { it.name to it.label() }
         MappingSection.STICKS -> directionTargets(ClassicStick.entries.map { it to it.label() })
-        MappingSection.MOTION, MappingSection.ANDROID, MappingSection.KEYBOARD, MappingSection.MOUSE -> emptyList()
+        MappingSection.RUMBLE, MappingSection.MOTION, MappingSection.ANDROID, MappingSection.KEYBOARD,
+        MappingSection.MOUSE -> emptyList()
     }
 
     @Composable

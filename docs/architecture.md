@@ -93,7 +93,8 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
   `AndroidKeyRouter` and a `HeldKeyRouter` per kind sit between the coordinator and both outputs
   ([how](virtual-gamepad.md#android-keys)).
 - **So is Eden's Pro Controller switch** for a lone Joy-Con (`PRO_CONTROLLER`), so layouts carry the
-  grip with its bindings ([how](virtual-gamepad.md#single-joy-con)).
+  grip with its bindings ([how](virtual-gamepad.md#single-joy-con)), **and rumble strength**
+  (`RUMBLE_PERCENT`, [how](virtual-gamepad.md#rumble)).
 - **The Wii controller is not a binding** (`WiiController`: remote, sideways or Classic). Like
   Thrust and Sensitivity it is a per-player setting the layout seeds
   ([how](dsu-motion.md#wii-controller)).

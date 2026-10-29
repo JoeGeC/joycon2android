@@ -186,6 +186,13 @@ An app vibrates the pad; the relay reports each motor's strength, and `GamepadMa
 `ControllerRumble` (`:app`), which plays it on the player's controllers as
 [HD rumble](protocol.md#hd-rumble): strong on the low band, weak on the high.
 
+**Rumble strength** is a per-player slider in the mapping editor's Rumble section: the share of the actuator's safe
+maximum ([SDL's cap](protocol.md#hd-rumble)) a game's full rumble reaches, 0–100% in steps of 5,
+default 20%. `ControllerRumble` scales the game's rumble by it for the output's console. It is a
+mapping entry (`RUMBLE_PERCENT`), so layouts carry it; the default is stored empty, so a body left
+there still matches its layout, and a shipped layout resets it. A grip switch keeps it. Offered on every console
+but Wii (DSU) and PC (Mouse & keys), which have no pad to rumble.
+
 - **Dolphin** lists the pad's vibrators as `Motor 0` and `Motor 1`; setup writes
   ``Rumble/Motor = `Motor 0` `` to each section it builds, and to a hand-made Pro Controller section
   without one. GameCube rumble arrives as on/off pulses of 15–200 ms at 49152.

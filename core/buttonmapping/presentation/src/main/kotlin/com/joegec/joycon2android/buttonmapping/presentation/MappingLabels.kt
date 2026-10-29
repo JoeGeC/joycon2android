@@ -177,6 +177,7 @@ internal fun SwitchProStick.label(): String = when (this) {
 internal fun MappingSection.label(): String = when (this) {
     MappingSection.BUTTONS -> stringResource(R.string.section_buttons)
     MappingSection.STICKS -> stringResource(R.string.section_sticks)
+    MappingSection.RUMBLE -> stringResource(R.string.section_rumble)
     MappingSection.MOTION -> stringResource(R.string.section_motion)
     MappingSection.ANDROID -> stringResource(R.string.section_android)
     MappingSection.KEYBOARD -> stringResource(R.string.section_keyboard)

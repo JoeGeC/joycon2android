@@ -40,14 +40,21 @@ class HdRumbleTest {
     fun `the strong motor drives the low band and the weak one the high band`() {
         val subframe = HdRumble.packet(counter = 0, Rumble(strong = 1f, weak = 0f)).copyOfRange(2, 7)
 
-        assertArrayEquals(HdRumble.packet(counter = 0, high = 0, low = 0x060).copyOfRange(2, 7), subframe)
+        assertArrayEquals(HdRumble.packet(counter = 0, high = 0, low = 0x1C4).copyOfRange(2, 7), subframe)
     }
 
     @Test
-    fun `a game's full strength is a comfortable amplitude, not the maximum`() {
+    fun `full strength is SDL's cap, not the actuator's maximum`() {
         val full = HdRumble.packet(counter = 0, Rumble(strong = 1f, weak = 1f))
 
-        assertArrayEquals(HdRumble.packet(counter = 0, high = 0x060, low = 0x060), full)
+        assertArrayEquals(HdRumble.packet(counter = 0, high = 0x1C4, low = 0x1C4), full)
+    }
+
+    @Test
+    fun `a strength past 1 stays at the cap`() {
+        val boosted = HdRumble.packet(counter = 0, Rumble(strong = 10f, weak = 10f))
+
+        assertArrayEquals(HdRumble.packet(counter = 0, high = 0x1C4, low = 0x1C4), boosted)
     }
 
     private fun bytes(vararg values: Int) = ByteArray(values.size) { values[it].toByte() }

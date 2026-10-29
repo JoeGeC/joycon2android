@@ -139,6 +139,8 @@ In `JoyconScreen.kt`:
 
 - **A row per target**, its sources in a `MultiSelectDropdown`, sections in `MappingSection` order:
   the console's own, then Android, Mouse, Keyboard.
+- **Rumble is a section of its own under Sticks**, holding the strength slider: it describes what
+  comes back to the controller, beside what goes out of it. Off the Wii and Mouse & keys only.
 - **Tapping a row listens first** (`PressToMapDialog`): the next button or half-way stick push on
   that player's controller replaces the row's sources, which is what pressing to bind means
   everywhere else. **Choose from list** opens the dropdown, the only way to bind several. A press

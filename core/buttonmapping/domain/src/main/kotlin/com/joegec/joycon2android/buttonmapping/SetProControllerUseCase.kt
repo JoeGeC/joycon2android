@@ -3,7 +3,7 @@ package com.joegec.joycon2android.buttonmapping
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import kotlinx.coroutines.flow.first
 
-/** The two grips bind different targets, so switching resets to that grip's layout, keeping the device keys. */
+/** The two grips bind different targets, so switching resets to that grip's layout, keeping the device keys and rumble. */
 class SetProControllerUseCase(
     private val observeControllerMapping: ObserveControllerMappingUseCase,
     private val repository: ControllerMappingRepository,
@@ -12,7 +12,8 @@ class SetProControllerUseCase(
         val layout = MappingPresets.forConsole(console)
             .firstOrNull { body.side in it.sides && it.entries(body.side).proController == enabled }
             ?: return
-        val deviceKeys = observeControllerMapping(console, body).first().filterKeys { it in DEVICE_KEY_TARGETS }
-        repository.replace(console, body, MappingLayouts.entriesOf(console, body.side, layout) + deviceKeys)
+        val kept = observeControllerMapping(console, body).first()
+            .filterKeys { it in DEVICE_KEY_TARGETS || it == RUMBLE_PERCENT_KEY }
+        repository.replace(console, body, MappingLayouts.entriesOf(console, body.side, layout) + kept)
     }
 }

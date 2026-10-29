@@ -16,6 +16,7 @@ import com.joegec.joycon2android.buttonmapping.SaveGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.SetControllerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.SetDeviceKeysPausedUseCase
 import com.joegec.joycon2android.buttonmapping.SetProControllerUseCase
+import com.joegec.joycon2android.buttonmapping.SetRumbleStrengthUseCase
 import com.joegec.joycon2android.buttonmapping.SetSensitivityUseCase
 import com.joegec.joycon2android.buttonmapping.SetThrustUseCase
 import com.joegec.joycon2android.buttonmapping.SetWiiControllerUseCase
@@ -42,6 +43,7 @@ class ControllerMappingViewModel(
     private val setWiiController: SetWiiControllerUseCase,
     private val setThrust: SetThrustUseCase,
     private val setSensitivity: SetSensitivityUseCase,
+    private val setRumbleStrength: SetRumbleStrengthUseCase,
     private val setProController: SetProControllerUseCase,
     private val setDeviceKeysPaused: SetDeviceKeysPausedUseCase,
     private val confirmPress: ConfirmPressUseCase,
@@ -83,6 +85,10 @@ class ControllerMappingViewModel(
 
     fun setSensitivityPercent(body: PlayerBody, percent: Int) = onTarget {
         setSensitivity(it.console, body, percent)
+    }
+
+    fun setRumblePercent(body: PlayerBody, percent: Int) = onTarget {
+        setRumbleStrength(it.console, body, percent)
     }
 
     fun setProControllerEnabled(body: PlayerBody, enabled: Boolean) = onTarget {

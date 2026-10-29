@@ -44,6 +44,7 @@ import com.joegec.joycon2android.buttonmapping.ObserveGlobalMappingUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveSavedLayoutsUseCase
 import com.joegec.joycon2android.buttonmapping.ObservePlayerMappingUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveRemoteMotionUseCase
+import com.joegec.joycon2android.buttonmapping.ObserveRumbleStrengthsUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveSensitivityUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveWiiControllerUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveThrustUseCase
@@ -56,6 +57,7 @@ import com.joegec.joycon2android.buttonmapping.SensitivityDataStore
 import com.joegec.joycon2android.buttonmapping.ObserveSingleJoyconBodiesUseCase
 import com.joegec.joycon2android.buttonmapping.SetProControllerUseCase
 import com.joegec.joycon2android.buttonmapping.SensitivityRepository
+import com.joegec.joycon2android.buttonmapping.SetRumbleStrengthUseCase
 import com.joegec.joycon2android.buttonmapping.SetSensitivityUseCase
 import com.joegec.joycon2android.buttonmapping.SetDeviceKeysPausedUseCase
 import com.joegec.joycon2android.buttonmapping.SetWiiControllerUseCase
@@ -201,6 +203,7 @@ class AppContainer(context: Context) {
     private val sensitivityRepository: SensitivityRepository = SensitivityDataStore(appContext)
 
     private val observeControllerMapping = ObserveControllerMappingUseCase(controllerMappingRepository)
+    private val observeRumbleStrengths = ObserveRumbleStrengthsUseCase(observeControllerMapping)
     private val observeWiiController = ObserveWiiControllerUseCase(wiiControllerRepository)
     private val observeRemoteMotion = ObserveRemoteMotionUseCase(
         observeWiiController,
@@ -224,6 +227,7 @@ class AppContainer(context: Context) {
         SetWiiControllerUseCase(wiiControllerRepository, observeControllerMapping, controllerMappingRepository)
     val setThrust = SetThrustUseCase(thrustRepository)
     val setSensitivity = SetSensitivityUseCase(sensitivityRepository)
+    val setRumbleStrength = SetRumbleStrengthUseCase(controllerMappingRepository)
     val setProController = SetProControllerUseCase(observeControllerMapping, controllerMappingRepository)
     private val edenSingleJoycons = EdenSingleJoycons(
         ObserveSingleJoyconBodiesUseCase(observeControllerMapping)()
@@ -262,7 +266,11 @@ class AppContainer(context: Context) {
     private val gamepadRepository: GamepadRepository =
         GamepadOutput(
             scope,
-            GamepadManager(scope, appContext, ControllerRumble(controllerRepository) { activePlayers }::play),
+            GamepadManager(
+                scope,
+                appContext,
+                ControllerRumble(controllerRepository, { activePlayers }, { rumbleStrengths.value })::play,
+            ),
             privilegedAccess::acquire,
         )
 
@@ -346,6 +354,11 @@ class AppContainer(context: Context) {
     private val androidBindings = bindingsFor(observeAndroidKeyBindings)
     private val keyboardBindings = bindingsFor(observeKeyboardKeyBindings)
     private val mouseBindings = bindingsFor(observeMouseActionBindings)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val rumbleStrengths: StateFlow<Map<PlayerNumber, Int>> = combine(activeConsole, activeBodies, ::Pair)
+        .flatMapLatest { (console, bodies) -> observeRumbleStrengths(console, bodies) }
+        .stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
     private val androidKeyRouter = AndroidKeyRouter(
         bindings = OutputBindings(deviceKeysActing, androidBindings),

@@ -183,6 +183,10 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
 - **Thrusts.** On the Wii console, turn this on for games that measure a push, like Wii Play
   Billiards' cue. Not offered with Classic. Leave it off for swings: with it on, Wii Sports Golf putts too hard and Bowling
   misses your swing. Every layout starts with it off; saved layouts remember it.
+- **Rumble strength.** In each player's **Rumble** section, a slider from Off to 100% of what the controller can safely do sets how
+  strongly a game's rumble plays on that player's controllers. It starts at 20%. Saved layouts
+  remember it. Wii and Mouse & keys have none: rumble comes
+  back only through the virtual gamepad.
 - **Motion sensitivity.** On the Wii console, a slider from 50% to 200% scales swings and shakes
   without changing tilt. Every layout starts at 110%, which suits Wii Sports; 100% passes motion
   through unscaled. Saved layouts remember it.
