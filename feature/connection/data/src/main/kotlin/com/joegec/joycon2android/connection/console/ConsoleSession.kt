@@ -29,6 +29,7 @@ internal class ConsoleSession(
     private val onReady: () -> Unit,
 ) : ControllerProtocol {
     companion object {
+        private const val LED_ATTEMPTS = 5
         private const val TAG = "Joycon2"
         private val SESSION_START_VALUE = byteArrayOf(0x01, 0x00)
 
@@ -80,7 +81,7 @@ internal class ConsoleSession(
 
     override fun setPlayerLed(bitmask: Byte) {
         ledBitmask = bitmask
-        submit { transport.send(ControllerCommands.playerLed(bitmask)) }
+        submit { sendUntilAnswered(ControllerCommands.playerLed(bitmask)) }
     }
 
     override fun vibrate(sample: VibrationSample) {
@@ -108,6 +109,11 @@ internal class ConsoleSession(
             is VibrationPlayback.Sample -> transport.send(step.command)
             is VibrationPlayback.Rumble -> writeRumble(HdRumble.packet(rumbleCounter++, step.amplitude, step.amplitude))
         }
+    }
+
+    // A write can be lost while the link renegotiates: docs/protocol.md#player-leds
+    private fun sendUntilAnswered(command: ByteArray) {
+        repeat(LED_ATTEMPTS) { if (stopped || transport.send(command) != null) return }
     }
 
     // The command frame's prefix is the rumble slot, so rumble alone is that slot with no command.

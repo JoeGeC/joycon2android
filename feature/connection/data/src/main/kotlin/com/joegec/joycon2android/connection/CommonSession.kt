@@ -25,6 +25,7 @@ internal class CommonSession(
     private val onAccentColor: (Int) -> Unit,
     private val onCommandReply: (ByteArray) -> Unit,
     private val onReady: () -> Unit,
+    scheduler: OpScheduler = MainThreadScheduler(),
 ) : ControllerProtocol {
     companion object {
         private const val TAG = "Joycon2"
@@ -46,6 +47,7 @@ internal class CommonSession(
     @Volatile private var ready = false
     @Volatile private var ledBitmask = initialLedBitmask
     private var ledSentAfterFirstPacket = false
+    private val led = LedDelivery(scheduler, ::sendPlayerLed)
     private var rumbleCounter = 0
     private val rumbleStream = RumbleStream(::sendRumble)
 
@@ -71,6 +73,7 @@ internal class CommonSession(
 
     override fun stop() {
         rumbleStream.set(Rumble.OFF)
+        led.stop()
         ready = false
     }
 
@@ -92,7 +95,7 @@ internal class CommonSession(
 
     override fun setPlayerLed(bitmask: Byte) {
         ledBitmask = bitmask
-        if (ready) sendPlayerLed()
+        if (ready) led.deliver()
     }
 
     override fun vibrate(sample: VibrationSample) {
@@ -132,13 +135,14 @@ internal class CommonSession(
         PacketParser.parse(report, side())?.let(onInput)
         if (!ledSentAfterFirstPacket && ready) {
             ledSentAfterFirstPacket = true
-            sendPlayerLed()
+            led.deliver()
         }
     }
 
     private fun onCommandResponse(value: ByteArray) {
         Log.d(TAG, "[${side()}] Cmd response: ${value.joinToString(" ") { "%02X".format(it) }}")
         onCommandReply(value)
+        led.onReply(value)
         SpiColorParser.parseAccentColor(value)?.let { color ->
             Log.i(TAG, "[${side()}] Accent color: #${"%06X".format(color)}")
             onAccentColor(color)

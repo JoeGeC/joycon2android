@@ -169,6 +169,12 @@ What the app does with it: [virtual-gamepad.md](virtual-gamepad.md#mouse).
 The mask's low nibble lights P1–P4 solid (`0x01`, `0x02`, `0x04`, `0x08`), its high nibble flashes
 them (`0x10` … `0x80`). `0xF0`, all flashing, is the controller's default cycling animation.
 
+The controller echoes `09 01 01 07 …` on the command-response characteristic. **A write can be
+lost**, so `LedDelivery` resends until the echo arrives, 300 ms apart, five attempts at most; the
+echo takes about 50 ms. AYN Thor, Joy-Con 2 pair, 2026-10-30: assigned as the output started, the
+left half never echoed a player LED written 35 ms after `requestConnectionPriority`, and stayed on
+all four, though it echoed the vibration sample sent straight after. The right half took both.
+
 ## Vibration
 
 Stored effects, from [ndeadly/switch2_controller_research](https://github.com/ndeadly/switch2_controller_research/blob/master/commands.md#command-0x0a---vibration):
