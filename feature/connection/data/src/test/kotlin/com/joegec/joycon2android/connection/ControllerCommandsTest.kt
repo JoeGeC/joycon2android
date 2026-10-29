@@ -22,6 +22,15 @@ class ControllerCommandsTest {
         )
     }
 
+    // ndeadly's capture of the console's connection vibration.
+    @Test
+    fun `builds the vibration sample command`() {
+        assertArrayEquals(
+            bytes(0x0A, 0x91, 0x01, 0x02, 0x00, 0x04, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00),
+            ControllerCommands.vibrationSample(0x03),
+        )
+    }
+
     @Test
     fun `builds the player LED command`() {
         assertArrayEquals(

@@ -137,7 +137,7 @@ button works in every game ([why](docs/virtual-gamepad.md#why-theyre-set-up-as-p
 GameCube controller has layouts of its own, with Z on its Z button and analog L/R in Dolphin.
 
 - **Mapping a target.** Tap it, then press the button or push the stick you want on that player's
-  controller; it replaces what was bound. A stick counts once pushed past half-way. **Choose from
+  controller; it replaces what was bound, and the controller gives a faint buzz. A stick counts once pushed past half-way. **Choose from
   list** instead lets a target take **several sources** — tick as many as you like, and any of them
   fires it.
 

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.buttonmapping.ApplyGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.ApplyMappingLayoutUseCase
+import com.joegec.joycon2android.buttonmapping.ConfirmPressUseCase
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.DeleteCustomLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.DeleteGlobalLayoutUseCase
@@ -19,6 +20,7 @@ import com.joegec.joycon2android.buttonmapping.SetSensitivityUseCase
 import com.joegec.joycon2android.buttonmapping.SetThrustUseCase
 import com.joegec.joycon2android.buttonmapping.SetWiiControllerUseCase
 import com.joegec.joycon2android.buttonmapping.WiiController
+import com.joegec.joycon2android.model.PlayerState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +44,7 @@ class ControllerMappingViewModel(
     private val setSensitivity: SetSensitivityUseCase,
     private val setProController: SetProControllerUseCase,
     private val setDeviceKeysPaused: SetDeviceKeysPausedUseCase,
+    private val confirmPress: ConfirmPressUseCase,
     private val saveCustomLayout: SaveCustomLayoutUseCase,
     private val saveGlobalLayout: SaveGlobalLayoutUseCase,
     private val deleteCustomLayout: DeleteCustomLayoutUseCase,
@@ -87,6 +90,8 @@ class ControllerMappingViewModel(
     }
 
     fun pauseDeviceKeys(paused: Boolean) = setDeviceKeysPaused(paused)
+
+    fun confirmPressOn(player: PlayerState) = confirmPress(player)
 
     /** Null means the whole session. */
     fun saveLayout(body: PlayerBody?, name: String) = onTarget { target ->

@@ -20,6 +20,7 @@ import com.joegec.joycon2android.androidkeys.HeldKeyRouter
 import com.joegec.joycon2android.androidkeys.OutputBindings
 import com.joegec.joycon2android.androidkeys.ShellAndroidKeyPresser
 import com.joegec.joycon2android.buttonmapping.ApplyGlobalLayoutUseCase
+import com.joegec.joycon2android.buttonmapping.ConfirmPressUseCase
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.KeyBindings
 import com.joegec.joycon2android.buttonmapping.ObserveKeyBindingsUseCase
@@ -334,6 +335,7 @@ class AppContainer(context: Context) {
     }
     private val deviceKeysPause = DeviceKeysPause()
     val setDeviceKeysPaused = SetDeviceKeysPausedUseCase(deviceKeysPause)
+    val confirmPress = ConfirmPressUseCase(ControllerPressFeedback(controllerRepository))
     private val deviceKeysActing = combine(outputRepository.running, deviceKeysPause.paused) { running, paused ->
         running && !paused
     }.stateIn(scope, SharingStarted.Eagerly, false)

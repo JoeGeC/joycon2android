@@ -79,6 +79,7 @@ internal fun BindingRow(
             onPressed = { sourceId ->
                 listening = false
                 actions.setMapping(state.body, targetKey, sourceIdOf(listOf(sourceId)))
+                actions.confirmPress(controller.player)
             },
             onChooseFromList = {
                 listening = false

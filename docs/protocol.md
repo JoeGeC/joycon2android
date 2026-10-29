@@ -188,9 +188,32 @@ Stored effects, from [ndeadly/switch2_controller_research](https://github.com/nd
 | `0x06` | short high beep | |
 | `0x07` | short higher beep | |
 
-The app plays `0x03` when a controller is assigned to a player. Free-form HD rumble goes to a
-separate vibration characteristic (`289326cb-…` left, `fa19b0fb-…` right) as 16 packed bytes whose
-encoding is not documented.
+The app plays `0x03` when a controller is assigned to a player.
+
+### HD rumble
+
+Free-form rumble, written without response to the controller's vibration characteristic. Layout from
+[Nadeflore/switch2-controllers](https://github.com/Nadeflore/switch2-controllers) and DS4Windows'
+Switch 2 codec, bit packing and frequencies from SDL's `SDL_hidapi_switch2.c`:
+
+| Controller | Characteristic | Packet |
+|---|---|---|
+| Joy-Con 2 L | `289326cb-a471-485d-a8f4-240c14f18241` | `00` + group |
+| Joy-Con 2 R | `fa19b0fb-cd1f-46a7-84a1-bbb09e00c149` | `00` + group |
+| Pro Controller 2 | `cc483f51-9258-427d-a939-630c31f72b05` | `00` + left group + right group |
+| Console-protocol clone | the side's command characteristic | `00` + group, the slot before a command |
+
+- **Group**, 16 bytes: `0x50 | counter` (counter 0–15, +1 per packet), then three 5-byte subframes.
+- **Subframe**, 40 bits little-endian: bits 0–9 high frequency, 10–19 high amplitude, 20–29 low
+  frequency, 30–39 low amplitude. Amplitude runs to `0x3FF`. SDL uses frequencies `0x187` and `0x112`
+  and caps amplitude at ~44%.
+- **Cadence:** a packet carries ~12 ms. SDL resends every 12 ms while it rumbles, then sends zero
+  amplitude to stop.
+- The GameCube controller takes 4 bytes in another format, on `3f8fb670-ab25-45bf-b540-38c72834d064`;
+  the app doesn't rumble it.
+
+When the mapping editor binds a press, the app plays three packets at amplitude `0x040` 12 ms apart, then
+silence: a ~36 ms faint buzz (`VibrationPlayback`). Clones are untested.
 
 ### Analog triggers
 

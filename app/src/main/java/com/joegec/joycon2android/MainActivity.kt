@@ -142,6 +142,7 @@ class MainActivity : ComponentActivity() {
                     c.setSensitivity,
                     c.setProController,
                     c.setDeviceKeysPaused,
+                    c.confirmPress,
                     c.saveCustomLayout,
                     c.saveGlobalLayout,
                     c.deleteCustomLayout,
@@ -284,6 +285,7 @@ class MainActivity : ComponentActivity() {
         setSensitivity = { body, percent -> controllerMappingViewModel.setSensitivityPercent(body, percent) },
         setProController = { body, enabled -> controllerMappingViewModel.setProControllerEnabled(body, enabled) },
         setDeviceKeysPaused = { controllerMappingViewModel.pauseDeviceKeys(it) },
+        confirmPress = { controllerMappingViewModel.confirmPressOn(it) },
     )
 
     @Composable

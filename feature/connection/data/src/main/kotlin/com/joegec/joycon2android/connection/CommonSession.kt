@@ -45,9 +45,11 @@ internal class CommonSession(
     @Volatile private var ready = false
     @Volatile private var ledBitmask = initialLedBitmask
     private var ledSentAfterFirstPacket = false
+    private var rumbleCounter = 0
 
     override fun start() {
         channel.write.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+        channel.vibration?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
         subscribeCommandResponse()
         subscribeInput()
         ops.enqueue(INIT_GAP_MS) { write(FEATURES_INIT) }
@@ -88,7 +90,15 @@ internal class CommonSession(
     }
 
     override fun vibrate(sample: VibrationSample) {
-        if (ready) ops.enqueue { write(ControllerCommands.vibrationSample(sample)) }
+        if (!ready) return
+        VibrationPlayback.steps(sample).forEach { step -> ops.enqueue(step.gapMs) { play(step) } }
+    }
+
+    private fun play(step: VibrationPlayback.Step): Boolean = when (step) {
+        is VibrationPlayback.Sample -> write(step.command)
+        is VibrationPlayback.Rumble -> channel.vibration?.let {
+            write(it, HdRumble.packet(rumbleCounter++, step.amplitude, channel.rumbleMotors))
+        } ?: false
     }
 
     override fun setHighPriority(enabled: Boolean) {
@@ -152,16 +162,18 @@ internal class CommonSession(
         }
     }
 
-    private fun write(value: ByteArray): Boolean =
+    private fun write(value: ByteArray): Boolean = write(channel.write, value)
+
+    private fun write(characteristic: BluetoothGattCharacteristic, value: ByteArray): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             gatt.writeCharacteristic(
-                channel.write, value, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                characteristic, value, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
             ) == BluetoothStatusCodes.SUCCESS
         } else {
             @Suppress("DEPRECATION")
-            channel.write.value = value
+            characteristic.value = value
             @Suppress("DEPRECATION")
-            gatt.writeCharacteristic(channel.write)
+            gatt.writeCharacteristic(characteristic)
         }
 
     private fun writeDescriptor(descriptor: BluetoothGattDescriptor, value: ByteArray): Boolean =

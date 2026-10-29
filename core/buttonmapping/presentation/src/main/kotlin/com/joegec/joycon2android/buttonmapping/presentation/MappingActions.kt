@@ -3,6 +3,7 @@ package com.joegec.joycon2android.buttonmapping.presentation
 import androidx.compose.runtime.Immutable
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.WiiController
+import com.joegec.joycon2android.model.PlayerState
 
 @Immutable
 class MappingActions(
@@ -16,4 +17,5 @@ class MappingActions(
     val setSensitivity: (body: PlayerBody, percent: Int) -> Unit,
     val setProController: (body: PlayerBody, enabled: Boolean) -> Unit,
     val setDeviceKeysPaused: (paused: Boolean) -> Unit,
+    val confirmPress: (player: PlayerState) -> Unit,
 )

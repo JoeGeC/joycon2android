@@ -6,6 +6,8 @@ import android.util.Log
 import com.joegec.joycon2android.connection.ControllerCommands
 import com.joegec.joycon2android.connection.ControllerProtocol
 import com.joegec.joycon2android.connection.GattOpQueue
+import com.joegec.joycon2android.connection.HdRumble
+import com.joegec.joycon2android.connection.VibrationPlayback
 import com.joegec.joycon2android.connection.VibrationSample
 import com.joegec.joycon2android.connection.SpiColorParser
 import com.joegec.joycon2android.model.JoyconInput
@@ -41,6 +43,7 @@ internal class ConsoleSession(
     @Volatile private var ledBitmask = initialLedBitmask
     private var lastCounter = -1
     private var packetId = 0
+    private var rumbleCounter = 0
 
     override fun start() {
         Log.i(TAG, "[$label] Using the console protocol")
@@ -76,7 +79,20 @@ internal class ConsoleSession(
     }
 
     override fun vibrate(sample: VibrationSample) {
-        submit { transport.send(ControllerCommands.vibrationSample(sample)) }
+        submit {
+            VibrationPlayback.steps(sample).forEach { step ->
+                play(step)
+                Thread.sleep(step.gapMs)
+            }
+        }
+    }
+
+    // The command frame's prefix is the rumble slot, so rumble alone is that slot with no command.
+    private fun play(step: VibrationPlayback.Step) {
+        when (step) {
+            is VibrationPlayback.Sample -> transport.send(step.command)
+            is VibrationPlayback.Rumble -> transport.write(channel.command, HdRumble.packet(rumbleCounter++, step.amplitude))
+        }
     }
 
     override fun onCharacteristicChanged(uuid: UUID, value: ByteArray) {
