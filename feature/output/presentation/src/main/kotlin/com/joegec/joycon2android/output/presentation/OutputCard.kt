@@ -2,10 +2,14 @@ package com.joegec.joycon2android.output.presentation
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -16,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,10 +30,12 @@ import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.output.OutputMode
 import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
 import com.joegec.joycon2android.ui.components.EmulatorOption
-import com.joegec.joycon2android.ui.components.FeatureToggleCard
 import com.joegec.joycon2android.ui.components.SegmentedChoice
 import com.joegec.joycon2android.ui.components.SettingWarning
+import com.joegec.joycon2android.ui.components.ToggleRow
+import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
+import com.joegec.joycon2android.ui.theme.ErrorText
 import com.joegec.joycon2android.ui.theme.Motion
 import com.joegec.joycon2android.ui.theme.TextDim
 
@@ -40,27 +47,21 @@ fun OutputCard(
     modifier: Modifier = Modifier,
     status: @Composable ColumnScope.() -> Unit = {},
 ) {
-    FeatureToggleCard(
-        title = stringResource(R.string.output_title),
-        subtitle = subtitle(state),
-        checked = state.running,
-        error = state.error ?: shizukuError(state),
-        onToggle = actions.toggle,
-        modifier = modifier,
+    Column(
+        modifier
+            .fillMaxWidth()
+            .background(CardBg, RoundedCornerShape(Dimens.buttonCorner))
+            .padding(Dimens.cardPadding),
+        verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
     ) {
-        Column(
-            Modifier.padding(top = Dimens.elementSpacing),
-            verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
-        ) {
-            SegmentedChoice(
-                options = OutputMode.entries.map { it to it.label() },
-                selected = state.selection.mode,
-                onSelect = actions.setMode,
-                lit = OutputMode.entries.filterTo(mutableSetOf()) { mode -> mode.devices.any { it in state.liveDevices } },
-            )
-            ModeContent(state, actions)
-            status()
-        }
+        SegmentedChoice(
+            options = OutputMode.entries.map { it to it.label() },
+            selected = state.selection.mode,
+            onSelect = actions.setMode,
+            lit = OutputMode.entries.filterTo(mutableSetOf(), state::isLit),
+        )
+        ModeContent(state, actions)
+        status()
     }
 }
 
@@ -76,13 +77,31 @@ private fun ModeContent(state: OutputCardState, actions: OutputCardActions) {
         label = "mode",
     ) { mode ->
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
-            when (mode) {
-                OutputMode.GAMEPAD, OutputMode.MOTION -> TargetSetup(mode, state, actions)
-                OutputMode.MOUSE_KEYBOARD -> {
-                    MappingButton(actions.openMapping)
-                    if (state.noPointerController) SettingWarning(stringResource(R.string.output_no_pointer))
+            ToggleRow(
+                status = outputStatus(mode, state),
+                checked = mode in state.running,
+                onToggle = { actions.toggle(mode, it) },
+                lit = state.isLit(mode) || mode in state.running,
+            )
+            AnimatedVisibility(
+                visible = mode in state.running,
+                enter = fadeIn(Motion.easeOut()) + expandVertically(Motion.easeOut()),
+                exit = fadeOut(Motion.easeOut()) + shrinkVertically(Motion.easeOut()),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
+                    when (mode) {
+                        OutputMode.GAMEPAD, OutputMode.MOTION -> {
+                            TargetSetup(mode, state, actions)
+                            if (state.setupsCollide) SettingWarning(stringResource(R.string.output_setups_collide))
+                        }
+                        OutputMode.MOUSE_KEYBOARD -> {
+                            MappingButton(actions.openMapping)
+                            if (state.noPointerController) SettingWarning(stringResource(R.string.output_no_pointer))
+                        }
+                    }
                 }
             }
+            ErrorLine(state.errors[mode]?.takeIf { mode in state.running } ?: shizukuError(state, mode))
         }
     }
 }
@@ -109,15 +128,6 @@ private fun TargetSetup(mode: OutputMode, state: OutputCardState, actions: Outpu
 @Composable
 private fun wide() = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-/** What the tab's output is doing: the gamepad, DSU's port and listeners, or mouse and keys. */
-@Composable
-private fun subtitle(state: OutputCardState): String {
-    if (!state.running) return stringResource(R.string.output_subtitle_off)
-    val mode = state.selection.mode
-    val detail = if (mode == OutputMode.MOTION) state.motionDetail ?: mode.label() else mode.label()
-    return stringResource(R.string.output_subtitle_on_for, detail)
-}
-
 @Composable
 private fun MappingButton(onClick: () -> Unit) {
     OutlinedButton(
@@ -127,5 +137,16 @@ private fun MappingButton(onClick: () -> Unit) {
     ) {
         Icon(Icons.Filled.SportsEsports, contentDescription = null, tint = TextDim, modifier = Modifier.size(Dimens.iconSizeSmall))
         Text(stringResource(R.string.output_mapping), color = TextDim, modifier = Modifier.padding(start = Dimens.elementSpacing))
+    }
+}
+
+@Composable
+private fun ErrorLine(error: String?) {
+    AnimatedVisibility(
+        visible = error != null,
+        enter = fadeIn(Motion.easeOut()) + expandVertically(Motion.easeOut()),
+        exit = fadeOut(Motion.easeOut()) + shrinkVertically(Motion.easeOut()),
+    ) {
+        Text(error.orEmpty(), color = ErrorText, style = MaterialTheme.typography.bodySmall)
     }
 }

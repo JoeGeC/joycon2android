@@ -58,7 +58,7 @@ and uinput relays, the DSU UDP server, byte/wire parsers, framework access. Depe
 `SidewaysMapper`, `GamepadState`). Depends on nothing of ours.
 
 **`:core:designsystem`** — theme (Color, Dimens, Type) and generic, reusable composables
-(`FeatureToggleCard`, `ExpandableInfoSection`, `CopyableCode`, `ErrorBox`, …). Anything
+(`ToggleRow`, `ExpandableInfoSection`, `CopyableCode`, `ErrorBox`, …). Anything
 app-specific lives in a feature's presentation, not here.
 
 **`:core:session`** — the cross-feature coordinator (`SessionCoordinator`) plus its session use
@@ -103,8 +103,8 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
 
 ## Output
 
-One **Output** card picks what runs. Each tab is one output, so its setup has one job.
-`:feature:output` owns the choice; `:app` runs it.
+One **Output** card picks what runs. Each tab is one output with its own switch, so its setup has
+one job, and any of them can run together. `:feature:output` owns the choice; `:app` runs it.
 
 | Tab (`OutputMode`) | Runs | Emulators offered | Set up writes |
 |---|---|---|---|
@@ -120,9 +120,9 @@ One **Output** card picks what runs. Each tab is one output, so its setup has on
 | Other | `Console.ANDROID`: device keys only, shared by both tabs |
 | (Mouse & keys) | `Console.PC`, WASD + mouse by default, or Mouse only |
 
-- **`OutputPlan` is the one rule**, pure and tested: a tab's devices, plus the keyboard or mouse once
-  the active mapping uses them (a keyboard or Android key for the keyboard, the Android keys' fast
-  path; a mouse action for the mouse), and the console that mapping is.
+- **`OutputPlan` is the one rule**, pure and tested: the running tabs' devices, plus the keyboard or
+  mouse once a running tab's mapping uses them (a keyboard or Android key for the keyboard, the
+  Android keys' fast path; a mouse action for the mouse), and the console each tab maps.
 - **No per-device overrides.** An emulator that reads gyro from DSU reads its buttons there too, so
   one device per tab covers it; Eden is on both tabs for the rest.
 - **The emulator box is auto setup alone**: what the tab can set up, then **Other**
@@ -132,15 +132,24 @@ One **Output** card picks what runs. Each tab is one output, so its setup has on
   own keys (save-state F-keys for Dolphin, say) and Other has a keys-only mapping of its own.
 - **Each tab keeps its own emulator** (`OutputSelection.emulators`), so switching tabs loses neither.
   Dolphin is two targets of one package (`dolphin-gamecube`, `dolphin-wii`).
-- **One active console for every device.** The routers read one set of bindings per kind of key, which
-  act while the output runs, whichever devices are up, unless paused (`DeviceKeysPause`, while the
-  mapping editor listens for a press).
+- **A console per output.** Set up writes a tab's mapping into the emulator's own config, so the pad
+  and DSU send raw buttons. What reads a console live: Eden's single Joy-Con marking, against the
+  pad's console for the pad and the Motion tab's for DSU; rumble strength, from the pad's; and the
+  mapping editor, on the tab in view (`AppContainer.consoleInView`).
+- **Device keys merge every running tab's mapping** (`ObserveKeyBindingsUseCase` over a set of
+  consoles, `KeyBindings.plus`): a press bound to one key in both acts once, bound to two holds both.
+  They act while any tab runs, unless paused (`DeviceKeysPause`, while the mapping editor listens for
+  a press), and a bound press is withheld from the pad and DSU.
+- **Eden set up from both tabs collides** (`OutputPlan.setupsCollide`): both write the same
+  `player_<n>_*` keys, so only the last Set up reaches it.
 - **`:app` runs it.** `AppContainer` derives the planned devices; `OutputDevicesPolicy` starts the pad
   (with players to give it, again when one returns or Shizuku comes or goes) and DSU; `PrivilegedDevicePolicy` the keyboard
   and mouse, which also need Shizuku.
-- **On as players arrive** (`OutputAutoStartPolicy`): the first player assigned switches it on.
-  Switched off by hand, it stays off until every player leaves and one returns. The switch isn't kept
-  across launches; the tab and each tab's emulator are (`OutputDataStore`).
+- **Remembered tabs start as players arrive** (`OutputAutoStartPolicy`). Every tab starts a launch
+  off, so a remembered Mouse & keys doesn't put up a keyboard and mouse before anyone plays. A switch sets the tab running and remembered together, so one switched off by hand stays
+  off. `stopOutputs` (Disconnect All, the service stopping) stops every tab but forgets none. The tab
+  in view, each tab's emulator and the remembered tabs are kept (`OutputDataStore`); with none
+  remembered yet, the tab in view is.
 
 ## Dependency rules
 
@@ -190,12 +199,12 @@ no state of its own.
 One **ViewModel per feature**, in its presentation module, built in `MainActivity` by a
 `viewModelFactory` that pulls use cases off `AppContainer` — so it depends only on its domain.
 
-- `OutputViewModel` — the [output](#output): mode, emulator, overrides, the on switch and emulator
-  auto setup.
+- `OutputViewModel` — the [output](#output): the tab in view, each tab's emulator and switch, and
+  emulator auto setup.
 - `DsuViewModel` — DSU status.
 - `GamepadViewModel` — the virtual gamepad, keyboard and mouse status, and Shizuku availability.
 - `UpdateViewModel` — the once-per-launch release check and the update prompt.
-- `SettingsViewModel` — the settings that apply to whichever output runs (faster updates, the Eden
+- `SettingsViewModel` — the settings that apply to whichever outputs run (faster updates, the Eden
   motion block), **Show tips**, which `MainActivity` hands every screen through `LocalTips`, and
   which screen `EmulatorLauncher` starts an emulator on. The panel's layout choice stays with `Joycon2ViewModel`, which renders it.
 - `ControllerMappingViewModel` (in `:core:buttonmapping:presentation`) — the button-mapping editor.

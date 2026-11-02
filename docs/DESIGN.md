@@ -114,8 +114,12 @@ In `JoyconScreen.kt`:
 
 ### Output card
 
-- **On by itself.** Assigning a player switches it on, so the usual path is assign and play; the
-  switch is for stopping. Tabs, emulator and mapping stay open either way.
+- **No header: the card opens on its tabs.** Each tab's content starts with its own `ToggleRow`, the
+  tab's status on the left and its switch on the right, so any outputs can run together and each is
+  switched where it's set up.
+- **On by itself.** Assigning a player switches on the tabs last left on, so the usual path is
+  assign and play; a tab's switch is for stopping it, and stays off until switched back on. Tabs,
+  emulator and mapping stay open either way.
 - **A tab per output, so setup has one job.** Virtual gamepad, Motion (DSU), Mouse & keys; the
   emulator box under a tab is auto setup only, for that output. **Other** ends its list: Set up hides
   and a labelled Mapping button eases out to fill the row (`SplitRow`; weights in a `Row` snap), for
@@ -123,13 +127,18 @@ In `JoyconScreen.kt`:
 - **A tab's label lights while its output runs**, in the accent: what is actually up, so an output
   that failed (no Shizuku) stays dim. Mouse & keys lights for the keyboard or mouse, on other tabs too
   once the mapping uses them. A lit tab tells a screen reader it's running, as colour alone can't.
-- **The subtitle names what is running:** "Active — Virtual gamepad", "Active — Mouse & keys", or
-  DSU's port and listening emulators on the Motion tab. A warning, such as DSU's slot limit, sits at
-  the bottom.
-- **A tab whose output needs Shizuku says so** in the card's red error line while it runs without
-  Shizuku: the virtual gamepad from its failed start, Mouse & keys from Shizuku's absence, since the
+- **The status says what that tab is doing:** "Off — switch on to play", "Active", or "Active —"
+  DSU's port and listening emulators on Motion. It's in the accent while the tab is on or lit.
+- **Mouse & keys says why it's lit with its switch off:** "On: Virtual gamepad, Motion (DSU)",
+  naming each running tab whose mapping brings up the keyboard or mouse.
+- **A tab's setup shows only while it's on.** Emulator auto setup, Mapping and their warnings expand
+  in under the switch and collapse when it's off, so an off tab is just its status and switch.
+- **Eden on both running tabs warns** under each one's setup that Eden keeps only the last Set up. A
+  warning for the whole card, such as DSU's slot limit, sits at the bottom.
+- **A tab whose output needs Shizuku says so** in a red error line at the foot of its content while it runs
+  without Shizuku: the virtual gamepad from its failed start, Mouse & keys from Shizuku's absence, since the
   keyboard and mouse wait for Shizuku rather than fail. Motion names what its mapping presses that
-  needs it ("Shizuku is needed for mouse and keyboard"). The line follows Shizuku and the tab.
+  needs it ("Shizuku is needed for mouse and keyboard"). The line follows Shizuku and the tab's switch.
 - **Long tab names wrap** to two centred lines at phone width rather than cut off.
 - **Mouse & keys warns when nothing can move the pointer**: a `SettingWarning` under Mapping while
   every connected controller lacks the Joy-Con 2's mouse sensor (Pro, GameCube, third-party), so
@@ -185,7 +194,7 @@ An odd trailing item takes a half cell, a weighted `Spacer` filling the other ha
 ## Components
 
 Shared in `core/designsystem/.../ui/components/`:
-- `FeatureToggleCard` — the primary on/off feature surface (the Output card)
+- `ToggleRow` — a status line and its switch, the status lit in the accent (each Output card tab)
 - `SegmentedChoice` — one of a few options, all in view, any of them lit in the accent (the Output
   card's tabs)
 - `OptionDropdown` / `DropdownOption` / `PanelDropdownMenu` — the app's picker: an accented current
@@ -212,7 +221,7 @@ system's reduced-motion setting.
   by the system's animation setting, so turning animations off makes it instant.
 - **Every state change on the Output card moves.** `SegmentedChoice`'s highlight slides to the
   choice and its labels fade to lit or dim; the tab's content cross-fades as the card eases to its
-  new height; the subtitle cross-fades; DSU's slot warning expands in and out.
+  new height; a tab's status cross-fades; error lines and DSU's slot warning expand in and out.
 
 ## Open work
 

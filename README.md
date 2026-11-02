@@ -72,8 +72,10 @@ as an ordinary gamepad.
 
 ### 3. Turn on the output
 
-The **Output** card asks what you're playing and runs what that needs. It turns on by itself once a
-player is assigned; its switch stops it. Grant Shizuku permission the first time.
+The **Output** card asks what you're playing and runs what that needs. Each tab has its own switch,
+and tabs can run together — say the virtual gamepad for GameCube games and Motion for Wii games.
+The tabs you left on turn on by themselves once a player is assigned; a tab switched off stays off
+until you switch it back on. Grant Shizuku permission the first time.
 
 | Tab | For | Runs |
 |---|---|---|
@@ -87,7 +89,10 @@ gamepad in its controller settings, or point it at DSU: [manual setup](#manual-s
 **Mapping** holds just the app's own keys (Android, mouse, keyboard). Each tab remembers its pick,
 and the mapping that applies is the one for whatever it's set to.
 
-A tab's name lights up while its output is running.
+A tab's name lights up while its output is running. If Mouse & keys is lit with its switch off,
+another tab's mapping is using the keyboard or mouse, and the tab names which ("On: Virtual
+gamepad"). A tab's setup and **Mapping** show once it's switched on. Eden reads only one
+tab's setup, so with Eden on both, the tab you set up last is the one that works.
 The app stays connected in the background while its notification is showing.
 
 - **Motion.** DSU streams gyro, buttons and sticks to emulators on the same device at
@@ -123,7 +128,7 @@ The gear at the top right opens the settings panel:
 
 ### 5. Set up your emulator
 
-On the **Virtual gamepad** or **Motion (DSU)** tab, pick Dolphin or Eden and tap **Set up**: the app writes the emulator's controller config for that tab. The app offers to start
+On the **Virtual gamepad** or **Motion (DSU)** tab, switched on, pick Dolphin or Eden and tap **Set up**: the app writes the emulator's controller config for that tab. The app offers to start
 the emulator afterwards — it only reads its config when it starts.
 
 | Tab | Emulators | What it writes |
@@ -131,7 +136,7 @@ the emulator afterwards — it only reads its config when it starts.
 | Virtual gamepad | Dolphin (GameCube), Eden, Eden Nightly | buttons, sticks and rumble; analog L/R for a GameCube controller |
 | Motion (DSU) | Dolphin (Wii), Eden, Eden Nightly | buttons, sticks and motion |
 
-The gamepad button beside **Set up** (**Mapping** on Mouse & keys) opens the mapping editor, with a card per connected player —
+Once a tab is switched on, the gamepad button beside **Set up** (**Mapping** on Mouse & keys) opens the mapping editor, with a card per connected player —
 tap one to open its bindings. On Eden a single Joy-Con is set up as a real left or right Joy-Con;
 with **Pro Controller** (below) turned on, or on Dolphin, it's a Pro Controller held sideways, so every
 button works in every game ([why](docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers)). A
@@ -317,12 +322,12 @@ shoulder buttons its body lacks.
 | Controllers drop when a game starts | Some phones clear background apps when a game launches. Tap the yellow banner at the top to let the app run in the background (or set its battery use to unrestricted), and exclude it from the game launcher's cleanup |
 | Gamepad doesn't show up in games | Check `adb shell getevent -p` lists "Joy-Con Virtual Gamepad" |
 | No rumble in Eden, or the phone vibrates instead | Tap **Set up** for Eden again, or turn off **Use system vibrator** in Eden's controller settings |
-| No rumble on an AYN Thor or Odin | Switch the output off and on: the firmware swaps in a copy of the gamepad that can't rumble, and the app stops that only as it creates the gamepad |
+| No rumble on an AYN Thor or Odin | Switch the **Virtual gamepad** tab off and on: the firmware swaps in a copy of the gamepad that can't rumble, and the app stops that only as it creates the gamepad |
 | No DSUClient device in the emulator | Check the server address, restart the emulator and open a mapping screen; `adb logcat -s DsuServer` shows whether it's connecting |
-| Emulator won't detect DSU presses | Pick inputs from the list — detection never sees DSU — with the virtual gamepad off |
+| Emulator won't detect DSU presses | Pick inputs from the list — detection never sees DSU — with the **Virtual gamepad** tab switched off |
 | Motion aiming stutters | Settings (gear, top right): keep **Ignore this device's motion in Eden** and **Faster controller updates** on |
 | Tilting the device moves the aim in Eden | Turn on **Ignore this device's motion in Eden** |
-| Joy-Con mouse doesn't move the pointer | The Output card's **Mouse & keys** tab name must be lit: the **Mouse & keys** tab, or a mapped mouse action on the others. Stand the Joy-Con on its rail, not its back, on a flat, non-glossy surface |
+| Joy-Con mouse doesn't move the pointer | The Output card's **Mouse & keys** tab name must be lit: the **Mouse & keys** tab switched on, or a mapped mouse action on another running tab. Stand the Joy-Con on its rail, not its back, on a flat, non-glossy surface |
 | Pointer drifts or starts off-screen | Rest the controller for ~2 s, then press Recenter |
 | Sticks feel twitchy in Dolphin (hard to walk or aim) | Tap **Set up** for Dolphin again. A Pro Controller: map it in Dolphin first, then tap **Set up** once to add the calibration |
 | MotionPlus tutorial replays every boot (Dolphin) | Set `MPLS.MOVIE` in `Wii/shared2/sys/SYSCONF` with Dolphin closed ([why](docs/dsu-motion.md#motionplus-tutorial-replays)) |

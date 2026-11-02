@@ -36,7 +36,7 @@ class OutputViewModel(
     val selection: StateFlow<OutputSelection> = observeOutputSelection()
         .stateIn(viewModelScope, SharingStarted.Eagerly, OutputSelection())
 
-    val running: StateFlow<Boolean> = observeOutputRunning()
+    val running: StateFlow<Set<OutputMode>> = observeOutputRunning()
 
     private val _setupPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
     val setupPhase: StateFlow<DolphinSetupPhase> = _setupPhase.asStateFlow()
@@ -52,7 +52,9 @@ class OutputViewModel(
 
     private fun selectedIn(selection: OutputSelection) = emulatorsFor(selection.mode).selected(selection.emulatorId)
 
-    fun toggle(running: Boolean) = setOutputRunning(running)
+    fun toggle(mode: OutputMode, running: Boolean) {
+        viewModelScope.launch { setOutputRunning(mode, running) }
+    }
 
     fun setMode(mode: OutputMode) {
         viewModelScope.launch { setOutputMode(mode) }

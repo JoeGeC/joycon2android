@@ -7,9 +7,9 @@ import com.joegec.joycon2android.output.OutputMode
 
 /** The keyboard, mouse and Android keys wait for Shizuku rather than fail, so they raise no error of their own. */
 @Composable
-fun shizukuError(state: OutputCardState): String? {
-    if (!state.running || state.shizukuAvailable) return null
-    return when (state.selection.mode) {
+fun shizukuError(state: OutputCardState, mode: OutputMode): String? {
+    if (mode !in state.running || state.shizukuAvailable) return null
+    return when (mode) {
         OutputMode.MOUSE_KEYBOARD -> stringResource(R.string.output_no_privileged_access)
         OutputMode.MOTION -> state.mappedKeys.takeIf { it.isNotEmpty() }?.let { neededFor(it) }
         OutputMode.GAMEPAD -> null

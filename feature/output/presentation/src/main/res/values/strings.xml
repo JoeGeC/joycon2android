@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="output_title">Output</string>
-    <string name="output_subtitle_off">Off — switch on to play</string>
-    <string name="output_subtitle_on_for">Active — %1$s</string>
+    <string name="output_status_off">Off — switch on to play</string>
+    <string name="output_status_active">Active</string>
+    <string name="output_status_active_with">Active — %1$s</string>
+    <string name="output_status_on_for">On: %1$s</string>
+    <string name="output_status_on_for_two">On: %1$s, %2$s</string>
     <string name="output_mode_gamepad">Virtual gamepad</string>
     <string name="output_mode_motion">Motion (DSU)</string>
     <string name="output_mode_mouse_keyboard">Mouse &amp; keys</string>
@@ -16,5 +18,6 @@
     <string name="output_key_kind_android">Android keys</string>
     <string name="output_list_two">%1$s and %2$s</string>
     <string name="output_list_three">%1$s, %2$s and %3$s</string>
+    <string name="output_setups_collide">Both tabs set up Eden, which keeps only the last Set up. The other tab runs but Eden won\'t read it.</string>
     <string name="output_no_pointer">Clicks and keys work on any controller, but only a Joy-Con 2 standing on its rail moves the pointer.</string>
 </resources>
