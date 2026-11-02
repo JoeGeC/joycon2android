@@ -341,6 +341,7 @@ class MainActivity : ComponentActivity() {
         val emulatorToStart by outputViewModel.emulatorToStart.collectAsState()
         val permissionDenied by viewModel.permissionDenied.collectAsState()
         val batteryRestricted by viewModel.batteryRestricted.collectAsState()
+        val locationBlocksScanning by viewModel.locationBlocksScanning.collectAsState()
         val viewMode by viewModel.viewMode.collectAsState()
 
         // A written config matches one assignment, so Done/Failed goes stale when it changes.
@@ -368,6 +369,8 @@ class MainActivity : ComponentActivity() {
             onAllowBackgroundRunning = {
                 startActivity(viewModel.batteryOptimizationExemption.buildRequestIntent())
             },
+            locationBlocksScanning = locationBlocksScanning,
+            onTurnOnLocation = { startActivity(viewModel.locationServices.buildSettingsIntent()) },
             onScan = onScan,
             onDisconnectAll = viewModel::disconnectAll,
             onAssign = viewModel::assignToPlayer,

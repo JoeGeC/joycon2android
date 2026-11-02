@@ -7,14 +7,13 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.joegec.joycon2android.R
 import com.joegec.joycon2android.ui.components.WarningBox
 
 @Composable
-fun BatteryRestrictedBanner(
+fun WarningBanner(
     visible: Boolean,
-    onAllowBackgroundRunning: () -> Unit,
+    text: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
@@ -23,9 +22,6 @@ fun BatteryRestrictedBanner(
         exit = fadeOut() + shrinkVertically(),
         modifier = modifier,
     ) {
-        WarningBox(
-            text = stringResource(R.string.warning_battery_restricted),
-            onClick = onAllowBackgroundRunning,
-        )
+        WarningBox(text = text, onClick = onClick)
     }
 }

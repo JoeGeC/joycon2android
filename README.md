@@ -309,7 +309,8 @@ shoulder buttons its body lacks.
 |---|---|
 | "Shizuku is not running" | Open Shizuku and start it |
 | "Shizuku permission denied" | Shizuku → Apps → allow Joycon2Android |
-| Controller not found | Hold SYNC again and move closer |
+| Controller not found | Hold SYNC again and move closer. A press on a controller synced to a Switch isn't enough: hold SYNC until the lights sweep |
+| Controller not found (Android 11 or older, Fire tablets) | Turn Location on and allow the app Location: before Android 12, Bluetooth scans find nothing without it. The app shows a banner when either is off |
 | Controller shows as the wrong type (stick turned sideways, no right stick) | Tap its type at the top of its card, pick the right one, then assign it |
 | Controller stops responding | Press SYNC and reconnect; wait a moment if it stays silent |
 | Controller shows "Connection lost" | Press SYNC on it and it reconnects to the same player by itself, or tap Scan. After two minutes it's removed |

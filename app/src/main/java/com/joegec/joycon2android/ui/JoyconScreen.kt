@@ -1,6 +1,8 @@
 package com.joegec.joycon2android.ui
 
 import android.content.res.Configuration
+import android.os.Build
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.expandVertically
@@ -126,6 +128,8 @@ fun JoyconScreen(
     permissionDenied: Boolean,
     batteryRestricted: Boolean,
     onAllowBackgroundRunning: () -> Unit,
+    locationBlocksScanning: Boolean,
+    onTurnOnLocation: () -> Unit,
     onScan: () -> Unit,
     onDisconnectAll: () -> Unit,
     onAssign: (String, PlayerNumber) -> Unit,
@@ -220,7 +224,7 @@ fun JoyconScreen(
                 when (target) {
                     ScreenState.IDLE -> IdleContent(
                         state, permissionDenied, batteryRestricted, onAllowBackgroundRunning,
-                        onScan, onOpenSystemSettings,
+                        locationBlocksScanning, onTurnOnLocation, onScan, onOpenSystemSettings,
                         Modifier
                             .fillMaxSize()
                             .padding(horizontal = Dimens.screenPaddingHorizontal)
@@ -236,6 +240,7 @@ fun JoyconScreen(
                         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
                     ) {
                         BatteryRestrictedBanner(batteryRestricted, onAllowBackgroundRunning)
+                        LocationOffBanner(locationBlocksScanning, onTurnOnLocation)
                         when (target) {
                             ScreenState.CONNECTED -> ConnectedContent(
                                 state, liveInputs, viewMode, outputCard, shizukuAvailable,
@@ -336,6 +341,8 @@ private fun IdleContent(
     permissionDenied: Boolean,
     batteryRestricted: Boolean,
     onAllowBackgroundRunning: () -> Unit,
+    locationBlocksScanning: Boolean,
+    onTurnOnLocation: () -> Unit,
     onScan: () -> Unit,
     onOpenSystemSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -345,9 +352,10 @@ private fun IdleContent(
         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
     ) {
         BatteryRestrictedBanner(batteryRestricted, onAllowBackgroundRunning)
+        LocationOffBanner(locationBlocksScanning, onTurnOnLocation)
         ErrorBox(text = state.error)
         ErrorBox(
-            text = if (permissionDenied) stringResource(R.string.error_permissions_denied) else null,
+            text = if (permissionDenied) stringResource(permissionsDeniedMessage()) else null,
             onClick = onOpenSystemSettings,
         )
 
@@ -367,6 +375,21 @@ private fun IdleContent(
         }
     }
 }
+
+@Composable
+private fun BatteryRestrictedBanner(visible: Boolean, onAllowBackgroundRunning: () -> Unit) {
+    WarningBanner(visible, stringResource(R.string.warning_battery_restricted), onAllowBackgroundRunning)
+}
+
+@Composable
+private fun LocationOffBanner(visible: Boolean, onTurnOnLocation: () -> Unit) {
+    WarningBanner(visible, stringResource(R.string.warning_location_off), onTurnOnLocation)
+}
+
+@StringRes
+private fun permissionsDeniedMessage(): Int =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) R.string.error_permissions_denied
+    else R.string.error_location_permission_denied
 
 @Composable
 private fun ScanningContent(state: AppUiState) {

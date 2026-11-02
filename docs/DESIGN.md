@@ -31,7 +31,8 @@ top-level `Color` vals used directly. One teal accent, plus each controller's ow
 - `WarningText` — `#FFB454` / `WarningBg` — `#2D2113`: a limit or a recoverable state, not a fault —
   the no-gyroscope note, and a dropped controller's **Connection lost** (a `WarningBox` at the top
   of its player card, a link-off glyph in the compact row, a label in the unassigned card), and the
-  tappable battery-restriction banner at the top of the connection screen, shown until the app runs unrestricted
+  tappable banners at the top of the connection screen: battery restriction, shown until the app runs
+  unrestricted, and location off, shown below Android 12 where scans need it
 - Battery ramp (`batteryColor()`): high `Accent` · medium `#FBBF24` · low `BatteryLow #FF8A8A`
   (a lighter red than `ErrorText` so the low % clears AA on the `AccentDim` pill). Shown with a
   battery icon whose fill tracks the level, so it isn't colour-only.

@@ -16,7 +16,9 @@
 
     <!-- Errors -->
     <string name="warning_battery_restricted">Some devices close this app when a game starts. Tap here to let it run in the background.</string>
+    <string name="warning_location_off">Location is off, so this device can\'t find controllers. Tap here to turn it on.</string>
     <string name="error_permissions_denied">Nearby Devices permission is required. Tap here to open Settings.</string>
+    <string name="error_location_permission_denied">Location permission is required to find controllers. Tap here to open Settings.</string>
 
     <!-- Multi-player -->
     <string name="status_connected_count">%1$d CONNECTED</string>

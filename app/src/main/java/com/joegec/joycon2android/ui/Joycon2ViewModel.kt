@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.AppContainer
 import com.joegec.joycon2android.JoyconApplication
 import com.joegec.joycon2android.ble.BlePermissionHandler
+import com.joegec.joycon2android.ble.LocationServices
 import com.joegec.joycon2android.model.AppUiState
 import com.joegec.joycon2android.model.ConnectionViewMode
 import com.joegec.joycon2android.model.JoyconInput
@@ -31,6 +32,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     val permissionHandler = BlePermissionHandler(application)
     val batteryOptimizationExemption = BatteryOptimizationExemption(application)
+    val locationServices = LocationServices(application)
 
     private var bound = false
 
@@ -57,6 +59,9 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     private val _batteryRestricted = MutableStateFlow(!batteryOptimizationExemption.isGranted())
     val batteryRestricted: StateFlow<Boolean> = _batteryRestricted.asStateFlow()
+
+    val locationBlocksScanning: StateFlow<Boolean> = locationServices.observeBlocksScanning()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
     val viewMode: StateFlow<ConnectionViewMode> = container.observeViewMode()
         .stateIn(viewModelScope, SharingStarted.Eagerly, ConnectionViewMode.DETAILED)

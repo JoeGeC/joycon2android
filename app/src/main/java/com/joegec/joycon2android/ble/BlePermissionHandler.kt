@@ -22,13 +22,9 @@ class BlePermissionHandler(private val context: Context) {
             )
         }
 
-    fun isGranted(): Boolean =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) ==
-                PackageManager.PERMISSION_GRANTED
-        } else {
-            true
-        }
+    fun isGranted(): Boolean = requiredPermissions.all {
+        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+    }
 
     fun buildSettingsIntent(): Intent {
         val nearbyIntent = Intent("android.settings.MANAGE_APP_PERMISSION").apply {
