@@ -12,30 +12,30 @@ class OutputAutoStartPolicyTest {
 
     private val scope = CoroutineScope(Dispatchers.Unconfined)
     private val hasPlayers = MutableStateFlow(false)
-    private val running = mutableListOf<Boolean>()
+    private var starts = 0
 
     init {
-        OutputAutoStartPolicy(scope, hasPlayers) { running += it }.start()
+        OutputAutoStartPolicy(scope, hasPlayers) { starts++ }.start()
     }
 
     @After
     fun tearDown() = scope.cancel()
 
     @Test
-    fun `the first player turns the output on, and nothing before`() {
-        assertEquals(emptyList<Boolean>(), running)
+    fun `the first player starts the remembered tabs, and nothing before`() {
+        assertEquals(0, starts)
 
         hasPlayers.value = true
 
-        assertEquals(listOf(true), running)
+        assertEquals(1, starts)
     }
 
     @Test
-    fun `players coming back turn it on again, not each change in between`() {
+    fun `players coming back start them again, not each change in between`() {
         hasPlayers.value = true
         hasPlayers.value = false
         hasPlayers.value = true
 
-        assertEquals(listOf(true, true), running)
+        assertEquals(2, starts)
     }
 }

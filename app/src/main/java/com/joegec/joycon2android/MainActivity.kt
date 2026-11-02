@@ -400,6 +400,7 @@ class MainActivity : ComponentActivity() {
         val dsuStatus by dsuViewModel.status.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
         val mappedKeys by container.mappedKeys.collectAsState()
+        val tabsMappingKeys by container.tabsMappingKeys.collectAsState()
         val live = buildSet {
             if (gamepadStatus.enabled) add(OutputDevice.PAD)
             if (dsuStatus.enabled) add(OutputDevice.MOTION)
@@ -414,11 +415,15 @@ class MainActivity : ComponentActivity() {
                 emulators = outputViewModel.emulators,
                 setupPhase = setupPhase,
                 liveDevices = live,
-                error = gamepadStatus.error ?: dsuStatus.error,
+                errors = buildMap {
+                    gamepadStatus.error?.let { put(OutputMode.GAMEPAD, it) }
+                    dsuStatus.error?.let { put(OutputMode.MOTION, it) }
+                },
                 motionDetail = if (dsuStatus.enabled) dsuPortText(dsuStatus.clientCount) else null,
                 noPointerController = players.any { it.hasController } && players.none { it.canMovePointer },
                 shizukuAvailable = shizukuAvailable,
                 mappedKeys = mappedKeys,
+                tabsMappingKeys = tabsMappingKeys,
             ),
             actions = OutputCardActions(
                 toggle = outputViewModel::toggle,
@@ -428,7 +433,7 @@ class MainActivity : ComponentActivity() {
                 openMapping = {
                     // DSU inputs are picked from a list; detection never sees them.
                     val fromDsu = selection.mode == OutputMode.MOTION
-                    onOpenMapping(MappingRoute(container.activeConsole.value, fromDsu))
+                    onOpenMapping(MappingRoute(container.consoleInView(), fromDsu))
                 },
             ),
             modifier = modifier,

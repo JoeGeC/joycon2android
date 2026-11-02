@@ -6,16 +6,16 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
-/** Turns the output on as players arrive. Switched off by hand, it stays off until they leave and return. */
+/** Starts the tabs last left on as players arrive. A tab switched off by hand is no longer among them. */
 class OutputAutoStartPolicy(
     private val scope: CoroutineScope,
     private val hasPlayers: Flow<Boolean>,
-    private val setRunning: (Boolean) -> Unit,
+    private val startRemembered: suspend () -> Unit,
 ) {
 
     fun start() {
         scope.launch {
-            hasPlayers.distinctUntilChanged().filter { it }.collect { setRunning(true) }
+            hasPlayers.distinctUntilChanged().filter { it }.collect { startRemembered() }
         }
     }
 }
