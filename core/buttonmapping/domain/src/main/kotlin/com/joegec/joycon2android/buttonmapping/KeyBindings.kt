@@ -17,6 +17,12 @@ data class KeyBindings<K>(val sources: Map<K, List<MappingSource>> = emptyMap())
     fun heldKeys(state: PlayerState, wasHeld: Set<K> = emptySet()): Set<K> =
         sources.filter { (key, bound) -> bound.any { it.holds(state, key in wasHeld) } }.keys
 
+    /** A source both bind holds each one's key; one bound to the same key twice still holds it once. */
+    operator fun plus(other: KeyBindings<K>): KeyBindings<K> =
+        KeyBindings((sources.keys + other.sources.keys).associateWith { key ->
+            (sources[key].orEmpty() + other.sources[key].orEmpty()).distinct()
+        })
+
     fun withheldFrom(state: PlayerState): PlayerState {
         if (boundButtonIds.isEmpty() && boundTilts.isEmpty()) return state
         val buttonsWithheld = state.copy(

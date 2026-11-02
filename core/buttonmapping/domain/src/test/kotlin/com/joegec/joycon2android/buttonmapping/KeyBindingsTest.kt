@@ -99,4 +99,17 @@ class KeyBindingsTest {
         assertEquals(setOf(KeyboardKey.UP), arrows.heldKeys(state))
         assertEquals(2048, arrows.withheldFrom(state).left!!.input.rightStickY)
     }
+
+    @Test
+    fun `merged bindings hold every key either binds`() {
+        val home = KeyBindings(mapOf(AndroidKey.HOME to listOf(MappingSource.Button(JoyconButton.Home))))
+        val back = KeyBindings(mapOf(AndroidKey.BACK to listOf(MappingSource.Button(JoyconButton.Home))))
+
+        assertEquals(setOf(AndroidKey.HOME, AndroidKey.BACK), (home + back).heldKeys(pair(JoyconButton.Home)))
+    }
+
+    @Test
+    fun `a source both bind to the same key is listed once`() {
+        assertEquals(homeAndBack.sources, (homeAndBack + homeAndBack).sources)
+    }
 }
