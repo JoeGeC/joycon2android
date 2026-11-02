@@ -76,6 +76,14 @@ class StickCalibratorTest {
     }
 
     @Test
+    fun `a full push still reaches the end after one stray reading widened the span`() {
+        settleAtRest()
+        rescale(fullRight + 130)
+
+        assertEquals(4095, rescale(fullRight))
+    }
+
+    @Test
     fun `sticks deflect before centre is learned`() {
         assertTrue(rescale(fullRight) > 2048)
     }

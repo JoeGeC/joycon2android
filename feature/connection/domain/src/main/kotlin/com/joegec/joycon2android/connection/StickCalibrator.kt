@@ -26,12 +26,12 @@ class StickCalibrator(
         }
     }
 
-    fun calibrate(input: JoyconInput): JoyconInput = input.copy(
-        stickX = leftX.rescale(input.stickX),
-        stickY = leftY.rescale(input.stickY),
-        rightStickX = rightX.rescale(input.rightStickX),
-        rightStickY = rightY.rescale(input.rightStickY),
-    )
+    fun calibrate(input: JoyconInput): JoyconInput {
+        val (stickX, stickY) = StickRim.saturate(leftX.rescale(input.stickX), leftY.rescale(input.stickY))
+        val (rightStickX, rightStickY) =
+            StickRim.saturate(rightX.rescale(input.rightStickX), rightY.rescale(input.rightStickY))
+        return input.copy(stickX = stickX, stickY = stickY, rightStickX = rightStickX, rightStickY = rightStickY)
+    }
 
     private class Axis(
         private val restWindowSize: Int,

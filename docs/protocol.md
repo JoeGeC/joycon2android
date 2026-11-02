@@ -338,6 +338,12 @@ corrected values:
   from the first packet, and only ever widen, factory spans included. The NSO GameCube controller's
   C-stick travels less, 1022–1204 from centre on three units (2026-10-07), so its spans are seeded
   at 1000.
+- **The outer tenth of the radius is full tilt** (`StickRim`). Each stick is then scaled by its
+  distance from centre and clamped to a circle. Learned spans widen to the furthest reading seen, so
+  one hard shove or stray packet leaves later full pushes short in that direction. Measured on a
+  Joy-Con 2's left stick through the virtual gamepad (AYN Thor, 2026-11-02): pushed to the gate,
+  right reached 0.89, left 0.92, up 0.95 and down 0.98, while diagonals saturated. After Eden's 15%
+  deadzone, that left up/down/left/right just under Fire Emblem: Three Houses' run speed.
 - Changing a controller's type resets the calibrator; the factory values are applied again.
 
 ## Console-protocol controllers
