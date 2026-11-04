@@ -130,7 +130,8 @@ In `JoyconScreen.kt`:
 - **The status says what that tab is doing:** "Off — switch on to play", "Active", or "Active —"
   DSU's port and listening emulators on Motion. It's in the accent while the tab is on or lit.
 - **Mouse & keys says why it's lit with its switch off:** "On: Virtual gamepad, Motion (DSU)",
-  naming each running tab whose mapping brings up the keyboard or mouse.
+  naming each running tab whose mapping brings up the keyboard or mouse. Virtual gamepad likewise
+  reads "On: Motion (DSU) rumble" while Motion's rumble runs the pad, and shows the pad's errors then.
 - **A tab's setup shows only while it's on.** Emulator auto setup, Mapping and their warnings expand
   in under the switch and collapse when it's off, so an off tab is just its status and switch.
 - **Eden on both running tabs warns** under each one's setup that Eden keeps only the last Set up. A
@@ -152,7 +153,9 @@ In `JoyconScreen.kt`:
 - **Thrusts and Motion sensitivity open the Motion section**, above Shake and Recenter: they shape the
   motion those rows act on. On Classic, with no rows, the section holds Sensitivity alone.
 - **Rumble is a section of its own under Sticks**, holding the strength slider: it describes what
-  comes back to the controller, beside what goes out of it. Off the Wii and Mouse & keys only.
+  comes back to the controller, beside what goes out of it. Off Mouse & keys only. Where rumble rides
+  the virtual gamepad on the Motion tab (Wii, and Switch opened from Motion), an info icon by the
+  section title opens a sheet saying so (`ExpandableInfoSection`'s `onInfoClick`).
 - **Tapping a row listens first** (`PressToMapDialog`): the next button or half-way stick push on
   that player's controller replaces the row's sources, which is what pressing to bind means
   everywhere else. **Choose from list** opens the dropdown, the only way to bind several. A press

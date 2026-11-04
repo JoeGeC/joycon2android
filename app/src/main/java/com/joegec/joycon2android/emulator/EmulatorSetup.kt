@@ -8,6 +8,7 @@ import com.joegec.joycon2android.buttonmapping.GetRemoteMotionUseCase
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.RemoteMotion
 import com.joegec.joycon2android.buttonmapping.body
+import com.joegec.joycon2android.buttonmapping.rumblePercent
 import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.dsu.emulator.DolphinDsuConfig
 import com.joegec.joycon2android.dsu.emulator.DolphinWiimoteConfig
@@ -120,14 +121,12 @@ class EmulatorSetup(
             val shell = awaitShell() ?: return@bounded EmulatorSetupResult.NO_PRIVILEGED_ACCESS
             shell.settle(emulatorId, closeEmulator)?.let { return@bounded it }
             val path = EdenDsuConfig.path(emulatorId)
-            val written = shell.writeText(
-                path,
-                EdenDsuConfig.merge(
-                    shell.readText(path),
-                    markSingleJoycons(players),
-                    mappingLookup(Console.SWITCH_PRO, players),
-                ),
-            )
+            val marked = markSingleJoycons(players)
+            val mapping = mappingLookup(Console.SWITCH_PRO, players)
+            val dsu = EdenDsuConfig.merge(shell.readText(path), marked, mapping)
+            // Eden rumbles only the device a player's buttons are on, so a player with rumble on is bound to their pad.
+            val rumbling = marked.filter { player -> player.body()?.let { mapping(it).rumblePercent > 0 } == true }
+            val written = shell.writeText(path, EdenGamepadConfig.bindToPads(dsu, rumbling, gamepadDevices(), mapping))
             if (written) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
         }
 
@@ -143,15 +142,15 @@ class EmulatorSetup(
         val dsuOk = shell.readText(DolphinDsuConfig.path)?.contains("127.0.0.1:${DsuConfig.PORT}") == true
 
         val motion = motionLookup(Console.WIIMOTE_NUNCHUK, players)
+        val mapping = mappingLookup(Console.WIIMOTE_NUNCHUK, players)
         val configurable = players.any { DolphinWiimoteConfig.writesFor(it, motion) }
+        val padIds = gamepadControllerNumbers()
+        val remotes = DolphinWiimoteConfig.merge(shell.readText(DolphinWiimoteConfig.path), players, motion, mapping)
         val wiimoteOk = !configurable || shell.writeText(
             DolphinWiimoteConfig.path,
-            DolphinWiimoteConfig.merge(
-                shell.readText(DolphinWiimoteConfig.path),
-                players,
-                motion,
-                mappingLookup(Console.WIIMOTE_NUNCHUK, players),
-            ),
+            DolphinWiimoteConfig.withRumble(remotes, players, motion) { body ->
+                padIds[body.player.index]?.takeIf { mapping(body).rumblePercent > 0 }
+            },
         )
 
         if (dsuOk && wiimoteOk) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED

@@ -16,6 +16,7 @@ fun MappingBindings(
     controller: LiveController,
     actions: MappingActions,
     warnings: DeviceKeyWarnings = DeviceKeyWarnings(),
+    viaDsu: Boolean = false,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
         MappingSection.entries.forEach { section ->
@@ -23,7 +24,7 @@ fun MappingBindings(
             val open = section.openAtFirst(console)
             when {
                 section == MappingSection.RUMBLE ->
-                    if (state.offersRumble) RumbleSection(state.rumblePercent, open) { actions.setRumble(state.body, it) }
+                    if (state.offersRumble) RumbleSection(console, viaDsu, state.rumblePercent, open) { actions.setRumble(state.body, it) }
                 section == MappingSection.MOTION ->
                     if (targets.isNotEmpty() || state.offersSensitivity) MotionSection(targets, state, controller, actions, open)
                 targets.isEmpty() -> Unit

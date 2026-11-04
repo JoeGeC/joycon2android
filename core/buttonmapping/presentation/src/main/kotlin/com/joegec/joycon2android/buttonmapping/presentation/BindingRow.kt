@@ -25,7 +25,12 @@ import com.joegec.joycon2android.ui.theme.TextDim
 
 /** A section on its own panel, its header tapped to show or hide its rows. */
 @Composable
-internal fun MappingSectionBox(section: MappingSection, open: Boolean, content: @Composable () -> Unit) {
+internal fun MappingSectionBox(
+    section: MappingSection,
+    open: Boolean,
+    onInfoClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
     ExpandableInfoSection(
         section.label(),
         Modifier
@@ -33,6 +38,7 @@ internal fun MappingSectionBox(section: MappingSection, open: Boolean, content: 
             .background(SectionBg),
         initiallyExpanded = open,
         insidePadding = Dimens.mappingSectionPadding,
+        onInfoClick = onInfoClick,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) { content() }
     }

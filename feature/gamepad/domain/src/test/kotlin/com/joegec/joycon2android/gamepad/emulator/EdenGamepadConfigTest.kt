@@ -283,4 +283,25 @@ class EdenGamepadConfigTest {
         const val GUID = "00000000000056780000000000001234"
         const val DEVICE = "engine:android,port:0,guid:$GUID,pad:0"
     }
+
+    @Test
+    fun `moving to the pads rebinds only the players with one, and keeps everyone's motion`() {
+        val existing = """
+            [Controls]
+            player_0_button_a="engine:cemuhookudp,pad:0,button:8192"
+            player_0_motionright="engine:cemuhookudp,pad:0,motion:0"
+            player_1_button_a="engine:cemuhookudp,pad:1,button:8192"
+        """.trimIndent()
+        val players = listOf(
+            PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)),
+            PlayerState(PlayerNumber.P2, right = joycon(Side.RIGHT)),
+        )
+        val pads = mapOf(1 to EdenGamepad.of(0, VENDOR_ID, PRODUCT_ID))
+
+        val result = EdenGamepadConfig.bindToPads(existing, players, pads, switchProMapping(players))
+
+        assertTrue(result.contains("player_0_button_a=\"engine:android,port:0,guid:$GUID,pad:0,"))
+        assertTrue(result.contains("player_0_motionright=\"engine:cemuhookudp,pad:0,motion:0\""))
+        assertTrue(result.contains("player_1_button_a=\"engine:cemuhookudp,pad:1,button:8192\""))
+    }
 }

@@ -134,7 +134,7 @@ the emulator afterwards — it only reads its config when it starts.
 | Tab | Emulators | What it writes |
 |---|---|---|
 | Virtual gamepad | Dolphin (GameCube), Eden, Eden Nightly | buttons, sticks and rumble; analog L/R for a GameCube controller |
-| Motion (DSU) | Dolphin (Wii), Eden, Eden Nightly | buttons, sticks and motion |
+| Motion (DSU) | Dolphin (Wii), Eden, Eden Nightly | buttons, sticks and motion; rumble through the virtual gamepad |
 
 Once a tab is switched on, the gamepad button beside **Set up** (**Mapping** on Mouse & keys) opens the mapping editor, with a card per connected player —
 tap one to open its bindings. On Eden a single Joy-Con is set up as a real left or right Joy-Con;
@@ -191,8 +191,12 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
   misses your swing. Every layout starts with it off; saved layouts remember it.
 - **Rumble strength.** In each player's **Rumble** section, a slider from Off to 100% of what the controller can safely do sets how
   strongly a game's rumble plays on that player's controllers. It starts at 20%. Saved layouts
-  remember it. Wii and Mouse & keys have none: rumble comes
-  back only through the virtual gamepad.
+  remember it. Mouse & keys has none. DSU can't carry rumble, so on the **Motion (DSU)** tab it
+  comes through the virtual gamepad, which the app starts for it (needs Shizuku); the **Virtual gamepad**
+  tab then reads "On: Motion (DSU) rumble". Dolphin (Wii) takes only the rumble from that pad. Eden
+  rumbles only the controller its buttons are on, so with rumble on, Motion's Set up puts buttons
+  and sticks on the pad and keeps motion on DSU. Set it to Off to keep everything on DSU, and tap
+  **Set up** again after turning it on or off.
 - **Motion sensitivity.** On the Wii console, in the **Motion** section, a slider from 50% to 200% scales swings and shakes
   without changing tilt. Every layout starts at 110%, which suits Wii Sports; 100% passes motion
   through unscaled. Saved layouts remember it.
@@ -322,6 +326,7 @@ shoulder buttons its body lacks.
 | Controllers drop when a game starts | Some phones clear background apps when a game launches. Tap the yellow banner at the top to let the app run in the background (or set its battery use to unrestricted), and exclude it from the game launcher's cleanup |
 | Gamepad doesn't show up in games | Check `adb shell getevent -p` lists "Joy-Con Virtual Gamepad" |
 | No rumble in Eden, or the phone vibrates instead | Tap **Set up** for Eden again, or turn off **Use system vibrator** in Eden's controller settings |
+| No rumble on the Motion (DSU) tab | Check the player's **Rumble** isn't Off and Shizuku is running, then tap **Set up** again so the emulator takes its rumble from the virtual gamepad |
 | No rumble on an AYN Thor or Odin | Switch the **Virtual gamepad** tab off and on: the firmware swaps in a copy of the gamepad that can't rumble, and the app stops that only as it creates the gamepad |
 | No DSUClient device in the emulator | Check the server address, restart the emulator and open a mapping screen; `adb logcat -s DsuServer` shows whether it's connecting |
 | Emulator won't detect DSU presses | Pick inputs from the list — detection never sees DSU — with the **Virtual gamepad** tab switched off |

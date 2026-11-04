@@ -526,4 +526,25 @@ class DolphinWiimoteConfigTest {
         assertTrue(result.contains("Buttons/A = `Cross`"))
         assertFalse(result.contains("Buttons/A = `Old`"))
     }
+
+    @Test
+    fun `a remote's rumble goes to its player's pad`() {
+        val players = listOf(PlayerState(PlayerNumber.P2, right = joycon(Side.RIGHT)))
+
+        val result = DolphinWiimoteConfig.withRumble(merge(null, players), players, { unscaled }) { 7 }
+
+        assertEquals(
+            "`Android/7/Joy-Con Virtual Gamepad 2:Motor 0`",
+            IniEditor.valueOf(result, "[Wiimote2]", "Rumble/Motor"),
+        )
+    }
+
+    @Test
+    fun `a player with no pad to rumble gets no rumble binding`() {
+        val players = listOf(PlayerState(PlayerNumber.P1, right = joycon(Side.RIGHT)))
+
+        val result = DolphinWiimoteConfig.withRumble(merge(null, players), players, { unscaled }) { null }
+
+        assertEquals(null, IniEditor.valueOf(result, "[Wiimote1]", "Rumble/Motor"))
+    }
 }

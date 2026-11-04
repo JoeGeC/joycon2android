@@ -134,7 +134,8 @@ one job, and any of them can run together. `:feature:output` owns the choice; `:
   Dolphin is two targets of one package (`dolphin-gamecube`, `dolphin-wii`).
 - **A console per output.** Set up writes a tab's mapping into the emulator's own config, so the pad
   and DSU send raw buttons. What reads a console live: Eden's single Joy-Con marking, against the
-  pad's console for the pad and the Motion tab's for DSU; rumble strength, from the pad's; and the
+  pad's console for the pad and the Motion tab's for DSU; rumble strength, from the pad's, which is
+  Motion's when the pad is up only for [Motion's rumble](virtual-gamepad.md#rumble-over-dsu); and the
   mapping editor, on the tab in view (`AppContainer.consoleInView`).
 - **Device keys merge every running tab's mapping** (`ObserveKeyBindingsUseCase` over a set of
   consoles, `KeyBindings.plus`): a press bound to one key in both acts once, bound to two holds both.
@@ -142,6 +143,8 @@ one job, and any of them can run together. `:feature:output` owns the choice; `:
   a press), and a bound press is withheld from the pad and DSU.
 - **Eden set up from both tabs collides** (`OutputPlan.setupsCollide`): both write the same
   `player_<n>_*` keys, so only the last Set up reaches it.
+- **Motion's rumble brings up the pad** (`OutputPlan.motionRumblesThroughPad`), as a mapping's keys
+  bring up the keyboard.
 - **`:app` runs it.** `AppContainer` derives the planned devices; `OutputDevicesPolicy` starts the pad
   (with players to give it, again when one returns or Shizuku comes or goes) and DSU; `PrivilegedDevicePolicy` the keyboard
   and mouse, which also need Shizuku.

@@ -73,6 +73,21 @@ object EdenGamepadConfig {
         return IniEditor.setKeys(cleared, EdenControls.SECTION, controlKeys(players, gamepads, mappingFor), assign = "=")
     }
 
+    /** Moves [players]' buttons and sticks onto their pads, leaving other players and all motion as they are. */
+    fun bindToPads(
+        existing: String,
+        players: List<PlayerState>,
+        gamepads: Map<Int, EdenGamepad>,
+        mappingFor: (PlayerBody) -> Map<String, String>,
+    ): String {
+        val moved = players.filter { gamepads[it.player.index] != null }
+        val slots = moved.map { (it.player.index - 1).toString() }.toSet()
+        val cleared = IniEditor.removeKeys(existing, EdenControls.SECTION) {
+            it.matches(PLAYER_KEY) && it.removePrefix("player_").substringBefore('_') in slots
+        }
+        return IniEditor.setKeys(cleared, EdenControls.SECTION, controlKeys(moved, gamepads, mappingFor), assign = "=")
+    }
+
     private fun controlKeys(
         players: List<PlayerState>,
         gamepads: Map<Int, EdenGamepad>,

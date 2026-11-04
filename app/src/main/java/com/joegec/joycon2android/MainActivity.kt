@@ -401,6 +401,7 @@ class MainActivity : ComponentActivity() {
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
         val mappedKeys by container.mappedKeys.collectAsState()
         val tabsMappingKeys by container.tabsMappingKeys.collectAsState()
+        val motionRumblesThroughPad by container.motionRumblesThroughPad.collectAsState()
         val live = buildSet {
             if (gamepadStatus.enabled) add(OutputDevice.PAD)
             if (dsuStatus.enabled) add(OutputDevice.MOTION)
@@ -424,6 +425,7 @@ class MainActivity : ComponentActivity() {
                 shizukuAvailable = shizukuAvailable,
                 mappedKeys = mappedKeys,
                 tabsMappingKeys = tabsMappingKeys,
+                motionRumblesThroughPad = motionRumblesThroughPad,
             ),
             actions = OutputCardActions(
                 toggle = outputViewModel::toggle,

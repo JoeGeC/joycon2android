@@ -331,8 +331,13 @@ class AppContainer(context: Context) {
 
     private val outputSelection = observeOutputSelection().stateIn(scope, SharingStarted.Eagerly, OutputSelection())
     private val runningOutputs = outputRepository.running
-    private val padConsole = consoleOf(OutputMode.GAMEPAD)
+    private val gamepadTabConsole = consoleOf(OutputMode.GAMEPAD)
     private val motionConsole = consoleOf(OutputMode.MOTION)
+
+    // A pad up for Motion's rumble alone plays Motion's console.
+    private val padConsole: StateFlow<Console> = combine(runningOutputs, gamepadTabConsole, motionConsole) { running, gamepad, motion ->
+        if (OutputMode.GAMEPAD !in running && OutputMode.MOTION in running) motion else gamepad
+    }.stateIn(scope, SharingStarted.Eagerly, gamepadTabConsole.value)
     private val runningConsoles: StateFlow<Set<Console>> = combine(outputSelection, runningOutputs) { selection, running ->
         running.mapTo(mutableSetOf()) { consoleOf(selection, it) }
     }.stateIn(scope, SharingStarted.Eagerly, emptySet())
@@ -376,6 +381,14 @@ class AppContainer(context: Context) {
         .flatMapLatest { (console, bodies) -> observeRumbleStrengths(console, bodies) }
         .stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val motionRumblesThroughPad: StateFlow<Boolean> = combine(runningOutputs, motionConsole, activeBodies, ::Triple)
+        .flatMapLatest { (running, console, bodies) ->
+            if (OutputMode.MOTION !in running) flowOf(false)
+            else observeRumbleStrengths(console, bodies).map { OutputPlan.motionRumblesThroughPad(console, it.values) }
+        }
+        .stateIn(scope, SharingStarted.Eagerly, false)
+
     private val androidKeyRouter = AndroidKeyRouter(
         bindings = OutputBindings(deviceKeysActing, androidBindings),
         padEnabled = gamepadRepository.enabled,
@@ -417,10 +430,11 @@ class AppContainer(context: Context) {
     ) { android, keyboard, mouse -> android.anyBound() || keyboard.anyBound() || mouse.anyBound() }
 
     // The keyboard is the Android keys' fast path, so they need it as keyboard keys do.
-    private val mappedDevices = mappedKeys.map { kinds ->
+    private val mappedDevices = combine(mappedKeys, motionRumblesThroughPad) { kinds, motionRumbles ->
         buildSet {
             if (DeviceKeyKind.ANDROID in kinds || DeviceKeyKind.KEYBOARD in kinds) add(OutputDevice.KEYBOARD)
             if (DeviceKeyKind.MOUSE in kinds) add(OutputDevice.MOUSE)
+            if (motionRumbles) add(OutputDevice.PAD)
         }
     }
     private val plannedDevices: StateFlow<Set<OutputDevice>> =

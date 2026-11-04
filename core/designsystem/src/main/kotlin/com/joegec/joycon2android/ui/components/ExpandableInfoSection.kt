@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,8 +27,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.joegec.joycon2android.core.designsystem.R
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextTitle
@@ -37,6 +41,7 @@ fun ExpandableInfoSection(
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = false,
     insidePadding: Dp = 0.dp,
+    onInfoClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
@@ -50,11 +55,26 @@ fun ExpandableInfoSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                title,
-                color = TextTitle,
-                style = MaterialTheme.typography.titleSmall,
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    title,
+                    color = TextTitle,
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                if (onInfoClick != null) {
+                    Icon(
+                        Icons.Outlined.Info,
+                        contentDescription = stringResource(R.string.more_info),
+                        tint = TextDim,
+                        modifier = Modifier
+                            .size(Dimens.iconSizeSmall)
+                            .clickable(onClick = onInfoClick),
+                    )
+                }
+            }
             Icon(
                 if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                 contentDescription = null,

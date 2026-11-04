@@ -64,4 +64,17 @@ class OutputPlanTest {
         assertFalse(OutputPlan.setupsCollide(gameCube, wii))
         assertFalse(OutputPlan.setupsCollide(EmulatorTarget.OTHER, EmulatorTarget.OTHER))
     }
+
+    @Test
+    fun `Motion rumbles through the pad on Dolphin Wii and Eden, unless every player has it off`() {
+        assertTrue(OutputPlan.motionRumblesThroughPad(Console.WIIMOTE_NUNCHUK, listOf(0, 20)))
+        assertTrue(OutputPlan.motionRumblesThroughPad(Console.SWITCH_PRO, listOf(20)))
+        assertFalse(OutputPlan.motionRumblesThroughPad(Console.SWITCH_PRO, listOf(0, 0)))
+        assertFalse(OutputPlan.motionRumblesThroughPad(Console.WIIMOTE_NUNCHUK, emptyList()))
+    }
+
+    @Test
+    fun `Motion on another emulator rumbles nothing`() {
+        assertFalse(OutputPlan.motionRumblesThroughPad(Console.ANDROID, listOf(20)))
+    }
 }

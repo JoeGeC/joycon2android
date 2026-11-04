@@ -187,6 +187,18 @@ object DolphinWiimoteConfig {
         return IniEditor.mergeSections(existing, StaleDolphinWiimotes.disconnected(existing, sections.keys) + sections)
     }
 
+    /** Points each written remote's rumble at its player's pad, [padIdFor] being Dolphin's id for it: docs/virtual-gamepad.md#rumble-over-dsu */
+    fun withRumble(
+        ini: String,
+        players: List<PlayerState>,
+        motionFor: (PlayerBody) -> RemoteMotion,
+        padIdFor: (PlayerBody) -> Int?,
+    ): String = players.filter { writesFor(it, motionFor) }.mapNotNull { it.body() }.fold(ini) { result, body ->
+        val id = padIdFor(body) ?: return@fold result
+        val pad = "Android/$id/Joy-Con Virtual Gamepad ${body.player.index}"
+        IniEditor.setKeys(result, "[Wiimote${body.player.index}]", mapOf("Rumble/Motor" to "`$pad:Motor 0`"))
+    }
+
     /** Pro and GameCube controllers are left to the player's own Dolphin mapping, unless they play a Classic Controller. */
     fun writesFor(player: PlayerState, motionFor: (PlayerBody) -> RemoteMotion): Boolean {
         val body = player.body() ?: return false

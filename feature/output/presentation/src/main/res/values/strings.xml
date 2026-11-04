@@ -5,6 +5,7 @@
     <string name="output_status_active_with">Active — %1$s</string>
     <string name="output_status_on_for">On: %1$s</string>
     <string name="output_status_on_for_two">On: %1$s, %2$s</string>
+    <string name="output_status_on_for_rumble">On: %1$s rumble</string>
     <string name="output_mode_gamepad">Virtual gamepad</string>
     <string name="output_mode_motion">Motion (DSU)</string>
     <string name="output_mode_mouse_keyboard">Mouse &amp; keys</string>

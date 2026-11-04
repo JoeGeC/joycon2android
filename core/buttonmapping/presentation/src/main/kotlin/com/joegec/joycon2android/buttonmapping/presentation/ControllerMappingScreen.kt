@@ -66,7 +66,7 @@ fun ControllerMappingScreen(
     modifier: Modifier = Modifier,
     onInfoClick: (() -> Unit)? = null,
     deviceKeyWarnings: DeviceKeyWarnings = DeviceKeyWarnings(),
-    /** Which output this mapping is for: names a keys-only mapping, which both outputs share. */
+    /** Which output this mapping is for: names a keys-only mapping, which both outputs share, and explains rumble over DSU. */
     viaDsu: Boolean = false,
 ) {
     BackHandler(onBack = onBack)
@@ -112,6 +112,7 @@ fun ControllerMappingScreen(
                         onSaveLayout = { dialog = MappingDialog.Save(player.body) },
                         onDeleteLayout = { dialog = MappingDialog.Delete(listOf(it.id), it.label, global = false) },
                         deviceKeyWarnings = deviceKeyWarnings,
+                        viaDsu = viaDsu,
                     )
                 }
             }

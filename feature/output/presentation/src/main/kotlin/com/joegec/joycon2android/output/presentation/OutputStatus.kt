@@ -10,6 +10,8 @@ internal fun outputStatus(mode: OutputMode, state: OutputCardState): String = wh
     mode == OutputMode.MOTION && mode in state.running && state.motionDetail != null ->
         stringResource(R.string.output_status_active_with, state.motionDetail)
     mode in state.running -> stringResource(R.string.output_status_active)
+    mode == OutputMode.GAMEPAD && state.isLit(mode) && state.motionRumblesThroughPad ->
+        stringResource(R.string.output_status_on_for_rumble, OutputMode.MOTION.label())
     mode == OutputMode.MOUSE_KEYBOARD && state.isLit(mode) && state.tabsMappingKeys.isNotEmpty() ->
         onForMappings(state.tabsMappingKeys)
     else -> stringResource(R.string.output_status_off)

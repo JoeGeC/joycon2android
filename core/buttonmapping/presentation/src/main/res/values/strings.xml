@@ -38,6 +38,9 @@
     <string name="controller_mapping_rumble">Strength</string>
     <string name="controller_mapping_rumble_description" formatted="false">How strongly a game\'s rumble plays on this player\'s controllers, as a share of the most they can safely do. 20% suits most games.</string>
     <string name="controller_mapping_rumble_off">Off</string>
+    <string name="rumble_through_pad_title">Rumble through the virtual gamepad</string>
+    <string name="rumble_through_pad_wii">DSU can\'t carry rumble, so while the Motion (DSU) tab is on, the app also runs a virtual gamepad for it, which needs Shizuku. Set up points each Wii Remote\'s rumble at that pad; its buttons, sticks and motion stay on DSU.\n\nSet the strength to Off to play without the pad. Tap Set up again after turning rumble on or off.</string>
+    <string name="rumble_through_pad_eden">DSU can\'t carry rumble, so while the Motion (DSU) tab is on, the app also runs a virtual gamepad for it, which needs Shizuku. Eden rumbles only the controller its buttons are on, so Set up binds the buttons and sticks to that pad and keeps motion on DSU.\n\nSet the strength to Off to keep everything on DSU. Tap Set up again after turning rumble on or off.</string>
     <string name="controller_mapping_thrust_description">For games that measure a push, like Wii Play Billiards. Leave off for swings, such as Wii Sports Golf and Bowling.</string>
     <string name="player_label">P%1$d</string>
     <string name="controller_left">Left</string>

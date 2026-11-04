@@ -101,7 +101,7 @@ private fun ModeContent(state: OutputCardState, actions: OutputCardActions) {
                     }
                 }
             }
-            ErrorLine(state.errors[mode]?.takeIf { mode in state.running } ?: shizukuError(state, mode))
+            ErrorLine(state.errors[mode]?.takeIf { state.isUp(mode) } ?: shizukuError(state, mode))
         }
     }
 }

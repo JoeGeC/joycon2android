@@ -37,8 +37,8 @@ internal object MappingOptions {
     fun offersProController(console: Console, side: JoyconSide) =
         console == Console.SWITCH_PRO && side.isLone
 
-    // Rumble comes back only through the virtual gamepad: not over DSU (Wii) or Mouse & keys (PC).
-    fun offersRumble(console: Console) = console != Console.WIIMOTE_NUNCHUK && console != Console.PC
+    // Mouse & keys has no pad to rumble.
+    fun offersRumble(console: Console) = console != Console.PC
 
     // No Classic Controller game reads a thrust, and Swing would jolt with every press.
     fun offersThrust(console: Console, controller: WiiController) =

@@ -191,7 +191,7 @@ maximum ([SDL's cap](protocol.md#hd-rumble)) a game's full rumble reaches, 0–1
 default 20%. `ControllerRumble` scales the game's rumble by it for the output's console. It is a
 mapping entry (`RUMBLE_PERCENT`), so layouts carry it; the default is stored empty, so a body left
 there still matches its layout, and a shipped layout resets it. A grip switch keeps it. Offered on every console
-but Wii (DSU) and PC (Mouse & keys), which have no pad to rumble.
+but PC (Mouse & keys), which has no pad to rumble.
 
 - **Dolphin** lists the pad's vibrators as `Motor 0` and `Motor 1`; setup writes
   ``Rumble/Motor = `Motor 0` `` to each section it builds, and to a hand-made Pro Controller section
@@ -207,6 +207,22 @@ but Wii (DSU) and PC (Mouse & keys), which have no pad to rumble.
   already created keeps its node. So `AynPadRepublishing` sets it to `1` before each pad, where it
   reads `0`. AYN Thor, Android 13, 2026-10-29: set, then the pad created, then Dolphin opened and the
   setting went back to `0`; the pad stayed visible and rumbled.
+
+### Rumble over DSU
+
+DSU carries no rumble, so Motion's comes through the pad. With the Motion tab running on Dolphin
+(Wii) or Eden and any player's rumble above Off (`OutputPlan.motionRumblesThroughPad`), the pad comes
+up too, and plays Motion's console while the Virtual gamepad tab is off. Off for every player, Motion
+needs no pad. Turning rumble on or off changes what Set up writes, so it needs setting up again.
+
+- **Dolphin (Wii)**: setup points each remote it writes at the player's pad,
+  ``Rumble/Motor = `Android/<id>/Joy-Con Virtual Gamepad <n>:Motor 0` `` (`DolphinWiimoteConfig.withRumble`).
+  Buttons, sticks and motion stay on DSU.
+- **Eden** rumbles only the device a player's buttons are bound to, so setup binds a rumbling
+  player's buttons and sticks to the pad (`EdenGamepadConfig.bindToPads`) and leaves motion on DSU.
+  Splitting just the buttons Eden routes rumble through (D-pad Right and A) onto the pad was rejected:
+  one device per player for buttons.
+- A player whose pad isn't enumerated at Set up keeps all-DSU bindings and gets no rumble.
 
 ## Android keys
 

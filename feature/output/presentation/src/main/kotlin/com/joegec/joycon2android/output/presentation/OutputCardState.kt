@@ -27,12 +27,18 @@ data class OutputCardState(
     val mappedKeys: Set<DeviceKeyKind> = emptySet(),
     /** The running tabs, Mouse & keys aside, whose mappings press keys or click. */
     val tabsMappingKeys: Set<OutputMode> = emptySet(),
+    /** The Motion tab runs the pad for its rumble. */
+    val motionRumblesThroughPad: Boolean = false,
 ) {
     fun emulatorsFor(mode: OutputMode): List<EmulatorTarget> = emulators[mode].orEmpty()
 
     fun selectedEmulatorFor(mode: OutputMode): String? = selectedTargetFor(mode)?.id
 
     fun isLit(mode: OutputMode): Boolean = mode.devices.any { it in liveDevices }
+
+    /** Running, or brought up for another tab, so its failures are worth showing. */
+    fun isUp(mode: OutputMode): Boolean =
+        mode in running || mode == OutputMode.GAMEPAD && motionRumblesThroughPad
 
     val setupsCollide: Boolean
         get() = OutputMode.GAMEPAD in running && OutputMode.MOTION in running &&
