@@ -9,6 +9,10 @@ object MappingLayouts {
         MappingPresets.forConsole(console).filter { side in it.sides } +
             saved.filter { it.console == console && it.side == side }
 
+    /** Presets some held body fits; the rest still get the family's other grip when one is chosen. */
+    fun forGroup(console: Console, sides: Collection<JoyconSide>): List<MappingPreset> =
+        MappingPresets.forConsole(console).filter { preset -> sides.any { it in preset.sides } }
+
     /** Clears every target first, as the console default fills any the stored mapping omits. */
     fun entriesOf(console: Console, side: JoyconSide, layout: MappingLayout): Map<String, String> =
         MappingPresets.default(console).entries(side).mapValues { "" } + layout.entries(side)

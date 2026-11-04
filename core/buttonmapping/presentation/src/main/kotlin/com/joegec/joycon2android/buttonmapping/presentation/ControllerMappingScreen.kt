@@ -40,7 +40,6 @@ import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.GlobalMapping
 import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.SavedLayout
-import com.joegec.joycon2android.buttonmapping.preset.MappingPresets
 import com.joegec.joycon2android.ui.components.DropdownOption
 import com.joegec.joycon2android.ui.components.InfoBox
 import com.joegec.joycon2android.ui.components.LocalTips
@@ -192,7 +191,7 @@ private fun GroupLayoutRow(
             description = stringResource(R.string.controller_mapping_group_layout_description),
         ) {
             LayoutRow(
-                options = MappingPresets.forConsole(console).map { labels.option(it) } + forBodies + saved,
+                options = MappingLayouts.forGroup(console, global.bodies.map { it.side }).map { labels.option(it) } + forBodies + saved,
                 selectedId = global.matchingSaved?.id
                     ?: global.sharedSavedName?.let { named[it]?.first()?.id }
                     ?: global.sharedLayout?.id,

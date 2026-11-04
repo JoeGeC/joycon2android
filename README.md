@@ -153,7 +153,8 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
   same body. It dims when the mapping already matches a layout. Deleting a layout (the bin in the
   dropdown) keeps everyone's buttons; they just read **Custom** until you save again. While a layout reads **Custom**, a hint points at its save icon.
 - **Tips.** A note at the top reminds you that games differ: if one plays oddly, try another layout.
-- **Group layout** at the top sets and saves everyone at once. A grip only some bodies fit —
+- **Group layout** at the top sets and saves everyone at once. It offers only the layouts that fit
+  someone connected, so pairs alone aren't offered the sideways Pro Controller or Mario Kart Wheel layouts. A grip only some bodies fit —
   **Mario Kart Wheel**, say — gives the rest the same game's other grip. A layout you saved for one
   player is offered here too: it sets everyone holding the same body and leaves the rest alone.
   Layouts saved under the same name for different bodies are one option ("Players on L/R, R"), and
