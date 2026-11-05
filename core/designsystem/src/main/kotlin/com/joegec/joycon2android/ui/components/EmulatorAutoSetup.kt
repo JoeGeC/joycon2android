@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,16 +35,12 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.joegec.joycon2android.core.designsystem.R
-import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.Motion
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
 fun EmulatorAutoSetup(
-    emulators: List<EmulatorOption>,
-    selectedEmulator: String,
-    onSelectEmulator: (String) -> Unit,
     phase: DolphinSetupPhase,
     setupLabel: String,
     /** Null for a choice with nothing to set up, leaving the mapping button to fill the row. */
@@ -55,47 +50,26 @@ fun EmulatorAutoSetup(
     /** Shown beside the mapping icon where there's room; icon only when null. */
     mappingLabel: String? = null,
 ) {
-    var showInfo by remember { mutableStateOf(false) }
-
-    LabeledBorderBox(
-        label = stringResource(R.string.emulator_auto_setup_title),
-        borderColor = TextDim,
-        labelBackground = CardBg,
-        modifier = modifier,
-        onInfoClick = { showInfo = true },
-    ) {
-        Column {
-            EmulatorDropdown(
-                options = emulators,
-                selectedId = selectedEmulator,
-                onSelect = onSelectEmulator,
-                modifier = Modifier.fillMaxWidth(),
+    Column(modifier) {
+        SetUpRow(phase, setupLabel, onSetUp, onConfigureMapping, mappingLabel)
+        val tips = LocalTips.current
+        AnimatedVisibility(
+            // A tip for when auto setup misbehaves, so not where there's nothing to set up.
+            visible = onConfigureMapping != null && onSetUp != null && tips.visible,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            HintBubble(
+                stringResource(R.string.emulator_auto_setup_mapping_hint),
+                pointerCenterFromEnd = Dimens.emulatorSetupButtonHeight / 2,
+                modifier = Modifier.padding(top = Dimens.emulatorSetupRowGap),
+                onClick = tips.onTap,
             )
-            Spacer(Modifier.height(Dimens.emulatorSetupRowGap))
-            SetUpRow(phase, setupLabel, onSetUp, onConfigureMapping, mappingLabel)
-            val tips = LocalTips.current
-            AnimatedVisibility(
-                // A tip for when auto setup misbehaves, so not where there's nothing to set up.
-                visible = onConfigureMapping != null && onSetUp != null && tips.visible,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically(),
-            ) {
-                HintBubble(
-                    stringResource(R.string.emulator_auto_setup_mapping_hint),
-                    pointerCenterFromEnd = Dimens.emulatorSetupButtonHeight / 2,
-                    modifier = Modifier.padding(top = Dimens.emulatorSetupRowGap),
-                    onClick = tips.onTap,
-                )
-            }
-            if (phase.isFailure) {
-                Spacer(Modifier.height(Dimens.elementSpacing))
-                DolphinSetupMessage(phase)
-            }
         }
-    }
-
-    if (showInfo) {
-        AutoSetupInfoSheet(onDismiss = { showInfo = false })
+        if (phase.isFailure) {
+            Spacer(Modifier.height(Dimens.elementSpacing))
+            DolphinSetupMessage(phase)
+        }
     }
 }
 
@@ -164,16 +138,5 @@ private fun MappingButton(onClick: () -> Unit, label: String?) {
                 modifier = Modifier.padding(end = Dimens.emulatorPickerPadding),
             )
         }
-    }
-}
-
-@Composable
-private fun AutoSetupInfoSheet(onDismiss: () -> Unit) {
-    InfoSheet(title = stringResource(R.string.emulator_auto_setup_title), onDismiss = onDismiss) {
-        Text(
-            stringResource(R.string.emulator_auto_setup_info_body),
-            color = TextDim,
-            style = MaterialTheme.typography.bodyMedium,
-        )
     }
 }

@@ -5,13 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.model.EmulatorSetupResult
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.output.EmulatorTarget
-import com.joegec.joycon2android.output.ObserveOutputRunningUseCase
-import com.joegec.joycon2android.output.ObserveOutputSelectionUseCase
-import com.joegec.joycon2android.output.OutputMode
-import com.joegec.joycon2android.output.OutputSelection
+import com.joegec.joycon2android.output.ObserveOutputOnUseCase
+import com.joegec.joycon2android.output.ObservePlayingUseCase
+import com.joegec.joycon2android.output.Playing
+import com.joegec.joycon2android.output.PlayingSelection
 import com.joegec.joycon2android.output.SelectEmulatorUseCase
-import com.joegec.joycon2android.output.SetOutputModeUseCase
-import com.joegec.joycon2android.output.SetOutputRunningUseCase
+import com.joegec.joycon2android.output.SetMotionUseCase
+import com.joegec.joycon2android.output.SetPlayingUseCase
 import com.joegec.joycon2android.output.selected
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
 import com.joegec.joycon2android.ui.components.EmulatorOption
@@ -24,19 +24,19 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class OutputViewModel(
-    observeOutputSelection: ObserveOutputSelectionUseCase,
-    observeOutputRunning: ObserveOutputRunningUseCase,
-    private val setOutputRunning: SetOutputRunningUseCase,
-    private val setOutputMode: SetOutputModeUseCase,
+    observePlaying: ObservePlayingUseCase,
+    observeOutputOn: ObserveOutputOnUseCase,
+    private val savePlaying: SetPlayingUseCase,
     private val saveEmulatorChoice: SelectEmulatorUseCase,
-    val emulators: Map<OutputMode, List<EmulatorTarget>>,
+    private val saveMotion: SetMotionUseCase,
+    val emulators: Map<Playing, List<EmulatorTarget>>,
     private val configure: suspend (target: EmulatorTarget, players: List<PlayerState>, closeEmulator: Boolean) -> EmulatorSetupResult,
 ) : ViewModel() {
 
-    val selection: StateFlow<OutputSelection> = observeOutputSelection()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, OutputSelection())
+    val selection: StateFlow<PlayingSelection> = observePlaying()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, PlayingSelection())
 
-    val running: StateFlow<Set<OutputMode>> = observeOutputRunning()
+    val on: StateFlow<Boolean> = observeOutputOn()
 
     private val _setupPhase = MutableStateFlow(DolphinSetupPhase.IDLE)
     val setupPhase: StateFlow<DolphinSetupPhase> = _setupPhase.asStateFlow()
@@ -48,23 +48,19 @@ class OutputViewModel(
     private val _emulatorToStart = MutableStateFlow<EmulatorOption?>(null)
     val emulatorToStart: StateFlow<EmulatorOption?> = _emulatorToStart.asStateFlow()
 
-    fun emulatorsFor(mode: OutputMode): List<EmulatorTarget> = emulators[mode].orEmpty()
+    private fun selectedIn(selection: PlayingSelection) = emulators[selection.playing].orEmpty().selected(selection.emulatorId)
 
-    private fun selectedIn(selection: OutputSelection) = emulatorsFor(selection.mode).selected(selection.emulatorId)
-
-    fun toggle(mode: OutputMode, running: Boolean) {
-        viewModelScope.launch { setOutputRunning(mode, running) }
-    }
-
-    fun setMode(mode: OutputMode) {
-        viewModelScope.launch { setOutputMode(mode) }
+    fun select(playing: Playing, emulatorId: String?) {
+        viewModelScope.launch {
+            emulatorId?.let { saveEmulatorChoice(playing, it) }
+            savePlaying(playing)
+        }
+        _emulatorToClose.value = null
         resetSetupPhase()
     }
 
-    fun selectEmulator(id: String) {
-        val mode = selection.value.mode
-        viewModelScope.launch { saveEmulatorChoice(mode, id) }
-        _emulatorToClose.value = null
+    fun setMotion(on: Boolean) {
+        viewModelScope.launch { saveMotion(on) }
         resetSetupPhase()
     }
 

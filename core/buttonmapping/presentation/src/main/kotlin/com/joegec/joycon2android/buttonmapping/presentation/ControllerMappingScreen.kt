@@ -65,8 +65,9 @@ fun ControllerMappingScreen(
     modifier: Modifier = Modifier,
     onInfoClick: (() -> Unit)? = null,
     deviceKeyWarnings: DeviceKeyWarnings = DeviceKeyWarnings(),
-    /** Which output this mapping is for: names a keys-only mapping, which both outputs share, and explains rumble over DSU. */
-    viaDsu: Boolean = false,
+    /** The game's motion switch, null where motion can't be switched off. */
+    motion: Boolean? = null,
+    onSetMotion: (Boolean) -> Unit = {},
 ) {
     BackHandler(onBack = onBack)
     var dialog by remember { mutableStateOf<MappingDialog?>(null) }
@@ -78,7 +79,7 @@ fun ControllerMappingScreen(
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = Dimens.screenPaddingHorizontal),
     ) {
-        ScreenHeader(state.console.title(viaDsu), onBack, onInfoClick)
+        ScreenHeader(state.console.label(), onBack, onInfoClick)
         Spacer(Modifier.height(Dimens.sectionSpacing))
         Column(
             Modifier
@@ -92,12 +93,13 @@ fun ControllerMappingScreen(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
             ) {
-                InfoBox(state.console.tip(viaDsu), onClick = tips.onTap)
+                InfoBox(state.console.tip(), onClick = tips.onTap)
             }
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
             } else {
                 GroupLayoutRow(state.console, state.global, state.savedLayouts, labels, actions) { dialog = it }
+                motion?.let { GameMotionCard(state.console, it, onSetMotion) }
             }
             state.players.forEach { player ->
                 val connected = players.firstOrNull { it.player == player.body.player }
@@ -111,7 +113,6 @@ fun ControllerMappingScreen(
                         onSaveLayout = { dialog = MappingDialog.Save(player.body) },
                         onDeleteLayout = { dialog = MappingDialog.Delete(listOf(it.id), it.label, global = false) },
                         deviceKeyWarnings = deviceKeyWarnings,
-                        viaDsu = viaDsu,
                     )
                 }
             }

@@ -50,9 +50,10 @@ import com.joegec.joycon2android.ui.components.StartEmulatorDialog
 import com.joegec.joycon2android.ui.components.ProvideTips
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.dsu.presentation.DsuSlotLimitWarning
-import com.joegec.joycon2android.dsu.presentation.dsuPortText
-import com.joegec.joycon2android.output.OutputMode
+import com.joegec.joycon2android.buttonmapping.Console
+import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.output.OutputDevice
+import com.joegec.joycon2android.output.Playing
 import com.joegec.joycon2android.output.presentation.OutputCard
 import com.joegec.joycon2android.output.presentation.OutputCardActions
 import com.joegec.joycon2android.output.presentation.OutputCardState
@@ -92,11 +93,11 @@ class MainActivity : ComponentActivity() {
             initializer {
                 val c = (application as JoyconApplication).container
                 OutputViewModel(
-                    c.observeOutputSelection,
-                    c.observeOutputRunning,
-                    c.setOutputRunning,
-                    c.setOutputMode,
+                    c.observePlaying,
+                    c.observeOutputOn,
+                    c.setPlaying,
                     c.selectEmulator,
+                    c.setMotion,
                     emulators = c.emulatorTargets,
                     configure = c::configureEmulator,
                 )
@@ -250,6 +251,7 @@ class MainActivity : ComponentActivity() {
         val bodies = players.mapNotNull { it.body() }
         val state by controllerMappingViewModel.uiState.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
+        val selection by outputViewModel.selection.collectAsState()
         var showDsuHelp by rememberSaveable { mutableStateOf(false) }
 
         LaunchedEffect(console, bodies) { controllerMappingViewModel.edit(console, bodies) }
@@ -261,13 +263,14 @@ class MainActivity : ComponentActivity() {
                 liveInputs = viewModel.liveInputs,
                 actions = mappingActions,
                 onBack = onBack,
-                onInfoClick = if (route.fromDsu) ({ showDsuHelp = true }) else null,
-                viaDsu = route.fromDsu,
+                onInfoClick = if (Playing.entries.any { it.console == route.console && it.buttonsOverDsu }) ({ showDsuHelp = true }) else null,
                 deviceKeyWarnings = DeviceKeyWarnings(
-                    androidNeedsShizuku = route.fromDsu && !shizukuAvailable,
+                    androidNeedsShizuku = !shizukuAvailable,
                     keyboardAndMouseNeedShizuku = !shizukuAvailable,
                     pointerlessBodies = players.filterNot { it.canMovePointer }.mapNotNull { it.body() }.toSet(),
                 ),
+                motion = selection.motion.takeIf { selection.playing.motionOptional && selection.playing.console == console },
+                onSetMotion = outputViewModel::setMotion,
             )
         }
         if (showDsuHelp) DsuSetupSheet(onDismiss = { showDsuHelp = false })
@@ -392,16 +395,14 @@ class MainActivity : ComponentActivity() {
     ) {
         val container = (application as JoyconApplication).container
         val selection by outputViewModel.selection.collectAsState()
-        val running by outputViewModel.running.collectAsState()
+        val on by outputViewModel.on.collectAsState()
         val setupPhase by outputViewModel.setupPhase.collectAsState()
         val gamepadStatus by gamepadViewModel.status.collectAsState()
         val keyboardEnabled by gamepadViewModel.keyboardEnabled.collectAsState()
         val mouseEnabled by gamepadViewModel.mouseEnabled.collectAsState()
         val dsuStatus by dsuViewModel.status.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
-        val mappedKeys by container.mappedKeys.collectAsState()
-        val tabsMappingKeys by container.tabsMappingKeys.collectAsState()
-        val motionRumblesThroughPad by container.motionRumblesThroughPad.collectAsState()
+        val plannedDevices by container.plannedDevices.collectAsState()
         val mouseOffPlayers by container.mouseOffPlayers.collectAsState()
         val live = buildSet {
             if (gamepadStatus.enabled) add(OutputDevice.PAD)
@@ -412,33 +413,25 @@ class MainActivity : ComponentActivity() {
 
         OutputCard(
             state = OutputCardState(
-                running = running,
+                on = on,
                 selection = selection,
                 emulators = outputViewModel.emulators,
                 setupPhase = setupPhase,
+                plannedDevices = plannedDevices,
                 liveDevices = live,
                 errors = buildMap {
-                    gamepadStatus.error?.let { put(OutputMode.GAMEPAD, it) }
-                    dsuStatus.error?.let { put(OutputMode.MOTION, it) }
+                    gamepadStatus.error?.let { put(OutputDevice.PAD, it) }
+                    dsuStatus.error?.let { put(OutputDevice.MOTION, it) }
                 },
-                motionDetail = if (dsuStatus.enabled) dsuPortText(dsuStatus.clientCount) else null,
+                dsuAddress = DsuConfig.LOCAL_ADDRESS,
                 noPointerController = players.any { it.hasController } && players.none { it.canMovePointer },
                 shizukuAvailable = shizukuAvailable,
-                mappedKeys = mappedKeys,
-                tabsMappingKeys = tabsMappingKeys,
-                motionRumblesThroughPad = motionRumblesThroughPad,
                 mouseOffPlayers = mouseOffPlayers,
             ),
             actions = OutputCardActions(
-                toggle = outputViewModel::toggle,
-                setMode = outputViewModel::setMode,
-                selectEmulator = outputViewModel::selectEmulator,
+                select = outputViewModel::select,
                 setUp = { outputViewModel.setUp(players) },
-                openMapping = {
-                    // DSU inputs are picked from a list; detection never sees them.
-                    val fromDsu = selection.mode == OutputMode.MOTION
-                    onOpenMapping(MappingRoute(container.consoleInView(), fromDsu))
-                },
+                openMapping = { onOpenMapping(MappingRoute(container.consoleInView())) },
             ),
             modifier = modifier,
         ) {

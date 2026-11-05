@@ -25,24 +25,20 @@ internal fun Console.label(): String = when (this) {
     Console.WIIMOTE_NUNCHUK -> stringResource(R.string.console_wiimote_nunchuk)
     Console.SWITCH_PRO -> stringResource(R.string.console_switch_pro)
     Console.ANDROID -> stringResource(R.string.console_android)
+    Console.EMULATOR -> stringResource(R.string.console_emulator)
     Console.PC -> stringResource(R.string.console_pc)
 }
 
 /** A keys-only mapping has no layouts to try, so it says how to map by hand instead. */
 @Composable
-internal fun Console.tip(viaDsu: Boolean): String = stringResource(
+internal fun Console.tip(): String = stringResource(
     when (this) {
-        Console.ANDROID -> if (viaDsu) R.string.mapping_manual_motion else R.string.mapping_manual_gamepad
+        Console.ANDROID -> R.string.mapping_manual_android
+        Console.EMULATOR -> R.string.mapping_manual_emulator
         Console.GAMECUBE, Console.WIIMOTE_NUNCHUK, Console.SWITCH_PRO, Console.PC -> R.string.controller_mapping_tips
     },
 )
 
-/** The mapping screen's title; a keys-only mapping is named for the output it's on. */
-@Composable
-internal fun Console.title(viaDsu: Boolean): String = when (this) {
-    Console.ANDROID -> stringResource(if (viaDsu) R.string.mapping_title_motion else R.string.mapping_title_gamepad)
-    Console.GAMECUBE, Console.WIIMOTE_NUNCHUK, Console.SWITCH_PRO, Console.PC -> label()
-}
 
 /** Short enough to sit in a list of players, as in "P1 L, P2 R". */
 @Composable

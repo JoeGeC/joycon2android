@@ -78,7 +78,7 @@ internal object MappingOptions {
             Console.GAMECUBE -> GameCubeButton.entries.map { it.name to it.label() }
             Console.WIIMOTE_NUNCHUK -> (WiimoteButton.entries - MOTION_TARGETS).map { it.name to it.label() }
             Console.SWITCH_PRO -> SwitchProTargets.buttons(side, singleJoycon).map { it.name to it.label() }
-            Console.ANDROID, Console.PC -> emptyList()
+            Console.ANDROID, Console.EMULATOR, Console.PC -> emptyList()
         }
 
     // Not buttons on the remote, so they get their own section.
@@ -107,7 +107,7 @@ internal object MappingOptions {
                 Console.GAMECUBE -> GameCubeStick.entries.map { it to it.label() }
                 Console.WIIMOTE_NUNCHUK -> WiimoteStick.entries.map { it to it.label() }
                 Console.SWITCH_PRO -> SwitchProTargets.sticks(side, singleJoycon).map { it to it.label() }
-                Console.ANDROID, Console.PC -> emptyList()
+                Console.ANDROID, Console.EMULATOR, Console.PC -> emptyList()
             },
         )
 

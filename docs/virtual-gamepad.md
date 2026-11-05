@@ -50,7 +50,7 @@ Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the 
 
 `Joy-Con Virtual Mouse` is one UHID device, shared by every player, with three buttons and a wheel.
 `PrivilegedDevicePolicy` keeps it up while Shizuku runs and the [output](architecture.md#output)
-plans it: a running tab whose mapping, for some player, has **Use the mouse** on (`JOYCON_MOUSE_KEY`).
+plans it: the mapping, for some player, has **Use the mouse** on (`JOYCON_MOUSE_KEY`).
 Unset, it's on for Mouse & keys alone; stored only where it differs, so a body still matches its
 layout. Off, that player's Joy-Cons move no pointer and their mapped clicks are dropped
 (`ObserveJoyconMouseUsersUseCase`); the editor hides the section's rows.
@@ -125,8 +125,8 @@ Each player can switch their own Joy-Con mouse off while playing: holding their 
 ## Keyboard
 
 `Joy-Con Virtual Keyboard` is one UHID device shared by every player, up while Shizuku runs and the
-[output](architecture.md#output) plans it (`PrivilegedDevicePolicy`): Mouse & keys mode, a mapped
-keyboard or Android key, or Keyboard set On. It carries the mapping's **Keyboard** keys, and the
+[output](architecture.md#output) plans it (`PrivilegedDevicePolicy`): Mouse & keys, or a mapped
+keyboard or Android key. It carries the mapping's **Keyboard** keys, and the
 [Android keys](#android-keys) the pad does not, in place of the shell.
 
 | Report | Bytes | Carries |
@@ -223,7 +223,7 @@ maximum ([SDL's cap](protocol.md#hd-rumble)) a game's full rumble reaches, 0–1
 default 20%. `ControllerRumble` scales the game's rumble by it for the output's console. It is a
 mapping entry (`RUMBLE_PERCENT`), so layouts carry it; the default is stored empty, so a body left
 there still matches its layout, and a shipped layout resets it. A grip switch keeps it. Offered on every console
-but PC (Mouse & keys), which has no pad to rumble.
+but PC, which has no pad to rumble.
 
 - **Dolphin** lists the pad's vibrators as `Motor 0` and `Motor 1`; setup writes
   ``Rumble/Motor = `Motor 0` `` to each section it builds, and to a hand-made Pro Controller section
@@ -242,19 +242,20 @@ but PC (Mouse & keys), which has no pad to rumble.
 
 ### Rumble over DSU
 
-DSU carries no rumble, so Motion's comes through the pad. With the Motion tab running on Dolphin
-(Wii) or Eden and any player's rumble above Off (`OutputPlan.motionRumblesThroughPad`), the pad comes
-up too, and plays Motion's console while the Virtual gamepad tab is off. Off for every player, Motion
-needs no pad. Turning rumble on or off changes what Set up writes, so it needs setting up again.
+DSU carries no rumble, so a game played over DSU rumbles through the pad, which is up whenever
+Shizuku is.
 
 - **Dolphin (Wii)**: setup points each remote it writes at the player's pad,
   ``Rumble/Motor = `Android/<id>/Joy-Con Virtual Gamepad <n>:Motor 0` `` (`DolphinWiimoteConfig.withRumble`).
-  Buttons, sticks and motion stay on DSU.
-- **Eden** rumbles only the device a player's buttons are bound to, so setup binds a rumbling
-  player's buttons and sticks to the pad (`EdenGamepadConfig.bindToPads`) and leaves motion on DSU.
+  Buttons, sticks and motion stay on DSU. Turning rumble on or off changes what it writes, so it
+  needs setting up again.
+- **Eden** rumbles only the device a player's buttons are bound to, so setup binds every player's
+  buttons and sticks to the pad (`EdenGamepadConfig.bindToPads` over `EdenDsuConfig.merge`) and leaves
+  motion on DSU. With motion off it writes the pad alone and unbinds the DSU motion it wrote
+  (`EdenDsuConfig.withoutMotion`).
   Splitting just the buttons Eden routes rumble through (D-pad Right and A) onto the pad was rejected:
   one device per player for buttons.
-- A player whose pad isn't enumerated at Set up keeps all-DSU bindings and gets no rumble.
+- A player whose pad isn't enumerated at Auto set up keeps all-DSU bindings and gets no rumble.
 
 ## Android keys
 

@@ -15,6 +15,7 @@ object MappingPresets {
         SwitchProSidewaysMapping,
         SwitchProSidewaysTriggersMapping,
         AndroidMapping,
+        OtherEmulatorMapping,
         WasdMouseMapping,
         MouseOnlyMapping,
     )

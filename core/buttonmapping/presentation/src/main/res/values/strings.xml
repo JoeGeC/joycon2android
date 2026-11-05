@@ -38,6 +38,9 @@
     <string name="controller_mapping_pro_controller">Pro Controller</string>
     <string name="controller_mapping_pro_controller_description">Eden will recognise it as a Pro Controller instead of a single Joy-Con.</string>
     <string name="controller_mapping_thrust">Thrusts</string>
+    <string name="controller_mapping_game_motion">Motion</string>
+    <string name="controller_mapping_game_motion_set_up">Every player\'s gyro, over DSU. Tap Set up again after changing it.</string>
+    <string name="controller_mapping_game_motion_description">Every player\'s gyro, over DSU.</string>
     <string name="controller_mapping_sensitivity">Motion sensitivity</string>
     <string name="controller_mapping_sensitivity_description">Scales swings and shakes without changing tilt. 100% reads as the Joy-Con moves.</string>
     <string name="controller_mapping_percent_value">%1$d%%</string>
@@ -45,8 +48,7 @@
     <string name="controller_mapping_rumble_description" formatted="false">How strongly a game\'s rumble plays on this player\'s controllers, as a share of the most they can safely do. 20% suits most games.</string>
     <string name="controller_mapping_rumble_off">Off</string>
     <string name="rumble_through_pad_title">Rumble through the virtual gamepad</string>
-    <string name="rumble_through_pad_wii">DSU can\'t carry rumble, so while the Motion (DSU) tab is on, the app also runs a virtual gamepad for it, which needs Shizuku. Set up points each Wii Remote\'s rumble at that pad; its buttons, sticks and motion stay on DSU.\n\nSet the strength to Off to play without the pad. Tap Set up again after turning rumble on or off.</string>
-    <string name="rumble_through_pad_eden">DSU can\'t carry rumble, so while the Motion (DSU) tab is on, the app also runs a virtual gamepad for it, which needs Shizuku. Eden rumbles only the controller its buttons are on, so Set up binds the buttons and sticks to that pad and keeps motion on DSU.\n\nSet the strength to Off to keep everything on DSU. Tap Set up again after turning rumble on or off.</string>
+    <string name="rumble_through_pad_wii">DSU can\'t carry rumble, so the app also runs a virtual gamepad, which needs Shizuku. Auto set up points each Wii Remote\'s rumble at that pad; its buttons, sticks and motion stay on DSU.\n\nTap Auto set up again after turning rumble on or off.</string>
     <string name="controller_mapping_thrust_description">For games that measure a push, like Wii Play Billiards. Leave off for swings, such as Wii Sports Golf and Bowling.</string>
     <string name="player_label">P%1$d</string>
     <string name="controller_left">Left</string>
@@ -78,12 +80,11 @@
     <string name="console_gamecube">Gamecube</string>
     <string name="console_wiimote_nunchuk">Wiimote &amp; Nunchuck</string>
     <string name="console_switch_pro">Joycons</string>
-    <string name="console_android">Android</string>
-    <string name="mapping_title_gamepad">Virtual Gamepad</string>
-    <string name="mapping_title_motion">Motion Controller</string>
-    <string name="mapping_manual_gamepad">Not all emulators are supported for auto setup. Each player has their own Virtual Gamepad, which can be mapped manually per emulator or game.</string>
-    <string name="mapping_manual_motion">Not all emulators are supported for auto setup. Each player streams to their own DSU slot, which can be mapped manually per emulator.</string>
-    <string name="console_pc">Mouse &amp; keyboard</string>
+    <string name="console_android">Android games &amp; apps</string>
+    <string name="mapping_manual_android">Android games read each player\'s Virtual Gamepad as it is. Here you can add Android keys, keyboard keys and the mouse on top.</string>
+    <string name="console_emulator">Other emulator</string>
+    <string name="mapping_manual_emulator">Each player has their own Virtual Gamepad and DSU slot. Map them in the emulator\'s own settings: buttons from the gamepad, motion from DSU.</string>
+    <string name="console_pc">Mouse &amp; keys</string>
     <string name="side_left_short">L</string>
     <string name="side_right_short">R</string>
     <string name="side_dual_short">L/R</string>

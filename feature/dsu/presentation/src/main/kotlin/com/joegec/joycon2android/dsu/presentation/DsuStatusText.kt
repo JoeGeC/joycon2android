@@ -6,20 +6,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import com.joegec.joycon2android.dsu.DsuConfig
 import com.joegec.joycon2android.dsu.DsuCoverage
 import com.joegec.joycon2android.dsu.DsuStatus
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.ui.components.WarningBox
 import com.joegec.joycon2android.ui.theme.Motion
-
-/** The server's port and how many emulators are listening, e.g. "DSU on port 26760 · waiting for an emulator". */
-@Composable
-fun dsuPortText(clientCount: Int): String =
-    if (clientCount == 0) stringResource(R.string.dsu_subtitle_waiting, DsuConfig.PORT)
-    else pluralStringResource(R.plurals.dsu_subtitle_on, clientCount, DsuConfig.PORT, clientCount)
 
 /** Any player the server has no slot for, while it runs. */
 @Composable

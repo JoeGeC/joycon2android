@@ -6,62 +6,50 @@ import com.joegec.joycon2android.output.OutputDevice.MOTION
 import com.joegec.joycon2android.output.OutputDevice.MOUSE
 import com.joegec.joycon2android.output.OutputDevice.PAD
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class OutputPlanTest {
 
+    private fun devices(playing: Playing, motion: Boolean = true, shizuku: Boolean = true, mapped: Set<OutputDevice> = emptySet()) =
+        OutputPlan.devices(playing, motion, shizuku, mapped)
+
     @Test
-    fun `each tab runs the device it is named for`() {
-        assertEquals(setOf(PAD), OutputPlan.devices(setOf(OutputMode.GAMEPAD), emptySet()))
-        assertEquals(setOf(MOTION), OutputPlan.devices(setOf(OutputMode.MOTION), emptySet()))
-        assertEquals(setOf(KEYBOARD, MOUSE), OutputPlan.devices(setOf(OutputMode.MOUSE_KEYBOARD), emptySet()))
+    fun `each game runs what it reads, plus the pad for getting round the device`() {
+        assertEquals(setOf(PAD, MOTION), devices(Playing.SWITCH))
+        assertEquals(setOf(PAD), devices(Playing.GAMECUBE))
+        assertEquals(setOf(PAD, MOTION), devices(Playing.WII))
+        assertEquals(setOf(PAD, MOTION), devices(Playing.OTHER_EMULATOR))
+        assertEquals(setOf(PAD), devices(Playing.ANDROID))
+        assertEquals(setOf(PAD, KEYBOARD, MOUSE), devices(Playing.PC))
     }
 
     @Test
-    fun `tabs running together run all their devices`() {
-        assertEquals(setOf(PAD, MOTION), OutputPlan.devices(setOf(OutputMode.GAMEPAD, OutputMode.MOTION), emptySet()))
+    fun `Switch and other emulators can play without motion, the others ignore the choice`() {
+        assertEquals(setOf(PAD), devices(Playing.SWITCH, motion = false))
+        assertEquals(setOf(PAD), devices(Playing.OTHER_EMULATOR, motion = false))
+        assertEquals(setOf(PAD, MOTION), devices(Playing.WII, motion = false))
     }
 
     @Test
     fun `a mapping that presses keys or clicks brings that device up too`() {
-        assertEquals(setOf(MOTION, KEYBOARD), OutputPlan.devices(setOf(OutputMode.MOTION), setOf(KEYBOARD)))
-        assertEquals(setOf(PAD, MOUSE), OutputPlan.devices(setOf(OutputMode.GAMEPAD), setOf(MOUSE)))
+        assertEquals(setOf(PAD, MOTION, MOUSE), devices(Playing.OTHER_EMULATOR, mapped = setOf(MOUSE)))
+        assertEquals(setOf(PAD, KEYBOARD), devices(Playing.ANDROID, mapped = setOf(KEYBOARD)))
     }
 
     @Test
-    fun `with no tab running nothing runs, mapped keys included`() {
-        assertEquals(emptySet<OutputDevice>(), OutputPlan.devices(emptySet(), setOf(KEYBOARD, MOUSE)))
+    fun `without Shizuku a game that reads buttons over DSU falls back to it, and the rest get nothing`() {
+        assertEquals(setOf(MOTION), devices(Playing.SWITCH, motion = false, shizuku = false))
+        assertEquals(setOf(MOTION), devices(Playing.WII, shizuku = false))
+        assertEquals(setOf(MOTION), devices(Playing.OTHER_EMULATOR, shizuku = false, mapped = setOf(MOUSE)))
+        assertEquals(emptySet<OutputDevice>(), devices(Playing.GAMECUBE, shizuku = false))
+        assertEquals(emptySet<OutputDevice>(), devices(Playing.PC, shizuku = false))
     }
 
     @Test
-    fun `each tab maps its emulator's console, and with none only the app's keys`() {
-        assertEquals(Console.WIIMOTE_NUNCHUK, OutputPlan.console(OutputMode.MOTION, EmulatorKind.DOLPHIN_WII))
-        assertEquals(Console.SWITCH_PRO, OutputPlan.console(OutputMode.GAMEPAD, EmulatorKind.EDEN))
-        assertEquals(Console.ANDROID, OutputPlan.console(OutputMode.GAMEPAD, EmulatorKind.OTHER))
-        assertEquals(Console.ANDROID, OutputPlan.console(OutputMode.GAMEPAD, null))
-        assertEquals(Console.PC, OutputPlan.console(OutputMode.MOUSE_KEYBOARD, EmulatorKind.EDEN))
-    }
-
-    @Test
-    fun `each tab keeps its own emulator`() {
-        val selection = OutputSelection(OutputMode.MOTION, mapOf(OutputMode.GAMEPAD to "eden", OutputMode.MOTION to "dolphin-wii"))
-
-        assertEquals("dolphin-wii", selection.emulatorId)
-        assertEquals("eden", selection.copy(mode = OutputMode.GAMEPAD).emulatorId)
-    }
-
-    @Test
-    fun `Motion rumbles through the pad on Dolphin Wii and Eden, unless every player has it off`() {
-        assertTrue(OutputPlan.motionRumblesThroughPad(Console.WIIMOTE_NUNCHUK, listOf(0, 20)))
-        assertTrue(OutputPlan.motionRumblesThroughPad(Console.SWITCH_PRO, listOf(20)))
-        assertFalse(OutputPlan.motionRumblesThroughPad(Console.SWITCH_PRO, listOf(0, 0)))
-        assertFalse(OutputPlan.motionRumblesThroughPad(Console.WIIMOTE_NUNCHUK, emptyList()))
-    }
-
-    @Test
-    fun `Motion on another emulator rumbles nothing`() {
-        assertFalse(OutputPlan.motionRumblesThroughPad(Console.ANDROID, listOf(20)))
+    fun `each game maps its own console, with a set-up emulator where there is one`() {
+        assertEquals(EmulatorKind.EDEN.console, Playing.SWITCH.console)
+        assertEquals(EmulatorKind.DOLPHIN_WII.console, Playing.WII.console)
+        assertEquals(null, Playing.OTHER_EMULATOR.emulator)
+        assertEquals(setOf(Playing.ANDROID), Playing.entries.filter { it.console == Console.ANDROID }.toSet())
     }
 }

@@ -17,8 +17,8 @@ import com.joegec.joycon2android.ui.theme.TextDim
 
 /** docs/virtual-gamepad.md#rumble */
 @Composable
-internal fun RumbleSection(console: Console, viaDsu: Boolean, percent: Int, open: Boolean, onSetPercent: (Int) -> Unit) {
-    val throughPad = rumbleThroughPadInfo(console, viaDsu)
+internal fun RumbleSection(console: Console, percent: Int, open: Boolean, onSetPercent: (Int) -> Unit) {
+    val throughPad = R.string.rumble_through_pad_wii.takeIf { console == Console.WIIMOTE_NUNCHUK }
     var showInfo by rememberSaveable { mutableStateOf(false) }
     MappingSectionBox(MappingSection.RUMBLE, open, onInfoClick = throughPad?.let { { showInfo = true } }) {
         PercentSlider(
@@ -39,11 +39,4 @@ internal fun RumbleSection(console: Console, viaDsu: Boolean, percent: Int, open
             Text(stringResource(throughPad), color = TextDim, style = MaterialTheme.typography.bodyMedium)
         }
     }
-}
-
-// DSU carries no rumble, so on the Motion tab it comes through the virtual gamepad.
-private fun rumbleThroughPadInfo(console: Console, viaDsu: Boolean): Int? = when {
-    console == Console.WIIMOTE_NUNCHUK -> R.string.rumble_through_pad_wii
-    console == Console.SWITCH_PRO && viaDsu -> R.string.rumble_through_pad_eden
-    else -> null
 }

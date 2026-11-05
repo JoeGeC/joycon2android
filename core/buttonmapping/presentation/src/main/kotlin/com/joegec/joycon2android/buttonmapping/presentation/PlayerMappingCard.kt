@@ -55,7 +55,6 @@ fun PlayerMappingCard(
     onDeleteLayout: (DropdownOption) -> Unit,
     modifier: Modifier = Modifier,
     deviceKeyWarnings: DeviceKeyWarnings = DeviceKeyWarnings(),
-    viaDsu: Boolean = false,
 ) {
     var expanded by rememberSaveable(state.body) { mutableStateOf(false) }
 
@@ -88,7 +87,7 @@ fun PlayerMappingCard(
                         actions.setWiiController(state.body, it)
                     }
                 }
-                MappingBindings(console, state, controller, actions, deviceKeyWarnings, viaDsu)
+                MappingBindings(console, state, controller, actions, deviceKeyWarnings)
             }
         }
     }

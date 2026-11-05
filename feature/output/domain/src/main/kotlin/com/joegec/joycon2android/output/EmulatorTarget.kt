@@ -2,7 +2,7 @@ package com.joegec.joycon2android.output
 
 /**
  * [name] is the emulator's own, e.g. "Dolphin (Wii)"; Dolphin is two targets of one [packageName].
- * Both are null for [OTHER], which names no app and so has nothing to set up.
+ * Both are null for [OTHER], a tab's Other, read only to migrate.
  */
 data class EmulatorTarget(val id: String, val packageName: String?, val name: String?, val kind: EmulatorKind) {
     val setsUp: Boolean get() = packageName != null

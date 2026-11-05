@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="output_status_off">Off — switch on to play</string>
-    <string name="output_status_active">Active</string>
-    <string name="output_status_active_with">Active — %1$s</string>
+    <string name="output_status_off">Waiting for a player</string>
     <string name="output_status_on_for">On: %1$s</string>
-    <string name="output_status_on_for_two">On: %1$s, %2$s</string>
-    <string name="output_status_on_for_rumble">On: %1$s rumble</string>
     <string name="output_status_mouse_off">%1$s · mouse off for %2$s</string>
     <string name="player_label">P%1$d</string>
-    <string name="output_mode_gamepad">Virtual gamepad</string>
-    <string name="output_mode_motion">Motion (DSU)</string>
-    <string name="output_mode_mouse_keyboard">Mouse &amp; keys</string>
-    <string name="output_set_up">Set up</string>
-    <string name="output_other">Other</string>
+    <string name="output_playing">Playing:</string>
+    <string name="output_set_up">Auto set up</string>
     <string name="output_mapping">Mapping</string>
     <string name="output_no_privileged_access">No privileged access — set up Shizuku</string>
-    <string name="output_shizuku_needed_for">Shizuku is needed for %1$s</string>
-    <string name="output_key_kind_mouse">mouse</string>
-    <string name="output_key_kind_keyboard">keyboard</string>
-    <string name="output_key_kind_android">Android keys</string>
-    <string name="output_list_two">%1$s and %2$s</string>
-    <string name="output_list_three">%1$s, %2$s and %3$s</string>
     <string name="output_no_pointer">Clicks and keys work on any controller, but only a Joy-Con 2 standing on its rail moves the pointer.</string>
+    <string name="output_status_starting">Starting…</string>
+    <string name="output_dsu_only">Without Shizuku, buttons and motion go over DSU alone: no rumble, keys or mouse.</string>
+    <string name="output_device_pad">gamepad</string>
+    <string name="output_device_motion">motion</string>
+    <string name="output_device_mouse">mouse</string>
+    <string name="output_device_keys">keys</string>
+    <string name="playing_switch">Eden</string>
+    <string name="playing_gamecube">Dolphin (GameCube)</string>
+    <string name="playing_wii">Dolphin (Wii)</string>
+    <string name="playing_other_emulator">Other emulator</string>
+    <string name="playing_android">Android games &amp; apps</string>
+    <string name="playing_pc">Mouse &amp; keys</string>
+    <string name="playing_not_installed">%1$s isn\'t installed, so it can\'t be set up from here.</string>
+    <string name="playing_other_emulator_steps">Map the emulator\'s controls in its own settings.\nMotion from DSU at %1$s (tap to copy).</string>
 </resources>

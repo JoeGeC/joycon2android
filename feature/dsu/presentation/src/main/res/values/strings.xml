@@ -1,14 +1,9 @@
 <resources>
-    <plurals name="dsu_subtitle_on">
-        <item quantity="one">DSU on port %1$d · %2$d emulator connected</item>
-        <item quantity="other">DSU on port %1$d · %2$d emulators connected</item>
-    </plurals>
-    <string name="dsu_subtitle_waiting">DSU on port %1$d · waiting for an emulator</string>
     <string name="player_label">P%1$d</string>
     <string name="dsu_slot_limit_lead">DSU has only 4 slots.</string>
     <string name="dsu_slot_limit_players">No slot for %1$s.</string>
     <string name="dsu_slot_limit_second_hands">No second slot for %1$s — left Joy-Con motion is dropped.</string>
-    <string name="dsu_manual_setup_title">Manual emulator setup</string>
+    <string name="dsu_manual_setup_title">Manual emulator motion setup</string>
     <string name="dsu_dolphin_emulator_name">Dolphin (Wii)</string>
     <string name="dsu_setup_body">In the emulator\'s controller settings, point its DSU (cemuhook) input source at:</string>
     <string name="dsu_eden_emulator_name">Eden (Switch)</string>
