@@ -1,6 +1,7 @@
 package com.joegec.joycon2android.buttonmapping.preset
 
 import com.joegec.joycon2android.buttonmapping.Console
+import com.joegec.joycon2android.buttonmapping.DEVICE_KEY_TARGETS
 import com.joegec.joycon2android.buttonmapping.JoyconSide
 import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.MappingSource
@@ -143,9 +144,10 @@ class WiiPresetsTest {
             ?.emittedFor(side)
 
     @Test
-    fun `no button on a lone Joy-Con fires two targets, bar the shoulder that hops and tricks`() {
+    fun `no button on a lone Joy-Con fires two Wii targets, bar the shoulder that hops and tricks`() {
         JoyconSide.entries.filter { it.isLone }.forEach { side ->
             val entries = MappingLayouts.entriesOf(Console.WIIMOTE_NUNCHUK, side, MarioKartNunchukMapping)
+                .filterKeys { it !in DEVICE_KEY_TARGETS }
             val fired = mutableMapOf<String, MutableSet<String>>()
             entries.forEach { (target, value) ->
                 sourceIdsOf(value).forEach { fired.getOrPut(it) { mutableSetOf() }.add(target) }

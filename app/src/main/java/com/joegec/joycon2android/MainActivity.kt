@@ -402,6 +402,7 @@ class MainActivity : ComponentActivity() {
         val mappedKeys by container.mappedKeys.collectAsState()
         val tabsMappingKeys by container.tabsMappingKeys.collectAsState()
         val motionRumblesThroughPad by container.motionRumblesThroughPad.collectAsState()
+        val mouseOffPlayers by container.mouseOffPlayers.collectAsState()
         val live = buildSet {
             if (gamepadStatus.enabled) add(OutputDevice.PAD)
             if (dsuStatus.enabled) add(OutputDevice.MOTION)
@@ -426,6 +427,7 @@ class MainActivity : ComponentActivity() {
                 mappedKeys = mappedKeys,
                 tabsMappingKeys = tabsMappingKeys,
                 motionRumblesThroughPad = motionRumblesThroughPad,
+                mouseOffPlayers = mouseOffPlayers,
             ),
             actions = OutputCardActions(
                 toggle = outputViewModel::toggle,

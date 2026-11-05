@@ -15,7 +15,7 @@ object MappingLayouts {
 
     /** Clears every target first, as the console default fills any the stored mapping omits. */
     fun entriesOf(console: Console, side: JoyconSide, layout: MappingLayout): Map<String, String> =
-        MappingPresets.default(console).entries(side).mapValues { "" } + layout.entries(side)
+        MappingPresets.default(console).entries(side).mapValues { "" } + mouseDefaults(side) + layout.entries(side)
 
     /** Matched by bindings, never a stored choice: docs/architecture.md#button-mapping. Null is "Custom". */
     fun matching(

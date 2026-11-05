@@ -22,7 +22,7 @@ import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
-internal fun DropdownTrigger(label: String, subLabel: String?, onClick: () -> Unit) {
+fun DropdownTrigger(label: String, subLabel: String?, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()

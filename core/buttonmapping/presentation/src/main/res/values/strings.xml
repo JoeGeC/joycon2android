@@ -29,6 +29,12 @@
     <string name="press_to_map_title">Map %1$s</string>
     <string name="press_to_map_body">Press a button or move a stick.</string>
     <string name="press_to_map_choose">Choose from list</string>
+    <string name="press_combo_body">Hold the buttons together, then let go.</string>
+    <string name="press_combo_clear">Clear</string>
+    <string name="mouse_on">Use the mouse</string>
+    <string name="mouse_on_description">A Joy-Con 2 standing on its rail moves the pointer.</string>
+    <string name="mouse_mode_target">Toggle combo</string>
+    <string name="mouse_mode_hold">Hold for 1 second</string>
     <string name="controller_mapping_pro_controller">Pro Controller</string>
     <string name="controller_mapping_pro_controller_description">Eden will recognise it as a Pro Controller instead of a single Joy-Con.</string>
     <string name="controller_mapping_thrust">Thrusts</string>

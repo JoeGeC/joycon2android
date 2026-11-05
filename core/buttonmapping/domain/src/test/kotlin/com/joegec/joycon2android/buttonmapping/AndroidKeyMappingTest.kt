@@ -46,7 +46,7 @@ class AndroidKeyMappingTest {
 
     @Test
     fun `an Android key cleared back to None still matches the layout`() {
-        val entries = GameCubeMapping.entries(JoyconSide.DUAL) + (AndroidKey.HOME.targetKey to "")
+        val entries = MappingLayouts.entriesOf(Console.GAMECUBE, JoyconSide.DUAL, GameCubeMapping) + (AndroidKey.HOME.targetKey to "")
 
         val layout = MappingLayouts.matching(Console.GAMECUBE, JoyconSide.DUAL, entries, RemoteMotion(), emptyList())
 

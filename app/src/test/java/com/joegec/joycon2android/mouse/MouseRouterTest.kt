@@ -12,7 +12,6 @@ import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.Side
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -20,8 +19,8 @@ class MouseRouterTest {
 
     private val enabled = MutableStateFlow(true)
     private val pushed = mutableListOf<MouseFrame>()
-    private val mapped = mutableSetOf<PlayerNumber>()
-    private val router = MouseRouter(enabled, { it in mapped }) { pushed += it }
+    private val off = mutableSetOf<PlayerNumber>()
+    private val router = MouseRouter(enabled, { it in off }) { pushed += it }
 
     private fun joycon(address: String, side: Side, x: Int, distance: Int, vararg pressed: JoyconButton) =
         ConnectedJoycon(
@@ -46,21 +45,26 @@ class MouseRouterTest {
     )
 
     @Test
-    fun `a joy-con on a surface moves the pointer and keeps its clicks from the game`() {
+    fun `a player's joy-con on a surface moves the pointer and clicks only through the mapping`() {
         router.route(pair(rightX = 100))
-        val routed = router.route(pair(rightX = 130))
+        router.route(pair(rightX = 130))
 
-        assertEquals(MouseFrame(dx = 30, buttons = setOf(MouseButton.PRIMARY)), pushed.last())
-        val player = routed.players.single()
-        assertTrue(player.right!!.input.pressed.isEmpty())
-        assertEquals(setOf(JoyconButton.L.id), player.left!!.input.pressed)
+        assertEquals(MouseFrame(dx = 30), pushed.last())
     }
 
     @Test
-    fun `with every joy-con lifted the game gets everything and the pointer is released`() {
-        val state = pair(rightX = 100, rightDistance = 3100)
+    fun `a joy-con no player holds clicks with the defaults`() {
+        val alone = { x: Int -> AppUiState(unassignedJoycons = listOf(joycon("right", Side.RIGHT, x, 150, JoyconButton.R))) }
+        router.route(alone(100))
+        router.route(alone(130))
 
-        assertSame(state, router.route(state))
+        assertEquals(MouseFrame(dx = 30, buttons = setOf(MouseButton.PRIMARY)), pushed.last())
+    }
+
+    @Test
+    fun `with every joy-con lifted the pointer is released`() {
+        router.route(pair(rightX = 100, rightDistance = 3100))
+
         assertEquals(MouseFrame(), pushed.single())
     }
 
@@ -70,27 +74,25 @@ class MouseRouterTest {
 
         router.route(pair(rightX = 5, leftDistance = 150))
 
-        assertEquals(setOf(MouseButton.PRIMARY), pushed.last().buttons)
         assertEquals(5, pushed.last().dx)
     }
 
     @Test
-    fun `turned off it touches nothing`() {
+    fun `turned off it pushes nothing`() {
         enabled.value = false
-        val state = pair(rightX = 100)
 
-        assertSame(state, router.route(state))
+        router.route(pair(rightX = 100))
+
         assertTrue(pushed.isEmpty())
     }
 
     @Test
-    fun `a player who maps the mouse moves the pointer but clicks only through the mapping`() {
-        mapped += PlayerNumber.P1
+    fun `a player who switched their mouse off moves no pointer`() {
+        off += PlayerNumber.P1
         router.route(pair(rightX = 100))
-        val routed = router.route(pair(rightX = 130))
+        router.route(pair(rightX = 130))
 
-        assertEquals(MouseFrame(dx = 30), pushed.last())
-        assertEquals(setOf(JoyconButton.R.id), routed.players.single().right!!.input.pressed)
+        assertEquals(MouseFrame(), pushed.last())
     }
 
     private companion object {

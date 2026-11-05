@@ -6,7 +6,15 @@ import com.joegec.joycon2android.output.OutputMode
 
 /** What a tab's switch row says: docs/DESIGN.md#output-card */
 @Composable
-internal fun outputStatus(mode: OutputMode, state: OutputCardState): String = when {
+internal fun outputStatus(mode: OutputMode, state: OutputCardState): String {
+    val status = baseStatus(mode, state)
+    if (mode != OutputMode.MOUSE_KEYBOARD || !state.isLit(mode) || state.mouseOffPlayers.isEmpty()) return status
+    val players = state.mouseOffPlayers.sortedBy { it.index }.map { stringResource(R.string.player_label, it.index) }.joinToString(", ")
+    return stringResource(R.string.output_status_mouse_off, status, players)
+}
+
+@Composable
+private fun baseStatus(mode: OutputMode, state: OutputCardState): String = when {
     mode == OutputMode.MOTION && mode in state.running && state.motionDetail != null ->
         stringResource(R.string.output_status_active_with, state.motionDetail)
     mode in state.running -> stringResource(R.string.output_status_active)

@@ -105,7 +105,7 @@ The app stays connected in the background while its notification is showing.
   GameCube or third-party controllers: their mapped clicks and keys still work, and the Mouse & keys
   tab and that player's Mouse mapping warn that it can't move the pointer.
 - **Keyboard and mouse on the other tabs** come up by themselves once the mapping uses them: a
-  keyboard key or Android key, or a mouse input. Otherwise they stay off.
+  keyboard key or Android key, or **Use the mouse** in a player's Mouse section. Otherwise they stay off.
 
 > [!TIP]
 > With the gamepad and DSU both on, an emulator sees each controller twice — map from one, and turn
@@ -169,10 +169,18 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
   a keyboard; the stick on W, A, S and D walks. A stick presses its key at half tilt. Like Android
   keys it never reaches the game, and it needs Shizuku running. While a letter is bound,
   Android hides the on-screen keyboard; tap **Other** on the letter to bring it back.
-- **Mouse.** Left, right and middle click, and scroll up and down, from a button or stick direction
-  — for PC games that want a click or the wheel. A held scroll repeats. Works held, and on a Joy-Con
-  standing on the desk as a mouse, replacing its default clicks.
-  Needs Shizuku running.
+- **Mouse.** **Use the mouse** at the top brings up the mouse for that player: a Joy-Con 2 standing
+  on the desk moves the pointer, even in an emulator. It's on for Mouse & keys and off elsewhere.
+  Below it, left, right and middle click, and scroll up and down, from a button or stick direction —
+  for PC games that want a click or the wheel. R clicks, ZR right-clicks, RS middle-clicks and the
+  right stick scrolls until you change them (L, ZL, LS and the left stick on a left Joy-Con alone). A held scroll repeats. They work held too, and take those buttons
+  from the game while the mouse is on. Needs Shizuku running.
+- **Toggle combo.** At the bottom of the Mouse section, **C** to start (**Capture** on a left
+  Joy-Con). To change it, tap it, hold the buttons you want together (C + RS, say), then let go. Holding them for a second while playing switches that player's Joy-Con
+  mouse off: no pointer, and their mouse buttons go back to the game. Hold again to switch it back on.
+  The controller buzzes each time, and the Mouse & keys tab says who has it off. The buttons still
+  reach the game while you hold them, so pick ones it doesn't use much. Everyone's mouse is back on
+  when the app restarts.
 - **Pro Controller.** On Eden, a lone Joy-Con also gets this switch, off by default. Off, Eden sees
   a real left or right Joy-Con and the game handles the grip and motion itself, which games such as
   Super Mario Party Jamboree's motion games need; you map its own buttons, plus SL and SR. If a game
@@ -333,7 +341,7 @@ shoulder buttons its body lacks.
 | Emulator won't detect DSU presses | Pick inputs from the list — detection never sees DSU — with the **Virtual gamepad** tab switched off |
 | Motion aiming stutters | Settings (gear, top right): keep **Ignore this device's motion in Eden** and **Faster controller updates** on |
 | Tilting the device moves the aim in Eden | Turn on **Ignore this device's motion in Eden** |
-| Joy-Con mouse doesn't move the pointer | The Output card's **Mouse & keys** tab name must be lit: the **Mouse & keys** tab switched on, or a mapped mouse action on another running tab. Stand the Joy-Con on its rail, not its back, on a flat, non-glossy surface |
+| Joy-Con mouse doesn't move the pointer | The Output card's **Mouse & keys** tab name must be lit: the **Mouse & keys** tab switched on, or **Use the mouse** on in another running tab's mapping, and not switched off with the player's toggle combo. Stand the Joy-Con on its rail, not its back, on a flat, non-glossy surface |
 | Pointer drifts or starts off-screen | Rest the controller for ~2 s, then press Recenter |
 | Sticks feel twitchy in Dolphin (hard to walk or aim) | Tap **Set up** for Dolphin again. A Pro Controller: map it in Dolphin first, then tap **Set up** once to add the calibration |
 | MotionPlus tutorial replays every boot (Dolphin) | Set `MPLS.MOVIE` in `Wii/shared2/sys/SYSCONF` with Dolphin closed ([why](docs/dsu-motion.md#motionplus-tutorial-replays)) |

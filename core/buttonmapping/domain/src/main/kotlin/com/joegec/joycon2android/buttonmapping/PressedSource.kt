@@ -12,6 +12,13 @@ private const val PRESS_TILT = 0.5f
 fun PlayerState.sourcePressedSince(previous: PlayerState, side: JoyconSide, heldSideways: Boolean): MappingSource? =
     newlyPressedButton(previous) ?: newlyLeanedStick(previous, side, heldSideways)
 
+/** Every button down and stick direction past half-way, directions in the mapping's frame. */
+fun PlayerState.heldSources(side: JoyconSide, heldSideways: Boolean): Set<MappingSource> =
+    JoyconButton.entries.filter { it.id in pressed }.map(MappingSource::Button).toSet() +
+        StickSource.entries.flatMap(MappingSource::directionsOf)
+            .filter { tilt(it.stick, it.direction) >= PRESS_TILT }
+            .map { it.inMappingFrame(side, heldSideways) }
+
 /** No button down and no stick past where it would press. */
 fun PlayerState.pressesNothing(): Boolean =
     pressed.isEmpty() && StickSource.entries.flatMap(MappingSource::directionsOf).none { tilt(it.stick, it.direction) >= PRESS_TILT }

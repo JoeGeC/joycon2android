@@ -174,7 +174,13 @@ In `JoyconScreen.kt`:
 - **Keyboard lists only the keys in use.** Bound keys, then an "Add a key" `OptionDropdown` of the
   rest; a key added but left on None is gone next visit. Sixty rows of None would bury the few that
   matter. A bound letter adds a `SettingWarning` that the on-screen keyboard hides.
-- **Mouse is five plain rows**, like Android: few enough to show whole.
+- **Mouse opens on a Use the mouse switch**, the rest expanding beneath it only while it's on, as an
+  Output tab's setup does: rows for a mouse that isn't up would read as broken.
+- **Mouse is five plain rows**, like Android: few enough to show whole, then **Toggle combo**.
+  Tapping it opens `PressComboDialog`, which collects everything held until the controller lets go
+  and binds it as one combo; **Clear** unbinds it. It has no list: a dropdown would tick sources that
+  fire alone, which a combo doesn't. Its trigger reads "C + RS", "Hold for 1 second" beneath.
+- **Mouse & keys names who switched their mouse off**, after its status: "Active · mouse off for P1".
 - **Other's keys-only mapping is named for its output**, "Virtual Gamepad" or "Motion Controller",
   though both share it. Its tip says how to map by hand in place of trying another layout; like every
   tip it hides with **Show tips** off.

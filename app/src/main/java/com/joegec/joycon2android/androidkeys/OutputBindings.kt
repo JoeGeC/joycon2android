@@ -14,8 +14,6 @@ class OutputBindings<K>(
 
     fun heldKeys(player: PlayerState, wasHeld: Set<K> = emptySet()): Set<K> = of(player).heldKeys(player, wasHeld)
 
-    fun bindsAny(player: PlayerNumber): Boolean = of(player).sources.isNotEmpty()
-
     private fun of(player: PlayerNumber): KeyBindings<K> =
         if (acting.value) bindings.value[player] ?: KeyBindings() else KeyBindings()
 }

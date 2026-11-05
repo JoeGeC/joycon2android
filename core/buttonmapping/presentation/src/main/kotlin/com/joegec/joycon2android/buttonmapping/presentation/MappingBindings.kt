@@ -28,6 +28,8 @@ fun MappingBindings(
                 section == MappingSection.MOTION ->
                     if (targets.isNotEmpty() || state.offersSensitivity) MotionSection(targets, state, controller, actions, open)
                 targets.isEmpty() -> Unit
+                section == MappingSection.MOUSE ->
+                    MouseSection(console, targets, state, controller, actions, sectionWarnings(section, state, warnings), open)
                 section == MappingSection.KEYBOARD ->
                     KeyboardBindingSection(targets, state, controller, actions, warnings.keyboardAndMouseNeedShizuku, open)
                 else -> BindingSection(section, targets, state, controller, actions, sectionWarnings(section, state, warnings), open)

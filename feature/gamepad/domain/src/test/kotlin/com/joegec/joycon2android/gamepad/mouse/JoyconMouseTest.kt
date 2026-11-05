@@ -98,16 +98,6 @@ class JoyconMouseTest {
     }
 
     @Test
-    fun `the clicks and stick are withheld from the game`() {
-        val withheld = JoyconMouse.withheldFrom(
-            input(stickY = 4095, pressed = arrayOf(JoyconButton.R, JoyconButton.ZR, JoyconButton.A)),
-        )
-
-        assertEquals(setOf(JoyconButton.A.id), withheld.pressed)
-        assertEquals(2048, withheld.stickY)
-    }
-
-    @Test
     fun `a Joy-Con held in a grip is no mouse, even with fingers over the sensor`() {
         assertNull(mouse.read(input(x = 100, accelX = 0)))
     }

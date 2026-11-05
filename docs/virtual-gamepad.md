@@ -50,18 +50,33 @@ Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the 
 
 `Joy-Con Virtual Mouse` is one UHID device, shared by every player, with three buttons and a wheel.
 `PrivilegedDevicePolicy` keeps it up while Shizuku runs and the [output](architecture.md#output)
-plans it: Mouse & keys mode, a mapped mouse action, or Mouse set On.
+plans it: a running tab whose mapping, for some player, has **Use the mouse** on (`JOYCON_MOUSE_KEY`).
+Unset, it's on for Mouse & keys alone; stored only where it differs, so a body still matches its
+layout. Off, that player's Joy-Cons move no pointer and their mapped clicks are dropped
+(`ObserveJoyconMouseUsersUseCase`); the editor hides the section's rows.
 
 **One mouse, two inputs to it.** Clicks and scroll come from each player's **Mouse** mapping, held
-or not. While the mouse is up, a Joy-Con 2 standing on a surface also moves the pointer. A player whose
-mapping binds no mouse action gets default clicks and scroll on a Joy-Con on the surface instead:
+or not. While the mouse is up, a Joy-Con 2 standing on a surface also moves the pointer.
+
+`mouseDefaults` sits under every layout, as the console default does, so every body starts bound and
+a layout's own mouse bindings win:
+
+| Target | Left Joy-Con | Anything else |
+|---|---|---|
+| Left click | L | R |
+| Right click | ZL | ZR |
+| Middle click | LS | RS |
+| Scroll up/down | left stick | right stick |
+| Toggle combo | Capture | C |
+
+A Joy-Con no player holds clicks and scrolls with fixed defaults on the surface (`JoyconMouse`):
 
 | Input | Mouse | Notes |
 |---|---|---|
 | X/Y counters | REL_X / REL_Y, one count a unit | always; the change since the last report, int16-wrapped; +Y is towards the player, down the screen |
-| L, R | primary button | default |
-| ZL, ZR | secondary button | default |
-| Stick Y | wheel | default; rate set by tilt, up to 20 detents/s past a 25% dead zone, timed by the packet clock |
+| L, R | primary button | unheld Joy-Con only |
+| ZL, ZR | secondary button | unheld Joy-Con only |
+| Stick Y | wheel | unheld Joy-Con only; rate set by tilt, up to 20 detents/s past a 25% dead zone, timed by the packet clock |
 
 **On a surface** means the distance reading says so ([sensor](protocol.md#mouse-0x100x17)) **and**
 the Joy-Con stands on its rail; lifted, it is a plain controller again.
@@ -71,10 +86,10 @@ the Joy-Con stands on its rail; lifted, it is a plain controller again.
   wheel. So `JoyconMouse` also wants raw accel x, which reads +1 g on whichever axis points up, at
   ≥ 0.71 g away from the rail (−x on a left Joy-Con, +x on a right): within 45° of rail-down. A
   grip leaves x level, and a sideways hold turns the rail up.
-- **The mapping replaces the defaults whole**, not per button, once it binds any mouse action on a
-  running output. Two sets of clicks on one Joy-Con would fight.
-- **What the mouse spends, the game never sees.** The defaults are withheld by `MouseRouter`, before
-  `AndroidKeyRouter`; mapped actions by their `HeldKeyRouter`, like [keyboard keys](#keyboard).
+- **A held Joy-Con clicks only through its player's mapping**, surface or not; a row cleared to None
+  clicks nothing. An unheld one reaches no game, so its defaults need no withholding.
+- **What the mouse spends, the game never sees.** Mapped actions are withheld by their
+  `HeldKeyRouter`, like [keyboard keys](#keyboard).
 - **One report a packet.** A report's buttons replace the last's, so `MouseMix` adds the mapped
   frame to the surface Joy-Cons' before pushing.
 - **Movement is summed, never conflated.** A pad report replaces the last; a mouse delta skipped is
@@ -89,6 +104,23 @@ the Joy-Con stands on its rail; lifted, it is a plain controller again.
   console-protocol controllers have none.
 - **Faster controller updates** counts the mouse as an output, doubling its report rate.
 - `UhidOutput` owns the shared-device lifecycle for the mouse and the [keyboard](#keyboard).
+
+### Mouse on and off
+
+Each player can switch their own Joy-Con mouse off while playing: holding their **Toggle combo**
+(`MOUSE_MODE_KEY`, a [device key](#android-keys) target, so a grip switch and layouts keep it) for
+1 s (`MouseModeToggle.HOLD_MILLIS`) toggles it, with the same buzz as a mapped press.
+
+- **Only while Use the mouse is on.** Every layout binds a combo (`mouseDefaults`), so elsewhere a
+  held C would buzz and toggle nothing.
+- **Off**, `MouseRouter` skips their Joy-Cons, so no pointer, and their mapped mouse actions are dropped, so those buttons reach the game again. Other players' mice carry on.
+- **A combo acts only held whole** (`HoldCombo`): every source down at once. Its value joins source
+  ids like any target's, but they're ANDed, not ORed; each running console's combo is kept whole.
+- **Its buttons still reach the game** while held: holding them back would delay every press that
+  starts a combo. The hold makes a stray toggle unlikely.
+- **Toggles once a hold.** Latched until a source lifts, so holding on doesn't flip it back.
+- **Not saved.** A player who leaves, or a relaunch, gets their mouse back on.
+- Like other device keys it waits while the mapping editor listens for a press.
 
 ## Keyboard
 

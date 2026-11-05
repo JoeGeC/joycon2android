@@ -15,7 +15,7 @@ class JoyconMouse(private val side: Side) {
 
     /**
      * Null while the Joy-Con is lifted, held, or has no mouse sensor. [defaultControls] adds the
-     * fixed clicks and scroll, for a player whose mapping has none of its own.
+     * fixed clicks and scroll, for a Joy-Con no player holds.
      */
     fun read(input: JoyconInput, defaultControls: Boolean = true): MouseFrame? {
         val sensor = input.mouse?.takeIf { it.onSurface && standsOnRail(input) } ?: return null.also { forget() }
@@ -82,10 +82,6 @@ class JoyconMouse(private val side: Side) {
 
         private val PRIMARY = setOf(JoyconButton.L.id, JoyconButton.R.id)
         private val SECONDARY = setOf(JoyconButton.ZL.id, JoyconButton.ZR.id)
-
-        /** What a Joy-Con on a surface spends on the mouse, so it never also reaches a game. */
-        fun withheldFrom(input: JoyconInput): JoyconInput =
-            input.copy(pressed = input.pressed - PRIMARY - SECONDARY, stickX = STICK_CENTER, stickY = STICK_CENTER)
 
         private fun buttons(pressed: Set<String>): Set<MouseButton> = buildSet {
             if (pressed.any { it in PRIMARY }) add(MouseButton.PRIMARY)

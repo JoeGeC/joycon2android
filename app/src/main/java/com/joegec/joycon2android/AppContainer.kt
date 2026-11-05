@@ -23,10 +23,12 @@ import com.joegec.joycon2android.buttonmapping.ApplyGlobalLayoutUseCase
 import com.joegec.joycon2android.buttonmapping.ConfirmPressUseCase
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.KeyBindings
+import com.joegec.joycon2android.buttonmapping.ObserveJoyconMouseUsersUseCase
 import com.joegec.joycon2android.buttonmapping.ObserveKeyBindingsUseCase
 import com.joegec.joycon2android.buttonmapping.androidKeyBindings
 import com.joegec.joycon2android.buttonmapping.keyboardKeyBindings
 import com.joegec.joycon2android.buttonmapping.mouseActionBindings
+import com.joegec.joycon2android.buttonmapping.mouseModeCombos
 import com.joegec.joycon2android.buttonmapping.PlayerBody
 import com.joegec.joycon2android.buttonmapping.body
 import com.joegec.joycon2android.buttonmapping.ApplyMappingLayoutUseCase
@@ -127,6 +129,7 @@ import com.joegec.joycon2android.gamepad.mouse.PushMouseFrameUseCase
 import com.joegec.joycon2android.gamepad.mouse.SetMouseEnabledUseCase
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.mouse.MouseMix
+import com.joegec.joycon2android.mouse.MouseModeToggle
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.output.DeviceKeyKind
 import com.joegec.joycon2android.output.EmulatorTarget
@@ -290,10 +293,9 @@ class AppContainer(context: Context) {
     // --- Mouse ---
     private val mouseRepository: MouseRepository = MouseOutput(scope, appContext, privilegedAccess::acquire)
     private val mouseMix = MouseMix(MappedMouse(SystemClock::uptimeMillis), PushMouseFrameUseCase(mouseRepository)::invoke)
-    // A player's own mouse mapping replaces the desk mouse's default clicks and scroll.
     private val mouseRouter = MouseRouter(
         enabled = mouseRepository.enabled,
-        mapsMouse = { player -> mouseActions.bindsAny(player) },
+        mouseOff = { player -> player !in mouseUsers.value || player in mouseModeToggle.off.value },
         push = mouseMix::desk,
     )
     val observeMouseEnabled = ObserveMouseEnabledUseCase(mouseRepository)
@@ -375,6 +377,31 @@ class AppContainer(context: Context) {
     private val androidBindings = bindingsFor(observeAndroidKeyBindings)
     private val keyboardBindings = bindingsFor(observeKeyboardKeyBindings)
     private val mouseBindings = bindingsFor(observeMouseActionBindings)
+    private val observeJoyconMouseUsers = ObserveJoyconMouseUsersUseCase(observeControllerMapping)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val mouseUsers: StateFlow<Set<PlayerNumber>> = combine(runningConsoles, activeBodies, ::Pair)
+        .flatMapLatest { (consoles, bodies) -> observeJoyconMouseUsers(consoles, bodies) }
+        .stateIn(scope, SharingStarted.Eagerly, emptySet())
+    private val observeMouseModeCombos = ObserveKeyBindingsUseCase(observeControllerMapping, observeWiiController) { entries, side, sideways ->
+        entries.mouseModeCombos(side, sideways)
+    }
+
+    // Every layout binds a combo, so only a player using the mouse can toggle it.
+    private val mouseModeCombos = combine(bindingsFor(observeMouseModeCombos), mouseUsers) { combos, users ->
+        combos.filterKeys { it in users }
+    }.stateIn(scope, SharingStarted.Eagerly, emptyMap())
+    private val mouseModeToggle = MouseModeToggle(
+        OutputBindings(deviceKeysActing, mouseModeCombos),
+        SystemClock::elapsedRealtime,
+        confirmPress::invoke,
+    )
+    val mouseOffPlayers: StateFlow<Set<PlayerNumber>> = mouseModeToggle.off
+
+    // A player with their mouse off clicks nothing, so the game gets those buttons back.
+    private val mouseModeBindings = combine(mouseBindings, mouseUsers, mouseModeToggle.off) { bindings, users, off ->
+        bindings.filterKeys { it in users && it !in off }
+    }.stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val rumbleStrengths: StateFlow<Map<PlayerNumber, Int>> = combine(padConsole, activeBodies, ::Pair)
@@ -398,14 +425,14 @@ class AppContainer(context: Context) {
     private val keyboardKeyRouter = HeldKeyRouter(OutputBindings(deviceKeysActing, keyboardBindings)) { held ->
         copy(keyboard = keyboard.copy(keys = held))
     }
-    private val mouseActions = OutputBindings(deviceKeysActing, mouseBindings)
+    private val mouseActions = OutputBindings(deviceKeysActing, mouseModeBindings)
     private val mouseActionRouter = HeldKeyRouter(mouseActions) { held -> copy(mouseActions = held) }
     private val pushKeyboardFrame = PushKeyboardFrameUseCase(keyboardRepository)
 
     val mappedKeys: StateFlow<Set<DeviceKeyKind>> =
-        combine(androidBindings, keyboardBindings, mouseBindings) { android, keyboard, mouse ->
+        combine(androidBindings, keyboardBindings, mouseUsers) { android, keyboard, mouseUsers ->
             buildSet {
-                if (mouse.anyBound()) add(DeviceKeyKind.MOUSE)
+                if (mouseUsers.isNotEmpty()) add(DeviceKeyKind.MOUSE)
                 if (keyboard.anyBound()) add(DeviceKeyKind.KEYBOARD)
                 if (android.anyBound()) add(DeviceKeyKind.ANDROID)
             }
@@ -426,8 +453,8 @@ class AppContainer(context: Context) {
     private fun mapsKeys(console: Console, bodies: List<PlayerBody>): Flow<Boolean> = combine(
         observeAndroidKeyBindings(console, bodies),
         observeKeyboardKeyBindings(console, bodies),
-        observeMouseActionBindings(console, bodies),
-    ) { android, keyboard, mouse -> android.anyBound() || keyboard.anyBound() || mouse.anyBound() }
+        observeJoyconMouseUsers(setOf(console), bodies),
+    ) { android, keyboard, mouseUsers -> android.anyBound() || keyboard.anyBound() || mouseUsers.isNotEmpty() }
 
     // The keyboard is the Android keys' fast path, so they need it as keyboard keys do.
     private val mappedDevices = combine(mappedKeys, motionRumblesThroughPad) { kinds, motionRumbles ->
@@ -475,8 +502,9 @@ class AppContainer(context: Context) {
             activePlayers = state.activePlayers
             hasActivePlayers.value = state.activePlayers.isNotEmpty()
             deviceKeysPause.onFrame(state.activePlayers)
-            val onDesk = mouseRouter.route(state)
-            val routed = mouseActionRouter.route(onDesk, keyboardKeyRouter.route(onDesk, androidKeyRouter.route(onDesk)))
+            mouseModeToggle.onFrame(state.activePlayers)
+            mouseRouter.route(state)
+            val routed = mouseActionRouter.route(state, keyboardKeyRouter.route(state, androidKeyRouter.route(state)))
             pushKeyboardFrame(routed.keyboard)
             mouseMix.send(routed.mouseActions)
             pushGamepadState(

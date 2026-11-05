@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.output.presentation
 
+import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.output.DeviceKeyKind
 import com.joegec.joycon2android.output.EmulatorTarget
 import com.joegec.joycon2android.output.OutputDevice
@@ -29,6 +30,8 @@ data class OutputCardState(
     val tabsMappingKeys: Set<OutputMode> = emptySet(),
     /** The Motion tab runs the pad for its rumble. */
     val motionRumblesThroughPad: Boolean = false,
+    /** Players who held their combo to switch their Joy-Con mouse off. */
+    val mouseOffPlayers: Set<PlayerNumber> = emptySet(),
 ) {
     fun emulatorsFor(mode: OutputMode): List<EmulatorTarget> = emulators[mode].orEmpty()
 
