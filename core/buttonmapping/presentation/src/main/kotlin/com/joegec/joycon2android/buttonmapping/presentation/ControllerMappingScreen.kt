@@ -65,6 +65,9 @@ fun ControllerMappingScreen(
     modifier: Modifier = Modifier,
     onInfoClick: (() -> Unit)? = null,
     deviceKeyWarnings: DeviceKeyWarnings = DeviceKeyWarnings(),
+    /** The game's motion switch, null where motion can't be switched off. */
+    motion: Boolean? = null,
+    onSetMotion: (Boolean) -> Unit = {},
 ) {
     BackHandler(onBack = onBack)
     var dialog by remember { mutableStateOf<MappingDialog?>(null) }
@@ -95,6 +98,7 @@ fun ControllerMappingScreen(
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
             } else {
+                motion?.let { GameMotionCard(state.console, it, onSetMotion) }
                 GroupLayoutRow(state.console, state.global, state.savedLayouts, labels, actions) { dialog = it }
             }
             state.players.forEach { player ->

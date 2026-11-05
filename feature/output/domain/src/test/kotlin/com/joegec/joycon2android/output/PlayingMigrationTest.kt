@@ -4,8 +4,6 @@ import com.joegec.joycon2android.output.OutputMode.GAMEPAD
 import com.joegec.joycon2android.output.OutputMode.MOTION
 import com.joegec.joycon2android.output.OutputMode.MOUSE_KEYBOARD
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PlayingMigrationTest {
@@ -46,15 +44,9 @@ class PlayingMigrationTest {
     }
 
     @Test
-    fun `with nothing running the tab in view decides, and the card starts off`() {
+    fun `with nothing running the tab in view decides`() {
         assertEquals(Playing.WII, migrate(emptySet(), motion = wii, inView = MOTION).playing)
-        assertFalse(PlayingMigration.wasOn(emptySet()))
-    }
-
-    @Test
-    fun `never stored, the tab in view ran, so the card starts on`() {
         assertEquals(Playing.PC, migrate(null, inView = MOUSE_KEYBOARD).playing)
-        assertTrue(PlayingMigration.wasOn(null))
     }
 
     @Test

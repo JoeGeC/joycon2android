@@ -229,4 +229,17 @@ class EdenDsuConfigTest {
         assertFalse(result.contains("player_0_button_lstick"))
         assertFalse(result.contains("player_0_button_rstick"))
     }
+
+    @Test
+    fun `without motion only our motion bindings go, the buttons and another server's motion stay`() {
+        val existing = merge(null, listOf(pair(PlayerNumber.P1))) +
+            "\nplayer_1_motionright=\"engine:cemuhookudp,guid:00000000000000000000000001020304,port:26760,pad:0,motion:0\""
+
+        val result = EdenDsuConfig.withoutMotion(existing)
+
+        assertFalse(result.contains("player_0_motionright"))
+        assertFalse(result.contains("player_0_motionleft"))
+        assertTrue(result.contains("player_1_motionright"))
+        assertEquals("\"${device(0)},button:8192\"", valueOf(result, "player_0_button_a"))
+    }
 }

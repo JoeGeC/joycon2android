@@ -9,6 +9,7 @@ import com.joegec.joycon2android.output.selected
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
 
 data class OutputCardState(
+    /** Off until the first player is assigned. */
     val on: Boolean = false,
     val selection: PlayingSelection = PlayingSelection(),
     val emulators: Map<Playing, List<EmulatorTarget>> = emptyMap(),

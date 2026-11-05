@@ -95,7 +95,6 @@ class MainActivity : ComponentActivity() {
                 OutputViewModel(
                     c.observePlaying,
                     c.observeOutputOn,
-                    c.setOutputOn,
                     c.setPlaying,
                     c.selectEmulator,
                     c.setMotion,
@@ -252,6 +251,7 @@ class MainActivity : ComponentActivity() {
         val bodies = players.mapNotNull { it.body() }
         val state by controllerMappingViewModel.uiState.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
+        val selection by outputViewModel.selection.collectAsState()
         var showDsuHelp by rememberSaveable { mutableStateOf(false) }
 
         LaunchedEffect(console, bodies) { controllerMappingViewModel.edit(console, bodies) }
@@ -269,6 +269,8 @@ class MainActivity : ComponentActivity() {
                     keyboardAndMouseNeedShizuku = !shizukuAvailable,
                     pointerlessBodies = players.filterNot { it.canMovePointer }.mapNotNull { it.body() }.toSet(),
                 ),
+                motion = selection.motion.takeIf { selection.playing.motionOptional && selection.playing.console == console },
+                onSetMotion = outputViewModel::setMotion,
             )
         }
         if (showDsuHelp) DsuSetupSheet(onDismiss = { showDsuHelp = false })
@@ -428,10 +430,7 @@ class MainActivity : ComponentActivity() {
                 mouseOffPlayers = mouseOffPlayers,
             ),
             actions = OutputCardActions(
-                setOn = outputViewModel::setOn,
-                setPlaying = outputViewModel::setPlaying,
-                selectEmulator = outputViewModel::selectEmulator,
-                setMotion = outputViewModel::setMotion,
+                select = outputViewModel::select,
                 setUp = { outputViewModel.setUp(players) },
                 openMapping = { onOpenMapping(MappingRoute(container.consoleInView())) },
             ),

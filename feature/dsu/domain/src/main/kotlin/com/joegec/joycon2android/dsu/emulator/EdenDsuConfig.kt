@@ -63,6 +63,14 @@ object EdenDsuConfig {
         )
     }
 
+    /** Unbinds the motion [merge] wrote, leaving any other motion binding. */
+    fun withoutMotion(existing: String?): String {
+        val ours = (0 until DsuSlots.COUNT).flatMap { listOf("player_${it}_motionright", "player_${it}_motionleft") }
+            .filter { IniEditor.valueOf(existing, EdenControls.SECTION, it)?.contains(device(0).substringBefore(",pad:")) == true }
+            .toSet()
+        return IniEditor.removeKeys(existing, EdenControls.SECTION) { it.removeSuffix("\\default") in ours }
+    }
+
     private fun serverKeys(existing: String?): Map<String, String> {
         val keys = LinkedHashMap<String, String>()
         keys.defineEdenKey("motion_enabled", "true")

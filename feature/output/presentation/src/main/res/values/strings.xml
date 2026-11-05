@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="output_status_off">Off — switch on to play</string>
+    <string name="output_status_off">Waiting for a player</string>
     <string name="output_status_on_for">On: %1$s</string>
     <string name="output_status_mouse_off">%1$s · mouse off for %2$s</string>
     <string name="player_label">P%1$d</string>
@@ -15,20 +15,12 @@
     <string name="output_device_motion_with">motion (%1$s)</string>
     <string name="output_device_keyboard">keyboard</string>
     <string name="output_device_mouse">mouse</string>
-    <string name="output_playing">Playing</string>
-    <string name="playing_switch">Switch</string>
-    <string name="playing_gamecube">GameCube</string>
-    <string name="playing_wii">Wii</string>
+    <string name="playing_switch">Eden</string>
+    <string name="playing_gamecube">Dolphin (GameCube)</string>
+    <string name="playing_wii">Dolphin (Wii)</string>
     <string name="playing_other_emulator">Other emulator</string>
     <string name="playing_android">Android games &amp; apps</string>
-    <string name="playing_pc">PC games</string>
-    <string name="playing_switch_examples">Eden</string>
-    <string name="playing_dolphin_examples">Dolphin</string>
-    <string name="playing_other_emulator_examples">Azahar, Cemu and others, set up by hand</string>
-    <string name="playing_android_examples">Games and apps that take a controller</string>
-    <string name="playing_pc_examples">Winlator, GameHub</string>
+    <string name="playing_pc">Mouse &amp; keys</string>
     <string name="playing_not_installed">%1$s isn\'t installed, so it can\'t be set up from here.</string>
-    <string name="playing_motion">Motion</string>
-    <string name="playing_motion_description">Gyro over DSU. Tap Set up after changing it.</string>
     <string name="playing_other_emulator_steps">Map the emulator\'s controls in its own settings: buttons and sticks from each player\'s Virtual Gamepad, motion from DSU at %1$s.</string>
 </resources>

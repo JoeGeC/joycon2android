@@ -20,7 +20,7 @@ enum class Playing(
     SWITCH(Console.SWITCH_PRO, setOf(PAD, MOTION), EmulatorKind.EDEN, motionOptional = true, buttonsOverDsu = true),
     GAMECUBE(Console.GAMECUBE, setOf(PAD), EmulatorKind.DOLPHIN_GAMECUBE),
     WII(Console.WIIMOTE_NUNCHUK, setOf(MOTION), EmulatorKind.DOLPHIN_WII, buttonsOverDsu = true),
-    OTHER_EMULATOR(Console.EMULATOR, setOf(PAD, MOTION), buttonsOverDsu = true),
+    OTHER_EMULATOR(Console.EMULATOR, setOf(PAD, MOTION), motionOptional = true, buttonsOverDsu = true),
     ANDROID(Console.ANDROID, setOf(PAD)),
     PC(Console.PC, setOf(KEYBOARD, MOUSE)),
 }

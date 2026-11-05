@@ -38,6 +38,9 @@
     <string name="controller_mapping_pro_controller">Pro Controller</string>
     <string name="controller_mapping_pro_controller_description">Eden will recognise it as a Pro Controller instead of a single Joy-Con.</string>
     <string name="controller_mapping_thrust">Thrusts</string>
+    <string name="controller_mapping_game_motion">Motion</string>
+    <string name="controller_mapping_game_motion_set_up">Every player\'s gyro, over DSU. Tap Set up again after changing it.</string>
+    <string name="controller_mapping_game_motion_description">Every player\'s gyro, over DSU.</string>
     <string name="controller_mapping_sensitivity">Motion sensitivity</string>
     <string name="controller_mapping_sensitivity_description">Scales swings and shakes without changing tilt. 100% reads as the Joy-Con moves.</string>
     <string name="controller_mapping_percent_value">%1$d%%</string>

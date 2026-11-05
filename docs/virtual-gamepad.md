@@ -243,13 +243,16 @@ but PC, which has no pad to rumble.
 ### Rumble over DSU
 
 DSU carries no rumble, so a game played over DSU rumbles through the pad, which is up whenever
-Shizuku is. Turning rumble on or off changes what Set up writes, so it needs setting up again.
+Shizuku is.
 
 - **Dolphin (Wii)**: setup points each remote it writes at the player's pad,
   ``Rumble/Motor = `Android/<id>/Joy-Con Virtual Gamepad <n>:Motor 0` `` (`DolphinWiimoteConfig.withRumble`).
-  Buttons, sticks and motion stay on DSU.
-- **Eden**, with Switch's motion on, rumbles only the device a player's buttons are bound to, so setup
-  binds a rumbling player's buttons and sticks to the pad (`EdenGamepadConfig.bindToPads`) and leaves motion on DSU.
+  Buttons, sticks and motion stay on DSU. Turning rumble on or off changes what it writes, so it
+  needs setting up again.
+- **Eden** rumbles only the device a player's buttons are bound to, so setup binds every player's
+  buttons and sticks to the pad (`EdenGamepadConfig.bindToPads` over `EdenDsuConfig.merge`) and leaves
+  motion on DSU. With motion off it writes the pad alone and unbinds the DSU motion it wrote
+  (`EdenDsuConfig.withoutMotion`).
   Splitting just the buttons Eden routes rumble through (D-pad Right and A) onto the pad was rejected:
   one device per player for buttons.
 - A player whose pad isn't enumerated at Set up keeps all-DSU bindings and gets no rumble.

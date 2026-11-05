@@ -43,9 +43,6 @@ import com.joegec.joycon2android.ui.theme.TextDim
 
 @Composable
 fun EmulatorAutoSetup(
-    emulators: List<EmulatorOption>,
-    selectedEmulator: String,
-    onSelectEmulator: (String) -> Unit,
     phase: DolphinSetupPhase,
     setupLabel: String,
     /** Null for a choice with nothing to set up, leaving the mapping button to fill the row. */
@@ -65,13 +62,6 @@ fun EmulatorAutoSetup(
         onInfoClick = { showInfo = true },
     ) {
         Column {
-            EmulatorDropdown(
-                options = emulators,
-                selectedId = selectedEmulator,
-                onSelect = onSelectEmulator,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(Dimens.emulatorSetupRowGap))
             SetUpRow(phase, setupLabel, onSetUp, onConfigureMapping, mappingLabel)
             val tips = LocalTips.current
             AnimatedVisibility(

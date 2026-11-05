@@ -18,18 +18,6 @@ internal fun Playing.label(): String = stringResource(
     },
 )
 
-/** What it's played on, under the name in the picker. */
-@Composable
-internal fun Playing.examples(): String = stringResource(
-    when (this) {
-        Playing.SWITCH -> R.string.playing_switch_examples
-        Playing.GAMECUBE, Playing.WII -> R.string.playing_dolphin_examples
-        Playing.OTHER_EMULATOR -> R.string.playing_other_emulator_examples
-        Playing.ANDROID -> R.string.playing_android_examples
-        Playing.PC -> R.string.playing_pc_examples
-    },
-)
-
 @Composable
 internal fun OutputDevice.label(motionDetail: String?): String = when (this) {
     OutputDevice.PAD -> stringResource(R.string.output_device_pad)

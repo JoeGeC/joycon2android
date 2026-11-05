@@ -27,7 +27,4 @@ object PlayingMigration {
             motion = playing != Playing.SWITCH || on(OutputMode.MOTION, EmulatorKind.EDEN),
         )
     }
-
-    /** Before tabs were remembered, the one in view ran; an empty set is every tab switched off. */
-    fun wasOn(remembered: Set<OutputMode>?): Boolean = remembered == null || remembered.isNotEmpty()
 }

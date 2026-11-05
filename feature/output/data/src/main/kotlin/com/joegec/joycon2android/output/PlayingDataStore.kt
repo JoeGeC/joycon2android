@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /** [targetOf] is the emulator a per-device tab had, for [PlayingMigration] on first read. */
@@ -37,14 +36,8 @@ class PlayingDataStore(context: Context, private val targetOf: (OutputMode, Stri
 
     override suspend fun setMotion(on: Boolean) = edit { it[MOTION] = on }
 
-    override suspend fun setOn(on: Boolean) {
-        _on.value = on
-        edit { it[REMEMBERED_ON] = on }
-    }
-
-    override suspend fun startRemembered() {
-        val prefs = dataStore.data.first()
-        if (prefs[REMEMBERED_ON] ?: PlayingMigration.wasOn(rememberedTabs(prefs))) _on.value = true
+    override fun start() {
+        _on.value = true
     }
 
     override fun stopAll() {
@@ -64,15 +57,13 @@ class PlayingDataStore(context: Context, private val targetOf: (OutputMode, Stri
         this[PLAYING] = migrated.playing.name
         migrated.emulators.forEach { (game, id) -> this[emulatorKey(game)] = id }
         this[MOTION] = migrated.motion
-        this[REMEMBERED_ON] = PlayingMigration.wasOn(rememberedTabs(this))
     }
 
     private fun migrated(prefs: Preferences): PlayingSelection {
         val inView = prefs[TAB_IN_VIEW]?.let(::modeOrNull) ?: OutputMode.GAMEPAD
-        return PlayingMigration.selection(rememberedTabs(prefs), inView) { mode -> targetOf(mode, prefs[tabEmulatorKey(mode)]) }
+        val rememberedTabs = prefs[REMEMBERED_TABS]?.mapNotNullTo(mutableSetOf(), ::modeOrNull)
+        return PlayingMigration.selection(rememberedTabs, inView) { mode -> targetOf(mode, prefs[tabEmulatorKey(mode)]) }
     }
-
-    private fun rememberedTabs(prefs: Preferences): Set<OutputMode>? = prefs[REMEMBERED_TABS]?.mapNotNullTo(mutableSetOf(), ::modeOrNull)
 
     // A name from another build reads as unset rather than failing.
     private fun playingOrNull(name: String) = Playing.entries.firstOrNull { it.name == name }
@@ -81,7 +72,6 @@ class PlayingDataStore(context: Context, private val targetOf: (OutputMode, Stri
     private companion object {
         val PLAYING = stringPreferencesKey("playing")
         val MOTION = booleanPreferencesKey("playing_motion")
-        val REMEMBERED_ON = booleanPreferencesKey("playing_on")
         fun emulatorKey(playing: Playing) = stringPreferencesKey("playing_emulator_${playing.name}")
 
         // The per-device tabs' keys, read only to migrate.

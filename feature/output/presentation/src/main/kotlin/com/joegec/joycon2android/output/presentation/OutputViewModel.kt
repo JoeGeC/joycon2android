@@ -11,7 +11,6 @@ import com.joegec.joycon2android.output.Playing
 import com.joegec.joycon2android.output.PlayingSelection
 import com.joegec.joycon2android.output.SelectEmulatorUseCase
 import com.joegec.joycon2android.output.SetMotionUseCase
-import com.joegec.joycon2android.output.SetOutputOnUseCase
 import com.joegec.joycon2android.output.SetPlayingUseCase
 import com.joegec.joycon2android.output.selected
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
@@ -27,7 +26,6 @@ import kotlinx.coroutines.launch
 class OutputViewModel(
     observePlaying: ObservePlayingUseCase,
     observeOutputOn: ObserveOutputOnUseCase,
-    private val setOutputOn: SetOutputOnUseCase,
     private val savePlaying: SetPlayingUseCase,
     private val saveEmulatorChoice: SelectEmulatorUseCase,
     private val saveMotion: SetMotionUseCase,
@@ -52,19 +50,11 @@ class OutputViewModel(
 
     private fun selectedIn(selection: PlayingSelection) = emulators[selection.playing].orEmpty().selected(selection.emulatorId)
 
-    fun setOn(on: Boolean) {
-        viewModelScope.launch { setOutputOn(on) }
-    }
-
-    fun setPlaying(playing: Playing) {
-        viewModelScope.launch { savePlaying(playing) }
-        _emulatorToClose.value = null
-        resetSetupPhase()
-    }
-
-    fun selectEmulator(id: String) {
-        val playing = selection.value.playing
-        viewModelScope.launch { saveEmulatorChoice(playing, id) }
+    fun select(playing: Playing, emulatorId: String?) {
+        viewModelScope.launch {
+            emulatorId?.let { saveEmulatorChoice(playing, it) }
+            savePlaying(playing)
+        }
         _emulatorToClose.value = null
         resetSetupPhase()
     }

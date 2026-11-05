@@ -28,14 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.output.Playing
-import com.joegec.joycon2android.ui.components.DropdownOption
 import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
-import com.joegec.joycon2android.ui.components.EmulatorOption
 import com.joegec.joycon2android.ui.components.InfoBox
-import com.joegec.joycon2android.ui.components.OptionDropdown
-import com.joegec.joycon2android.ui.components.SettingSwitch
 import com.joegec.joycon2android.ui.components.SettingWarning
-import com.joegec.joycon2android.ui.components.ToggleRow
+import com.joegec.joycon2android.ui.components.StatusLine
 import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.ErrorText
@@ -57,30 +53,12 @@ fun OutputCard(
             .padding(Dimens.cardPadding),
         verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
     ) {
-        ToggleRow(status = outputStatus(state), checked = state.on, onToggle = actions.setOn)
-        PlayingPicker(state.playing, actions.setPlaying)
-        AnimatedVisibility(
-            visible = state.on,
-            enter = fadeIn(Motion.easeOut()) + expandVertically(Motion.easeOut()),
-            exit = fadeOut(Motion.easeOut()) + shrinkVertically(Motion.easeOut()),
-        ) {
-            PlayingContent(state, actions)
-        }
+        StatusLine(outputStatus(state), lit = state.liveDevices.isNotEmpty())
+        PlayingPicker(state, actions.select)
+        PlayingContent(state, actions)
         ErrorLine(state.error ?: shizukuError(state))
         status()
     }
-}
-
-@Composable
-private fun PlayingPicker(playing: Playing, onSelect: (Playing) -> Unit) {
-    OptionDropdown(
-        options = Playing.entries.map { DropdownOption(it.name, it.label(), it.examples()) },
-        selectedId = playing.name,
-        label = playing.label(),
-        subLabel = playing.examples(),
-        onSelect = { id -> onSelect(Playing.valueOf(id)) },
-        modifier = Modifier.fillMaxWidth(),
-    )
 }
 
 /** Cross-fades between games while the card eases to the new content's height. */
@@ -98,7 +76,7 @@ private fun PlayingContent(state: OutputCardState, actions: OutputCardActions) {
             when {
                 playing.emulator != null && state.targets.isNotEmpty() -> EmulatorSetup(state, actions)
                 playing.emulator != null -> {
-                    InfoBox(stringResource(R.string.playing_not_installed, playing.examples()))
+                    InfoBox(stringResource(R.string.playing_not_installed, playing.label()))
                     MappingButton(actions.openMapping)
                 }
                 playing == Playing.OTHER_EMULATOR -> {
@@ -106,14 +84,6 @@ private fun PlayingContent(state: OutputCardState, actions: OutputCardActions) {
                     MappingButton(actions.openMapping)
                 }
                 else -> MappingButton(actions.openMapping)
-            }
-            if (playing.motionOptional) {
-                SettingSwitch(
-                    title = stringResource(R.string.playing_motion),
-                    description = stringResource(R.string.playing_motion_description),
-                    checked = state.selection.motion,
-                    onCheckedChange = actions.setMotion,
-                )
             }
             if (playing == Playing.PC && state.noPointerController) SettingWarning(stringResource(R.string.output_no_pointer))
         }
@@ -123,9 +93,6 @@ private fun PlayingContent(state: OutputCardState, actions: OutputCardActions) {
 @Composable
 private fun EmulatorSetup(state: OutputCardState, actions: OutputCardActions) {
     EmulatorAutoSetup(
-        emulators = state.targets.map { EmulatorOption(it.id, it.label()) },
-        selectedEmulator = state.target?.id.orEmpty(),
-        onSelectEmulator = actions.selectEmulator,
         phase = state.setupPhase,
         setupLabel = stringResource(R.string.output_set_up),
         onSetUp = actions.setUp,

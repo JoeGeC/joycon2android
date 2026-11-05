@@ -95,7 +95,7 @@ class EmulatorSetup(
         else EmulatorTarget(DOLPHIN_GAMECUBE, DolphinPaths.PACKAGE, "Dolphin (GameCube)", kind)
     }
 
-    /** Writes [target]'s config for [playing]; Eden's motion lives in its DSU config, so [motion] picks which. */
+    /** Writes [target]'s config for [playing]; [motion] is Eden's, which binds it over DSU or not at all. */
     suspend fun configure(
         target: EmulatorTarget,
         playing: Playing,
@@ -105,10 +105,9 @@ class EmulatorSetup(
     ): EmulatorSetupResult {
         val packageName = target.packageName ?: return EmulatorSetupResult.FAILED
         return when (playing) {
-            Playing.SWITCH ->
-                if (motion) configureDsu(packageName, players, closeEmulator) else configureGamepad(packageName, players, closeEmulator)
-            Playing.GAMECUBE -> configureGamepad(packageName, players, closeEmulator)
-            Playing.WII -> configureDsu(packageName, players, closeEmulator)
+            Playing.SWITCH -> configureEden(packageName, motion, players, closeEmulator)
+            Playing.GAMECUBE -> configureGamecube(players, closeEmulator)
+            Playing.WII -> configureWii(players, closeEmulator)
             Playing.OTHER_EMULATOR, Playing.ANDROID, Playing.PC -> EmulatorSetupResult.FAILED
         }
     }
@@ -116,38 +115,33 @@ class EmulatorSetup(
     private fun isInstalled(pkg: String) =
         runCatching { packageManager.getPackageInfo(pkg, 0) }.isSuccess
 
-    suspend fun configureDsu(
-        emulatorId: String,
-        players: List<PlayerState>,
-        closeEmulator: Boolean = false,
-    ): EmulatorSetupResult = if (emulatorId in EdenPaths.PACKAGES) {
-        configureEdenDsu(emulatorId, players, closeEmulator)
-    } else {
-        configureDolphinDsu(players, closeEmulator)
-    }
-
-    private suspend fun configureEdenDsu(
-        emulatorId: String,
+    // Buttons go to each player's pad, since Eden rumbles only the device they're on; a player without
+    // one keeps them on DSU.
+    private suspend fun configureEden(
+        packageName: String,
+        motion: Boolean,
         players: List<PlayerState>,
         closeEmulator: Boolean,
     ): EmulatorSetupResult =
-        bounded("eden-dsu") {
+        bounded("eden") {
             val shell = awaitShell() ?: return@bounded EmulatorSetupResult.NO_PRIVILEGED_ACCESS
-            shell.settle(emulatorId, closeEmulator)?.let { return@bounded it }
-            val path = EdenDsuConfig.path(emulatorId)
+            shell.settle(packageName, closeEmulator)?.let { return@bounded it }
+            val path = EdenPaths.config(packageName)
             val marked = markSingleJoycons(players)
             val mapping = mappingLookup(Console.SWITCH_PRO, players)
-            val dsu = EdenDsuConfig.merge(shell.readText(path), marked, mapping)
-            // Eden rumbles only the device a player's buttons are on, so a player with rumble on is bound to their pad.
-            val rumbling = marked.filter { player -> player.body()?.let { mapping(it).rumblePercent > 0 } == true }
-            val written = shell.writeText(path, EdenGamepadConfig.bindToPads(dsu, rumbling, gamepadDevices(), mapping))
-            if (written) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
+            val existing = shell.readText(path)
+            val config = if (motion) {
+                EdenGamepadConfig.bindToPads(EdenDsuConfig.merge(existing, marked, mapping), marked, gamepadDevices(), mapping)
+            } else {
+                EdenGamepadConfig.merge(EdenDsuConfig.withoutMotion(existing), marked, gamepadDevices(), mapping)
+            }
+            if (shell.writeText(path, config)) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
         }
 
-    private suspend fun configureDolphinDsu(
+    private suspend fun configureWii(
         players: List<PlayerState>,
         closeEmulator: Boolean,
-    ): EmulatorSetupResult = bounded("dsu") {
+    ): EmulatorSetupResult = bounded("wii") {
         val shell = awaitShell() ?: return@bounded EmulatorSetupResult.NO_PRIVILEGED_ACCESS
         shell.settle(DolphinPaths.PACKAGE, closeEmulator)?.let { return@bounded it }
 
@@ -170,40 +164,24 @@ class EmulatorSetup(
         if (dsuOk && wiimoteOk) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
     }
 
-    suspend fun configureGamepad(
-        emulatorId: String,
+    private suspend fun configureGamecube(
         players: List<PlayerState>,
-        closeEmulator: Boolean = false,
+        closeEmulator: Boolean,
     ): EmulatorSetupResult =
-        bounded("gamepad") {
+        bounded("gamecube") {
             val shell = awaitShell() ?: return@bounded EmulatorSetupResult.NO_PRIVILEGED_ACCESS
-            val target = if (emulatorId in EdenPaths.PACKAGES) emulatorId else DolphinPaths.PACKAGE
-            shell.settle(target, closeEmulator)?.let { return@bounded it }
-            val written = if (emulatorId in EdenPaths.PACKAGES) {
-                val path = EdenPaths.config(emulatorId)
-                shell.writeText(
-                    path,
-                    EdenGamepadConfig.merge(
-                        shell.readText(path),
-                        markSingleJoycons(players),
-                        gamepadDevices(),
-                        mappingLookup(Console.SWITCH_PRO, players),
-                    ),
-                )
-            } else {
-                val mappings = DolphinGcpadConfig.merge(
-                    shell.readText(DolphinGcpadConfig.path),
-                    players,
-                    gamepadControllerNumbers(),
-                    mappingLookup(Console.GAMECUBE, players),
-                )
-                val mappingsOk = shell.writeText(DolphinGcpadConfig.path, mappings)
-                // Dolphin's GameCube ports default to None.
-                val core = DolphinGcpadConfig.mergeCore(shell.readText(DolphinGcpadConfig.corePath), players)
-                val coreOk = shell.writeText(DolphinGcpadConfig.corePath, core)
-                mappingsOk && coreOk
-            }
-            if (written) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
+            shell.settle(DolphinPaths.PACKAGE, closeEmulator)?.let { return@bounded it }
+            val mappings = DolphinGcpadConfig.merge(
+                shell.readText(DolphinGcpadConfig.path),
+                players,
+                gamepadControllerNumbers(),
+                mappingLookup(Console.GAMECUBE, players),
+            )
+            val mappingsOk = shell.writeText(DolphinGcpadConfig.path, mappings)
+            // Dolphin's GameCube ports default to None.
+            val core = DolphinGcpadConfig.mergeCore(shell.readText(DolphinGcpadConfig.corePath), players)
+            val coreOk = shell.writeText(DolphinGcpadConfig.corePath, core)
+            if (mappingsOk && coreOk) EmulatorSetupResult.SUCCESS else EmulatorSetupResult.FAILED
         }
 
     // Shell calls block in native code that cancellation can't interrupt, so they run on an outer

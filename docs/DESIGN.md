@@ -114,19 +114,24 @@ In `JoyconScreen.kt`:
 
 ### Output card
 
-- **It asks what you're playing, not which output.** A `ToggleRow` on top, then a picker of games
-  (Switch, GameCube, Wii, Other emulator, Android games & apps, PC games), each sub-labelled with what
-  it's played on. The app works out the outputs, so there's nothing to pick per device.
-- **On by itself.** Assigning a player switches the card on if it was left on, so the usual path is
-  assign and play; the switch is for stopping, and stays off until switched back on.
-- **Setup shows only while it's on**, expanding under the picker and cross-fading as the game changes:
-  - an emulator the app sets up: emulator auto setup (Set up and Mapping), with Eden or Eden Nightly
-    in its dropdown when both are installed; an `InfoBox` saying it isn't installed when it's not;
-  - Switch adds a **Motion** switch: Eden's gyro over DSU, off for games without it;
+- **It asks what you're playing, not which output.** A `StatusLine` on top, then one picker
+  (`PlayingPicker`): Eden, Eden Nightly, Dolphin (GameCube), Dolphin (Wii), Other emulator, Android
+  games & apps, Mouse & keys. Each installed emulator is a row, so there's no second emulator picker;
+  one not installed is a single row under its own name. The app works out the outputs, so there's
+  nothing to pick per device.
+- **The picker sits on `Background`**, as the mapping editor's layout picker does, so it reads as a
+  field to tap rather than a line of text.
+- **No switch.** Assigning a player turns the card on; nothing needs stopping by hand, since the
+  outputs only act on what players press.
+- **Setup sits under the picker**, cross-fading as the game changes:
+  - an emulator the app sets up: emulator auto setup (Set up and Mapping), unnamed, since the picker
+    names it; an `InfoBox` saying it isn't installed when it's not;
   - Other emulator: an `InfoBox` with the steps and DSU's address, then Mapping;
-  - Android and PC games: Mapping alone. PC games warns when nothing can move the pointer
+  - Android and Mouse & keys: Mapping alone. Mouse & keys warns when nothing can move the pointer
     (`SettingWarning`), so clicks that work without a moving pointer don't read as broken.
-- **The status names what's actually up:** "Off — switch on to play", "Starting…", or
+- **Motion's switch is in the mapping editor**, not the card: it's a choice about the game's
+  controls, beside the rest of them.
+- **The status names what's actually up:** "Waiting for a player", "Starting…", or
   "On: gamepad, motion (port 26760 · 1 emulator)", so a device that failed to start is missing from
   it. "· mouse off for P1" follows while a player has toggled their mouse off.
 - **Errors sit in a red line at the foot**: a planned device's failed start, or Shizuku's absence,
@@ -139,6 +144,8 @@ In `JoyconScreen.kt`:
   the console's own, then Android, Mouse, Keyboard.
 - **Thrusts and Motion sensitivity open the Motion section**, above Shake and Recenter: they shape the
   motion those rows act on. On Classic, with no rows, the section holds Sensitivity alone.
+- **A Motion card opens Eden's and Other emulator's mapping**, above the group layout: one
+  `SettingSwitch` for every player, since DSU runs for the whole game or not at all.
 - **Rumble is a section of its own under Sticks**, holding the strength slider: it describes what
   comes back to the controller, beside what goes out of it. Not for PC games. Where rumble rides
   the virtual gamepad beside DSU (Wii), an info icon by the section title opens a sheet saying so
@@ -189,12 +196,12 @@ An odd trailing item takes a half cell, a weighted `Spacer` filling the other ha
 ## Components
 
 Shared in `core/designsystem/.../ui/components/`:
-- `ToggleRow` — a status line and its switch, the status lit in the accent (the Output card)
+- `StatusLine` — a status that cross-fades as it changes, lit in the accent (the Output card)
 - `SegmentedChoice` — one of a few options, all in view, any of them lit in the accent (the Wii
   controller choice)
 - `OptionDropdown` / `DropdownOption` / `PanelDropdownMenu` — the app's picker: an accented current
   value over a panel of alternatives, each row optionally sub-labelled, dimmed or deletable
-- `EmulatorDropdown` / `EmulatorOption` / `EmulatorAutoSetup` — emulator picker + one-tap setup
+- `EmulatorOption` / `EmulatorAutoSetup` — one-tap setup and the mapping button
 - `DolphinSetupButton` / `DolphinSetupPhase` / `CloseEmulatorDialog` — staged setup flow
 - `SettingSwitch` — a titled, described switch (the settings panel)
 - `EndDrawer` — a modal drawer from the end edge (the settings panel)

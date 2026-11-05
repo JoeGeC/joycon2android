@@ -58,7 +58,7 @@ and uinput relays, the DSU UDP server, byte/wire parsers, framework access. Depe
 `SidewaysMapper`, `GamepadState`). Depends on nothing of ours.
 
 **`:core:designsystem`** — theme (Color, Dimens, Type) and generic, reusable composables
-(`ToggleRow`, `ExpandableInfoSection`, `CopyableCode`, `ErrorBox`, …). Anything
+(`StatusLine`, `ExpandableInfoSection`, `CopyableCode`, `ErrorBox`, …). Anything
 app-specific lives in a feature's presentation, not here.
 
 **`:core:session`** — the cross-feature coordinator (`SessionCoordinator`) plus its session use
@@ -108,12 +108,12 @@ One **Output** card picks what's being played (`Playing`), and the app picks the
 
 | Playing | Console mapped | Game reads | Set up writes |
 |---|---|---|---|
-| Switch | Switch Pro | pad, DSU (motion can be switched off) | Eden's DSU config with motion, its gamepad config without |
+| Switch (Eden) | Switch Pro | pad, DSU (motion can be switched off) | Eden's config: buttons on the pad, motion on DSU while on |
 | GameCube | GameCube | pad | Dolphin's GameCube pads |
 | Wii | Wii Remote | DSU | Dolphin's DSU and Wii Remotes |
-| Other emulator | `Console.EMULATOR` | pad, DSU | — (set up in the emulator) |
+| Other emulator | `Console.EMULATOR` | pad, DSU (motion can be switched off) | — (set up in the emulator) |
 | Android games & apps | `Console.ANDROID` | pad | — |
-| PC games | `Console.PC`, WASD + mouse by default | keyboard, mouse | — |
+| Mouse & keys | `Console.PC`, WASD + mouse by default | keyboard, mouse | — |
 
 - **`OutputPlan.devices` is the one rule**, pure and tested: what the game reads, plus the pad
   whenever Shizuku is (for getting round the device, and Wii's rumble), plus the keyboard or mouse
@@ -122,10 +122,10 @@ One **Output** card picks what's being played (`Playing`), and the app picks the
 - **Without Shizuku only DSU runs.** The pad, keyboard and mouse need it, so a game that reads
   buttons over DSU (`Playing.buttonsOverDsu`: Switch, Wii, Other emulator) gets DSU alone; the rest
   get nothing.
-- **One game at a time.** The card's one switch is on or off (`PlayingRepository.on`); device keys
-  read that game's mapping alone. `ObserveKeyBindingsUseCase` still takes a set of consoles, of one.
+- **One game at a time**, on from the first player until `stopAll` (`PlayingRepository.on`); device
+  keys read that game's mapping alone. `ObserveKeyBindingsUseCase` still takes a set of consoles, of one.
 - **Each game keeps its own emulator** (`PlayingSelection.emulators`): Eden or Eden Nightly for
-  Switch. Dolphin is two targets of one package (`dolphin-gamecube`, `dolphin-wii`).
+  Switch, each a row of the card's picker. Dolphin is two targets of one package (`dolphin-gamecube`, `dolphin-wii`).
 - **Set up writes the game's mapping into the emulator's own config**, so the pad and DSU send raw
   buttons. What reads the console live: Eden's single Joy-Con marking, rumble strength and the
   mapping editor (`AppContainer.consoleInView`).
@@ -134,15 +134,13 @@ One **Output** card picks what's being played (`Playing`), and the app picks the
 - **`:app` runs it.** `AppContainer` derives the planned devices; `OutputDevicesPolicy` starts the pad
   (with players to give it, again when one returns or Shizuku comes or goes) and DSU; `PrivilegedDevicePolicy` the keyboard
   and mouse.
-- **Left on, the card starts as players arrive** (`OutputAutoStartPolicy`). It starts each launch off,
-  so a remembered PC games doesn't put up a keyboard and mouse before anyone plays. The switch sets it
-  on and remembered together, so off by hand stays off. `stopOutputs` (Disconnect All, the service
-  stopping) switches it off but remembers it on.
+- **The card starts as players arrive** (`OutputAutoStartPolicy`), so Mouse & keys doesn't put up a
+  keyboard and mouse before anyone plays. `stopOutputs` (Disconnect All, the service stopping)
+  switches it off until players next arrive.
 - **Migrated from per-device tabs** (`PlayingMigration`, on `PlayingDataStore`'s first read, kept on
-  its first write): Mouse & keys running is PC games; Eden on either tab is Switch, with motion if it
+  its first write): the Mouse & keys tab running stays Mouse & keys; Eden on either tab is Switch, with motion if it
   was on Motion; Dolphin is Wii from Motion and GameCube from the gamepad; Other is Other emulator from
-  Motion and Android from the gamepad. With no tab running, the tab in view decides and the card
-  starts off.
+  Motion and Android from the gamepad. With no tab running, the tab in view decides.
 
 ## Dependency rules
 
@@ -192,8 +190,8 @@ no state of its own.
 One **ViewModel per feature**, in its presentation module, built in `MainActivity` by a
 `viewModelFactory` that pulls use cases off `AppContainer` — so it depends only on its domain.
 
-- `OutputViewModel` — the [output](#output): what's being played, its emulator, the card's switch,
-  and emulator auto setup.
+- `OutputViewModel` — the [output](#output): what's being played, its emulator, motion, and
+  emulator auto setup.
 - `DsuViewModel` — DSU status.
 - `GamepadViewModel` — the virtual gamepad, keyboard and mouse status, and Shizuku availability.
 - `UpdateViewModel` — the once-per-launch release check and the update prompt.

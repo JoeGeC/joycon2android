@@ -143,9 +143,8 @@ import com.joegec.joycon2android.output.PlayingRepository
 import com.joegec.joycon2android.output.PlayingSelection
 import com.joegec.joycon2android.output.SelectEmulatorUseCase
 import com.joegec.joycon2android.output.SetMotionUseCase
-import com.joegec.joycon2android.output.SetOutputOnUseCase
 import com.joegec.joycon2android.output.SetPlayingUseCase
-import com.joegec.joycon2android.output.StartRememberedOutputsUseCase
+import com.joegec.joycon2android.output.StartOutputsUseCase
 import com.joegec.joycon2android.output.StopOutputsUseCase
 import com.joegec.joycon2android.mouse.MouseRouter
 import com.joegec.joycon2android.update.ApkDownloader
@@ -320,11 +319,10 @@ class AppContainer(context: Context) {
     private val playingRepository: PlayingRepository = PlayingDataStore(appContext, emulatorSetup::tabTarget)
     val observePlaying = ObservePlayingUseCase(playingRepository)
     val observeOutputOn = ObserveOutputOnUseCase(playingRepository)
-    val setOutputOn = SetOutputOnUseCase(playingRepository)
     val setPlaying = SetPlayingUseCase(playingRepository)
     val setMotion = SetMotionUseCase(playingRepository)
     val selectEmulator = SelectEmulatorUseCase(playingRepository)
-    private val startRememberedOutputs = StartRememberedOutputsUseCase(playingRepository)
+    private val startOutputs = StartOutputsUseCase(playingRepository)
     private val stopAllOutputs = StopOutputsUseCase(playingRepository)
     val emulatorTargets: Map<Playing, List<EmulatorTarget>> by lazy { Playing.entries.associateWith(emulatorSetup::targets) }
 
@@ -478,7 +476,7 @@ class AppContainer(context: Context) {
         dsu.enabled || gamepad.enabled
     }
 
-    private val outputAutoStartPolicy = OutputAutoStartPolicy(scope, hasActivePlayers, startRememberedOutputs::invoke)
+    private val outputAutoStartPolicy = OutputAutoStartPolicy(scope, hasActivePlayers, startOutputs::invoke)
         .also { it.start() }
 
     private val outputDevicesPolicy = OutputDevicesPolicy(

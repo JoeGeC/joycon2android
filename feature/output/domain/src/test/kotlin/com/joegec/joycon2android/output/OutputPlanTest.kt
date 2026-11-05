@@ -24,8 +24,9 @@ class OutputPlanTest {
     }
 
     @Test
-    fun `Switch can play without motion, the others ignore the choice`() {
+    fun `Switch and other emulators can play without motion, the others ignore the choice`() {
         assertEquals(setOf(PAD), devices(Playing.SWITCH, motion = false))
+        assertEquals(setOf(PAD), devices(Playing.OTHER_EMULATOR, motion = false))
         assertEquals(setOf(PAD, MOTION), devices(Playing.WII, motion = false))
     }
 
