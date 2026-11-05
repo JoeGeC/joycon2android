@@ -1,9 +1,4 @@
 <resources>
-    <plurals name="dsu_subtitle_on">
-        <item quantity="one">DSU on port %1$d · %2$d emulator connected</item>
-        <item quantity="other">DSU on port %1$d · %2$d emulators connected</item>
-    </plurals>
-    <string name="dsu_subtitle_waiting">DSU on port %1$d · waiting for an emulator</string>
     <string name="player_label">P%1$d</string>
     <string name="dsu_slot_limit_lead">DSU has only 4 slots.</string>
     <string name="dsu_slot_limit_players">No slot for %1$s.</string>

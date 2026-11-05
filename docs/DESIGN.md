@@ -131,7 +131,7 @@ In `JoyconScreen.kt`:
 - **Motion's switch is in the mapping editor**, not the card: it's a choice about the game's
   controls, beside the rest of them.
 - **The status names what's actually up:** "Waiting for a player", "Starting…", or
-  "On: gamepad, motion (port 26760 · 1 emulator)", so a device that failed to start is missing from
+  "On: gamepad, motion" or "On: mouse, keys", so a device that failed to start is missing from
   it. "· mouse off for P1" follows while a player has toggled their mouse off.
 - **Errors sit in a red line at the foot**: a planned device's failed start, or Shizuku's absence,
   which says what's lost ("buttons and motion go over DSU alone") where DSU carries on. A warning

@@ -13,9 +13,8 @@
     <string name="output_dsu_only">Without Shizuku, buttons and motion go over DSU alone: no rumble, keys or mouse.</string>
     <string name="output_device_pad">gamepad</string>
     <string name="output_device_motion">motion</string>
-    <string name="output_device_motion_with">motion (%1$s)</string>
-    <string name="output_device_keyboard">keyboard</string>
     <string name="output_device_mouse">mouse</string>
+    <string name="output_device_keys">keys</string>
     <string name="playing_switch">Eden</string>
     <string name="playing_gamecube">Dolphin (GameCube)</string>
     <string name="playing_wii">Dolphin (Wii)</string>

@@ -52,8 +52,8 @@ import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.dsu.presentation.DsuSlotLimitWarning
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.dsu.DsuConfig
-import com.joegec.joycon2android.dsu.presentation.dsuPortText
 import com.joegec.joycon2android.output.OutputDevice
+import com.joegec.joycon2android.output.Playing
 import com.joegec.joycon2android.output.presentation.OutputCard
 import com.joegec.joycon2android.output.presentation.OutputCardActions
 import com.joegec.joycon2android.output.presentation.OutputCardState
@@ -263,7 +263,7 @@ class MainActivity : ComponentActivity() {
                 liveInputs = viewModel.liveInputs,
                 actions = mappingActions,
                 onBack = onBack,
-                onInfoClick = if (route.console == Console.EMULATOR) ({ showDsuHelp = true }) else null,
+                onInfoClick = if (Playing.entries.any { it.console == route.console && it.buttonsOverDsu }) ({ showDsuHelp = true }) else null,
                 deviceKeyWarnings = DeviceKeyWarnings(
                     androidNeedsShizuku = !shizukuAvailable,
                     keyboardAndMouseNeedShizuku = !shizukuAvailable,
@@ -423,7 +423,6 @@ class MainActivity : ComponentActivity() {
                     gamepadStatus.error?.let { put(OutputDevice.PAD, it) }
                     dsuStatus.error?.let { put(OutputDevice.MOTION, it) }
                 },
-                motionDetail = if (dsuStatus.enabled) dsuPortText(dsuStatus.clientCount) else null,
                 dsuAddress = DsuConfig.LOCAL_ADDRESS,
                 noPointerController = players.any { it.hasController } && players.none { it.canMovePointer },
                 shizukuAvailable = shizukuAvailable,

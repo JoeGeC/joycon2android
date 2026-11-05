@@ -19,8 +19,6 @@ data class OutputCardState(
     val liveDevices: Set<OutputDevice> = emptySet(),
     /** A device's own failure, such as the pad's failed start. */
     val errors: Map<OutputDevice, String> = emptyMap(),
-    /** DSU's port and listening emulators. */
-    val motionDetail: String? = null,
     /** Where an emulator set up by hand finds DSU. */
     val dsuAddress: String = "",
     /** Some controller is connected, but none has the Joy-Con 2's mouse sensor. */

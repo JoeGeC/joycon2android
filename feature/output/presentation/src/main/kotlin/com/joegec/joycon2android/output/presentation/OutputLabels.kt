@@ -19,13 +19,14 @@ internal fun Playing.label(): String = stringResource(
 )
 
 @Composable
-internal fun OutputDevice.label(motionDetail: String?): String = when (this) {
-    OutputDevice.PAD -> stringResource(R.string.output_device_pad)
-    OutputDevice.MOTION ->
-        motionDetail?.let { stringResource(R.string.output_device_motion_with, it) } ?: stringResource(R.string.output_device_motion)
-    OutputDevice.KEYBOARD -> stringResource(R.string.output_device_keyboard)
-    OutputDevice.MOUSE -> stringResource(R.string.output_device_mouse)
-}
+internal fun OutputDevice.label(): String = stringResource(
+    when (this) {
+        OutputDevice.PAD -> R.string.output_device_pad
+        OutputDevice.MOTION -> R.string.output_device_motion
+        OutputDevice.KEYBOARD -> R.string.output_device_keys
+        OutputDevice.MOUSE -> R.string.output_device_mouse
+    },
+)
 
 @Composable
 internal fun EmulatorTarget.label(): String = name.orEmpty()
