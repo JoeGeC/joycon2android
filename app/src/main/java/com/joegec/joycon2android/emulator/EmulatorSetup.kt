@@ -25,6 +25,8 @@ import com.joegec.joycon2android.gamepad.privileged.PrivilegedShell
 import com.joegec.joycon2android.output.EmulatorKind
 import com.joegec.joycon2android.output.EmulatorTarget
 import com.joegec.joycon2android.output.OutputMode
+import com.joegec.joycon2android.output.Playing
+import com.joegec.joycon2android.output.selected
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -63,39 +65,51 @@ class EmulatorSetup(
 
     private fun bodiesOf(players: List<PlayerState>) = players.mapNotNull { it.body() }.distinct()
 
-    /** The installed emulators [mode]'s tab can set up, then [EmulatorTarget.OTHER]. */
-    fun targets(mode: OutputMode): List<EmulatorTarget> = buildList {
-        if (isInstalled(DolphinPaths.PACKAGE)) {
-            when (mode) {
-                OutputMode.GAMEPAD ->
-                    add(EmulatorTarget(DOLPHIN_GAMECUBE, DolphinPaths.PACKAGE, "Dolphin (GameCube)", EmulatorKind.DOLPHIN_GAMECUBE))
-                OutputMode.MOTION ->
-                    add(EmulatorTarget(DOLPHIN_WII, DolphinPaths.PACKAGE, "Dolphin (Wii)", EmulatorKind.DOLPHIN_WII))
-                OutputMode.MOUSE_KEYBOARD -> return@buildList
-            }
-        }
-        if (mode == OutputMode.MOUSE_KEYBOARD) return@buildList
-        if (isInstalled(EdenPaths.PACKAGE)) {
-            add(EmulatorTarget(EdenPaths.PACKAGE, EdenPaths.PACKAGE, "Eden", EmulatorKind.EDEN))
-        }
-        if (isInstalled(EdenPaths.NIGHTLY_PACKAGE)) {
-            add(EmulatorTarget(EdenPaths.NIGHTLY_PACKAGE, EdenPaths.NIGHTLY_PACKAGE, "Eden Nightly", EmulatorKind.EDEN))
-        }
-        add(EmulatorTarget.OTHER)
+    /** The installed emulators Set up writes for [playing]. */
+    fun targets(playing: Playing): List<EmulatorTarget> = when (playing.emulator) {
+        EmulatorKind.EDEN -> edenTargets()
+        EmulatorKind.DOLPHIN_GAMECUBE -> listOfNotNull(dolphin(EmulatorKind.DOLPHIN_GAMECUBE))
+        EmulatorKind.DOLPHIN_WII -> listOfNotNull(dolphin(EmulatorKind.DOLPHIN_WII))
+        EmulatorKind.OTHER, null -> emptyList()
     }
 
-    /** Writes [target]'s config for [mode]'s device. */
+    /** What a per-device tab had picked, as it listed them, for [com.joegec.joycon2android.output.PlayingMigration]. */
+    fun tabTarget(mode: OutputMode, id: String?): EmulatorTarget? {
+        val listed = when (mode) {
+            OutputMode.GAMEPAD -> listOfNotNull(dolphin(EmulatorKind.DOLPHIN_GAMECUBE)) + edenTargets() + EmulatorTarget.OTHER
+            OutputMode.MOTION -> listOfNotNull(dolphin(EmulatorKind.DOLPHIN_WII)) + edenTargets() + EmulatorTarget.OTHER
+            OutputMode.MOUSE_KEYBOARD -> emptyList()
+        }
+        return listed.selected(id)
+    }
+
+    private fun edenTargets() = listOfNotNull(
+        EmulatorTarget(EdenPaths.PACKAGE, EdenPaths.PACKAGE, "Eden", EmulatorKind.EDEN).takeIf { isInstalled(EdenPaths.PACKAGE) },
+        EmulatorTarget(EdenPaths.NIGHTLY_PACKAGE, EdenPaths.NIGHTLY_PACKAGE, "Eden Nightly", EmulatorKind.EDEN)
+            .takeIf { isInstalled(EdenPaths.NIGHTLY_PACKAGE) },
+    )
+
+    private fun dolphin(kind: EmulatorKind): EmulatorTarget? {
+        if (!isInstalled(DolphinPaths.PACKAGE)) return null
+        return if (kind == EmulatorKind.DOLPHIN_WII) EmulatorTarget(DOLPHIN_WII, DolphinPaths.PACKAGE, "Dolphin (Wii)", kind)
+        else EmulatorTarget(DOLPHIN_GAMECUBE, DolphinPaths.PACKAGE, "Dolphin (GameCube)", kind)
+    }
+
+    /** Writes [target]'s config for [playing]; Eden's motion lives in its DSU config, so [motion] picks which. */
     suspend fun configure(
         target: EmulatorTarget,
-        mode: OutputMode,
+        playing: Playing,
+        motion: Boolean,
         players: List<PlayerState>,
         closeEmulator: Boolean,
     ): EmulatorSetupResult {
         val packageName = target.packageName ?: return EmulatorSetupResult.FAILED
-        return when (mode) {
-            OutputMode.GAMEPAD -> configureGamepad(packageName, players, closeEmulator)
-            OutputMode.MOTION -> configureDsu(packageName, players, closeEmulator)
-            OutputMode.MOUSE_KEYBOARD -> EmulatorSetupResult.FAILED
+        return when (playing) {
+            Playing.SWITCH ->
+                if (motion) configureDsu(packageName, players, closeEmulator) else configureGamepad(packageName, players, closeEmulator)
+            Playing.GAMECUBE -> configureGamepad(packageName, players, closeEmulator)
+            Playing.WII -> configureDsu(packageName, players, closeEmulator)
+            Playing.OTHER_EMULATOR, Playing.ANDROID, Playing.PC -> EmulatorSetupResult.FAILED
         }
     }
 

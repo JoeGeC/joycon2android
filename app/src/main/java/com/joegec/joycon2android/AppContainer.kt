@@ -133,18 +133,18 @@ import com.joegec.joycon2android.mouse.MouseModeToggle
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.output.DeviceKeyKind
 import com.joegec.joycon2android.output.EmulatorTarget
-import com.joegec.joycon2android.output.ObserveOutputRunningUseCase
-import com.joegec.joycon2android.output.ObserveOutputSelectionUseCase
-import com.joegec.joycon2android.output.OutputDataStore
+import com.joegec.joycon2android.output.ObserveOutputOnUseCase
+import com.joegec.joycon2android.output.ObservePlayingUseCase
 import com.joegec.joycon2android.output.OutputDevice
 import com.joegec.joycon2android.output.OutputPlan
-import com.joegec.joycon2android.output.OutputRepository
-import com.joegec.joycon2android.output.OutputSelection
+import com.joegec.joycon2android.output.Playing
+import com.joegec.joycon2android.output.PlayingDataStore
+import com.joegec.joycon2android.output.PlayingRepository
+import com.joegec.joycon2android.output.PlayingSelection
 import com.joegec.joycon2android.output.SelectEmulatorUseCase
-import com.joegec.joycon2android.output.selected
-import com.joegec.joycon2android.output.OutputMode
-import com.joegec.joycon2android.output.SetOutputModeUseCase
-import com.joegec.joycon2android.output.SetOutputRunningUseCase
+import com.joegec.joycon2android.output.SetMotionUseCase
+import com.joegec.joycon2android.output.SetOutputOnUseCase
+import com.joegec.joycon2android.output.SetPlayingUseCase
 import com.joegec.joycon2android.output.StartRememberedOutputsUseCase
 import com.joegec.joycon2android.output.StopOutputsUseCase
 import com.joegec.joycon2android.mouse.MouseRouter
@@ -163,13 +163,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.io.File
@@ -318,44 +316,31 @@ class AppContainer(context: Context) {
     val emulatorLauncher = EmulatorLauncher(appContext)
     val deviceScreens = DeviceScreens(appContext)
 
-    // --- Output: the running tabs pick the devices, each tab's emulator the console it maps: docs/architecture.md#output ---
-    private val outputRepository: OutputRepository = OutputDataStore(appContext)
-    val observeOutputSelection = ObserveOutputSelectionUseCase(outputRepository)
-    val observeOutputRunning = ObserveOutputRunningUseCase(outputRepository)
-    val setOutputRunning = SetOutputRunningUseCase(outputRepository)
-    val setOutputMode = SetOutputModeUseCase(outputRepository)
-    private val startRememberedOutputs = StartRememberedOutputsUseCase(outputRepository)
-    private val stopAllOutputs = StopOutputsUseCase(outputRepository)
-    val selectEmulator = SelectEmulatorUseCase(outputRepository)
-    val emulatorTargets: Map<OutputMode, List<EmulatorTarget>> by lazy {
-        OutputMode.entries.associateWith(emulatorSetup::targets)
-    }
+    // --- Output: what's being played picks the devices and the console mapped: docs/architecture.md#output ---
+    private val playingRepository: PlayingRepository = PlayingDataStore(appContext, emulatorSetup::tabTarget)
+    val observePlaying = ObservePlayingUseCase(playingRepository)
+    val observeOutputOn = ObserveOutputOnUseCase(playingRepository)
+    val setOutputOn = SetOutputOnUseCase(playingRepository)
+    val setPlaying = SetPlayingUseCase(playingRepository)
+    val setMotion = SetMotionUseCase(playingRepository)
+    val selectEmulator = SelectEmulatorUseCase(playingRepository)
+    private val startRememberedOutputs = StartRememberedOutputsUseCase(playingRepository)
+    private val stopAllOutputs = StopOutputsUseCase(playingRepository)
+    val emulatorTargets: Map<Playing, List<EmulatorTarget>> by lazy { Playing.entries.associateWith(emulatorSetup::targets) }
 
-    private val outputSelection = observeOutputSelection().stateIn(scope, SharingStarted.Eagerly, OutputSelection())
-    private val runningOutputs = outputRepository.running
-    private val gamepadTabConsole = consoleOf(OutputMode.GAMEPAD)
-    private val motionConsole = consoleOf(OutputMode.MOTION)
-
-    // A pad up for Motion's rumble alone plays Motion's console.
-    private val padConsole: StateFlow<Console> = combine(runningOutputs, gamepadTabConsole, motionConsole) { running, gamepad, motion ->
-        if (OutputMode.GAMEPAD !in running && OutputMode.MOTION in running) motion else gamepad
-    }.stateIn(scope, SharingStarted.Eagerly, gamepadTabConsole.value)
-    private val runningConsoles: StateFlow<Set<Console>> = combine(outputSelection, runningOutputs) { selection, running ->
-        running.mapTo(mutableSetOf()) { consoleOf(selection, it) }
+    private val playing = observePlaying().stateIn(scope, SharingStarted.Eagerly, PlayingSelection())
+    private val outputOn = observeOutputOn()
+    private val console: StateFlow<Console> = playing.map { it.playing.console }
+        .stateIn(scope, SharingStarted.Eagerly, PlayingSelection().playing.console)
+    private val runningConsoles: StateFlow<Set<Console>> = combine(console, outputOn) { console, on ->
+        if (on) setOf(console) else emptySet()
     }.stateIn(scope, SharingStarted.Eagerly, emptySet())
 
-    /** The mapping editor opens on the tab in view. */
-    fun consoleInView(): Console = outputSelection.value.let { consoleOf(it, it.mode) }
-
-    private fun consoleOf(mode: OutputMode): StateFlow<Console> = outputSelection
-        .map { consoleOf(it, mode) }
-        .stateIn(scope, SharingStarted.Eagerly, consoleOf(OutputSelection(), mode))
-
-    private fun consoleOf(selection: OutputSelection, mode: OutputMode): Console =
-        OutputPlan.console(mode, emulatorTargets[mode].orEmpty().selected(selection.emulators[mode])?.kind)
+    /** The mapping editor opens on what's being played. */
+    fun consoleInView(): Console = console.value
 
     suspend fun configureEmulator(target: EmulatorTarget, players: List<PlayerState>, closeEmulator: Boolean) =
-        emulatorSetup.configure(target, outputSelection.value.mode, players, closeEmulator)
+        playing.value.let { emulatorSetup.configure(target, it.playing, it.motion, players, closeEmulator) }
 
     // --- Device keys: Android, keyboard and mouse, from every running tab's mapping ---
     private val activeBodies = MutableStateFlow(emptyList<PlayerBody>())
@@ -371,9 +356,7 @@ class AppContainer(context: Context) {
     private val deviceKeysPause = DeviceKeysPause()
     val setDeviceKeysPaused = SetDeviceKeysPausedUseCase(deviceKeysPause)
     val confirmPress = ConfirmPressUseCase(ControllerPressFeedback(controllerRepository))
-    private val deviceKeysActing = combine(runningOutputs, deviceKeysPause.paused) { running, paused ->
-        running.isNotEmpty() && !paused
-    }.stateIn(scope, SharingStarted.Eagerly, false)
+    private val deviceKeysActing = combine(outputOn, deviceKeysPause.paused) { on, paused -> on && !paused }.stateIn(scope, SharingStarted.Eagerly, false)
     private val androidBindings = bindingsFor(observeAndroidKeyBindings)
     private val keyboardBindings = bindingsFor(observeKeyboardKeyBindings)
     private val mouseBindings = bindingsFor(observeMouseActionBindings)
@@ -404,17 +387,9 @@ class AppContainer(context: Context) {
     }.stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val rumbleStrengths: StateFlow<Map<PlayerNumber, Int>> = combine(padConsole, activeBodies, ::Pair)
+    private val rumbleStrengths: StateFlow<Map<PlayerNumber, Int>> = combine(console, activeBodies, ::Pair)
         .flatMapLatest { (console, bodies) -> observeRumbleStrengths(console, bodies) }
         .stateIn(scope, SharingStarted.Eagerly, emptyMap())
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val motionRumblesThroughPad: StateFlow<Boolean> = combine(runningOutputs, motionConsole, activeBodies, ::Triple)
-        .flatMapLatest { (running, console, bodies) ->
-            if (OutputMode.MOTION !in running) flowOf(false)
-            else observeRumbleStrengths(console, bodies).map { OutputPlan.motionRumblesThroughPad(console, it.values) }
-        }
-        .stateIn(scope, SharingStarted.Eagerly, false)
 
     private val androidKeyRouter = AndroidKeyRouter(
         bindings = OutputBindings(deviceKeysActing, androidBindings),
@@ -438,34 +413,17 @@ class AppContainer(context: Context) {
             }
         }.stateIn(scope, SharingStarted.Eagerly, emptySet())
 
-    /** The running tabs, Mouse & keys aside, whose own mappings press keys or click. */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val tabsMappingKeys: StateFlow<Set<OutputMode>> = combine(outputSelection, runningOutputs, activeBodies, ::Triple)
-        .flatMapLatest { (selection, running, bodies) ->
-            val tabs = (running - OutputMode.MOUSE_KEYBOARD).toList()
-            if (tabs.isEmpty()) flowOf(emptySet())
-            else combine(tabs.map { mode -> mapsKeys(consoleOf(selection, mode), bodies).map { mode to it } }) { tabMaps ->
-                tabMaps.filter { (_, maps) -> maps }.mapTo(mutableSetOf()) { (mode, _) -> mode }
-            }
-        }
-        .stateIn(scope, SharingStarted.Eagerly, emptySet())
-
-    private fun mapsKeys(console: Console, bodies: List<PlayerBody>): Flow<Boolean> = combine(
-        observeAndroidKeyBindings(console, bodies),
-        observeKeyboardKeyBindings(console, bodies),
-        observeJoyconMouseUsers(setOf(console), bodies),
-    ) { android, keyboard, mouseUsers -> android.anyBound() || keyboard.anyBound() || mouseUsers.isNotEmpty() }
-
     // The keyboard is the Android keys' fast path, so they need it as keyboard keys do.
-    private val mappedDevices = combine(mappedKeys, motionRumblesThroughPad) { kinds, motionRumbles ->
+    private val mappedDevices = mappedKeys.map { kinds ->
         buildSet {
             if (DeviceKeyKind.ANDROID in kinds || DeviceKeyKind.KEYBOARD in kinds) add(OutputDevice.KEYBOARD)
             if (DeviceKeyKind.MOUSE in kinds) add(OutputDevice.MOUSE)
-            if (motionRumbles) add(OutputDevice.PAD)
         }
     }
-    private val plannedDevices: StateFlow<Set<OutputDevice>> =
-        combine(runningOutputs, mappedDevices, OutputPlan::devices).stateIn(scope, SharingStarted.Eagerly, emptySet())
+    val plannedDevices: StateFlow<Set<OutputDevice>> =
+        combine(playing, outputOn, observeShizukuAvailability(), mappedDevices) { selection, on, shizuku, mapped ->
+            if (on) OutputPlan.devices(selection.playing, selection.motion, shizuku, mapped) else emptySet()
+        }.stateIn(scope, SharingStarted.Eagerly, emptySet())
 
     private fun Map<PlayerNumber, KeyBindings<*>>.anyBound() = values.any { it.sources.isNotEmpty() }
     private val hasActivePlayers = MutableStateFlow(false)
@@ -508,9 +466,9 @@ class AppContainer(context: Context) {
             pushKeyboardFrame(routed.keyboard)
             mouseMix.send(routed.mouseActions)
             pushGamepadState(
-                routed.gamepad.map { it.copy(state = edenSingleJoycons.markedFor(padConsole.value, it.state)) },
+                routed.gamepad.map { it.copy(state = edenSingleJoycons.markedFor(console.value, it.state)) },
             )
-            pushDsuPadData(routed.dsu.map { edenSingleJoycons.markedFor(motionConsole.value, it) })
+            pushDsuPadData(routed.dsu.map { edenSingleJoycons.markedFor(console.value, it) })
         },
         onPlayerAssigned = { onPlayerAssigned(it) },
         onPlayerUnassigned = { onPlayerUnassigned(it) },
@@ -534,7 +492,7 @@ class AppContainer(context: Context) {
 
     private val fasterUpdatesPolicy = FasterUpdatesPolicy(
         scope = scope,
-        outputActive = runningOutputs.map { it.isNotEmpty() },
+        outputActive = outputOn,
         fasterUpdates = observeOutputSettings().map { it.fasterUpdates },
         setHighConnectionPriority = setHighConnectionPriority,
     ).also { it.start() }
@@ -572,7 +530,7 @@ class AppContainer(context: Context) {
     val unassignController = UnassignControllerUseCase(sessionCoordinator)
     val setControllerType = SetControllerTypeUseCase(sessionCoordinator)
 
-    /** Stops every tab, and the pad and DSU with them at once, not when the policy next runs. */
+    /** Switches the card off, and the pad and DSU with it at once, not when the policy next runs. */
     fun stopOutputs() {
         stopAllOutputs()
         disableGamepad()

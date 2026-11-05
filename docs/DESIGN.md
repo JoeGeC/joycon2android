@@ -114,37 +114,24 @@ In `JoyconScreen.kt`:
 
 ### Output card
 
-- **No header: the card opens on its tabs.** Each tab's content starts with its own `ToggleRow`, the
-  tab's status on the left and its switch on the right, so any outputs can run together and each is
-  switched where it's set up.
-- **On by itself.** Assigning a player switches on the tabs last left on, so the usual path is
-  assign and play; a tab's switch is for stopping it, and stays off until switched back on. Tabs,
-  emulator and mapping stay open either way.
-- **A tab per output, so setup has one job.** Virtual gamepad, Motion (DSU), Mouse & keys; the
-  emulator box under a tab is auto setup only, for that output. **Other** ends its list: Set up hides
-  and a labelled Mapping button eases out to fill the row (`SplitRow`; weights in a `Row` snap), for
-  the keys-only mapping.
-- **A tab's label lights while its output runs**, in the accent: what is actually up, so an output
-  that failed (no Shizuku) stays dim. Mouse & keys lights for the keyboard or mouse, on other tabs too
-  once the mapping uses them. A lit tab tells a screen reader it's running, as colour alone can't.
-- **The status says what that tab is doing:** "Off — switch on to play", "Active", or "Active —"
-  DSU's port and listening emulators on Motion. It's in the accent while the tab is on or lit.
-- **Mouse & keys says why it's lit with its switch off:** "On: Virtual gamepad, Motion (DSU)",
-  naming each running tab whose mapping brings up the keyboard or mouse. Virtual gamepad likewise
-  reads "On: Motion (DSU) rumble" while Motion's rumble runs the pad, and shows the pad's errors then.
-- **A tab's setup shows only while it's on.** Emulator auto setup, Mapping and their warnings expand
-  in under the switch and collapse when it's off, so an off tab is just its status and switch.
-- **Eden on both running tabs warns** under each one's setup that Eden keeps only the last Set up. A
-  warning for the whole card, such as DSU's slot limit, sits at the bottom.
-- **A tab whose output needs Shizuku says so** in a red error line at the foot of its content while it runs
-  without Shizuku: the virtual gamepad from its failed start, Mouse & keys from Shizuku's absence, since the
-  keyboard and mouse wait for Shizuku rather than fail. Motion names what its mapping presses that
-  needs it ("Shizuku is needed for mouse and keyboard"). The line follows Shizuku and the tab's switch.
-- **Long tab names wrap** to two centred lines at phone width rather than cut off.
-- **Mouse & keys warns when nothing can move the pointer**: a `SettingWarning` under Mapping while
-  every connected controller lacks the Joy-Con 2's mouse sensor (Pro, GameCube, third-party), so
-  clicks that work without a moving pointer don't read as broken. The mapping editor's Mouse section
-  warns the same per player.
+- **It asks what you're playing, not which output.** A `ToggleRow` on top, then a picker of games
+  (Switch, GameCube, Wii, Other emulator, Android games & apps, PC games), each sub-labelled with what
+  it's played on. The app works out the outputs, so there's nothing to pick per device.
+- **On by itself.** Assigning a player switches the card on if it was left on, so the usual path is
+  assign and play; the switch is for stopping, and stays off until switched back on.
+- **Setup shows only while it's on**, expanding under the picker and cross-fading as the game changes:
+  - an emulator the app sets up: emulator auto setup (Set up and Mapping), with Eden or Eden Nightly
+    in its dropdown when both are installed; an `InfoBox` saying it isn't installed when it's not;
+  - Switch adds a **Motion** switch: Eden's gyro over DSU, off for games without it;
+  - Other emulator: an `InfoBox` with the steps and DSU's address, then Mapping;
+  - Android and PC games: Mapping alone. PC games warns when nothing can move the pointer
+    (`SettingWarning`), so clicks that work without a moving pointer don't read as broken.
+- **The status names what's actually up:** "Off — switch on to play", "Starting…", or
+  "On: gamepad, motion (port 26760 · 1 emulator)", so a device that failed to start is missing from
+  it. "· mouse off for P1" follows while a player has toggled their mouse off.
+- **Errors sit in a red line at the foot**: a planned device's failed start, or Shizuku's absence,
+  which says what's lost ("buttons and motion go over DSU alone") where DSU carries on. A warning
+  for the whole card, such as DSU's slot limit, sits below that.
 
 ### Mapping editor
 
@@ -153,9 +140,9 @@ In `JoyconScreen.kt`:
 - **Thrusts and Motion sensitivity open the Motion section**, above Shake and Recenter: they shape the
   motion those rows act on. On Classic, with no rows, the section holds Sensitivity alone.
 - **Rumble is a section of its own under Sticks**, holding the strength slider: it describes what
-  comes back to the controller, beside what goes out of it. Off Mouse & keys only. Where rumble rides
-  the virtual gamepad on the Motion tab (Wii, and Switch opened from Motion), an info icon by the
-  section title opens a sheet saying so (`ExpandableInfoSection`'s `onInfoClick`).
+  comes back to the controller, beside what goes out of it. Not for PC games. Where rumble rides
+  the virtual gamepad beside DSU (Wii), an info icon by the section title opens a sheet saying so
+  (`ExpandableInfoSection`'s `onInfoClick`).
 - **Tapping a row listens first** (`PressToMapDialog`): the next button or half-way stick push on
   that player's controller replaces the row's sources, which is what pressing to bind means
   everywhere else. **Choose from list** opens the dropdown, the only way to bind several. A press
@@ -169,21 +156,20 @@ In `JoyconScreen.kt`:
   chosen one's description cross-fades beneath it, and Thrusts hides on Classic.
 - **Each section sits on its own panel**, `SectionBg` rounded inside the card, so scrolling shows
   where one ends and the next begins.
-- **Every section collapses.** The app's own keys (Android, Mouse, Keyboard) start collapsed, Other's
-  included, and open only on Mouse & keys, where they're the point.
+- **Every section collapses.** The app's own keys (Android, Mouse, Keyboard) start collapsed, and
+  open only on PC games, where they're the point.
 - **Keyboard lists only the keys in use.** Bound keys, then an "Add a key" `OptionDropdown` of the
   rest; a key added but left on None is gone next visit. Sixty rows of None would bury the few that
   matter. A bound letter adds a `SettingWarning` that the on-screen keyboard hides.
 - **Mouse opens on a Use the mouse switch**, the rest expanding beneath it only while it's on, as an
-  Output tab's setup does: rows for a mouse that isn't up would read as broken.
+  Output card's setup does: rows for a mouse that isn't up would read as broken.
 - **Mouse is five plain rows**, like Android: few enough to show whole, then **Toggle combo**.
   Tapping it opens `PressComboDialog`, which collects everything held until the controller lets go
   and binds it as one combo; **Clear** unbinds it. It has no list: a dropdown would tick sources that
   fire alone, which a combo doesn't. Its trigger reads "C + RS", "Hold for 1 second" beneath.
-- **Mouse & keys names who switched their mouse off**, after its status: "Active · mouse off for P1".
-- **Other's keys-only mapping is named for its output**, "Virtual Gamepad" or "Motion Controller",
-  though both share it. Its tip says how to map by hand in place of trying another layout; like every
-  tip it hides with **Show tips** off.
+- **A keys-only mapping says how to map by hand** in its tip, in place of trying another layout:
+  Android games read the pad as it is; another emulator is mapped in its own settings, and the info
+  icon opens DSU's steps. Like every tip it hides with **Show tips** off.
 
 ### Landscape
 
@@ -192,7 +178,7 @@ Two-up, to use the wide, short viewport; portrait keeps single columns.
 - **Players** — a two-column grid. Detailed players are shrunk to `LandscapePlayerScale` (0.7) by
   `scaleLayout`, which scales the whole controller uniformly and reflows, so a full player fits the
   short height. Compact rows aren't scaled.
-- **Output card** — full width, not a cell: its tabs need the room, and
+- **Output card** — full width, not a cell: its picker and setup need the room, and
   its mapping button is labelled. The Shizuku card, when shown, sits beneath at full width too.
 - **Scanning graphics** — the "Looking for Joy-Con 2" card and sync-button illustration side by side.
 - **Action buttons** — Disconnect All left, Scan right; Disconnect keeps its half while Scan is hidden
@@ -203,9 +189,9 @@ An odd trailing item takes a half cell, a weighted `Spacer` filling the other ha
 ## Components
 
 Shared in `core/designsystem/.../ui/components/`:
-- `ToggleRow` — a status line and its switch, the status lit in the accent (each Output card tab)
-- `SegmentedChoice` — one of a few options, all in view, any of them lit in the accent (the Output
-  card's tabs)
+- `ToggleRow` — a status line and its switch, the status lit in the accent (the Output card)
+- `SegmentedChoice` — one of a few options, all in view, any of them lit in the accent (the Wii
+  controller choice)
 - `OptionDropdown` / `DropdownOption` / `PanelDropdownMenu` — the app's picker: an accented current
   value over a panel of alternatives, each row optionally sub-labelled, dimmed or deletable
 - `EmulatorDropdown` / `EmulatorOption` / `EmulatorAutoSetup` — emulator picker + one-tap setup
@@ -228,9 +214,9 @@ system's reduced-motion setting.
 
 - **`Motion.easeOut()`** is the one spec for new transitions: 220 ms, decelerating. Compose scales it
   by the system's animation setting, so turning animations off makes it instant.
-- **Every state change on the Output card moves.** `SegmentedChoice`'s highlight slides to the
-  choice and its labels fade to lit or dim; the tab's content cross-fades as the card eases to its
-  new height; a tab's status cross-fades; error lines and DSU's slot warning expand in and out.
+- **Every state change on the Output card moves.** The setup expands in as it's switched on and
+  cross-fades between games as the card eases to its new height; the status cross-fades; error lines
+  and DSU's slot warning expand in and out.
 
 ## Open work
 

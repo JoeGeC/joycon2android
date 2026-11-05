@@ -8,6 +8,6 @@ enum class EmulatorKind(val console: Console) {
     DOLPHIN_WII(Console.WIIMOTE_NUNCHUK),
     EDEN(Console.SWITCH_PRO),
 
-    /** Nothing to set up: Android games, or an emulator set up in its own settings. Maps only the app's keys. */
+    /** A tab's Other, read only to migrate. */
     OTHER(Console.ANDROID),
 }
