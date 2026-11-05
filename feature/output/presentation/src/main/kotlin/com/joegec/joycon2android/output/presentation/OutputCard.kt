@@ -25,8 +25,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import com.joegec.joycon2android.output.Playing
 import com.joegec.joycon2android.ui.components.EmulatorAutoSetup
 import com.joegec.joycon2android.ui.components.InfoBox
@@ -84,7 +86,7 @@ private fun PlayingContent(state: OutputCardState, actions: OutputCardActions) {
                     MappingButton(actions.openMapping)
                 }
                 playing == Playing.OTHER_EMULATOR -> {
-                    InfoBox(stringResource(R.string.playing_other_emulator_steps, state.dsuAddress))
+                    OtherEmulatorSteps(state.dsuAddress)
                     MappingButton(actions.openMapping)
                 }
                 else -> MappingButton(actions.openMapping)
@@ -92,6 +94,15 @@ private fun PlayingContent(state: OutputCardState, actions: OutputCardActions) {
             if (playing == Playing.PC && state.noPointerController) SettingWarning(stringResource(R.string.output_no_pointer))
         }
     }
+}
+
+@Composable
+private fun OtherEmulatorSteps(dsuAddress: String) {
+    val clipboard = LocalClipboardManager.current
+    InfoBox(
+        stringResource(R.string.playing_other_emulator_steps, dsuAddress),
+        onClick = { clipboard.setText(AnnotatedString(dsuAddress)) },
+    )
 }
 
 @Composable

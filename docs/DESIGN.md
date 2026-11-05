@@ -125,7 +125,7 @@ In `JoyconScreen.kt`:
   outputs only act on what players press.
 - **Setup sits under the picker**, cross-fading as the game changes:
   - an emulator the app sets up: Auto set up and Mapping, bare, since the picker names the emulator; an `InfoBox` saying it isn't installed when it's not;
-  - Other emulator: an `InfoBox` with the steps and DSU's address, then Mapping;
+  - Other emulator: an `InfoBox` with the steps and DSU's address, which a tap copies, then Mapping;
   - Android and Mouse & keys: Mapping alone. Mouse & keys warns when nothing can move the pointer
     (`SettingWarning`), so clicks that work without a moving pointer don't read as broken.
 - **Motion's switch is in the mapping editor**, not the card: it's a choice about the game's
