@@ -54,7 +54,11 @@ fun OutputCard(
         verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
     ) {
         PlayingPicker(state, actions.select)
-        StatusLine(outputStatus(state), lit = state.liveDevices.isNotEmpty())
+        StatusLine(
+            outputStatus(state),
+            lit = state.liveDevices.isNotEmpty(),
+            modifier = Modifier.padding(vertical = Dimens.statusLinePadding),
+        )
         PlayingContent(state, actions)
         ErrorLine(state.error ?: shizukuError(state))
         status()

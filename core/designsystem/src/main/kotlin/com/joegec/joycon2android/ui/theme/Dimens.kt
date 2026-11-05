@@ -12,6 +12,7 @@ object Dimens {
     val cardBorderAlpha = 1f
     val sectionSpacing = 14.dp
     val elementSpacing = 8.dp
+    val statusLinePadding = 6.dp
     val dualJoyconGap = 10.dp
 
     val featureCardTitleGap = 4.dp
