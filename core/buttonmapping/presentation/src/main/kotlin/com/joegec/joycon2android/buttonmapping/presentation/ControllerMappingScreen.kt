@@ -98,8 +98,8 @@ fun ControllerMappingScreen(
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
             } else {
-                motion?.let { GameMotionCard(state.console, it, onSetMotion) }
                 GroupLayoutRow(state.console, state.global, state.savedLayouts, labels, actions) { dialog = it }
+                motion?.let { GameMotionCard(state.console, it, onSetMotion) }
             }
             state.players.forEach { player ->
                 val connected = players.firstOrNull { it.player == player.body.player }

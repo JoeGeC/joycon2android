@@ -114,8 +114,8 @@ In `JoyconScreen.kt`:
 
 ### Output card
 
-- **It asks what you're playing, not which output.** A `StatusLine` on top, then one picker
-  (`PlayingPicker`): Eden, Eden Nightly, Dolphin (GameCube), Dolphin (Wii), Other emulator, Android
+- **It asks what you're playing, not which output.** One picker (`PlayingPicker`), its
+  `StatusLine` beneath: Eden, Eden Nightly, Dolphin (GameCube), Dolphin (Wii), Other emulator, Android
   games & apps, Mouse & keys. Each installed emulator is a row, so there's no second emulator picker;
   one not installed is a single row under its own name. The app works out the outputs, so there's
   nothing to pick per device.
@@ -124,8 +124,7 @@ In `JoyconScreen.kt`:
 - **No switch.** Assigning a player turns the card on; nothing needs stopping by hand, since the
   outputs only act on what players press.
 - **Setup sits under the picker**, cross-fading as the game changes:
-  - an emulator the app sets up: emulator auto setup (Set up and Mapping), unnamed, since the picker
-    names it; an `InfoBox` saying it isn't installed when it's not;
+  - an emulator the app sets up: Set up and Mapping, bare, since the picker names the emulator; an `InfoBox` saying it isn't installed when it's not;
   - Other emulator: an `InfoBox` with the steps and DSU's address, then Mapping;
   - Android and Mouse & keys: Mapping alone. Mouse & keys warns when nothing can move the pointer
     (`SettingWarning`), so clicks that work without a moving pointer don't read as broken.
@@ -144,10 +143,10 @@ In `JoyconScreen.kt`:
   the console's own, then Android, Mouse, Keyboard.
 - **Thrusts and Motion sensitivity open the Motion section**, above Shake and Recenter: they shape the
   motion those rows act on. On Classic, with no rows, the section holds Sensitivity alone.
-- **A Motion card opens Eden's and Other emulator's mapping**, above the group layout: one
+- **A Motion card follows the group layout** in Eden's and Other emulator's mapping: one
   `SettingSwitch` for every player, since DSU runs for the whole game or not at all.
 - **Rumble is a section of its own under Sticks**, holding the strength slider: it describes what
-  comes back to the controller, beside what goes out of it. Not for PC games. Where rumble rides
+  comes back to the controller, beside what goes out of it. Not for Mouse & keys. Where rumble rides
   the virtual gamepad beside DSU (Wii), an info icon by the section title opens a sheet saying so
   (`ExpandableInfoSection`'s `onInfoClick`).
 - **Tapping a row listens first** (`PressToMapDialog`): the next button or half-way stick push on
@@ -164,7 +163,7 @@ In `JoyconScreen.kt`:
 - **Each section sits on its own panel**, `SectionBg` rounded inside the card, so scrolling shows
   where one ends and the next begins.
 - **Every section collapses.** The app's own keys (Android, Mouse, Keyboard) start collapsed, and
-  open only on PC games, where they're the point.
+  open only on Mouse & keys, where they're the point.
 - **Keyboard lists only the keys in use.** Bound keys, then an "Add a key" `OptionDropdown` of the
   rest; a key added but left on None is gone next visit. Sixty rows of None would bury the few that
   matter. A bound letter adds a `SettingWarning` that the on-screen keyboard hides.
@@ -206,10 +205,10 @@ Shared in `core/designsystem/.../ui/components/`:
 - `SettingSwitch` — a titled, described switch (the settings panel)
 - `EndDrawer` — a modal drawer from the end edge (the settings panel)
 - `ConfirmDialog` · `TextInputDialog` — ask before a change lands, or ask it for a name
-- `InfoSheet` — help behind an info icon, as a bottom sheet (auto setup, DSU mapping)
-- `ErrorBox` · `WarningBox` · `LabeledBorderBox` · `ExpandableInfoSection` · `CopyableCode`
+- `InfoSheet` — help behind an info icon, as a bottom sheet (DSU mapping)
+- `ErrorBox` · `WarningBox` · `ExpandableInfoSection` · `CopyableCode`
 - `InfoBox` — an accent note with an exclamation-circle icon, at the top of a screen (mapping tips)
-- `HintBubble` — an accent bubble pointing up at a control (the mapping button, under auto setup; the save button, under a Custom group or player layout)
+- `HintBubble` — an accent bubble pointing up at a control (the mapping button, under Set up; the save button, under a Custom group or player layout)
 - Tips (`InfoBox`, `HintBubble`) show only while `LocalTips` is visible and pass its `onTap`;
   `ProvideTips` at the root supplies it from **Show tips** and asks before turning them off
 

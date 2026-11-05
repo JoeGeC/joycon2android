@@ -51,7 +51,7 @@ Emulators address it by enumeration rank instead: with P1, P2 and P4, P4 is the 
 `Joy-Con Virtual Mouse` is one UHID device, shared by every player, with three buttons and a wheel.
 `PrivilegedDevicePolicy` keeps it up while Shizuku runs and the [output](architecture.md#output)
 plans it: the mapping, for some player, has **Use the mouse** on (`JOYCON_MOUSE_KEY`).
-Unset, it's on for PC games alone; stored only where it differs, so a body still matches its
+Unset, it's on for Mouse & keys alone; stored only where it differs, so a body still matches its
 layout. Off, that player's Joy-Cons move no pointer and their mapped clicks are dropped
 (`ObserveJoyconMouseUsersUseCase`); the editor hides the section's rows.
 
@@ -125,7 +125,7 @@ Each player can switch their own Joy-Con mouse off while playing: holding their 
 ## Keyboard
 
 `Joy-Con Virtual Keyboard` is one UHID device shared by every player, up while Shizuku runs and the
-[output](architecture.md#output) plans it (`PrivilegedDevicePolicy`): PC games, or a mapped
+[output](architecture.md#output) plans it (`PrivilegedDevicePolicy`): Mouse & keys, or a mapped
 keyboard or Android key. It carries the mapping's **Keyboard** keys, and the
 [Android keys](#android-keys) the pad does not, in place of the shell.
 

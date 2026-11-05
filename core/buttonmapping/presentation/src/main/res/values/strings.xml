@@ -84,7 +84,7 @@
     <string name="mapping_manual_android">Android games read each player\'s Virtual Gamepad as it is. Here you can add Android keys, keyboard keys and the mouse on top.</string>
     <string name="console_emulator">Other emulator</string>
     <string name="mapping_manual_emulator">Each player has their own Virtual Gamepad and DSU slot. Map them in the emulator\'s own settings: buttons from the gamepad, motion from DSU.</string>
-    <string name="console_pc">PC games</string>
+    <string name="console_pc">Mouse &amp; keys</string>
     <string name="side_left_short">L</string>
     <string name="side_right_short">R</string>
     <string name="side_dual_short">L/R</string>

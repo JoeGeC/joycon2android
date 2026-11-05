@@ -112,7 +112,7 @@ The app stays connected in the background while its notification is showing.
 The gear at the top right opens the settings panel:
 
 - **Layout** — detailed controller graphics or compact rows.
-- **Show tips** (on by default) — the hints under auto setup and on the mapping screen. Tap any tip
+- **Show tips** (on by default) — the hints under **Set up** and on the mapping screen. Tap any tip
   to turn them all off.
 - **Open emulators on the main screen** (on by default, two-screen devices such as the AYN Thor) —
   when the app offers to start the emulator after setup, it opens on the main screen instead of the
@@ -168,9 +168,9 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
   keys it never reaches the game, and it needs Shizuku running. While a letter is bound,
   Android hides the on-screen keyboard; tap **Other** on the letter to bring it back.
 - **Mouse.** **Use the mouse** at the top brings up the mouse for that player: a Joy-Con 2 standing
-  on the desk moves the pointer, even in an emulator. It's on for PC games and off elsewhere.
+  on the desk moves the pointer, even in an emulator. It's on for Mouse & keys and off elsewhere.
   Below it, left, right and middle click, and scroll up and down, from a button or stick direction —
-  for PC games that want a click or the wheel. R clicks, ZR right-clicks, RS middle-clicks and the
+  for games that want a click or the wheel. R clicks, ZR right-clicks, RS middle-clicks and the
   right stick scrolls until you change them (L, ZL, LS and the left stick on a left Joy-Con alone). A held scroll repeats. They work held too, and take those buttons
   from the game while the mouse is on. Needs Shizuku running.
 - **Toggle combo.** At the bottom of the Mouse section, **C** to start (**Capture** on a left
@@ -198,7 +198,7 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
   misses your swing. Every layout starts with it off; saved layouts remember it.
 - **Rumble strength.** In each player's **Rumble** section, a slider from Off to 100% of what the controller can safely do sets how
   strongly a game's rumble plays on that player's controllers. It starts at 20%. Saved layouts
-  remember it. PC games has none. DSU can't carry rumble, so Wii's comes through the virtual
+  remember it. Mouse & keys has none. DSU can't carry rumble, so Wii's comes through the virtual
   gamepad (needs Shizuku); Dolphin (Wii) takes only the rumble from that pad, so tap **Set up** again
   after turning it on or off.
 - **Motion.** On Eden and Other emulator, a **Motion** switch at the top of the mapping turns every
@@ -338,7 +338,7 @@ shoulder buttons its body lacks.
 | Emulator won't detect DSU presses | Pick inputs from the list: detection never sees DSU, and grabs the virtual gamepad instead |
 | Motion aiming stutters | Settings (gear, top right): keep **Ignore this device's motion in Eden** and **Faster controller updates** on |
 | Tilting the device moves the aim in Eden | Turn on **Ignore this device's motion in Eden** |
-| Joy-Con mouse doesn't move the pointer | The Output card's status must list "mouse": PC games picked, or **Use the mouse** on in the mapping, and not switched off with the player's toggle combo. Stand the Joy-Con on its rail, not its back, on a flat, non-glossy surface |
+| Joy-Con mouse doesn't move the pointer | The Output card's status must list "mouse": Mouse & keys picked, or **Use the mouse** on in the mapping, and not switched off with the player's toggle combo. Stand the Joy-Con on its rail, not its back, on a flat, non-glossy surface |
 | Pointer drifts or starts off-screen | Rest the controller for ~2 s, then press Recenter |
 | Sticks feel twitchy in Dolphin (hard to walk or aim) | Tap **Set up** for Dolphin again. A Pro Controller: map it in Dolphin first, then tap **Set up** once to add the calibration |
 | MotionPlus tutorial replays every boot (Dolphin) | Set `MPLS.MOVIE` in `Wii/shared2/sys/SYSCONF` with Dolphin closed ([why](docs/dsu-motion.md#motionplus-tutorial-replays)) |
