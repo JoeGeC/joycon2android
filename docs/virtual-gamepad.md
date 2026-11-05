@@ -255,7 +255,7 @@ Shizuku is.
   (`EdenDsuConfig.withoutMotion`).
   Splitting just the buttons Eden routes rumble through (D-pad Right and A) onto the pad was rejected:
   one device per player for buttons.
-- A player whose pad isn't enumerated at Set up keeps all-DSU bindings and gets no rumble.
+- A player whose pad isn't enumerated at Auto set up keeps all-DSU bindings and gets no rumble.
 
 ## Android keys
 

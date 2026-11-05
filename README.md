@@ -77,9 +77,9 @@ player is assigned. Grant Shizuku permission the first time.
 
 | Playing | Runs | Setup |
 |---|---|---|
-| **Eden**, **Eden Nightly** | the virtual gamepad, and motion over DSU (switch **Motion** off in the mapping for games without gyro) | **Set up** (step 5) |
-| **Dolphin (GameCube)** | the virtual gamepad | **Set up** |
-| **Dolphin (Wii)** | motion, buttons and sticks over DSU; the virtual gamepad for rumble | **Set up** |
+| **Eden**, **Eden Nightly** | the virtual gamepad, and motion over DSU (switch **Motion** off in the mapping for games without gyro) | **Auto set up** (step 5) |
+| **Dolphin (GameCube)** | the virtual gamepad | **Auto set up** |
+| **Dolphin (Wii)** | motion, buttons and sticks over DSU; the virtual gamepad for rumble | **Auto set up** |
 | **Other emulator** | the virtual gamepad and DSU, for Azahar, Cemu and the like (switch **Motion** off in the mapping to stop DSU) | in the emulator: buttons from the gamepad, motion from DSU ([manual setup](#manual-setup)) |
 | **Android games & apps** | the virtual gamepad: each player appears to every app as `Joy-Con Virtual Gamepad <N>` | none |
 | **Mouse & keys** | a virtual keyboard and mouse, mapped **WASD + mouse** to start, or **Mouse only** (clicks and scroll; a stick click middle-clicks, RS on a pair or right Joy-Con, LS on a left), for Winlator, GameHub and the like | none |
@@ -112,7 +112,7 @@ The app stays connected in the background while its notification is showing.
 The gear at the top right opens the settings panel:
 
 - **Layout** — detailed controller graphics or compact rows.
-- **Show tips** (on by default) — the hints under **Set up** and on the mapping screen. Tap any tip
+- **Show tips** (on by default) — the hints under **Auto set up** and on the mapping screen. Tap any tip
   to turn them all off.
 - **Open emulators on the main screen** (on by default, two-screen devices such as the AYN Thor) —
   when the app offers to start the emulator after setup, it opens on the main screen instead of the
@@ -124,7 +124,7 @@ The gear at the top right opens the settings panel:
 
 ### 5. Set up your emulator
 
-With Eden or Dolphin picked, tap **Set up**: the app writes the emulator's
+With Eden or Dolphin picked, tap **Auto set up**: the app writes the emulator's
 controller config. The app offers to start the emulator afterwards — it only reads its config when
 it starts.
 
@@ -134,7 +134,7 @@ it starts.
 | Dolphin (GameCube) | Dolphin | buttons, sticks and rumble; analog L/R for a GameCube controller |
 | Dolphin (Wii) | Dolphin | buttons, sticks and motion over DSU; rumble through the virtual gamepad |
 
-The gamepad button beside **Set up** (**Mapping** elsewhere) opens the mapping editor, with a card per connected player —
+The gamepad button beside **Auto set up** (**Mapping** elsewhere) opens the mapping editor, with a card per connected player —
 tap one to open its bindings. On Eden a single Joy-Con is set up as a real left or right Joy-Con;
 with **Pro Controller** (below) turned on, or on Dolphin, it's a Pro Controller held sideways, so every
 button works in every game ([why](docs/virtual-gamepad.md#why-theyre-set-up-as-pro-controllers)). A
@@ -184,7 +184,7 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
   Super Mario Party Jamboree's motion games need; you map its own buttons, plus SL and SR. If a game
   won't accept the Joy-Con, or reads it as held upright (Moving Out), turn it on. Switching resets
   that player's buttons to the grip's standard ones (Android and keyboard keys stay), and layouts save the switch
-  with the rest. Its layouts put SL/SR on L/R, or on ZL/ZR with **Pro Controller (ZL/ZR)**. It needs **Set up** run again (and Eden restarted) after changing it. Dolphin always
+  with the rest. Its layouts put SL/SR on L/R, or on ZL/ZR with **Pro Controller (ZL/ZR)**. It needs **Auto set up** run again (and Eden restarted) after changing it. Dolphin always
   uses the sideways grip.
 - **Wii controller.** On the Wii console, pick what each player holds: **Wiimote**, a
   **Sideways** remote (a lone Joy-Con only), or a **Classic** Controller. Sideways is for games that steer by
@@ -199,10 +199,10 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
 - **Rumble strength.** In each player's **Rumble** section, a slider from Off to 100% of what the controller can safely do sets how
   strongly a game's rumble plays on that player's controllers. It starts at 20%. Saved layouts
   remember it. Mouse & keys has none. DSU can't carry rumble, so Wii's comes through the virtual
-  gamepad (needs Shizuku); Dolphin (Wii) takes only the rumble from that pad, so tap **Set up** again
+  gamepad (needs Shizuku); Dolphin (Wii) takes only the rumble from that pad, so tap **Auto set up** again
   after turning it on or off.
 - **Motion.** On Eden and Other emulator, a **Motion** switch at the top of the mapping turns every
-  player's gyro over DSU on or off. On Eden, tap **Set up** again after changing it.
+  player's gyro over DSU on or off. On Eden, tap **Auto set up** again after changing it.
 - **Motion sensitivity.** On the Wii console, in the **Motion** section, a slider from 50% to 200% scales swings and shakes
   without changing tilt. Every layout starts at 110%, which suits Wii Sports; 100% passes motion
   through unscaled. Saved layouts remember it.
@@ -220,7 +220,7 @@ The layouts the app ships:
 > [!NOTE]
 > Auto setup needs Shizuku, and some devices block writing into another app's `Android/data` — use
 > [manual setup](#manual-setup) if it fails. Emulators rewrite their config when they exit, so let the
-> app close an open one first. Run **Set up** again after changing players or updating the app.
+> app close an open one first. Run **Auto set up** again after changing players or updating the app.
 
 ### Manual setup
 
@@ -331,8 +331,8 @@ shoulder buttons its body lacks.
 | Controller shows "Connection lost" | Press SYNC on it and it reconnects to the same player by itself, or tap Scan. After two minutes it's removed |
 | Controllers drop when a game starts | Some phones clear background apps when a game launches. Tap the yellow banner at the top to let the app run in the background (or set its battery use to unrestricted), and exclude it from the game launcher's cleanup |
 | Gamepad doesn't show up in games | Check `adb shell getevent -p` lists "Joy-Con Virtual Gamepad" |
-| No rumble in Eden, or the phone vibrates instead | Tap **Set up** for Eden again, or turn off **Use system vibrator** in Eden's controller settings |
-| No rumble on Wii or Switch | Check the player's **Rumble** isn't Off and Shizuku is running, then tap **Set up** again so the emulator takes its rumble from the virtual gamepad |
+| No rumble in Eden, or the phone vibrates instead | Tap **Auto set up** for Eden again, or turn off **Use system vibrator** in Eden's controller settings |
+| No rumble on Wii or Switch | Check the player's **Rumble** isn't Off and Shizuku is running, then tap **Auto set up** again so the emulator takes its rumble from the virtual gamepad |
 | No rumble on an AYN Thor or Odin | Switch the Output card off and on: the firmware swaps in a copy of the gamepad that can't rumble, and the app stops that only as it creates the gamepad |
 | No DSUClient device in the emulator | Check the server address, restart the emulator and open a mapping screen; `adb logcat -s DsuServer` shows whether it's connecting |
 | Emulator won't detect DSU presses | Pick inputs from the list: detection never sees DSU, and grabs the virtual gamepad instead |
@@ -340,7 +340,7 @@ shoulder buttons its body lacks.
 | Tilting the device moves the aim in Eden | Turn on **Ignore this device's motion in Eden** |
 | Joy-Con mouse doesn't move the pointer | The Output card's status must list "mouse": Mouse & keys picked, or **Use the mouse** on in the mapping, and not switched off with the player's toggle combo. Stand the Joy-Con on its rail, not its back, on a flat, non-glossy surface |
 | Pointer drifts or starts off-screen | Rest the controller for ~2 s, then press Recenter |
-| Sticks feel twitchy in Dolphin (hard to walk or aim) | Tap **Set up** for Dolphin again. A Pro Controller: map it in Dolphin first, then tap **Set up** once to add the calibration |
+| Sticks feel twitchy in Dolphin (hard to walk or aim) | Tap **Auto set up** for Dolphin again. A Pro Controller: map it in Dolphin first, then tap **Auto set up** once to add the calibration |
 | MotionPlus tutorial replays every boot (Dolphin) | Set `MPLS.MOVIE` in `Wii/shared2/sys/SYSCONF` with Dolphin closed ([why](docs/dsu-motion.md#motionplus-tutorial-replays)) |
 
 ## Roadmap and feedback

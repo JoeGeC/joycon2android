@@ -114,7 +114,7 @@ In `JoyconScreen.kt`:
 
 ### Output card
 
-- **It asks what you're playing, not which output.** One picker (`PlayingPicker`), its
+- **It asks what you're playing, not which output.** One picker (`PlayingPicker`) after a "Playing:" label, its
   `StatusLine` beneath: Eden, Eden Nightly, Dolphin (GameCube), Dolphin (Wii), Other emulator, Android
   games & apps, Mouse & keys. Each installed emulator is a row, so there's no second emulator picker;
   one not installed is a single row under its own name. The app works out the outputs, so there's
@@ -124,7 +124,7 @@ In `JoyconScreen.kt`:
 - **No switch.** Assigning a player turns the card on; nothing needs stopping by hand, since the
   outputs only act on what players press.
 - **Setup sits under the picker**, cross-fading as the game changes:
-  - an emulator the app sets up: Set up and Mapping, bare, since the picker names the emulator; an `InfoBox` saying it isn't installed when it's not;
+  - an emulator the app sets up: Auto set up and Mapping, bare, since the picker names the emulator; an `InfoBox` saying it isn't installed when it's not;
   - Other emulator: an `InfoBox` with the steps and DSU's address, then Mapping;
   - Android and Mouse & keys: Mapping alone. Mouse & keys warns when nothing can move the pointer
     (`SettingWarning`), so clicks that work without a moving pointer don't read as broken.
@@ -208,7 +208,7 @@ Shared in `core/designsystem/.../ui/components/`:
 - `InfoSheet` — help behind an info icon, as a bottom sheet (DSU mapping)
 - `ErrorBox` · `WarningBox` · `ExpandableInfoSection` · `CopyableCode`
 - `InfoBox` — an accent note with an exclamation-circle icon, at the top of a screen (mapping tips)
-- `HintBubble` — an accent bubble pointing up at a control (the mapping button, under Set up; the save button, under a Custom group or player layout)
+- `HintBubble` — an accent bubble pointing up at a control (the mapping button, under Auto set up; the save button, under a Custom group or player layout)
 - Tips (`InfoBox`, `HintBubble`) show only while `LocalTips` is visible and pass its `onTap`;
   `ProvideTips` at the root supplies it from **Show tips** and asks before turning them off
 

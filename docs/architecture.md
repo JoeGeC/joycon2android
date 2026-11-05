@@ -106,7 +106,7 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
 One **Output** card picks what's being played (`Playing`), and the app picks the outputs from it.
 `:feature:output` owns the choice; `:app` runs it.
 
-| Playing | Console mapped | Game reads | Set up writes |
+| Playing | Console mapped | Game reads | Auto set up writes |
 |---|---|---|---|
 | Switch (Eden) | Switch Pro | pad, DSU (motion can be switched off) | Eden's config: buttons on the pad, motion on DSU while on |
 | GameCube | GameCube | pad | Dolphin's GameCube pads |
@@ -126,7 +126,7 @@ One **Output** card picks what's being played (`Playing`), and the app picks the
   keys read that game's mapping alone. `ObserveKeyBindingsUseCase` still takes a set of consoles, of one.
 - **Each game keeps its own emulator** (`PlayingSelection.emulators`): Eden or Eden Nightly for
   Switch, each a row of the card's picker. Dolphin is two targets of one package (`dolphin-gamecube`, `dolphin-wii`).
-- **Set up writes the game's mapping into the emulator's own config**, so the pad and DSU send raw
+- **Auto set up writes the game's mapping into the emulator's own config**, so the pad and DSU send raw
   buttons. What reads the console live: Eden's single Joy-Con marking, rumble strength and the
   mapping editor (`AppContainer.consoleInView`).
 - **Android games and other emulators have their own mappings.** They shared `Console.ANDROID`
