@@ -56,6 +56,10 @@
     <string name="controller_pro">Pro</string>
     <string name="controller_gamecube">GameCube</string>
     <string name="layout_standard">Standard</string>
+    <string name="layout_as_labelled">As labelled</string>
+    <string name="layout_as_labelled_description">Each button sends the button it\'s printed as.</string>
+    <string name="layout_xbox_positions">By position (Xbox)</string>
+    <string name="layout_xbox_positions_description">A/B and X/Y swapped, so each sends the button in its spot on an Xbox pad.</string>
     <string name="layout_wasd_mouse">WASD + Mouse</string>
     <string name="layout_wasd_mouse_description">WASD on the stick, plus mouse clicks and scroll</string>
     <string name="layout_mouse_only">Mouse only</string>
@@ -81,7 +85,7 @@
     <string name="console_wiimote_nunchuk">Wiimote &amp; Nunchuck</string>
     <string name="console_switch_pro">Joycons</string>
     <string name="console_android">Android games &amp; apps</string>
-    <string name="mapping_manual_android">Android games read each player\'s Virtual Gamepad as it is. Here you can add Android keys, keyboard keys and the mouse on top.</string>
+    <string name="mapping_manual_android">Android games read each player\'s Virtual Gamepad. Here you can remap its buttons and sticks, and add Android keys, keyboard keys and the mouse.</string>
     <string name="console_emulator">Other emulator</string>
     <string name="mapping_manual_emulator">Each player has their own Virtual Gamepad and DSU slot. Map them in the emulator\'s own settings: buttons from the gamepad, motion from DSU.</string>
     <string name="console_pc">Mouse &amp; keys</string>

@@ -112,7 +112,7 @@ One **Output** card picks what's being played (`Playing`), and the app picks the
 | GameCube | GameCube | pad | Dolphin's GameCube pads |
 | Wii | Wii Remote | DSU | Dolphin's DSU and Wii Remotes |
 | Other emulator | `Console.EMULATOR` | pad, DSU (motion can be switched off) | — (set up in the emulator) |
-| Android games & apps | `Console.ANDROID` | pad | — |
+| Android games & apps | `Console.ANDROID` | pad, remapped by the app ([why](virtual-gamepad.md#android-games)) | — |
 | Mouse & keys | `Console.PC`, WASD + mouse by default | keyboard, mouse | — |
 
 - **`OutputPlan.devices` is the one rule**, pure and tested: what the game reads, plus the pad
@@ -127,7 +127,7 @@ One **Output** card picks what's being played (`Playing`), and the app picks the
 - **Each game keeps its own emulator** (`PlayingSelection.emulators`): Eden or Eden Nightly for
   Switch, each a row of the card's picker. Dolphin is two targets of one package (`dolphin-gamecube`, `dolphin-wii`).
 - **Auto set up writes the game's mapping into the emulator's own config**, so the pad and DSU send raw
-  buttons. What reads the console live: Eden's single Joy-Con marking, rumble strength and the
+  buttons. An Android game can't, so `AndroidPadLayout` remaps the pad for it. What reads the console live: Eden's single Joy-Con marking, Android's pad layout, rumble strength and the
   mapping editor (`AppContainer.consoleInView`).
 - **Android games and other emulators have their own mappings.** They shared `Console.ANDROID`
   before; `OtherEmulatorMappingMigration` copied it to `Console.EMULATOR` once.

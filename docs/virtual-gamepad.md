@@ -284,6 +284,25 @@ The shell's `input keyevent`, once per press, stands in for the keyboard only if
 - **Android handles `HOME` itself** and never passes it to the app in front, so a bound Home always
   leaves the game.
 
+## Android games
+
+An Android game can't remap a pad, so with **Android games & apps** picked the app applies the
+mapping itself: `AndroidPadLayout` builds what the pad sends from the player's `Console.ANDROID`
+mapping, whose targets are the pad's own buttons and sticks (`PadButton`, `PadStick`). Every other
+game gets the pad unmapped, since Auto set up writes the mapping into the emulator.
+
+- **As labelled** (`AndroidMapping`, the default) puts each button on the pad button its grip sends
+  unmapped (`emittedFor`), so the pad sends what it always has. A test holds every button of every
+  body to that.
+- **By position (Xbox)** swaps A/B and X/Y. Android games follow Xbox positions, A at the bottom,
+  where Nintendo prints B, so as labelled the face buttons feel swapped.
+- **A whole stick stays analog** (`wholeEmittedStick`), a sideways Joy-Con's still turned; directions
+  bound any other way push the stick to the gate.
+- **ZL/ZR pull the triggers** wherever they're bound, except on a controller with
+  [analog triggers](#analog-triggers), whose triggers keep their own travel.
+- Sources are read as the controller reports them, as [Android keys](#android-keys) are, after those
+  keys are withheld.
+
 ## Dolphin stick calibration
 
 Dolphin setup writes `Main Stick/Calibration = 100.00` and `C-Stick/Calibration = 100.00` for each

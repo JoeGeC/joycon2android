@@ -11,6 +11,8 @@ import com.joegec.joycon2android.buttonmapping.target.ClassicButton
 import com.joegec.joycon2android.buttonmapping.target.ClassicStick
 import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
 import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
+import com.joegec.joycon2android.buttonmapping.target.PadButton
+import com.joegec.joycon2android.buttonmapping.target.PadStick
 import com.joegec.joycon2android.buttonmapping.target.SwitchProButton
 import com.joegec.joycon2android.buttonmapping.target.SwitchProStick
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
@@ -163,6 +165,37 @@ internal fun SwitchProButton.label(): String = when (this) {
     SwitchProButton.DPadRight -> stringResource(R.string.button_dpad_right)
     SwitchProButton.SL -> "SL"
     SwitchProButton.SR -> "SR"
+}
+
+@Composable
+internal fun PadButton.label(): String = when (this) {
+    PadButton.A -> "A"
+    PadButton.B -> "B"
+    PadButton.X -> "X"
+    PadButton.Y -> "Y"
+    PadButton.L -> "L"
+    PadButton.R -> "R"
+    PadButton.ZL -> "ZL"
+    PadButton.ZR -> "ZR"
+    PadButton.Plus -> "+"
+    PadButton.Minus -> "-"
+    PadButton.Home -> stringResource(R.string.button_home)
+    PadButton.Capture -> stringResource(R.string.button_capture)
+    PadButton.LStickClick -> stringResource(R.string.button_lstick_click)
+    PadButton.RStickClick -> stringResource(R.string.button_rstick_click)
+    PadButton.DPadUp -> stringResource(R.string.button_dpad_up)
+    PadButton.DPadDown -> stringResource(R.string.button_dpad_down)
+    PadButton.DPadLeft -> stringResource(R.string.button_dpad_left)
+    PadButton.DPadRight -> stringResource(R.string.button_dpad_right)
+    PadButton.GL -> "GL"
+    PadButton.GR -> "GR"
+    PadButton.C -> "C"
+}
+
+@Composable
+internal fun PadStick.label(): String = when (this) {
+    PadStick.LStick -> stringResource(R.string.stick_l)
+    PadStick.RStick -> stringResource(R.string.stick_r)
 }
 
 @Composable

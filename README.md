@@ -81,7 +81,7 @@ player is assigned. Grant Shizuku permission the first time.
 | **Dolphin (GameCube)** | the virtual gamepad | **Auto set up** |
 | **Dolphin (Wii)** | motion, buttons and sticks over DSU; the virtual gamepad for rumble | **Auto set up** |
 | **Other emulator** | the virtual gamepad and DSU, for Azahar, Cemu and the like (switch **Motion** off in the mapping to stop DSU) | in the emulator: buttons from the gamepad, motion from DSU ([manual setup](#manual-setup)) |
-| **Android games & apps** | the virtual gamepad: each player appears to every app as `Joy-Con Virtual Gamepad <N>` | none |
+| **Android games & apps** | the virtual gamepad: each player appears to every app as `Joy-Con Virtual Gamepad <N>` | none; remap buttons and sticks in **Mapping**, or pick **By position (Xbox)** if A/B and X/Y feel swapped |
 | **Mouse & keys** | a virtual keyboard and mouse, mapped **WASD + mouse** to start, or **Mouse only** (clicks and scroll; a stick click middle-clicks, RS on a pair or right Joy-Con, LS on a left), for Winlator, GameHub and the like | none |
 
 The virtual gamepad runs whenever Shizuku does, whatever you're playing, so the Joy-Cons also get

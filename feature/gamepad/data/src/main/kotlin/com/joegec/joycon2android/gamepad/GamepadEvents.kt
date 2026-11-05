@@ -41,7 +41,7 @@ object GamepadEvents {
     private const val STICK_MAX = 32767
 
     fun of(frame: GamepadFrame): List<InputEvent> {
-        val gamepad = frame.state.gamepad
+        val gamepad = frame.gamepad
         val pressed = gamepad.pressed
         val (hatX, hatY) = hat(pressed)
         return BUTTON_CODES.map { (id, code) -> key(code, id in pressed) } +

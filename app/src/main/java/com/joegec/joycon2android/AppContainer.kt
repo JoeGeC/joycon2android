@@ -106,9 +106,12 @@ import com.joegec.joycon2android.settings.TipsRepository
 import com.joegec.joycon2android.emulator.EdenDeviceMotionBlocker
 import com.joegec.joycon2android.gamepad.DisableGamepadUseCase
 import com.joegec.joycon2android.gamepad.EnableGamepadUseCase
+import com.joegec.joycon2android.gamepad.AndroidPadLayout
+import com.joegec.joycon2android.gamepad.GamepadFrame
 import com.joegec.joycon2android.gamepad.GamepadManager
 import com.joegec.joycon2android.gamepad.GamepadOutput
 import com.joegec.joycon2android.gamepad.GamepadRepository
+import com.joegec.joycon2android.gamepad.ObserveAndroidPadLayoutsUseCase
 import com.joegec.joycon2android.gamepad.ObserveGamepadStatusUseCase
 import com.joegec.joycon2android.gamepad.ObserveShizukuAvailabilityUseCase
 import com.joegec.joycon2android.gamepad.OnPlayerAssignedUseCase
@@ -384,6 +387,13 @@ class AppContainer(context: Context) {
         bindings.filterKeys { it in users && it !in off }
     }.stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
+    private val observeAndroidPadLayouts = ObserveAndroidPadLayoutsUseCase(observeControllerMapping)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val androidPadLayouts: StateFlow<Map<PlayerNumber, AndroidPadLayout>> = combine(console, activeBodies, ::Pair)
+        .flatMapLatest { (console, bodies) -> observeAndroidPadLayouts(console, bodies) }
+        .stateIn(scope, SharingStarted.Eagerly, emptyMap())
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private val rumbleStrengths: StateFlow<Map<PlayerNumber, Int>> = combine(console, activeBodies, ::Pair)
         .flatMapLatest { (console, bodies) -> observeRumbleStrengths(console, bodies) }
@@ -427,6 +437,11 @@ class AppContainer(context: Context) {
     private val hasActivePlayers = MutableStateFlow(false)
     @Volatile private var activePlayers = emptyList<PlayerState>()
 
+    private fun GamepadFrame.forGame(): GamepadFrame {
+        val marked = edenSingleJoycons.markedFor(console.value, state)
+        return copy(state = marked, remapped = androidPadLayouts.value[marked.player]?.padFor(marked))
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun <K> bindingsFor(observe: ObserveKeyBindingsUseCase<K>): StateFlow<Map<PlayerNumber, KeyBindings<K>>> =
         combine(runningConsoles, activeBodies, ::Pair)
@@ -463,9 +478,7 @@ class AppContainer(context: Context) {
             val routed = mouseActionRouter.route(state, keyboardKeyRouter.route(state, androidKeyRouter.route(state)))
             pushKeyboardFrame(routed.keyboard)
             mouseMix.send(routed.mouseActions)
-            pushGamepadState(
-                routed.gamepad.map { it.copy(state = edenSingleJoycons.markedFor(console.value, it.state)) },
-            )
+            pushGamepadState(routed.gamepad.map { it.forGame() })
             pushDsuPadData(routed.dsu.map { edenSingleJoycons.markedFor(console.value, it) })
         },
         onPlayerAssigned = { onPlayerAssigned(it) },

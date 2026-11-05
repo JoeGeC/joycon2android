@@ -8,12 +8,15 @@ import com.joegec.joycon2android.buttonmapping.MappingSource
 import com.joegec.joycon2android.buttonmapping.StickDirection
 import com.joegec.joycon2android.buttonmapping.StickSource
 import com.joegec.joycon2android.buttonmapping.WiiController
+import com.joegec.joycon2android.buttonmapping.physicalButtons
 import com.joegec.joycon2android.buttonmapping.targetKey
 import com.joegec.joycon2android.buttonmapping.directionKey
 import com.joegec.joycon2android.buttonmapping.target.ClassicButton
 import com.joegec.joycon2android.buttonmapping.target.ClassicStick
 import com.joegec.joycon2android.buttonmapping.target.GameCubeButton
 import com.joegec.joycon2android.buttonmapping.target.GameCubeStick
+import com.joegec.joycon2android.buttonmapping.target.PadButton
+import com.joegec.joycon2android.buttonmapping.target.PadStick
 import com.joegec.joycon2android.buttonmapping.target.SwitchProTargets
 import com.joegec.joycon2android.buttonmapping.target.WiimoteButton
 import com.joegec.joycon2android.buttonmapping.target.WiimoteStick
@@ -78,7 +81,8 @@ internal object MappingOptions {
             Console.GAMECUBE -> GameCubeButton.entries.map { it.name to it.label() }
             Console.WIIMOTE_NUNCHUK -> (WiimoteButton.entries - MOTION_TARGETS).map { it.name to it.label() }
             Console.SWITCH_PRO -> SwitchProTargets.buttons(side, singleJoycon).map { it.name to it.label() }
-            Console.ANDROID, Console.EMULATOR, Console.PC -> emptyList()
+            Console.ANDROID -> PadButton.entries.map { it.name to it.label() }
+            Console.EMULATOR, Console.PC -> emptyList()
         }
 
     // Not buttons on the remote, so they get their own section.
@@ -107,7 +111,8 @@ internal object MappingOptions {
                 Console.GAMECUBE -> GameCubeStick.entries.map { it to it.label() }
                 Console.WIIMOTE_NUNCHUK -> WiimoteStick.entries.map { it to it.label() }
                 Console.SWITCH_PRO -> SwitchProTargets.sticks(side, singleJoycon).map { it to it.label() }
-                Console.ANDROID, Console.EMULATOR, Console.PC -> emptyList()
+                Console.ANDROID -> PadStick.entries.map { it to it.label() }
+                Console.EMULATOR, Console.PC -> emptyList()
             },
         )
 
@@ -123,7 +128,7 @@ internal object MappingOptions {
     @Composable
     fun sources(side: JoyconSide, section: MappingSection): List<Pair<String, String>> =
         listOf(NONE_ID to stringResource(R.string.source_none)) +
-            physicalButtons(side).map { it.name to it.markingOn(side) } +
+            side.physicalButtons().map { it.name to it.markingOn(side) } +
             if (section == MappingSection.ANDROID) emptyList() else stickDirections(side)
 
     // A lone Joy-Con has one stick, so its directions need no "Left"/"Right" to tell them apart.
@@ -139,22 +144,6 @@ internal object MappingOptions {
                 if (side.isLone) stringResource(R.string.stick_lone) else source.stick.label()
             source.id to stringResource(R.string.source_direction, stick, source.direction.label())
         }
-    }
-
-    // Only what that side physically has, so every choice can fire.
-    private fun physicalButtons(side: JoyconSide): List<JoyconButton> = when (side) {
-        JoyconSide.DUAL -> JoyconButton.entries
-        JoyconSide.GAMECUBE -> GameCubeButtons.present.toList()
-        JoyconSide.LEFT -> listOf(
-            JoyconButton.L, JoyconButton.ZL, JoyconButton.Minus, JoyconButton.LS,
-            JoyconButton.Up, JoyconButton.Down, JoyconButton.Left, JoyconButton.Right,
-            JoyconButton.Capture, JoyconButton.SlLeft, JoyconButton.SrLeft,
-        )
-        JoyconSide.RIGHT -> listOf(
-            JoyconButton.R, JoyconButton.ZR, JoyconButton.Plus, JoyconButton.RS,
-            JoyconButton.A, JoyconButton.B, JoyconButton.X, JoyconButton.Y,
-            JoyconButton.Home, JoyconButton.Chat, JoyconButton.SrRight, JoyconButton.SlRight,
-        )
     }
 
     private fun JoyconButton.markingOn(side: JoyconSide): String =

@@ -174,8 +174,8 @@ In `JoyconScreen.kt`:
   and binds it as one combo; **Clear** unbinds it. It has no list: a dropdown would tick sources that
   fire alone, which a combo doesn't. Its trigger reads "C + RS", "Hold for 1 second" beneath.
 - **A keys-only mapping says how to map by hand** in its tip, in place of trying another layout:
-  Android games read the pad as it is; another emulator is mapped in its own settings, and the info
-  icon opens DSU's steps. Like every tip it hides with **Show tips** off.
+  another emulator is mapped in its own settings, and the info icon opens DSU's steps. Android's
+  tip says its buttons and sticks can be remapped here, since an Android game can't remap a pad. Like every tip it hides with **Show tips** off.
 
 ### Landscape
 
