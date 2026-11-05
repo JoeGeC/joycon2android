@@ -53,19 +53,6 @@ class OutputPlanTest {
     }
 
     @Test
-    fun `Eden set up from both tabs collides, Dolphin's two consoles and two Edens don't`() {
-        val eden = EmulatorTarget("eden", "dev.eden.eden_emulator", "Eden", EmulatorKind.EDEN)
-        val nightly = EmulatorTarget("eden-nightly", "dev.eden.eden_nightly", "Eden Nightly", EmulatorKind.EDEN)
-        val gameCube = EmulatorTarget("dolphin-gamecube", "org.dolphinemu.dolphinemu", "Dolphin (GameCube)", EmulatorKind.DOLPHIN_GAMECUBE)
-        val wii = EmulatorTarget("dolphin-wii", "org.dolphinemu.dolphinemu", "Dolphin (Wii)", EmulatorKind.DOLPHIN_WII)
-
-        assertTrue(OutputPlan.setupsCollide(eden, eden))
-        assertFalse(OutputPlan.setupsCollide(eden, nightly))
-        assertFalse(OutputPlan.setupsCollide(gameCube, wii))
-        assertFalse(OutputPlan.setupsCollide(EmulatorTarget.OTHER, EmulatorTarget.OTHER))
-    }
-
-    @Test
     fun `Motion rumbles through the pad on Dolphin Wii and Eden, unless every player has it off`() {
         assertTrue(OutputPlan.motionRumblesThroughPad(Console.WIIMOTE_NUNCHUK, listOf(0, 20)))
         assertTrue(OutputPlan.motionRumblesThroughPad(Console.SWITCH_PRO, listOf(20)))

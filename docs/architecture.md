@@ -141,8 +141,8 @@ one job, and any of them can run together. `:feature:output` owns the choice; `:
   consoles, `KeyBindings.plus`): a press bound to one key in both acts once, bound to two holds both.
   They act while any tab runs, unless paused (`DeviceKeysPause`, while the mapping editor listens for
   a press), and a bound press is withheld from the pad and DSU.
-- **Eden set up from both tabs collides** (`OutputPlan.setupsCollide`): both write the same
-  `player_<n>_*` keys, so only the last Set up reaches it.
+- **Eden set up from both tabs collides**: both write the same `player_<n>_*` keys, so only the
+  last Set up reaches it. Unflagged: Motion's setup already maps the buttons when it rumbles.
 - **Motion's rumble brings up the pad** (`OutputPlan.motionRumblesThroughPad`), as a mapping's keys
   bring up the keyboard.
 - **`:app` runs it.** `AppContainer` derives the planned devices; `OutputDevicesPolicy` starts the pad

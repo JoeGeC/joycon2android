@@ -5,7 +5,6 @@ import com.joegec.joycon2android.output.DeviceKeyKind
 import com.joegec.joycon2android.output.EmulatorTarget
 import com.joegec.joycon2android.output.OutputDevice
 import com.joegec.joycon2android.output.OutputMode
-import com.joegec.joycon2android.output.OutputPlan
 import com.joegec.joycon2android.output.OutputSelection
 import com.joegec.joycon2android.output.selected
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
@@ -42,10 +41,6 @@ data class OutputCardState(
     /** Running, or brought up for another tab, so its failures are worth showing. */
     fun isUp(mode: OutputMode): Boolean =
         mode in running || mode == OutputMode.GAMEPAD && motionRumblesThroughPad
-
-    val setupsCollide: Boolean
-        get() = OutputMode.GAMEPAD in running && OutputMode.MOTION in running &&
-            OutputPlan.setupsCollide(selectedTargetFor(OutputMode.GAMEPAD), selectedTargetFor(OutputMode.MOTION))
 
     private fun selectedTargetFor(mode: OutputMode) = emulatorsFor(mode).selected(selection.emulators[mode])
 }

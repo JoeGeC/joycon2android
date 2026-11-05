@@ -20,8 +20,4 @@ object OutputPlan {
         console in RUMBLE_THROUGH_PAD && rumblePercents.any { it > 0 }
 
     private val RUMBLE_THROUGH_PAD = setOf(Console.WIIMOTE_NUNCHUK, Console.SWITCH_PRO)
-
-    /** Both tabs set up Eden's same player bindings, so only the one set up last reaches it. */
-    fun setupsCollide(gamepad: EmulatorTarget?, motion: EmulatorTarget?): Boolean =
-        gamepad?.kind == EmulatorKind.EDEN && gamepad.packageName == motion?.packageName
 }

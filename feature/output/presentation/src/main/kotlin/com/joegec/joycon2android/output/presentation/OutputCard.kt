@@ -90,10 +90,7 @@ private fun ModeContent(state: OutputCardState, actions: OutputCardActions) {
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) {
                     when (mode) {
-                        OutputMode.GAMEPAD, OutputMode.MOTION -> {
-                            TargetSetup(mode, state, actions)
-                            if (state.setupsCollide) SettingWarning(stringResource(R.string.output_setups_collide))
-                        }
+                        OutputMode.GAMEPAD, OutputMode.MOTION -> TargetSetup(mode, state, actions)
                         OutputMode.MOUSE_KEYBOARD -> {
                             MappingButton(actions.openMapping)
                             if (state.noPointerController) SettingWarning(stringResource(R.string.output_no_pointer))
