@@ -2,7 +2,7 @@ package com.joegec.joycon2android.buttonmapping
 
 import com.joegec.joycon2android.model.PlayerNumber
 
-private const val SEPARATOR = "|"
+internal const val SEPARATOR = "|"
 
 internal fun bodyKeyPrefix(console: Console, body: PlayerBody) =
     listOf(console.name, body.player.name, body.side.name).joinToString(SEPARATOR)

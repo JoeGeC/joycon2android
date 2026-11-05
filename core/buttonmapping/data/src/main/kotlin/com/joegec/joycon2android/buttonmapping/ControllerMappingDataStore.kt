@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 
 internal val Context.controllerMappingDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "controller_mapping",
-    produceMigrations = { listOf(PerPlayerMigration(::perPlayerMappingNames), LegacyGripMigration()) },
+    produceMigrations = { listOf(PerPlayerMigration(::perPlayerMappingNames), LegacyGripMigration(), OtherEmulatorMappingMigration()) },
 )
 
 // A stored override used to be keyed CONSOLE|SIDE|TARGET, for every player at once.
