@@ -175,11 +175,12 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
   on the desk moves the pointer, even in an emulator. It's on for Mouse & keys and off elsewhere.
   Below it, left, right and middle click, and scroll up and down, from a button or stick direction —
   for games that want a click or the wheel. R clicks, ZR right-clicks, RS middle-clicks and the
-  right stick scrolls until you change them (L, ZL, LS and the left stick on a left Joy-Con alone). A held scroll repeats. They work held too, and take those buttons
-  from the game while the mouse is on. Needs Shizuku running.
+  right stick scrolls until you change them (L, ZL, LS and the left stick on a left Joy-Con alone). A held scroll repeats. They take those buttons from the game only
+  while a Joy-Con stands on the desk; in your hands they go back to the game. A controller with no
+  mouse sensor, or anyone on Mouse & keys, always clicks. Needs Shizuku running.
 - **Toggle combo.** At the bottom of the Mouse section, **C** to start (**Capture** on a left
   Joy-Con). To change it, tap it, hold the buttons you want together (C + RS, say), then let go. Holding them for a second while playing switches that player's Joy-Con
-  mouse off: no pointer, and their mouse buttons go back to the game. Hold again to switch it back on.
+  mouse off: no pointer, and their mouse buttons stay with the game even on the desk. Hold again to switch it back on.
   The controller buzzes each time, and the Output card says who has it off. The buttons still
   reach the game while you hold them, so pick ones it doesn't use much. Everyone's mouse is back on
   when the app restarts.

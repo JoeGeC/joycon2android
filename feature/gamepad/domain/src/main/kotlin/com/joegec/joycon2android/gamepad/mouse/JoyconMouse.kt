@@ -18,7 +18,7 @@ class JoyconMouse(private val side: Side) {
      * fixed clicks and scroll, for a Joy-Con no player holds.
      */
     fun read(input: JoyconInput, defaultControls: Boolean = true): MouseFrame? {
-        val sensor = input.mouse?.takeIf { it.onSurface && standsOnRail(input) } ?: return null.also { forget() }
+        val sensor = input.mouse?.takeIf { input.restsOnSurface(side) } ?: return null.also { forget() }
         val frame = MouseFrame(
             dx = sensor.x.since(lastX),
             dy = sensor.y.since(lastY),
@@ -29,16 +29,6 @@ class JoyconMouse(private val side: Side) {
         lastY = sensor.y
         lastPacketId = input.packetId
         return frame
-    }
-
-    // Fingers round the rail read as a surface too; only a desk turns the rail to the floor.
-    private fun standsOnRail(input: JoyconInput): Boolean {
-        val awayFromRail = when (side) {
-            Side.LEFT -> -input.accelX
-            Side.RIGHT -> input.accelX
-            Side.PRO, Side.UNKNOWN -> return false
-        }
-        return awayFromRail >= RAIL_DOWN_ACCEL
     }
 
     private fun forget() {
@@ -76,9 +66,6 @@ class JoyconMouse(private val side: Side) {
         private const val DETENTS_PER_SECOND = 20f
         private const val PACKET_ID_MASK = 0xFFFFFF
         private const val MAX_ELAPSED_MS = 100
-
-        // Raw accel reads +1 g (4096) on the axis pointing up; this allows a 45° lean.
-        private const val RAIL_DOWN_ACCEL = 2896
 
         private val PRIMARY = setOf(JoyconButton.L.id, JoyconButton.R.id)
         private val SECONDARY = setOf(JoyconButton.ZL.id, JoyconButton.ZR.id)

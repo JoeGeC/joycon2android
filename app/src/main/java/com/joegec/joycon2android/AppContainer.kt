@@ -134,6 +134,7 @@ import com.joegec.joycon2android.gamepad.mouse.MouseRepository
 import com.joegec.joycon2android.gamepad.mouse.ObserveMouseEnabledUseCase
 import com.joegec.joycon2android.gamepad.mouse.PushMouseFrameUseCase
 import com.joegec.joycon2android.gamepad.mouse.SetMouseEnabledUseCase
+import com.joegec.joycon2android.gamepad.mouse.spendsButtonsOnMouse
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.mouse.MouseMix
 import com.joegec.joycon2android.mouse.MouseModeToggle
@@ -416,7 +417,10 @@ class AppContainer(context: Context) {
     private val keyboardKeyRouter = HeldKeyRouter(OutputBindings(deviceKeysActing, keyboardBindings)) { held ->
         copy(keyboard = keyboard.copy(keys = held))
     }
-    private val mouseActions = OutputBindings(deviceKeysActing, mouseModeBindings)
+    // Mouse & keys has no game to hand the buttons back to.
+    private val mouseActions = OutputBindings(deviceKeysActing, mouseModeBindings) {
+        console.value == Console.PC || it.spendsButtonsOnMouse
+    }
     private val mouseActionRouter = HeldKeyRouter(mouseActions) { held -> copy(mouseActions = held) }
     private val pushKeyboardFrame = PushKeyboardFrameUseCase(keyboardRepository)
 

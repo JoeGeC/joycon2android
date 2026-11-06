@@ -39,6 +39,22 @@ class HeldKeyRouterTest {
     private fun holding(vararg buttons: JoyconButton) = player(JoyconInput(pressed = buttons.map { it.id }.toSet()))
 
     /** [routed] is what reaches this router after earlier ones withheld their own buttons. */
+    @Test
+    fun `a player the bindings don't act for keeps their buttons and holds no keys`() {
+        val router = HeldKeyRouter(OutputBindings(running, bindings) { false }) { held ->
+            copy(keyboard = keyboard.copy(keys = held))
+        }
+        val player = holding(JoyconButton.A)
+
+        val routed = router.route(
+            AppUiState(players = listOf(player)),
+            RoutedOutputs(gamepad = listOf(GamepadFrame(player)), dsu = listOf(player), keyboard = KeyboardFrame()),
+        )
+
+        assertEquals(emptySet<KeyboardKey>(), routed.keyboard.keys)
+        assertEquals(setOf(JoyconButton.A.id), routed.dsu.single().pressed)
+    }
+
     private fun route(player: PlayerState, routed: PlayerState = player) = router.route(
         AppUiState(players = listOf(player)),
         RoutedOutputs(

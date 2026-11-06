@@ -55,8 +55,9 @@ Unset, it's on for Mouse & keys alone; stored only where it differs, so a body s
 layout. Off, that player's Joy-Cons move no pointer and their mapped clicks are dropped
 (`ObserveJoyconMouseUsersUseCase`); the editor hides the section's rows.
 
-**One mouse, two inputs to it.** Clicks and scroll come from each player's **Mouse** mapping, held
-or not. While the mouse is up, a Joy-Con 2 standing on a surface also moves the pointer.
+**One mouse, two inputs to it.** Clicks and scroll come from each player's **Mouse** mapping, while
+one of their Joy-Cons stands on a surface. While the mouse is up, a Joy-Con 2 on a surface also moves
+the pointer.
 
 `mouseDefaults` sits under every layout, as the console default does, so every body starts bound and
 a layout's own mouse bindings win:
@@ -86,10 +87,14 @@ the Joy-Con stands on its rail; lifted, it is a plain controller again.
   wheel. So `JoyconMouse` also wants raw accel x, which reads +1 g on whichever axis points up, at
   ≥ 0.71 g away from the rail (−x on a left Joy-Con, +x on a right): within 45° of rail-down. A
   grip leaves x level, and a sideways hold turns the rail up.
-- **A held Joy-Con clicks only through its player's mapping**, surface or not; a row cleared to None
-  clicks nothing. An unheld one reaches no game, so its defaults need no withholding.
+- **A held Joy-Con clicks only through its player's mapping**; a row cleared to None clicks nothing.
+  An unheld one reaches no game, so its defaults need no withholding.
 - **What the mouse spends, the game never sees.** Mapped actions are withheld by their
   `HeldKeyRouter`, like [keyboard keys](#keyboard).
+- **In the hands, the buttons go back to the game** (`spendsButtonsOnMouse`): a player's mapped actions
+  act only while one of their Joy-Cons is on a surface, and both hands of a pair count, so the held hand can
+  click for the one on the desk. A controller with no sensor always clicks, as it can never stand on
+  one; so does anyone on Mouse & keys, which has no game to hand them to.
 - **One report a packet.** A report's buttons replace the last's, so `MouseMix` adds the mapped
   frame to the surface Joy-Cons' before pushing.
 - **Movement is summed, never conflated.** A pad report replaces the last; a mouse delta skipped is

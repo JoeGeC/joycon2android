@@ -9,8 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 class OutputBindings<K>(
     private val acting: StateFlow<Boolean>,
     private val bindings: StateFlow<Map<PlayerNumber, KeyBindings<K>>>,
+    private val actsFor: (PlayerState) -> Boolean = { true },
 ) {
-    fun of(player: PlayerState): KeyBindings<K> = of(player.player)
+    fun of(player: PlayerState): KeyBindings<K> = if (actsFor(player)) of(player.player) else KeyBindings()
 
     fun heldKeys(player: PlayerState, wasHeld: Set<K> = emptySet()): Set<K> = of(player).heldKeys(player, wasHeld)
 
