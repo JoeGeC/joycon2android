@@ -116,8 +116,10 @@ Each player can switch their own Joy-Con mouse off while playing: holding their 
 - **Off**, `MouseRouter` skips their Joy-Cons, so no pointer, and their mapped mouse actions are dropped, so those buttons reach the game again. Other players' mice carry on.
 - **A combo acts only held whole** (`HoldCombo`): every source down at once. Its value joins source
   ids like any target's, but they're ANDed, not ORed; each running console's combo is kept whole.
-- **Its buttons still reach the game** while held: holding them back would delay every press that
-  starts a combo. The hold makes a stray toggle unlikely.
+- **A combo of two or more still reaches the game** while held: holding it back would delay every
+  press that starts a combo. The hold makes a stray toggle unlikely.
+- **A one-button toggle never reaches the game or DSU** while the player uses the mouse, on or off,
+  so it doesn't also [select in Android](#buttons-and-keycodes).
 - **Toggles once a hold.** Latched until a source lifts, so holding on doesn't flip it back.
 - **Not saved.** A player who leaves, or a relaunch, gets their mouse back on.
 - Like other device keys it waits while the mapping editor listens for a press.
@@ -193,6 +195,9 @@ button the code whose keycode carries its own name:
   as `AXIS_LTRIGGER`/`AXIS_RTRIGGER` with compat copies as `AXIS_BRAKE` (23) and `AXIS_GAS` (22);
   Android 7–13 report only 23 and 22. Re-publishing firmware synthesises `L2`/`R2` from those axes —
   reversed, a ZR pull arrives as L2.
+- **A button no app handles falls back to a key** (`Generic.kcm`): A, Capture, GL, GR, C, + and the
+  stick clicks to `DPAD_CENTER` (select), B to Back, X to Delete, Y to Space, − to Menu, Home to Home.
+  An app can't change it: a device's own map lives in `/system`, `/vendor` or `/data/system`.
 - **D-pad** is the hat (`AXIS_HAT_X` 15, `AXIS_HAT_Y` 16), one direction winning a conflict. Sticks
   are axes 0/1 (left) and 11/14 (right). Eden's config uses numeric keycodes; Dolphin's uses names (`Button L2` = ZL,
   `Select` = −, …).
