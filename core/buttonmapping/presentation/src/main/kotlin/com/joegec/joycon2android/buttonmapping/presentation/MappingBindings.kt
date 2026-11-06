@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.buttonmapping.Console
+import com.joegec.joycon2android.buttonmapping.RUMBLE_PERCENT_KEY
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.ui.components.SettingWarning
 import com.joegec.joycon2android.ui.theme.Dimens
@@ -23,7 +24,7 @@ fun MappingBindings(
             val open = section.openAtFirst(console)
             when {
                 section == MappingSection.RUMBLE ->
-                    if (state.offersRumble) RumbleSection(console, state.rumblePercent, open) { actions.setRumble(state.body, it) }
+                    if (state.offersRumble) RumbleSection(console, state.rumblePercent, open, RUMBLE_PERCENT_KEY in state.changes.targets) { actions.setRumble(state.body, it) }
                 section == MappingSection.MOTION ->
                     if (targets.isNotEmpty() || state.offersSensitivity) MotionSection(targets, state, controller, actions, open)
                 targets.isEmpty() -> Unit
@@ -47,7 +48,7 @@ private fun BindingSection(
     warnings: List<String>,
     open: Boolean,
 ) {
-    MappingSectionBox(section, open) {
+    MappingSectionBox(section, open, changed = state.anyChanged(targets)) {
         warnings.forEach { SettingWarning(it) }
         val sources = MappingOptions.sources(state.body.side, section)
         targets.forEach { (key, label) -> BindingRow(label, key, sources, state, controller, actions) }

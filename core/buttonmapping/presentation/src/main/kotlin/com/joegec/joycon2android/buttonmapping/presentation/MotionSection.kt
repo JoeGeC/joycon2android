@@ -8,6 +8,7 @@ import com.joegec.joycon2android.buttonmapping.RemoteMotion
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.ui.components.SettingSwitch
 import com.joegec.joycon2android.ui.theme.Dimens
+import com.joegec.joycon2android.ui.theme.TextTitle
 
 /** How a Wii player's motion is shaped, then what Shake and Recenter are bound to. Classic has only sensitivity. */
 @Composable
@@ -18,10 +19,11 @@ internal fun MotionSection(
     actions: MappingActions,
     open: Boolean,
 ) {
-    MappingSectionBox(MappingSection.MOTION, open) {
-        if (state.offersThrust) ThrustSwitch(state.thrust) { actions.setThrust(state.body, it) }
+    val changed = state.changes.thrust || state.changes.sensitivity || state.anyChanged(targets)
+    MappingSectionBox(MappingSection.MOTION, open, changed) {
+        if (state.offersThrust) ThrustSwitch(state.thrust, state.changes.thrust) { actions.setThrust(state.body, it) }
         if (state.offersSensitivity) {
-            SensitivitySlider(state.sensitivityPercent) { actions.setSensitivity(state.body, it) }
+            SensitivitySlider(state.sensitivityPercent, state.changes.sensitivity) { actions.setSensitivity(state.body, it) }
         }
         val sources = MappingOptions.sources(state.body.side, MappingSection.MOTION)
         targets.forEach { (key, label) -> BindingRow(label, key, sources, state, controller, actions) }
@@ -30,9 +32,10 @@ internal fun MotionSection(
 
 /** docs/dsu-motion.md#thrusts */
 @Composable
-private fun ThrustSwitch(enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
+private fun ThrustSwitch(enabled: Boolean, changed: Boolean, onSetEnabled: (Boolean) -> Unit) {
     SettingSwitch(
         title = stringResource(R.string.controller_mapping_thrust),
+        titleColor = changedColor(changed, TextTitle),
         description = stringResource(R.string.controller_mapping_thrust_description),
         checked = enabled,
         onCheckedChange = onSetEnabled,
@@ -42,9 +45,10 @@ private fun ThrustSwitch(enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
 
 /** docs/dsu-motion.md#motion-sensitivity */
 @Composable
-private fun SensitivitySlider(percent: Int, onSetPercent: (Int) -> Unit) {
+private fun SensitivitySlider(percent: Int, changed: Boolean, onSetPercent: (Int) -> Unit) {
     PercentSlider(
         title = stringResource(R.string.controller_mapping_sensitivity),
+        titleColor = changedColor(changed, TextTitle),
         description = stringResource(R.string.controller_mapping_sensitivity_description),
         percent = percent,
         range = RemoteMotion.SENSITIVITY_PERCENT_RANGE,

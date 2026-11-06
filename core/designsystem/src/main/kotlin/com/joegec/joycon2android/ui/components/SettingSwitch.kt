@@ -37,6 +37,7 @@ fun SettingSwitch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    titleColor: Color = TextTitle,
     descriptionColor: Color = TextDim,
     titleStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     warning: String? = null,
@@ -54,7 +55,7 @@ fun SettingSwitch(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = TextTitle, style = titleStyle)
+            Text(title, color = titleColor, style = titleStyle)
             Spacer(Modifier.height(Dimens.featureCardTitleGap))
             Text(description, color = descriptionColor, style = MaterialTheme.typography.bodySmall)
             warning?.let {

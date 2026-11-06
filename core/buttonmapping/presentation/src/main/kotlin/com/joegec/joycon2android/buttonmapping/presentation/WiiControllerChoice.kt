@@ -27,6 +27,7 @@ internal fun WiiControllerChoice(
     side: JoyconSide,
     options: List<WiiController>,
     selected: WiiController,
+    changed: Boolean,
     onSelect: (WiiController) -> Unit,
 ) {
     Column(
@@ -40,7 +41,7 @@ internal fun WiiControllerChoice(
             label = "description",
         ) { controller ->
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.featureCardTitleGap)) {
-                Text(controller.description(), color = TextDim, style = MaterialTheme.typography.bodySmall)
+                Text(controller.description(), color = changedColor(changed, TextDim), style = MaterialTheme.typography.bodySmall)
                 if (controller == WiiController.SIDEWAYS_REMOTE && side == JoyconSide.RIGHT) {
                     SettingWarning(stringResource(R.string.wii_controller_sideways_remote_warning))
                 }

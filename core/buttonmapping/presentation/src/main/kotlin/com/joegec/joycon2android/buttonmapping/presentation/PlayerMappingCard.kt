@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.joegec.joycon2android.buttonmapping.Console
+import com.joegec.joycon2android.buttonmapping.PRO_CONTROLLER_KEY
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.model.ConnectedJoycon
 import com.joegec.joycon2android.model.PlayerState
@@ -42,6 +43,7 @@ import com.joegec.joycon2android.ui.theme.CardBg
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.JoyconDefaultColor
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextTitle
 import com.joegec.joycon2android.ui.theme.joyconBorderColor
 
 @Composable
@@ -80,10 +82,10 @@ fun PlayerMappingCard(
             ) {
                 PlayerLayoutPicker(state, labels, actions, onSaveLayout, onDeleteLayout)
                 if (state.offersProController) {
-                    ProControllerSwitch(state.proController) { actions.setProController(state.body, it) }
+                    ProControllerSwitch(state.proController, PRO_CONTROLLER_KEY in state.changes.targets) { actions.setProController(state.body, it) }
                 }
                 if (state.wiiControllers.isNotEmpty()) {
-                    WiiControllerChoice(state.body.side, state.wiiControllers, state.wiiController) {
+                    WiiControllerChoice(state.body.side, state.wiiControllers, state.wiiController, state.changes.controller) {
                         actions.setWiiController(state.body, it)
                     }
                 }
@@ -114,7 +116,7 @@ private fun CardHeader(player: PlayerState, layoutName: String?, expanded: Boole
         ControllerChips(player)
         Text(
             layoutName ?: stringResource(R.string.controller_mapping_layout_custom),
-            color = TextDim,
+            color = changedColor(layoutName == null, TextDim),
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.End,
             maxLines = 1,
@@ -180,9 +182,10 @@ private fun PlayerLayoutPicker(
 
 /** docs/virtual-gamepad.md#single-joy-con */
 @Composable
-private fun ProControllerSwitch(enabled: Boolean, onSetEnabled: (Boolean) -> Unit) {
+private fun ProControllerSwitch(enabled: Boolean, changed: Boolean, onSetEnabled: (Boolean) -> Unit) {
     SettingSwitch(
         title = stringResource(R.string.controller_mapping_pro_controller),
+        titleColor = changedColor(changed, TextTitle),
         description = stringResource(R.string.controller_mapping_pro_controller_description),
         checked = enabled,
         onCheckedChange = onSetEnabled,

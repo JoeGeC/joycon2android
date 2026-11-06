@@ -53,4 +53,60 @@ class MappingLayoutsTest {
         assertTrue(MarioKartNunchukMapping in offered)
         assertFalse(MarioKartWheelMapping in offered)
     }
+
+    private val side = JoyconSide.DUAL
+    private val console = Console.SWITCH_PRO
+    private val layouts = MappingLayouts.forBody(console, side, emptyList())
+    private val default = MappingLayouts.entriesOf(console, side, SwitchProMapping)
+
+    private fun changes(entries: Map<String, String>, motion: RemoteMotion = RemoteMotion()) =
+        MappingLayouts.changesFromClosest(console, side, entries, motion, layouts)
+
+    @Test
+    fun `an unchanged layout has no changes`() {
+        assertEquals(MappingChanges(), changes(default))
+    }
+
+    @Test
+    fun `a rebound target is the only change`() {
+        val rebound = default.keys.first { default.getValue(it).isNotEmpty() }
+
+        assertEquals(setOf(rebound), changes(default + (rebound to "ZZ")).targets)
+    }
+
+    @Test
+    fun `a cleared target is a change`() {
+        val cleared = default.keys.first { default.getValue(it).isNotEmpty() }
+
+        assertEquals(setOf(cleared), changes(default + (cleared to "")).targets)
+    }
+
+    @Test
+    fun `a target the layout leaves empty stays unchanged when stored empty`() {
+        assertEquals(MappingChanges(), changes(default + ("KEYBOARD_W" to "")))
+    }
+
+    @Test
+    fun `changes are read against the closest layout, not the default`() {
+        val wii = Console.WIIMOTE_NUNCHUK
+        val lone = JoyconSide.RIGHT
+        val closest = MarioKartWheelMapping
+        val entries = MappingLayouts.entriesOf(wii, lone, closest)
+        val rebound = entries.keys.first { entries.getValue(it).isNotEmpty() }
+
+        val found = MappingLayouts.changesFromClosest(
+            wii, lone, entries + (rebound to "ZZ"), closest.motion(lone), MappingLayouts.forBody(wii, lone, emptyList()),
+        )
+
+        assertEquals(setOf(rebound), found.targets)
+    }
+
+    @Test
+    fun `motion shaping counts as a change`() {
+        val found = changes(default, RemoteMotion(thrust = true, sensitivityPercent = 150))
+
+        assertTrue(found.thrust)
+        assertTrue(found.sensitivity)
+        assertFalse(found.controller)
+    }
 }

@@ -2,6 +2,7 @@ package com.joegec.joycon2android.buttonmapping.presentation
 
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.GlobalMapping
+import com.joegec.joycon2android.buttonmapping.MappingChanges
 import com.joegec.joycon2android.buttonmapping.MappingLayout
 import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.PlayerBody
@@ -34,6 +35,7 @@ data class PlayerMappingUiState(
     val rumblePercent: Int,
     val offersRumble: Boolean,
     val mapping: Map<String, String>,
+    val changes: MappingChanges = MappingChanges(),
 ) {
     val singleJoycon: Boolean get() = offersProController && !proController
     val classicController: Boolean get() = wiiController == WiiController.CLASSIC
@@ -70,6 +72,7 @@ private fun PlayerMapping.uiState(
     rumblePercent = entries.rumblePercent,
     offersRumble = MappingOptions.offersRumble(console),
     mapping = entries,
+    changes = if (layout == null) MappingLayouts.changesFromClosest(console, body.side, entries, motion, layouts) else MappingChanges(),
 )
 
 internal fun ControllerMappingUiState.takenNames(session: Boolean): List<String> =

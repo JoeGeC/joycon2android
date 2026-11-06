@@ -87,6 +87,8 @@ shipped layouts in `preset/`), persistence (`data`) and the editor (`presentatio
   `MappingLayouts.matching` reads the name back by comparing a body's bindings with every shipped
   layout and every one the user saved for that body; no match is "Custom". So deleting a layout
   removes only its name, and the same bindings answer to it again if an identical one is saved.
+- **A Custom mapping shows what's changed against its closest layout** (`changesFromClosest`), the one
+  it differs from least. With no stored reference, what it's compared to can shift as it's edited.
 - **Android keys, keyboard keys and mouse actions are mapping targets too** (`ANDROID_HOME`,
   `KEYBOARD_W`, `MOUSE_LEFT_CLICK`, …), so layouts save them and a grip switch keeps them
   (`DEVICE_KEY_TARGETS`). They act in the app rather than the emulator, parsed into `KeyBindings`:

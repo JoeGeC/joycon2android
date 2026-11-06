@@ -28,6 +28,36 @@ object MappingLayouts {
         it.motion(side) == motion && entriesOf(console, side, it).bound() == entries.bound()
     }
 
+    /** Against the layout it differs from least, the earliest on a tie, so the console default wins one. */
+    fun changesFromClosest(
+        console: Console,
+        side: JoyconSide,
+        entries: Map<String, String>,
+        motion: RemoteMotion,
+        layouts: List<MappingLayout>,
+    ): MappingChanges = layouts
+        .map { changesFrom(it, console, side, entries, motion) }
+        .minByOrNull { it.count }
+        ?: MappingChanges()
+
+    private fun changesFrom(
+        layout: MappingLayout,
+        console: Console,
+        side: JoyconSide,
+        entries: Map<String, String>,
+        motion: RemoteMotion,
+    ): MappingChanges {
+        val theirs = entriesOf(console, side, layout).bound()
+        val ours = entries.bound()
+        val base = layout.motion(side)
+        return MappingChanges(
+            targets = (theirs.keys + ours.keys).filterTo(mutableSetOf()) { theirs[it] != ours[it] },
+            controller = base.controller != motion.controller,
+            thrust = base.thrust != motion.thrust,
+            sensitivity = base.sensitivityPercent != motion.sensitivityPercent,
+        )
+    }
+
     // A target cleared back to "None" is stored as empty, which a layout that never bound it omits.
     private fun Map<String, String>.bound() = filterValues { it.isNotEmpty() }
 

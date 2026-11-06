@@ -38,7 +38,7 @@ internal fun MouseModeRow(
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, color = TextDim, modifier = Modifier.weight(1f))
+        Text(label, color = changedColor(MOUSE_MODE_KEY in state.changes.targets, TextDim), modifier = Modifier.weight(1f))
         Box(Modifier.weight(1f)) {
             DropdownTrigger(
                 label = names.takeIf { it.isNotEmpty() }?.joinToString(" + ") ?: stringResource(R.string.source_none),

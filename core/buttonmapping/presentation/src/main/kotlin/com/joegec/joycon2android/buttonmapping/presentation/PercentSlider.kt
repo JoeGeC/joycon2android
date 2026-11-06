@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.joegec.joycon2android.ui.components.SettingSlider
 import com.joegec.joycon2android.ui.theme.Dimens
 import kotlin.math.roundToInt
@@ -15,6 +16,7 @@ import kotlin.math.roundToInt
 @Composable
 internal fun PercentSlider(
     title: String,
+    titleColor: Color,
     description: String,
     percent: Int,
     range: IntRange,
@@ -25,6 +27,7 @@ internal fun PercentSlider(
     var dragged by remember(percent) { mutableFloatStateOf(percent.toFloat()) }
     SettingSlider(
         title = title,
+        titleColor = titleColor,
         description = description,
         valueLabel = valueLabel(dragged.roundToInt()),
         value = dragged,

@@ -146,7 +146,9 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
   fires it.
 
 - **Layouts.** Each player picks a layout to start from, which resets their changes. The card reads
-  **Custom** once you change a binding, and the layout's name again if you change it back.
+  **Custom** once you change a binding, and the layout's name again if you change it back. While it's
+  Custom, teal marks what differs from the closest layout: the word **Custom**, each changed row and
+  its section's header.
 - **Saving.** The save icon beside the name keeps your mapping as a layout for any player holding the
   same body. It dims when the mapping already matches a layout. Deleting a layout (the bin in the
   dropdown) keeps everyone's buttons; they just read **Custom** until you save again. While a layout reads **Custom**, a hint points at its save icon.

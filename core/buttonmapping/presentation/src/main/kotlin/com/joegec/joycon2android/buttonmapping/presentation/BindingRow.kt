@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import com.joegec.joycon2android.buttonmapping.sourceIdOf
 import com.joegec.joycon2android.buttonmapping.sourceIdsOf
 import com.joegec.joycon2android.ui.components.ExpandableInfoSection
@@ -22,12 +23,15 @@ import com.joegec.joycon2android.ui.components.MultiSelectDropdown
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.SectionBg
 import com.joegec.joycon2android.ui.theme.TextDim
+import com.joegec.joycon2android.ui.theme.TextTitle
+import com.joegec.joycon2android.ui.theme.UnsavedText
 
 /** A section on its own panel, its header tapped to show or hide its rows. */
 @Composable
 internal fun MappingSectionBox(
     section: MappingSection,
     open: Boolean,
+    changed: Boolean = false,
     onInfoClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
@@ -39,6 +43,7 @@ internal fun MappingSectionBox(
         initiallyExpanded = open,
         insidePadding = Dimens.mappingSectionPadding,
         onInfoClick = onInfoClick,
+        titleColor = changedColor(changed, TextTitle),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing)) { content() }
     }
@@ -62,7 +67,7 @@ internal fun BindingRow(
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, color = TextDim, modifier = Modifier.weight(1f))
+        Text(label, color = changedColor(targetKey in state.changes.targets, TextDim), modifier = Modifier.weight(1f))
         MultiSelectDropdown(
             options = sources,
             selectedIds = selectedIds,
@@ -95,6 +100,11 @@ internal fun BindingRow(
         )
     }
 }
+
+internal fun changedColor(changed: Boolean, unchanged: Color): Color = if (changed) UnsavedText else unchanged
+
+internal fun PlayerMappingUiState.anyChanged(targets: List<Pair<String, String>>): Boolean =
+    targets.any { (key, _) -> key in changes.targets }
 
 /** Any source can fire a target, so picking one adds it; picking "None" empties the row. */
 private fun List<String>.toggling(sourceId: String): List<String> = when {

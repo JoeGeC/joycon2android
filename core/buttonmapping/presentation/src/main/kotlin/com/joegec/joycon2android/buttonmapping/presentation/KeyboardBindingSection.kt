@@ -29,7 +29,7 @@ internal fun KeyboardBindingSection(
     val bound = targets.filter { (key, _) -> state.mapping[key].orEmpty().isNotEmpty() }.map { it.first }.toSet()
     val shown = targets.filter { (key, _) -> key in bound || key in added }
 
-    MappingSectionBox(MappingSection.KEYBOARD, open) {
+    MappingSectionBox(MappingSection.KEYBOARD, open, changed = state.anyChanged(targets)) {
         if (needsShizuku) SettingWarning(stringResource(R.string.keyboard_keys_need_shizuku))
         if (LETTER_KEYS.any { it in bound }) SettingWarning(stringResource(R.string.keyboard_letters_hide_ime))
         val sources = MappingOptions.sources(state.body.side, MappingSection.KEYBOARD)

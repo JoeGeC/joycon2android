@@ -31,10 +31,11 @@ fun SettingSlider(
     onValueChange: (Float) -> Unit,
     onValueChangeFinished: () -> Unit,
     modifier: Modifier = Modifier,
+    titleColor: Color = TextTitle,
 ) {
     Column(modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(title, color = TextTitle, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            Text(title, color = titleColor, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(Dimens.featureCardSwitchGap))
             Text(valueLabel, color = Accent, style = MaterialTheme.typography.bodyMedium)
         }

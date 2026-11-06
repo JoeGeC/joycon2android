@@ -25,6 +25,9 @@ top-level `Color` vals used directly. One teal accent, plus each controller's ow
 **Accent**
 - `Accent` — `#38E0C8` (teal/cyan; `primary`, active toggles, high battery, default Joy-Con color)
 - `AccentDim` — `#1C3A38` (muted teal for dim/secondary accent states)
+- `UnsavedText` — `Accent`, matching the save icon and hint that also light up: on a Custom mapping,
+  the player row's **Custom**, each row that differs from the closest layout, and its section's
+  header, which shows through a collapsed section. Not `WarningText`: an unsaved change isn't a problem
 
 **Status**
 - `ErrorText` — `#FF6B6B` / `ErrorBg` — `#2D1B1B`
