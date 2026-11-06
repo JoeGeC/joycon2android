@@ -17,10 +17,9 @@ internal fun MotionSection(
     state: PlayerMappingUiState,
     controller: LiveController,
     actions: MappingActions,
-    open: Boolean,
 ) {
     val changed = state.changes.thrust || state.changes.sensitivity || state.anyChanged(targets)
-    MappingSectionBox(MappingSection.MOTION, open, changed) {
+    MappingSectionBox(MappingSection.MOTION, changed) {
         if (state.offersThrust) ThrustSwitch(state.thrust, state.changes.thrust) { actions.setThrust(state.body, it) }
         if (state.offersSensitivity) {
             SensitivitySlider(state.sensitivityPercent, state.changes.sensitivity) { actions.setSensitivity(state.body, it) }

@@ -166,8 +166,8 @@ In `JoyconScreen.kt`:
   chosen one's description cross-fades beneath it, and Thrusts hides on Classic.
 - **Each section sits on its own panel**, `SectionBg` rounded inside the card, so scrolling shows
   where one ends and the next begins.
-- **Every section collapses.** The app's own keys (Android, Mouse, Keyboard) start collapsed, and
-  open only on Mouse & keys, where they're the point.
+- **Every section starts collapsed**, so the screen opens as a short list of headers, and a changed
+  section's teal header shows without opening it.
 - **Keyboard lists only the keys in use.** Bound keys, then an "Add a key" `OptionDropdown` of the
   rest; a key added but left on None is gone next visit. Sixty rows of None would bury the few that
   matter. A bound letter adds a `SettingWarning` that the on-screen keyboard hides.

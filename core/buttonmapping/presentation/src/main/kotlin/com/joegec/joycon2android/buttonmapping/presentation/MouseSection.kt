@@ -29,12 +29,11 @@ internal fun MouseSection(
     controller: LiveController,
     actions: MappingActions,
     warnings: List<String>,
-    open: Boolean,
 ) {
     val on = state.mapping.joyconMouse(console)
     val switchChanged = JOYCON_MOUSE_KEY in state.changes.targets
     val changed = switchChanged || MOUSE_MODE_KEY in state.changes.targets || state.anyChanged(targets)
-    MappingSectionBox(MappingSection.MOUSE, open, changed) {
+    MappingSectionBox(MappingSection.MOUSE, changed) {
         SettingSwitch(
             title = stringResource(R.string.mouse_on),
             description = stringResource(R.string.mouse_on_description),

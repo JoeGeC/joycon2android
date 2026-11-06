@@ -21,18 +21,17 @@ fun MappingBindings(
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing)) {
         MappingSection.entries.forEach { section ->
             val targets = MappingOptions.targets(console, section, state.body.side, state.singleJoycon, state.classicController)
-            val open = section.openAtFirst(console)
             when {
                 section == MappingSection.RUMBLE ->
-                    if (state.offersRumble) RumbleSection(console, state.rumblePercent, open, RUMBLE_PERCENT_KEY in state.changes.targets) { actions.setRumble(state.body, it) }
+                    if (state.offersRumble) RumbleSection(console, state.rumblePercent, RUMBLE_PERCENT_KEY in state.changes.targets) { actions.setRumble(state.body, it) }
                 section == MappingSection.MOTION ->
-                    if (targets.isNotEmpty() || state.offersSensitivity) MotionSection(targets, state, controller, actions, open)
+                    if (targets.isNotEmpty() || state.offersSensitivity) MotionSection(targets, state, controller, actions)
                 targets.isEmpty() -> Unit
                 section == MappingSection.MOUSE ->
-                    MouseSection(console, targets, state, controller, actions, sectionWarnings(section, state, warnings), open)
+                    MouseSection(console, targets, state, controller, actions, sectionWarnings(section, state, warnings))
                 section == MappingSection.KEYBOARD ->
-                    KeyboardBindingSection(targets, state, controller, actions, warnings.keyboardAndMouseNeedShizuku, open)
-                else -> BindingSection(section, targets, state, controller, actions, sectionWarnings(section, state, warnings), open)
+                    KeyboardBindingSection(targets, state, controller, actions, warnings.keyboardAndMouseNeedShizuku)
+                else -> BindingSection(section, targets, state, controller, actions, sectionWarnings(section, state, warnings))
             }
         }
     }
@@ -46,18 +45,13 @@ private fun BindingSection(
     controller: LiveController,
     actions: MappingActions,
     warnings: List<String>,
-    open: Boolean,
 ) {
-    MappingSectionBox(section, open, changed = state.anyChanged(targets)) {
+    MappingSectionBox(section, changed = state.anyChanged(targets)) {
         warnings.forEach { SettingWarning(it) }
         val sources = MappingOptions.sources(state.body.side, section)
         targets.forEach { (key, label) -> BindingRow(label, key, sources, state, controller, actions) }
     }
 }
-
-// The app's own keys start collapsed everywhere but Mouse & keys, where they're the point.
-private fun MappingSection.openAtFirst(console: Console) = console == Console.PC ||
-    this != MappingSection.ANDROID && this != MappingSection.MOUSE && this != MappingSection.KEYBOARD
 
 @Composable
 private fun sectionWarnings(

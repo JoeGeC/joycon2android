@@ -18,10 +18,10 @@ import com.joegec.joycon2android.ui.theme.TextTitle
 
 /** docs/virtual-gamepad.md#rumble */
 @Composable
-internal fun RumbleSection(console: Console, percent: Int, open: Boolean, changed: Boolean, onSetPercent: (Int) -> Unit) {
+internal fun RumbleSection(console: Console, percent: Int, changed: Boolean, onSetPercent: (Int) -> Unit) {
     val throughPad = R.string.rumble_through_pad_wii.takeIf { console == Console.WIIMOTE_NUNCHUK }
     var showInfo by rememberSaveable { mutableStateOf(false) }
-    MappingSectionBox(MappingSection.RUMBLE, open, changed, onInfoClick = throughPad?.let { { showInfo = true } }) {
+    MappingSectionBox(MappingSection.RUMBLE, changed, onInfoClick = throughPad?.let { { showInfo = true } }) {
         PercentSlider(
             title = stringResource(R.string.controller_mapping_rumble),
             titleColor = changedColor(changed, TextTitle),

@@ -30,7 +30,6 @@ import com.joegec.joycon2android.ui.theme.UnsavedText
 @Composable
 internal fun MappingSectionBox(
     section: MappingSection,
-    open: Boolean,
     changed: Boolean = false,
     onInfoClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
@@ -40,7 +39,6 @@ internal fun MappingSectionBox(
         Modifier
             .clip(RoundedCornerShape(Dimens.buttonCorner))
             .background(SectionBg),
-        initiallyExpanded = open,
         insidePadding = Dimens.mappingSectionPadding,
         onInfoClick = onInfoClick,
         titleColor = changedColor(changed, TextTitle),
