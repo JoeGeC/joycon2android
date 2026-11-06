@@ -22,5 +22,6 @@
     <string name="playing_android">Android games &amp; apps</string>
     <string name="playing_pc">Mouse &amp; keys</string>
     <string name="playing_not_installed">%1$s isn\'t installed, so it can\'t be set up from here.</string>
-    <string name="playing_other_emulator_steps">Map the emulator\'s controls in its own settings.\nMotion from DSU at %1$s (tap to copy).</string>
+    <string name="playing_other_emulator_steps">Map the emulator\'s controls in its own settings.</string>
+    <string name="playing_other_emulator_steps_with_motion">Map the emulator\'s controls in its own settings.\nMotion from DSU at %1$s (tap to copy).</string>
 </resources>

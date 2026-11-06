@@ -86,7 +86,7 @@ private fun PlayingContent(state: OutputCardState, actions: OutputCardActions) {
                     MappingButton(actions.openMapping)
                 }
                 playing == Playing.OTHER_EMULATOR -> {
-                    OtherEmulatorSteps(state.dsuAddress)
+                    OtherEmulatorSteps(state.dsuAddress.takeIf { state.selection.motion })
                     MappingButton(actions.openMapping)
                 }
                 else -> MappingButton(actions.openMapping)
@@ -97,10 +97,14 @@ private fun PlayingContent(state: OutputCardState, actions: OutputCardActions) {
 }
 
 @Composable
-private fun OtherEmulatorSteps(dsuAddress: String) {
+private fun OtherEmulatorSteps(dsuAddress: String?) {
+    if (dsuAddress == null) {
+        InfoBox(stringResource(R.string.playing_other_emulator_steps))
+        return
+    }
     val clipboard = LocalClipboardManager.current
     InfoBox(
-        stringResource(R.string.playing_other_emulator_steps, dsuAddress),
+        stringResource(R.string.playing_other_emulator_steps_with_motion, dsuAddress),
         onClick = { clipboard.setText(AnnotatedString(dsuAddress)) },
     )
 }
