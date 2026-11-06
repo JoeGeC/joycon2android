@@ -61,7 +61,7 @@ internal fun rememberLayoutLabels(): LayoutLabels {
 private fun nameOf(preset: MappingPreset): String = when (preset) {
     GameCubeMapping, SwitchProMapping, OtherEmulatorMapping -> stringResource(R.string.layout_standard)
     AndroidMapping -> stringResource(R.string.layout_as_labelled)
-    AndroidXboxMapping -> stringResource(R.string.layout_xbox_positions)
+    AndroidXboxMapping -> stringResource(R.string.layout_xbox)
     WasdMouseMapping -> stringResource(R.string.layout_wasd_mouse)
     MouseOnlyMapping -> stringResource(R.string.layout_mouse_only)
     WiiMapping -> stringResource(R.string.layout_wii)
@@ -77,7 +77,7 @@ private fun nameOf(preset: MappingPreset): String = when (preset) {
 private fun descriptionOf(preset: MappingPreset): String? = when (preset) {
     GameCubeMapping, SwitchProMapping, OtherEmulatorMapping -> null
     AndroidMapping -> stringResource(R.string.layout_as_labelled_description)
-    AndroidXboxMapping -> stringResource(R.string.layout_xbox_positions_description)
+    AndroidXboxMapping -> stringResource(R.string.layout_xbox_description)
     WasdMouseMapping -> stringResource(R.string.layout_wasd_mouse_description)
     MouseOnlyMapping -> stringResource(R.string.layout_mouse_only_description)
     WiiMapping -> stringResource(R.string.layout_wii_description)

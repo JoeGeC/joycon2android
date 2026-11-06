@@ -58,8 +58,8 @@
     <string name="layout_standard">Standard</string>
     <string name="layout_as_labelled">As labelled</string>
     <string name="layout_as_labelled_description">Each button sends the button it\'s printed as.</string>
-    <string name="layout_xbox_positions">By position (Xbox)</string>
-    <string name="layout_xbox_positions_description">A/B and X/Y swapped, so each sends the button in its spot on an Xbox pad.</string>
+    <string name="layout_xbox">Xbox</string>
+    <string name="layout_xbox_description">A/B and X/Y swapped, so each sends the button in its spot on an Xbox pad.</string>
     <string name="layout_wasd_mouse">WASD + Mouse</string>
     <string name="layout_wasd_mouse_description">WASD on the stick, plus mouse clicks and scroll</string>
     <string name="layout_mouse_only">Mouse only</string>

@@ -294,7 +294,7 @@ game gets the pad unmapped, since Auto set up writes the mapping into the emulat
 - **As labelled** (`AndroidMapping`, the default) puts each button on the pad button its grip sends
   unmapped (`emittedFor`), so the pad sends what it always has. A test holds every button of every
   body to that.
-- **By position (Xbox)** swaps A/B and X/Y. Android games follow Xbox positions, A at the bottom,
+- **Xbox** swaps A/B and X/Y. Android games follow Xbox positions, A at the bottom,
   where Nintendo prints B, so as labelled the face buttons feel swapped.
 - **A whole stick stays analog** (`wholeEmittedStick`), a sideways Joy-Con's still turned; directions
   bound any other way push the stick to the gate.

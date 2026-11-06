@@ -65,7 +65,7 @@ class AndroidPadLayoutTest {
     }
 
     @Test
-    fun `by position sends A for the bottom button and B for the right one`() {
+    fun `xbox sends A for the bottom button and B for the right one`() {
         val layout = AndroidPadLayout.of(AndroidXboxMapping.entries(JoyconSide.DUAL), JoyconSide.DUAL)
 
         assertEquals(setOf(JoyconButton.A.id), layout.padFor(stateOf(JoyconSide.DUAL, setOf(JoyconButton.B))).pressed)
