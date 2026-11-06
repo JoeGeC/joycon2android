@@ -15,12 +15,33 @@ import com.joegec.joycon2android.ui.theme.Dimens
 /** One switch for every player, since DSU runs for the whole game or not at all. */
 @Composable
 internal fun GameMotionCard(console: Console, on: Boolean, onSetOn: (Boolean) -> Unit) {
-    SettingSwitch(
+    GameSwitchCard(
         title = stringResource(R.string.controller_mapping_game_motion),
         description = stringResource(
             if (console == Console.SWITCH_PRO) R.string.controller_mapping_game_motion_set_up
             else R.string.controller_mapping_game_motion_description,
         ),
+        on = on,
+        onSetOn = onSetOn,
+    )
+}
+
+/** One switch for every player, as the output runs the pad or doesn't: docs/architecture.md#output */
+@Composable
+internal fun GamePadCard(on: Boolean, onSetOn: (Boolean) -> Unit) {
+    GameSwitchCard(
+        title = stringResource(R.string.controller_mapping_game_pad),
+        description = stringResource(R.string.controller_mapping_game_pad_description),
+        on = on,
+        onSetOn = onSetOn,
+    )
+}
+
+@Composable
+private fun GameSwitchCard(title: String, description: String, on: Boolean, onSetOn: (Boolean) -> Unit) {
+    SettingSwitch(
+        title = title,
+        description = description,
         checked = on,
         onCheckedChange = onSetOn,
         modifier = Modifier

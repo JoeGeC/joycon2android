@@ -82,10 +82,10 @@ player is assigned. Grant Shizuku permission the first time.
 | **Dolphin (Wii)** | motion, buttons and sticks over DSU; the virtual gamepad for rumble | **Auto set up** |
 | **Other emulator** | the virtual gamepad and DSU, for Azahar, Cemu and the like (switch **Motion** off in the mapping to stop DSU) | in the emulator: buttons from the gamepad, motion from DSU ([manual setup](#manual-setup)) |
 | **Android games & apps** | the virtual gamepad: each player appears to every app as `Joy-Con Virtual Gamepad <N>` | none; remap buttons and sticks in **Mapping**, or pick **Xbox** if A/B and X/Y feel swapped |
-| **Mouse & keys** | a virtual keyboard and mouse, mapped **WASD + mouse** to start, or **Mouse only** (clicks and scroll; a stick click middle-clicks, RS on a pair or right Joy-Con, LS on a left), for Winlator, GameHub and the like | none |
+| **Mouse & keys** | a virtual keyboard and mouse, mapped **WASD + mouse** to start, or **Mouse only** (clicks and scroll; a stick click middle-clicks, RS on a pair or right Joy-Con, LS on a left), for Winlator, GameHub and the like (switch **Gamepad** on in the mapping to run the virtual gamepad too) | none |
 
-The virtual gamepad runs whenever Shizuku does, whatever you're playing, so the Joy-Cons also get
-you round Android between games. Without Shizuku only DSU can run: Switch, Wii and Other emulator
+The virtual gamepad runs whenever Shizuku does, except on Mouse & keys with **Gamepad** off, so the
+Joy-Cons also get you round Android between games. Without Shizuku only DSU can run: Switch, Wii and Other emulator
 carry on over DSU alone (no rumble, keys or mouse), and the card says so.
 
 Each installed Eden is its own choice; one not installed still shows, saying so. The status says

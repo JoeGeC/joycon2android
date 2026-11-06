@@ -98,6 +98,7 @@ class MainActivity : ComponentActivity() {
                     c.setPlaying,
                     c.selectEmulator,
                     c.setMotion,
+                    c.setPad,
                     emulators = c.emulatorTargets,
                     configure = c::configureEmulator,
                 )
@@ -274,6 +275,8 @@ class MainActivity : ComponentActivity() {
                 ),
                 motion = selection.motion.takeIf { selection.playing.motionOptional && selection.playing.console == console },
                 onSetMotion = outputViewModel::setMotion,
+                pad = selection.pad.takeIf { selection.playing.padOptional && selection.playing.console == console },
+                onSetPad = outputViewModel::setPad,
                 warnUnsavedMapping = warnUnsavedMapping,
                 onStopWarningUnsavedMapping = { settingsViewModel.toggleWarnUnsavedMapping(false) },
             )

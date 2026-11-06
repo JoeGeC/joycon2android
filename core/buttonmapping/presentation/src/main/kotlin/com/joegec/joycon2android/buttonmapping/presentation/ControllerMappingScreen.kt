@@ -68,6 +68,9 @@ fun ControllerMappingScreen(
     /** The game's motion switch, null where motion can't be switched off. */
     motion: Boolean? = null,
     onSetMotion: (Boolean) -> Unit = {},
+    /** The game's gamepad switch, null where the pad always runs. */
+    pad: Boolean? = null,
+    onSetPad: (Boolean) -> Unit = {},
     warnUnsavedMapping: Boolean = false,
     onStopWarningUnsavedMapping: () -> Unit = {},
 ) {
@@ -114,6 +117,7 @@ fun ControllerMappingScreen(
                     },
                 ) { dialog = it }
                 motion?.let { GameMotionCard(state.console, it, onSetMotion) }
+                pad?.let { GamePadCard(it, onSetPad) }
             }
             state.players.forEach { player ->
                 val connected = players.firstOrNull { it.player == player.body.player }

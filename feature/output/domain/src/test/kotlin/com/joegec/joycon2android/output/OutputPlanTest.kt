@@ -10,8 +10,19 @@ import org.junit.Test
 
 class OutputPlanTest {
 
-    private fun devices(playing: Playing, motion: Boolean = true, shizuku: Boolean = true, mapped: Set<OutputDevice> = emptySet()) =
-        OutputPlan.devices(playing, motion, shizuku, mapped)
+    private fun devices(
+        playing: Playing,
+        motion: Boolean = true,
+        pad: Boolean = false,
+        shizuku: Boolean = true,
+        mapped: Set<OutputDevice> = emptySet(),
+    ) = OutputPlan.devices(playing, motion, pad, shizuku, mapped)
+
+    @Test
+    fun `Mouse & keys runs the pad only when it's switched on, the others ignore the choice`() {
+        assertEquals(setOf(PAD, KEYBOARD, MOUSE), devices(Playing.PC, pad = true))
+        assertEquals(setOf(PAD), devices(Playing.ANDROID, pad = false))
+    }
 
     @Test
     fun `each game runs what it reads, plus the pad for getting round the device`() {
@@ -20,7 +31,7 @@ class OutputPlanTest {
         assertEquals(setOf(PAD, MOTION), devices(Playing.WII))
         assertEquals(setOf(PAD, MOTION), devices(Playing.OTHER_EMULATOR))
         assertEquals(setOf(PAD), devices(Playing.ANDROID))
-        assertEquals(setOf(PAD, KEYBOARD, MOUSE), devices(Playing.PC))
+        assertEquals(setOf(KEYBOARD, MOUSE), devices(Playing.PC))
     }
 
     @Test

@@ -46,6 +46,8 @@
     <string name="controller_mapping_game_motion">Motion</string>
     <string name="controller_mapping_game_motion_set_up">Every player\'s gyro, over DSU.</string>
     <string name="controller_mapping_game_motion_description">Every player\'s gyro, over DSU.</string>
+    <string name="controller_mapping_game_pad">Gamepad</string>
+    <string name="controller_mapping_game_pad_description">Also runs the virtual gamepad, for every player. Buttons bound to a key or click stay off it.</string>
     <string name="controller_mapping_sensitivity">Motion sensitivity</string>
     <string name="controller_mapping_sensitivity_description">Scales swings and shakes without changing tilt. 100% reads as the Joy-Con moves.</string>
     <string name="controller_mapping_percent_value">%1$d%%</string>

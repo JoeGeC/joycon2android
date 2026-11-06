@@ -147,6 +147,8 @@ In `JoyconScreen.kt`:
   the console's own, then Android, Mouse, Keyboard.
 - **Thrusts and Motion sensitivity open the Motion section**, above Shake and Recenter: they shape the
   motion those rows act on. On Classic, with no rows, the section holds Sensitivity alone.
+- **A Gamepad card follows the group layout** in Mouse & keys' mapping, off by default: one switch for
+  every player, like Motion.
 - **A Motion card follows the group layout** in Eden's and Other emulator's mapping: one
   `SettingSwitch` for every player, since DSU runs for the whole game or not at all.
 - **Rumble is a section of its own under Sticks**, holding the strength slider: it describes what

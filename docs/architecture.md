@@ -115,10 +115,11 @@ One **Output** card picks what's being played (`Playing`), and the app picks the
 | Wii | Wii Remote | DSU | Dolphin's DSU and Wii Remotes |
 | Other emulator | `Console.EMULATOR` | pad, DSU (motion can be switched off) | — (set up in the emulator) |
 | Android games & apps | `Console.ANDROID` | pad, remapped by the app ([why](virtual-gamepad.md#android-games)) | — |
-| Mouse & keys | `Console.PC`, WASD + mouse by default | keyboard, mouse | — |
+| Mouse & keys | `Console.PC`, WASD + mouse by default | keyboard, mouse (pad can be switched on) | — |
 
 - **`OutputPlan.devices` is the one rule**, pure and tested: what the game reads, plus the pad
-  whenever Shizuku is (for getting round the device, and Wii's rumble), plus the keyboard or mouse
+  whenever Shizuku is (for getting round the device, and Wii's rumble) unless it's Mouse & keys with
+  **Gamepad** off, since a PC game shouldn't see a controller as well, plus the keyboard or mouse
   once the mapping uses them (a keyboard or Android key for the keyboard, the Android keys' fast path;
   **Use the mouse** for the mouse).
 - **Without Shizuku only DSU runs.** The pad, keyboard and mouse need it, so a game that reads

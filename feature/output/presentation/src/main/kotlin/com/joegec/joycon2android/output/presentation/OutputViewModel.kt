@@ -11,6 +11,7 @@ import com.joegec.joycon2android.output.Playing
 import com.joegec.joycon2android.output.PlayingSelection
 import com.joegec.joycon2android.output.SelectEmulatorUseCase
 import com.joegec.joycon2android.output.SetMotionUseCase
+import com.joegec.joycon2android.output.SetPadUseCase
 import com.joegec.joycon2android.output.SetPlayingUseCase
 import com.joegec.joycon2android.output.selected
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
@@ -29,6 +30,7 @@ class OutputViewModel(
     private val savePlaying: SetPlayingUseCase,
     private val saveEmulatorChoice: SelectEmulatorUseCase,
     private val saveMotion: SetMotionUseCase,
+    private val savePad: SetPadUseCase,
     val emulators: Map<Playing, List<EmulatorTarget>>,
     private val configure: suspend (target: EmulatorTarget, players: List<PlayerState>, closeEmulator: Boolean) -> EmulatorSetupResult,
 ) : ViewModel() {
@@ -62,6 +64,10 @@ class OutputViewModel(
     fun setMotion(on: Boolean) {
         viewModelScope.launch { saveMotion(on) }
         resetSetupPhase()
+    }
+
+    fun setPad(on: Boolean) {
+        viewModelScope.launch { savePad(on) }
     }
 
     fun resetSetupPhase() {

@@ -27,6 +27,7 @@ class PlayingDataStore(context: Context, private val targetOf: (OutputMode, Stri
             playing = playing,
             emulators = Playing.entries.mapNotNull { game -> prefs[emulatorKey(game)]?.let { game to it } }.toMap(),
             motion = prefs[MOTION] ?: true,
+            pad = prefs[PAD] ?: false,
         )
     }
 
@@ -35,6 +36,8 @@ class PlayingDataStore(context: Context, private val targetOf: (OutputMode, Stri
     override suspend fun selectEmulator(playing: Playing, id: String) = edit { it[emulatorKey(playing)] = id }
 
     override suspend fun setMotion(on: Boolean) = edit { it[MOTION] = on }
+
+    override suspend fun setPad(on: Boolean) = edit { it[PAD] = on }
 
     override fun start() {
         _on.value = true
@@ -72,6 +75,7 @@ class PlayingDataStore(context: Context, private val targetOf: (OutputMode, Stri
     private companion object {
         val PLAYING = stringPreferencesKey("playing")
         val MOTION = booleanPreferencesKey("playing_motion")
+        val PAD = booleanPreferencesKey("playing_pad")
         fun emulatorKey(playing: Playing) = stringPreferencesKey("playing_emulator_${playing.name}")
 
         // The per-device tabs' keys, read only to migrate.

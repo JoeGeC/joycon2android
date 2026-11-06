@@ -151,6 +151,7 @@ import com.joegec.joycon2android.output.PlayingRepository
 import com.joegec.joycon2android.output.PlayingSelection
 import com.joegec.joycon2android.output.SelectEmulatorUseCase
 import com.joegec.joycon2android.output.SetMotionUseCase
+import com.joegec.joycon2android.output.SetPadUseCase
 import com.joegec.joycon2android.output.SetPlayingUseCase
 import com.joegec.joycon2android.output.StartOutputsUseCase
 import com.joegec.joycon2android.output.StopOutputsUseCase
@@ -333,6 +334,7 @@ class AppContainer(context: Context) {
     val observeOutputOn = ObserveOutputOnUseCase(playingRepository)
     val setPlaying = SetPlayingUseCase(playingRepository)
     val setMotion = SetMotionUseCase(playingRepository)
+    val setPad = SetPadUseCase(playingRepository)
     val selectEmulator = SelectEmulatorUseCase(playingRepository)
     private val startOutputs = StartOutputsUseCase(playingRepository)
     private val stopAllOutputs = StopOutputsUseCase(playingRepository)
@@ -442,7 +444,7 @@ class AppContainer(context: Context) {
     }
     val plannedDevices: StateFlow<Set<OutputDevice>> =
         combine(playing, outputOn, observeShizukuAvailability(), mappedDevices) { selection, on, shizuku, mapped ->
-            if (on) OutputPlan.devices(selection.playing, selection.motion, shizuku, mapped) else emptySet()
+            if (on) OutputPlan.devices(selection.playing, selection.motion, selection.pad, shizuku, mapped) else emptySet()
         }.stateIn(scope, SharingStarted.Eagerly, emptySet())
 
     private fun Map<PlayerNumber, KeyBindings<*>>.anyBound() = values.any { it.sources.isNotEmpty() }

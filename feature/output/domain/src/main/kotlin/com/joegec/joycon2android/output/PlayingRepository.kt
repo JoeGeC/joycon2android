@@ -12,6 +12,7 @@ interface PlayingRepository {
     suspend fun setPlaying(playing: Playing)
     suspend fun selectEmulator(playing: Playing, id: String)
     suspend fun setMotion(on: Boolean)
+    suspend fun setPad(on: Boolean)
     fun start()
     fun stopAll()
 }
