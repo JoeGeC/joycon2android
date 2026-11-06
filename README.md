@@ -180,9 +180,8 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
 - **Toggle combo.** At the bottom of the Mouse section, **C** to start (**Capture** on a left
   Joy-Con). To change it, tap it, hold the buttons you want together (C + RS, say), then let go. Holding them for a second while playing switches that player's Joy-Con
   mouse off: no pointer, and their mouse buttons go back to the game. Hold again to switch it back on.
-  The controller buzzes each time, and the Output card says who has it off. A single button
-  is kept from the game while the mouse is on. Buttons held together still reach it, so pick ones it
-  doesn't use much. Everyone's mouse is back on
+  The controller buzzes each time, and the Output card says who has it off. The buttons still
+  reach the game while you hold them, so pick ones it doesn't use much. Everyone's mouse is back on
   when the app restarts.
 - **Pro Controller.** On Eden, a lone Joy-Con also gets this switch, off by default. Off, Eden sees
   a real left or right Joy-Con and the game handles the grip and motion itself, which games such as

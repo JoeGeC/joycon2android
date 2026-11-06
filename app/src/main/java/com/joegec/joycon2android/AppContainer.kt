@@ -390,12 +390,6 @@ class AppContainer(context: Context) {
     )
     val mouseOffPlayers: StateFlow<Set<PlayerNumber>> = mouseModeToggle.off
 
-    // A one-button toggle delays no other press, so the game never gets it.
-    private val soloMouseModeCombos = mouseModeCombos.map { combos ->
-        combos.mapValues { (_, bindings) -> KeyBindings(bindings.sources.filterKeys { it.sources.size == 1 }) }
-    }.stateIn(scope, SharingStarted.Eagerly, emptyMap())
-    private val mouseModeRouter = HeldKeyRouter(OutputBindings(deviceKeysActing, soloMouseModeCombos)) { this }
-
     // A player with their mouse off clicks nothing, so the game gets those buttons back.
     private val mouseModeBindings = combine(mouseBindings, mouseUsers, mouseModeToggle.off) { bindings, users, off ->
         bindings.filterKeys { it in users && it !in off }
@@ -492,7 +486,6 @@ class AppContainer(context: Context) {
             val routed = androidKeyRouter.route(state)
                 .let { keyboardKeyRouter.route(state, it) }
                 .let { mouseActionRouter.route(state, it) }
-                .let { mouseModeRouter.route(state, it) }
             pushKeyboardFrame(routed.keyboard)
             mouseMix.send(routed.mouseActions)
             pushGamepadState(routed.gamepad.map { it.forGame() })

@@ -116,10 +116,9 @@ Each player can switch their own Joy-Con mouse off while playing: holding their 
 - **Off**, `MouseRouter` skips their Joy-Cons, so no pointer, and their mapped mouse actions are dropped, so those buttons reach the game again. Other players' mice carry on.
 - **A combo acts only held whole** (`HoldCombo`): every source down at once. Its value joins source
   ids like any target's, but they're ANDed, not ORed; each running console's combo is kept whole.
-- **A combo of two or more still reaches the game** while held: holding it back would delay every
-  press that starts a combo. The hold makes a stray toggle unlikely.
-- **A one-button toggle never reaches the game or DSU** while the player uses the mouse, on or off,
-  so it doesn't also [select in Android](#buttons-and-keycodes).
+- **Its buttons still reach the game** while held, so on Android's own screens C also
+  [selects](#buttons-and-keycodes). Holding them back would delay every press that starts a combo, and
+  a one-button toggle on A would take A from every game. The hold makes a stray toggle unlikely.
 - **Toggles once a hold.** Latched until a source lifts, so holding on doesn't flip it back.
 - **Not saved.** A player who leaves, or a relaunch, gets their mouse back on.
 - Like other device keys it waits while the mapping editor listens for a press.
