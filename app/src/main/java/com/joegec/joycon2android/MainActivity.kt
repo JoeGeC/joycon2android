@@ -116,6 +116,8 @@ class MainActivity : ComponentActivity() {
                     c.setShowTips,
                     c.observeLaunchOnMainScreen,
                     c.setLaunchOnMainScreen,
+                    c.observeWarnUnsavedMapping,
+                    c.setWarnUnsavedMapping,
                 )
             }
         }
@@ -253,6 +255,7 @@ class MainActivity : ComponentActivity() {
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
         val selection by outputViewModel.selection.collectAsState()
         var showDsuHelp by rememberSaveable { mutableStateOf(false) }
+        val warnUnsavedMapping by settingsViewModel.warnUnsavedMapping.collectAsState()
 
         LaunchedEffect(console, bodies) { controllerMappingViewModel.edit(console, bodies) }
 
@@ -271,6 +274,8 @@ class MainActivity : ComponentActivity() {
                 ),
                 motion = selection.motion.takeIf { selection.playing.motionOptional && selection.playing.console == console },
                 onSetMotion = outputViewModel::setMotion,
+                warnUnsavedMapping = warnUnsavedMapping,
+                onStopWarningUnsavedMapping = { settingsViewModel.toggleWarnUnsavedMapping(false) },
             )
         }
         if (showDsuHelp) DsuSetupSheet(onDismiss = { showDsuHelp = false })
@@ -308,6 +313,7 @@ class MainActivity : ComponentActivity() {
         val viewMode by viewModel.viewMode.collectAsState()
         val shizukuAvailable by gamepadViewModel.shizukuAvailable.collectAsState()
         val showTips by settingsViewModel.showTips.collectAsState()
+        val warnUnsavedMapping by settingsViewModel.warnUnsavedMapping.collectAsState()
         val launchOnMainScreen by settingsViewModel.launchOnMainScreen.collectAsState()
         val mainScreenLaunchAvailable = remember {
             (application as JoyconApplication).container.deviceScreens.canLaunchOnMainScreen()
@@ -321,6 +327,7 @@ class MainActivity : ComponentActivity() {
                         outputSettings,
                         shizukuAvailable = shizukuAvailable,
                         showTips = showTips,
+                        warnUnsavedMapping = warnUnsavedMapping,
                         mainScreenLaunchAvailable = mainScreenLaunchAvailable,
                         launchOnMainScreen = launchOnMainScreen,
                     ),
@@ -328,6 +335,7 @@ class MainActivity : ComponentActivity() {
                     onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
                     onBlockDeviceMotionToggle = settingsViewModel::toggleBlockDeviceMotion,
                     onShowTipsToggle = settingsViewModel::toggleShowTips,
+                    onWarnUnsavedMappingToggle = settingsViewModel::toggleWarnUnsavedMapping,
                     onLaunchOnMainScreenToggle = settingsViewModel::toggleLaunchOnMainScreen,
                 )
             },

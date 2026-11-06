@@ -18,6 +18,11 @@
     <string name="controller_mapping_delete_layout">Delete layout?</string>
     <string name="controller_mapping_delete_layout_body">Only the name goes — everyone playing on it keeps their buttons, and reads as \"Custom\" until you save it again.</string>
     <string name="controller_mapping_delete">Delete</string>
+    <string name="controller_mapping_unsaved_title">Lose unsaved changes?</string>
+    <string name="controller_mapping_unsaved_body">This player\'s Custom mapping isn\'t saved as a layout. Switching will replace it.</string>
+    <string name="controller_mapping_unsaved_group_body">At least one player\'s Custom mapping isn\'t saved as a layout. Switching will replace it.</string>
+    <string name="controller_mapping_unsaved_confirm">Switch</string>
+    <string name="controller_mapping_unsaved_stop">Don\'t show again</string>
     <string name="controller_mapping_no_players">Connect a controller to map it.</string>
     <string name="wii_controller_remote">Wiimote</string>
     <string name="wii_controller_remote_description">Points and swings like a Wii Remote.</string>

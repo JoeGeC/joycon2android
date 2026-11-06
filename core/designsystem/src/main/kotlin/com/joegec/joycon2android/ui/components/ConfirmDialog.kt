@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.ui.components
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,6 +20,7 @@ fun ConfirmDialog(
     dismissLabel: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    below: @Composable () -> Unit = {},
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -27,7 +29,10 @@ fun ConfirmDialog(
             Text(title, color = TextTitle, style = MaterialTheme.typography.titleSmall)
         },
         text = {
-            Text(body, color = TextDim, style = MaterialTheme.typography.bodyMedium)
+            Column {
+                Text(body, color = TextDim, style = MaterialTheme.typography.bodyMedium)
+                below()
+            }
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {

@@ -114,6 +114,8 @@ The gear at the top right opens the settings panel:
 - **Layout** — detailed controller graphics or compact rows.
 - **Show tips** (on by default) — the hints under **Auto set up** and on the mapping screen. Tap any tip
   to turn them all off.
+- **Warn about unsaved mappings** (on by default) — asks first when switching layout, or the **Pro Controller**
+  switch, would replace a **Custom** mapping. Ticking **Don't show again** in that popup turns this off.
 - **Open emulators on the main screen** (on by default, two-screen devices such as the AYN Thor) —
   when the app offers to start the emulator after setup, it opens on the main screen instead of the
   one this app is on.
@@ -151,7 +153,7 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
   its section's header.
 - **Saving.** The save icon beside the name keeps your mapping as a layout for any player holding the
   same body. It dims when the mapping already matches a layout. Deleting a layout (the bin in the
-  dropdown) keeps everyone's buttons; they just read **Custom** until you save again. While a layout reads **Custom**, a hint points at its save icon.
+  dropdown) keeps everyone's buttons; they just read **Custom** until you save again. While a layout reads **Custom**, a hint points at its save icon, and picking another layout warns first, since it replaces those changes.
 - **Tips.** A note at the top reminds you that games differ: if one plays oddly, try another layout.
 - **Group layout** at the top sets and saves everyone at once. It offers only the layouts that fit
   someone connected, so pairs alone aren't offered the sideways Pro Controller or Mario Kart Wheel layouts. A grip only some bodies fit —

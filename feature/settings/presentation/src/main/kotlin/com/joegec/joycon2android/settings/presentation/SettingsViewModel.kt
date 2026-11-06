@@ -5,11 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.settings.ObserveLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.ObserveOutputSettingsUseCase
 import com.joegec.joycon2android.settings.ObserveShowTipsUseCase
+import com.joegec.joycon2android.settings.ObserveWarnUnsavedMappingUseCase
 import com.joegec.joycon2android.settings.OutputSettings
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
 import com.joegec.joycon2android.settings.SetLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.SetShowTipsUseCase
+import com.joegec.joycon2android.settings.SetWarnUnsavedMappingUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -23,6 +25,8 @@ class SettingsViewModel(
     private val setShowTips: SetShowTipsUseCase,
     observeLaunchOnMainScreen: ObserveLaunchOnMainScreenUseCase,
     private val setLaunchOnMainScreen: SetLaunchOnMainScreenUseCase,
+    observeWarnUnsavedMapping: ObserveWarnUnsavedMappingUseCase,
+    private val setWarnUnsavedMapping: SetWarnUnsavedMappingUseCase,
 ) : ViewModel() {
 
     val outputSettings: StateFlow<OutputSettings> = observeOutputSettings()
@@ -35,6 +39,14 @@ class SettingsViewModel(
     // Read as .value when an emulator starts, so it can't wait for a subscriber.
     val launchOnMainScreen: StateFlow<Boolean> = observeLaunchOnMainScreen()
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    // On until read, so a slow read can't skip the warning.
+    val warnUnsavedMapping: StateFlow<Boolean> = observeWarnUnsavedMapping()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), true)
+
+    fun toggleWarnUnsavedMapping(enabled: Boolean) {
+        viewModelScope.launch { setWarnUnsavedMapping(enabled) }
+    }
 
     fun toggleFasterUpdates(enabled: Boolean) {
         viewModelScope.launch { setFasterUpdates(enabled) }

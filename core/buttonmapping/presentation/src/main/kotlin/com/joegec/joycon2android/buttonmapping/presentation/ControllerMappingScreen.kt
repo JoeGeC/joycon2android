@@ -68,10 +68,15 @@ fun ControllerMappingScreen(
     /** The game's motion switch, null where motion can't be switched off. */
     motion: Boolean? = null,
     onSetMotion: (Boolean) -> Unit = {},
+    warnUnsavedMapping: Boolean = false,
+    onStopWarningUnsavedMapping: () -> Unit = {},
 ) {
     BackHandler(onBack = onBack)
     var dialog by remember { mutableStateOf<MappingDialog?>(null) }
     val labels = rememberLayoutLabels()
+    val replacing = { custom: Boolean, group: Boolean, replace: () -> Unit ->
+        if (warnUnsavedMapping && custom) dialog = MappingDialog.Unsaved(group, replace) else replace()
+    }
 
     Column(
         modifier
@@ -98,7 +103,16 @@ fun ControllerMappingScreen(
             if (state.players.isEmpty()) {
                 Text(stringResource(R.string.controller_mapping_no_players), color = TextDim)
             } else {
-                GroupLayoutRow(state.console, state.global, state.savedLayouts, labels, actions) { dialog = it }
+                GroupLayoutRow(
+                    state.console,
+                    state.global,
+                    state.savedLayouts,
+                    labels,
+                    actions,
+                    onSelect = { id ->
+                        replacing(state.players.any { it.layout == null }, true) { actions.selectGlobalLayout(id) }
+                    },
+                ) { dialog = it }
                 motion?.let { GameMotionCard(state.console, it, onSetMotion) }
             }
             state.players.forEach { player ->
@@ -110,6 +124,12 @@ fun ControllerMappingScreen(
                         state = player,
                         labels = labels,
                         actions = actions,
+                        onSelectLayout = { id ->
+                            replacing(player.layout == null, false) { actions.selectLayout(player.body, id) }
+                        },
+                        onSetProController = { enabled ->
+                            replacing(player.layout == null, false) { actions.setProController(player.body, enabled) }
+                        },
                         onSaveLayout = { dialog = MappingDialog.Save(player.body) },
                         onDeleteLayout = { dialog = MappingDialog.Delete(listOf(it.id), it.label, global = false) },
                         deviceKeyWarnings = deviceKeyWarnings,
@@ -120,7 +140,7 @@ fun ControllerMappingScreen(
         }
     }
 
-    MappingDialogs(state, dialog, actions) { dialog = null }
+    MappingDialogs(state, dialog, actions, onStopWarningUnsavedMapping) { dialog = null }
 }
 
 @Composable
@@ -157,6 +177,7 @@ private fun GroupLayoutRow(
     playerLayouts: List<SavedLayout>,
     labels: LayoutLabels,
     actions: MappingActions,
+    onSelect: (String) -> Unit,
     onDialog: (MappingDialog) -> Unit,
 ) {
     val named = playerLayouts.groupBy { it.name }
@@ -198,7 +219,7 @@ private fun GroupLayoutRow(
                     ?: global.sharedLayout?.id,
                 layoutName = layoutName,
                 subLabel = global.matchingSaved?.let { it.playerSummary() },
-                onSelect = actions.selectGlobalLayout,
+                onSelect = onSelect,
                 onSave = { onDialog(MappingDialog.Save(body = null)) },
                 onDelete = { option ->
                     val group = global.savedLayouts.any { it.id == option.id }
@@ -219,6 +240,7 @@ private fun MappingDialogs(
     state: ControllerMappingUiState,
     dialog: MappingDialog?,
     actions: MappingActions,
+    onStopWarningUnsavedMapping: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     when (dialog) {
@@ -249,6 +271,15 @@ private fun MappingDialogs(
             },
             onDismiss = onDismiss,
         )
+        is MappingDialog.Unsaved -> UnsavedMappingDialog(
+            group = dialog.group,
+            onConfirm = { stopWarning ->
+                if (stopWarning) onStopWarningUnsavedMapping()
+                dialog.replace()
+                onDismiss()
+            },
+            onDismiss = onDismiss,
+        )
     }
 }
 
@@ -258,4 +289,6 @@ private sealed interface MappingDialog {
 
     /** Several ids when a group option names saved layouts for different bodies. */
     data class Delete(val ids: List<String>, val name: String, val global: Boolean) : MappingDialog
+
+    data class Unsaved(val group: Boolean, val replace: () -> Unit) : MappingDialog
 }

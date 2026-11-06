@@ -22,6 +22,7 @@ fun SettingsPanel(
     onFasterUpdatesToggle: (Boolean) -> Unit,
     onBlockDeviceMotionToggle: (Boolean) -> Unit,
     onShowTipsToggle: (Boolean) -> Unit,
+    onWarnUnsavedMappingToggle: (Boolean) -> Unit,
     onLaunchOnMainScreenToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -45,6 +46,13 @@ fun SettingsPanel(
                     description = stringResource(R.string.settings_show_tips_description),
                     checked = state.showTips,
                     onCheckedChange = onShowTipsToggle,
+                    titleStyle = MaterialTheme.typography.titleMedium,
+                )
+                SettingSwitch(
+                    title = stringResource(R.string.settings_warn_unsaved_mapping_title),
+                    description = stringResource(R.string.settings_warn_unsaved_mapping_description),
+                    checked = state.warnUnsavedMapping,
+                    onCheckedChange = onWarnUnsavedMappingToggle,
                     titleStyle = MaterialTheme.typography.titleMedium,
                 )
             }

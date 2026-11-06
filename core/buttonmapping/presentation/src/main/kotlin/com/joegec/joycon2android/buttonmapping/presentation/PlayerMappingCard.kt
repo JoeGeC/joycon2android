@@ -53,6 +53,8 @@ fun PlayerMappingCard(
     state: PlayerMappingUiState,
     labels: LayoutLabels,
     actions: MappingActions,
+    onSelectLayout: (String) -> Unit,
+    onSetProController: (Boolean) -> Unit,
     onSaveLayout: () -> Unit,
     onDeleteLayout: (DropdownOption) -> Unit,
     modifier: Modifier = Modifier,
@@ -80,9 +82,9 @@ fun PlayerMappingCard(
                 ),
                 verticalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
             ) {
-                PlayerLayoutPicker(state, labels, actions, onSaveLayout, onDeleteLayout)
+                PlayerLayoutPicker(state, labels, onSelectLayout, onSaveLayout, onDeleteLayout)
                 if (state.offersProController) {
-                    ProControllerSwitch(state.proController, PRO_CONTROLLER_KEY in state.changes.targets) { actions.setProController(state.body, it) }
+                    ProControllerSwitch(state.proController, PRO_CONTROLLER_KEY in state.changes.targets, onSetProController)
                 }
                 if (state.wiiControllers.isNotEmpty()) {
                     WiiControllerChoice(state.body.side, state.wiiControllers, state.wiiController, state.changes.controller) {
@@ -157,7 +159,7 @@ private fun ControllerChip(text: String, joycon: ConnectedJoycon) {
 private fun PlayerLayoutPicker(
     state: PlayerMappingUiState,
     labels: LayoutLabels,
-    actions: MappingActions,
+    onSelectLayout: (String) -> Unit,
     onSaveLayout: () -> Unit,
     onDeleteLayout: (DropdownOption) -> Unit,
 ) {
@@ -168,7 +170,7 @@ private fun PlayerLayoutPicker(
                 options = state.layouts.map { labels.playerOption(it) },
                 selectedId = state.layout?.id,
                 layoutName = layoutName,
-                onSelect = { actions.selectLayout(state.body, it) },
+                onSelect = onSelectLayout,
                 onSave = onSaveLayout,
                 onDelete = onDeleteLayout,
             )

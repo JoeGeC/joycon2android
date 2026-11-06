@@ -94,6 +94,7 @@ import com.joegec.joycon2android.settings.MainScreenLaunchRepository
 import com.joegec.joycon2android.settings.ObserveLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.ObserveOutputSettingsUseCase
 import com.joegec.joycon2android.settings.ObserveShowTipsUseCase
+import com.joegec.joycon2android.settings.ObserveWarnUnsavedMappingUseCase
 import com.joegec.joycon2android.settings.OutputSettingsDataStore
 import com.joegec.joycon2android.settings.OutputSettingsRepository
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
@@ -101,8 +102,11 @@ import com.joegec.joycon2android.settings.SetDeviceMotionBlockedUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
 import com.joegec.joycon2android.settings.SetLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.SetShowTipsUseCase
+import com.joegec.joycon2android.settings.SetWarnUnsavedMappingUseCase
 import com.joegec.joycon2android.settings.TipsDataStore
 import com.joegec.joycon2android.settings.TipsRepository
+import com.joegec.joycon2android.settings.UnsavedMappingWarningDataStore
+import com.joegec.joycon2android.settings.UnsavedMappingWarningRepository
 import com.joegec.joycon2android.emulator.EdenDeviceMotionBlocker
 import com.joegec.joycon2android.gamepad.DisableGamepadUseCase
 import com.joegec.joycon2android.gamepad.EnableGamepadUseCase
@@ -196,6 +200,10 @@ class AppContainer(context: Context) {
     private val tipsRepository: TipsRepository = TipsDataStore(appContext)
     val observeShowTips = ObserveShowTipsUseCase(tipsRepository)
     val setShowTips = SetShowTipsUseCase(tipsRepository)
+
+    private val unsavedMappingWarning: UnsavedMappingWarningRepository = UnsavedMappingWarningDataStore(appContext)
+    val observeWarnUnsavedMapping = ObserveWarnUnsavedMappingUseCase(unsavedMappingWarning)
+    val setWarnUnsavedMapping = SetWarnUnsavedMappingUseCase(unsavedMappingWarning)
 
     private val mainScreenLaunchRepository: MainScreenLaunchRepository = MainScreenLaunchDataStore(appContext)
     val observeLaunchOnMainScreen = ObserveLaunchOnMainScreenUseCase(mainScreenLaunchRepository)

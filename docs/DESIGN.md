@@ -180,6 +180,11 @@ In `JoyconScreen.kt`:
 - **A keys-only mapping says how to map by hand** in its tip, in place of trying another layout:
   another emulator is mapped in its own settings, and the info icon opens DSU's steps. Android's
   tip says its buttons and sticks can be remapped here, since an Android game can't remap a pad. Like every tip it hides with **Show tips** off.
+- **Switching away from Custom asks first** (`UnsavedMappingDialog`), since a layout is only a name for
+  bindings and nothing keeps the old ones. So does the Pro Controller switch, which resets to its grip's
+  layout. A group switch asks when any player is Custom. **Don't show
+  again** applies only on confirming, so cancelling can't turn it off; **Warn about unsaved mappings**
+  in settings turns it back on.
 
 ### Landscape
 

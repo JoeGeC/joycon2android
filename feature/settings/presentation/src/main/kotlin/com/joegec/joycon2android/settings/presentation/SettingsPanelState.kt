@@ -8,6 +8,7 @@ data class SettingsPanelState(
     val outputSettings: OutputSettings = OutputSettings(),
     val shizukuAvailable: Boolean = false,
     val showTips: Boolean = true,
+    val warnUnsavedMapping: Boolean = true,
     val mainScreenLaunchAvailable: Boolean = false,
     val launchOnMainScreen: Boolean = true,
 )
