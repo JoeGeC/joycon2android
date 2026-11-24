@@ -308,8 +308,11 @@ from dekuNukem's docs) shifted down 0.6 V. Below ~3.0 V is extrapolated; no low 
 captured yet. `JoyconInput` carries the result as a `BatteryCharge` percentage, since the console
 report gives a level rather than a voltage.
 
-Above 3.30 V the gauge moves 1% per 12 mV, so each packet's percentage wobbles. `SteadyBattery`
-holds the shown charge until a reading is 5% away, so the UI redraws only on a real change.
+Readings wobble by a few mV from packet to packet, a few percent on the plateau, and a rumble sags
+them ~10 mV for a few packets: on the plateau one sagging packet reads 5% low. `SteadyBattery`
+takes the median of the last 64 reports (~1–2 s), shows nothing until it has them, and holds the
+shown charge until that median is 5% away, so neither the UI nor the low-battery warning reacts
+to one packet.
 
 ## Stick range and centre
 

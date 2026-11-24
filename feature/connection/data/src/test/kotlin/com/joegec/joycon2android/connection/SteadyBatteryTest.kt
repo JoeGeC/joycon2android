@@ -9,32 +9,63 @@ class SteadyBatteryTest {
 
     private val battery = SteadyBattery()
 
-    @Test
-    fun `a reading wobbling within the noise keeps the first one`() {
-        battery.steady(BatteryCharge(80))
+    private fun feed(percent: Int, times: Int = WINDOW): BatteryCharge? =
+        (1..times).map { battery.steady(BatteryCharge(percent)) }.last()
 
-        listOf(81, 79, 82, 78).forEach { assertEquals(BatteryCharge(80), battery.steady(BatteryCharge(it))) }
+    @Test
+    fun `no charge is shown until a window of readings has arrived`() {
+        assertNull(feed(13, times = WINDOW - 1))
     }
 
     @Test
-    fun `a reading past the noise is shown`() {
-        battery.steady(BatteryCharge(80))
-
-        assertEquals(BatteryCharge(75), battery.steady(BatteryCharge(75)))
+    fun `a full window shows its charge`() {
+        assertEquals(BatteryCharge(13), feed(13))
     }
 
     @Test
-    fun `a reset shows the next reading as it is`() {
-        battery.steady(BatteryCharge(80))
+    fun `a brief sag does not move the charge`() {
+        feed(13)
+
+        assertEquals(BatteryCharge(13), feed(8, times = 5))
+    }
+
+    @Test
+    fun `a sag in the first readings does not set the charge`() {
+        feed(8, times = 5)
+
+        assertEquals(BatteryCharge(13), feed(13, times = WINDOW - 5))
+    }
+
+    @Test
+    fun `a reading wobbling within the noise keeps the shown charge`() {
+        feed(80)
+
+        assertEquals(BatteryCharge(80), feed(77))
+    }
+
+    @Test
+    fun `a sustained reading past the noise is shown`() {
+        feed(80)
+
+        assertEquals(BatteryCharge(75), feed(75))
+    }
+
+    @Test
+    fun `a reset starts a fresh window`() {
+        feed(80)
         battery.reset()
 
-        assertEquals(BatteryCharge(78), battery.steady(BatteryCharge(78)))
+        assertNull(feed(78, times = 1))
     }
 
     @Test
     fun `no reading clears the charge`() {
-        battery.steady(BatteryCharge(80))
+        feed(80)
 
         assertNull(battery.steady(null))
+    }
+
+    private companion object {
+        const val WINDOW = 64
     }
 }
