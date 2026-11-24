@@ -33,7 +33,7 @@ import com.joegec.joycon2android.ui.theme.WarningText
 @Composable
 fun SettingSwitch(
     title: String,
-    description: String,
+    description: String?,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -56,8 +56,10 @@ fun SettingSwitch(
     ) {
         Column(Modifier.weight(1f)) {
             Text(title, color = titleColor, style = titleStyle)
-            Spacer(Modifier.height(Dimens.featureCardTitleGap))
-            Text(description, color = descriptionColor, style = MaterialTheme.typography.bodySmall)
+            description?.let {
+                Spacer(Modifier.height(Dimens.featureCardTitleGap))
+                Text(it, color = descriptionColor, style = MaterialTheme.typography.bodySmall)
+            }
             warning?.let {
                 Spacer(Modifier.height(Dimens.featureCardTitleGap))
                 SettingWarning(it)

@@ -1,5 +1,6 @@
 package com.joegec.joycon2android.buttonmapping.presentation
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -7,12 +8,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.RUMBLE_PERCENT_RANGE
 import com.joegec.joycon2android.buttonmapping.RUMBLE_PERCENT_STEP
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
 import com.joegec.joycon2android.ui.components.InfoSheet
+import com.joegec.joycon2android.ui.components.PercentSlider
+import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 import com.joegec.joycon2android.ui.theme.TextTitle
 
@@ -34,6 +38,7 @@ internal fun RumbleSection(console: Console, percent: Int, changed: Boolean, onS
                 else stringResource(R.string.controller_mapping_percent_value, it)
             },
             onSetPercent = onSetPercent,
+            modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
         )
     }
     if (showInfo && throughPad != null) {

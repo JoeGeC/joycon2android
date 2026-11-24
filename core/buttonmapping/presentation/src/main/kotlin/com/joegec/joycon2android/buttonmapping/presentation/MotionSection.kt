@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.buttonmapping.RemoteMotion
 import com.joegec.joycon2android.core.buttonmapping.presentation.R
+import com.joegec.joycon2android.ui.components.PercentSlider
 import com.joegec.joycon2android.ui.components.SettingSwitch
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextTitle
@@ -54,5 +55,6 @@ private fun SensitivitySlider(percent: Int, changed: Boolean, onSetPercent: (Int
         step = RemoteMotion.SENSITIVITY_PERCENT_STEP,
         valueLabel = { stringResource(R.string.controller_mapping_percent_value, it) },
         onSetPercent = onSetPercent,
+        modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
     )
 }

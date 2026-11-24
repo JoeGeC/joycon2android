@@ -7,6 +7,7 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -26,17 +27,21 @@ fun EndDrawer(
 ) {
     val direction = LocalLayoutDirection.current
     val mirrored = if (direction == LayoutDirection.Ltr) LayoutDirection.Rtl else LayoutDirection.Ltr
+    val sliderTouch = remember { SliderTouch() }
     CompositionLocalProvider(LocalLayoutDirection provides mirrored) {
         ModalNavigationDrawer(
             drawerState = drawerState,
-            gesturesEnabled = drawerState.isOpen,
+            gesturesEnabled = drawerState.isOpen && !sliderTouch.touching,
             drawerContent = {
                 ModalDrawerSheet(
                     drawerState = drawerState,
                     modifier = Modifier.fillMaxWidth(WidthFraction),
                     drawerContainerColor = containerColor,
                 ) {
-                    CompositionLocalProvider(LocalLayoutDirection provides direction) {
+                    CompositionLocalProvider(
+                        LocalLayoutDirection provides direction,
+                        LocalSliderTouch provides sliderTouch,
+                    ) {
                         drawerContent()
                     }
                 }

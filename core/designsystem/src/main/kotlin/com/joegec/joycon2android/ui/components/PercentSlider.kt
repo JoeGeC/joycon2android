@@ -1,6 +1,5 @@
-package com.joegec.joycon2android.buttonmapping.presentation
+package com.joegec.joycon2android.ui.components
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -8,21 +7,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.joegec.joycon2android.ui.components.SettingSlider
-import com.joegec.joycon2android.ui.theme.Dimens
+import com.joegec.joycon2android.ui.theme.TextTitle
 import kotlin.math.roundToInt
 
 /** Held locally while dragging, so the thumb doesn't wait on storage; stored when let go. */
 @Composable
-internal fun PercentSlider(
+fun PercentSlider(
     title: String,
-    titleColor: Color,
     description: String,
     percent: Int,
     range: IntRange,
     step: Int,
     valueLabel: @Composable (Int) -> String,
     onSetPercent: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    titleColor: Color = TextTitle,
 ) {
     var dragged by remember(percent) { mutableFloatStateOf(percent.toFloat()) }
     SettingSlider(
@@ -35,6 +34,6 @@ internal fun PercentSlider(
         steps = (range.last - range.first) / step - 1,
         onValueChange = { dragged = it },
         onValueChangeFinished = { onSetPercent(dragged.roundToInt()) },
-        modifier = Modifier.padding(bottom = Dimens.mappingSwitchBottomPadding),
+        modifier = modifier,
     )
 }
