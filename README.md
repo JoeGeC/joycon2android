@@ -116,6 +116,13 @@ The gear at the top right opens the settings panel:
   to turn them all off.
 - **Warn about unsaved mappings** (on by default) — asks first when switching layout, or the **Pro Controller**
   switch, would replace a **Custom** mapping. Ticking **Don't show again** in that popup turns this off.
+- **Low battery warning notification** and **Low battery warning vibration** (both on by default) —
+  a notification naming the player and controller, and a beep-beep on the controller itself, when its
+  battery falls to **Warn at** (10% by default, 5–50%), once each time it runs down. Drag **Warn at**'s
+  two handles apart for an earlier warning as well, e.g. 20% then 10%. A full charge streamed for about
+  26 hours in testing, so 10% leaves around 2½ hours, less with rumble. The first time the app opens it
+  explains this and asks to allow notifications; after that, turning the notification on asks. It
+  stays off until they're allowed. The vibration doesn't need them.
 - **Open emulators on the main screen** (on by default, two-screen devices such as the AYN Thor) —
   when the app offers to start the emulator after setup, it opens on the main screen instead of the
   one this app is on.
@@ -334,6 +341,8 @@ shoulder buttons its body lacks.
 | Controller shows as the wrong type (stick turned sideways, no right stick) | Tap its type at the top of its card, pick the right one, then assign it |
 | Controller stops responding | Press SYNC and reconnect; wait a moment if it stays silent |
 | Controller shows "Connection lost" | Press SYNC on it and it reconnects to the same player by itself, or tap Scan. After two minutes it's removed |
+| Battery percentage looks wrong after a short charge | A Joy-Con charged only a few minutes reads high until it settles; it's accurate after a full charge |
+| No low battery notification | Settings: turn **Low battery warning notification** on and allow notifications when Android asks. If it won't stay on, allow the app's notifications in Android's settings |
 | Controllers drop when a game starts | Some phones clear background apps when a game launches. Tap the yellow banner at the top to let the app run in the background (or set its battery use to unrestricted), and exclude it from the game launcher's cleanup |
 | Gamepad doesn't show up in games | Check `adb shell getevent -p` lists "Joy-Con Virtual Gamepad" |
 | No rumble in Eden, or the phone vibrates instead | Tap **Auto set up** for Eden again, or turn off **Use system vibrator** in Eden's controller settings |

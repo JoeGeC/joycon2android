@@ -115,6 +115,14 @@ In `JoyconScreen.kt`:
   say GameCube, and its detailed view is the Pro layout without the buttons it lacks, with ZR marked
   Z and its triggers, L and R, above ZL and Z. `GameCubeButtons` is the one list of what it has, which the mapping editor offers too.
 
+### Notification onboarding
+
+- **Once, before the main screen, only where Android asks** (13+, notifications not yet allowed): an
+  icon, a `titleLarge` heading, why the app wants notifications, **Allow notifications** (the large
+  accent button) and **Not now**. Either choice marks it seen.
+- **It asks in context.** Android's prompt opens from **Allow notifications**, never on launch.
+  Afterwards only the **Low battery warning notification** switch asks.
+
 ### Output card
 
 - **It asks what you're playing, not which output.** One picker (`PlayingPicker`) after a "Playing:" label, its

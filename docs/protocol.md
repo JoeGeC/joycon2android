@@ -194,7 +194,7 @@ Stored effects, from [ndeadly/switch2_controller_research](https://github.com/nd
 | `0x06` | short high beep | |
 | `0x07` | short higher beep | |
 
-The app plays `0x03` when a controller is assigned to a player.
+The app plays `0x03` when a controller is assigned to a player, and `0x04` with a low battery warning.
 
 ### HD rumble
 
@@ -302,11 +302,29 @@ requested at any alignment.
 
 ## Battery
 
-The packet's voltage reads ~0.6 V below the cell's: ~3.30 V shows 75% on a Switch 2, ~3.60 V shows
-100%. `BatteryGauge` interpolates Nintendo's Joy-Con thresholds (3.3 / 3.6 / 3.76 / 3.9 / 4.2 V,
-from dekuNukem's docs) shifted down 0.6 V. Below ~3.0 V is extrapolated; no low readings have been
-captured yet. `JoyconInput` carries the result as a `BatteryCharge` percentage, since the console
-report gives a level rather than a voltage.
+Bytes `0x1F–0x20` are millivolts, ~0.6 V below the cell's: a full charge reads ~3.69 V (cell
+~4.29 V) and the controller shuts down at 2.39 V (cell ~3.0 V).
+
+`BatteryGauge`'s percentage is the **share of a full charge's play time left**, from a measured
+discharge (2026-11-19, AYN Thor, a left and a right Joy-Con 2 streaming idle over BLE, 26.6 h from
+full to shutdown, the two within 20 mV throughout):
+
+| mV | 3685 | 3592 | 3503 | 3423 | 3345 | 3279 | 3242 | 3212 | 3178 | 3135 | 3127 | 3090 | 2997 | 2804 | 2390 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| % | 100 | 90 | 80 | 70 | 60 | 50 | 40 | 30 | 20 | 12 | 8 | 5 | 3 | 1 | 0 |
+
+- **12% → 8% is a ~10 mV plateau** (~1 h of play), so each mV there is worth ~0.5%. Below 5% the
+  voltage falls fast: 2.80 V is ~15 minutes from shutdown, 2.70 V ~7.
+- **A short charge reads high.** A flat pair charged a few minutes read 3.137 V and ran 99 minutes
+  (2026-11-18, Galaxy S25), ~6% by run time, while the table says 12%: the cell had not settled.
+  The bottom ~50 minutes matched the full run within a few minutes.
+- **The Switch 2 reads higher in the middle.** ~3.30 V was seen as 75% on one; by run time it's
+  ~54%. The table goes by run time, which is what a low-battery warning needs.
+- Nintendo's Joy-Con thresholds (3.3 / 3.6 / 3.76 / 3.9 / 4.2 V, from dekuNukem's docs) are battery
+  bars, not percentages; a straight line through them read a near-empty cell as half full.
+
+`JoyconInput` carries the result as a `BatteryCharge` percentage, since the console report gives a
+level rather than a voltage.
 
 Readings wobble by a few mV from packet to packet, a few percent on the plateau, and a rumble sags
 them ~10 mV for a few packets: on the plateau one sagging packet reads 5% low. `SteadyBattery`
