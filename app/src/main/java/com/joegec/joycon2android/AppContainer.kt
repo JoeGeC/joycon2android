@@ -89,9 +89,19 @@ import com.joegec.joycon2android.dsu.DsuServer
 import com.joegec.joycon2android.dsu.EnableDsuUseCase
 import com.joegec.joycon2android.dsu.ObserveDsuStatusUseCase
 import com.joegec.joycon2android.dsu.PushDsuPadDataUseCase
+import com.joegec.joycon2android.battery.LowBatteryAlertPolicy
+import com.joegec.joycon2android.battery.LowBatteryNotification
+import com.joegec.joycon2android.battery.LowBatteryWarning
+import com.joegec.joycon2android.settings.LowBatteryAlertDataStore
+import com.joegec.joycon2android.settings.LowBatteryAlertRepository
 import com.joegec.joycon2android.settings.MainScreenLaunchDataStore
+import com.joegec.joycon2android.settings.MarkNotificationOnboardingSeenUseCase
+import com.joegec.joycon2android.settings.NotificationOnboardingDataStore
+import com.joegec.joycon2android.settings.NotificationOnboardingRepository
+import com.joegec.joycon2android.settings.ObserveNotificationOnboardingSeenUseCase
 import com.joegec.joycon2android.settings.MainScreenLaunchRepository
 import com.joegec.joycon2android.settings.ObserveLaunchOnMainScreenUseCase
+import com.joegec.joycon2android.settings.ObserveLowBatteryAlertUseCase
 import com.joegec.joycon2android.settings.ObserveOutputSettingsUseCase
 import com.joegec.joycon2android.settings.ObserveShowTipsUseCase
 import com.joegec.joycon2android.settings.ObserveWarnUnsavedMappingUseCase
@@ -101,6 +111,9 @@ import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
 import com.joegec.joycon2android.settings.SetDeviceMotionBlockedUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
 import com.joegec.joycon2android.settings.SetLaunchOnMainScreenUseCase
+import com.joegec.joycon2android.settings.SetLowBatteryNotificationUseCase
+import com.joegec.joycon2android.settings.SetLowBatteryVibrationUseCase
+import com.joegec.joycon2android.settings.SetLowBatteryWarningsUseCase
 import com.joegec.joycon2android.settings.SetShowTipsUseCase
 import com.joegec.joycon2android.settings.SetWarnUnsavedMappingUseCase
 import com.joegec.joycon2android.settings.TipsDataStore
@@ -210,6 +223,17 @@ class AppContainer(context: Context) {
     private val mainScreenLaunchRepository: MainScreenLaunchRepository = MainScreenLaunchDataStore(appContext)
     val observeLaunchOnMainScreen = ObserveLaunchOnMainScreenUseCase(mainScreenLaunchRepository)
     val setLaunchOnMainScreen = SetLaunchOnMainScreenUseCase(mainScreenLaunchRepository)
+
+    private val lowBatteryAlertRepository: LowBatteryAlertRepository = LowBatteryAlertDataStore(appContext)
+    val observeLowBatteryAlert = ObserveLowBatteryAlertUseCase(lowBatteryAlertRepository)
+    val setLowBatteryNotification = SetLowBatteryNotificationUseCase(lowBatteryAlertRepository)
+    val setLowBatteryVibration = SetLowBatteryVibrationUseCase(lowBatteryAlertRepository)
+    val setLowBatteryWarnings = SetLowBatteryWarningsUseCase(lowBatteryAlertRepository)
+
+    private val notificationOnboardingRepository: NotificationOnboardingRepository =
+        NotificationOnboardingDataStore(appContext)
+    val observeNotificationOnboardingSeen = ObserveNotificationOnboardingSeenUseCase(notificationOnboardingRepository)
+    val markNotificationOnboardingSeen = MarkNotificationOnboardingSeenUseCase(notificationOnboardingRepository)
 
     // --- Controller button mapping (shared by Gamepad and DSU) ---
     private val controllerMappingRepository: ControllerMappingRepository = ControllerMappingDataStore(appContext)
@@ -550,6 +574,16 @@ class AppContainer(context: Context) {
         scope = scope,
         bound = keyboardBindings.map { bindings -> bindings.values.flatMapTo(mutableSetOf()) { it.sources.keys } },
         declare = DeclareKeyboardKeysUseCase(keyboardRepository)::invoke,
+    ).also { it.start() }
+
+    private val lowBatteryAlertPolicy = LowBatteryAlertPolicy(
+        scope = scope,
+        session = sessionCoordinator.uiState,
+        alert = observeLowBatteryAlert(),
+        warn = LowBatteryWarning(
+            LowBatteryNotification(appContext).apply { createChannel() },
+            controllerRepository,
+        )::warn,
     ).also { it.start() }
 
     val observeSession = ObserveSessionUseCase(sessionCoordinator)

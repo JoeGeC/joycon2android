@@ -1,4 +1,4 @@
 package com.joegec.joycon2android.connection
 
 /** Effects stored on the controller: docs/protocol.md#vibration */
-enum class VibrationSample { CLICK, BUZZ }
+enum class VibrationSample { CLICK, BUZZ, LOW_BATTERY }

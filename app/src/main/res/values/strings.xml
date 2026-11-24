@@ -38,4 +38,13 @@
     <string name="notification_title">Joy-Con Connected</string>
     <string name="notification_text">BLE connections are active</string>
     <string name="notification_action_disconnect_all">Disconnect All</string>
+    <string name="low_battery_channel_name">Low battery</string>
+    <string name="low_battery_channel_description">When a controller\'s battery runs low</string>
+    <string name="low_battery_title">Low battery</string>
+    <string name="low_battery_text">Player %1$d\'s %2$s is at %3$d%%</string>
+    <string name="low_battery_text_unassigned">%1$s is at %2$d%%</string>
+    <string name="low_battery_joycon_left">Left Joy-Con</string>
+    <string name="low_battery_joycon_right">Right Joy-Con</string>
+    <string name="low_battery_pro">Pro Controller</string>
+    <string name="low_battery_gamecube">GameCube controller</string>
 </resources>

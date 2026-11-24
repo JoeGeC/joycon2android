@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.model.ConnectionViewMode
+import com.joegec.joycon2android.ui.components.LocalSliderTouch
 import com.joegec.joycon2android.ui.components.SettingSwitch
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextTitle
@@ -24,11 +25,12 @@ fun SettingsPanel(
     onShowTipsToggle: (Boolean) -> Unit,
     onWarnUnsavedMappingToggle: (Boolean) -> Unit,
     onLaunchOnMainScreenToggle: (Boolean) -> Unit,
+    lowBatteryActions: LowBatteryActions,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState(), enabled = LocalSliderTouch.current?.touching != true)
             .padding(Dimens.cardPadding),
         verticalArrangement = Arrangement.spacedBy(Dimens.sectionSpacing),
     ) {
@@ -56,6 +58,9 @@ fun SettingsPanel(
                     titleStyle = MaterialTheme.typography.titleMedium,
                 )
             }
+        }
+        SettingsSection {
+            LowBatterySetting(state.lowBatteryAlert, state.notificationsAllowed, lowBatteryActions)
         }
         if (state.mainScreenLaunchAvailable) {
             SettingsSection {

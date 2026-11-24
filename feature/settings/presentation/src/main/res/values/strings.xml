@@ -11,8 +11,19 @@
     <string name="settings_faster_updates_description">Joy-Cons send input about twice as often for smoother motion and quicker buttons but uses more battery.</string>
     <string name="settings_block_device_motion_title">Ignore this device\'s motion in Eden</string>
     <string name="settings_block_device_motion_description">Eden adds this device\'s gyro to Player 1, which makes controller motion stutter. Lifted when the Virtual Gamepad and DSU are both off.</string>
+    <string name="settings_low_battery_notification_title">Low battery warning notification</string>
+    <string name="settings_low_battery_vibration_title">Low battery warning vibration</string>
+    <string name="settings_low_battery_warn_at_title">Warn at</string>
+    <string name="settings_low_battery_warn_at_one">%1$d%%</string>
+    <string name="settings_low_battery_warn_at_two">%1$d%%, then %2$d%%</string>
     <string name="settings_needs_shizuku">Needs Shizuku running.</string>
     <string name="settings_launch_on_main_screen_title">Open emulators on the main screen</string>
     <string name="settings_launch_on_main_screen_description">On a device with two screens, starts the emulator on the main one rather than the screen this app is on.</string>
     <string name="kofi_banner">Support on Ko-fi - tips go towards controllers and devices for development and testing (and coffee!)</string>
+    <string name="onboarding_notifications_title">Know before a controller dies</string>
+    <string name="onboarding_notifications_why">When a controller\'s battery runs low, the app can send a notification saying which player and which controller, so you can charge it before it cuts out mid-game.</string>
+    <string name="onboarding_notifications_also">It also shows a notification while controllers are connected, with a button to disconnect them all. Android needs your permission for both.</string>
+    <string name="onboarding_notifications_allow">Allow notifications</string>
+    <string name="onboarding_notifications_not_now">Not now</string>
+    <string name="onboarding_notifications_later">You can turn this on later in Settings. The controller still vibrates when it\'s low either way.</string>
 </resources>

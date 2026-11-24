@@ -36,6 +36,8 @@ object Dimens {
     val iconSizeTiny = 14.dp // sits beside bodySmall text rather than standing on its own
     val iconSizeSmall = 18.dp
     val iconSizeMedium = 20.dp
+    val iconSizeLarge = 48.dp
+    val onboardingMaxWidth = 480.dp
     val progressIndicatorSmall = 14.dp
 
     val stickCanvasSize = 110.dp

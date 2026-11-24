@@ -18,6 +18,7 @@ import com.joegec.joycon2android.model.JoyconInput
 import com.joegec.joycon2android.model.PlayerNumber
 import com.joegec.joycon2android.model.PlayerState
 import com.joegec.joycon2android.model.ControllerModel
+import com.joegec.joycon2android.notification.NotificationPermission
 import com.joegec.joycon2android.power.BatteryOptimizationExemption
 import com.joegec.joycon2android.service.Joycon2Service
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +34,7 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
     val permissionHandler = BlePermissionHandler(application)
     val batteryOptimizationExemption = BatteryOptimizationExemption(application)
     val locationServices = LocationServices(application)
+    val notificationPermission = NotificationPermission(application)
 
     private var bound = false
 
@@ -59,6 +61,9 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
 
     private val _batteryRestricted = MutableStateFlow(!batteryOptimizationExemption.isGranted())
     val batteryRestricted: StateFlow<Boolean> = _batteryRestricted.asStateFlow()
+
+    private val _notificationsAllowed = MutableStateFlow(notificationPermission.isAllowed())
+    val notificationsAllowed: StateFlow<Boolean> = _notificationsAllowed.asStateFlow()
 
     val locationBlocksScanning: StateFlow<Boolean> = locationServices.observeBlocksScanning()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
@@ -103,6 +108,10 @@ class Joycon2ViewModel(application: Application) : AndroidViewModel(application)
         if (_permissionDenied.value && permissionHandler.isGranted()) {
             onPermissionsGranted()
         }
+    }
+
+    fun recheckNotifications() {
+        _notificationsAllowed.value = notificationPermission.isAllowed()
     }
 
     fun recheckBatteryOptimization() {

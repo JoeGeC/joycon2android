@@ -1,6 +1,8 @@
 package com.joegec.joycon2android
 
+import android.Manifest
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -17,6 +19,9 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.rememberCoroutineScope
+import com.joegec.joycon2android.settings.presentation.LowBatteryActions
+import com.joegec.joycon2android.settings.presentation.NotificationOnboardingScreen
+import com.joegec.joycon2android.settings.presentation.NotificationOnboardingViewModel
 import com.joegec.joycon2android.settings.presentation.SettingsPanel
 import com.joegec.joycon2android.settings.presentation.SettingsPanelState
 import com.joegec.joycon2android.settings.presentation.SettingsViewModel
@@ -119,7 +124,19 @@ class MainActivity : ComponentActivity() {
                     c.setLaunchOnMainScreen,
                     c.observeWarnUnsavedMapping,
                     c.setWarnUnsavedMapping,
+                    c.observeLowBatteryAlert,
+                    c.setLowBatteryNotification,
+                    c.setLowBatteryVibration,
+                    c.setLowBatteryWarnings,
                 )
+            }
+        }
+    }
+    private val notificationOnboardingViewModel: NotificationOnboardingViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                val c = (application as JoyconApplication).container
+                NotificationOnboardingViewModel(c.observeNotificationOnboardingSeen, c.markNotificationOnboardingSeen)
             }
         }
     }
@@ -161,6 +178,31 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         viewModel.recheckPermissions()
         viewModel.recheckBatteryOptimization()
+        viewModel.recheckNotifications()
+    }
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        viewModel.recheckNotifications()
+        val askedForTheLastTime = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
+        if (!granted && askedForTheLastTime) startActivity(viewModel.notificationPermission.buildSettingsIntent())
+    }
+
+    private fun requestNotifications() {
+        val permission = viewModel.notificationPermission
+        if (permission.canRequest()) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            startActivity(permission.buildSettingsIntent())
+        }
+    }
+
+    // Stored on before asking, so the switch shows on as soon as notifications are allowed.
+    private fun toggleLowBatteryNotification(enabled: Boolean) {
+        settingsViewModel.toggleLowBatteryNotification(enabled)
+        if (enabled && !viewModel.notificationsAllowed.value) requestNotifications()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -189,30 +231,53 @@ class MainActivity : ComponentActivity() {
             Joycon2AndroidTheme {
                 ProvideTips(visible = showTips, onTurnOff = { settingsViewModel.toggleShowTips(false) }) {
                     Surface(Modifier.fillMaxSize(), color = Background) {
-                        var mappingRoute by rememberSaveable { mutableStateOf<MappingRoute?>(null) }
-
                         UpdatePrompt()
-
-                        AnimatedContent(
-                            targetState = mappingRoute,
-                            transitionSpec = { pushTransition(forward = targetState != null) },
-                            label = "mappingScreen",
-                        ) { route ->
-                            Box(Modifier.fillMaxSize().background(Background)) {
-                                if (route != null) {
-                                    ControllerMappingRoute(route, onBack = { mappingRoute = null })
-                                } else {
-                                    MainRoute(
-                                        onScan = { permLauncher.launch(permissionHandler.requiredPermissions) },
-                                        onOpenMapping = { mappingRoute = it },
-                                    )
-                                }
-                            }
+                        when (notificationOnboarding()) {
+                            true -> NotificationOnboarding()
+                            false -> Routes(onScan = { permLauncher.launch(permissionHandler.requiredPermissions) })
+                            null -> Unit
                         }
                     }
                 }
             }
         }
+    }
+
+    @Composable
+    private fun Routes(onScan: () -> Unit) {
+        var mappingRoute by rememberSaveable { mutableStateOf<MappingRoute?>(null) }
+        AnimatedContent(
+            targetState = mappingRoute,
+            transitionSpec = { pushTransition(forward = targetState != null) },
+            label = "mappingScreen",
+        ) { route ->
+            Box(Modifier.fillMaxSize().background(Background)) {
+                if (route != null) {
+                    ControllerMappingRoute(route, onBack = { mappingRoute = null })
+                } else {
+                    MainRoute(onScan = onScan, onOpenMapping = { mappingRoute = it })
+                }
+            }
+        }
+    }
+
+    /** True to show it, false once seen or not needed, null while the seen flag is read. */
+    @Composable
+    private fun notificationOnboarding(): Boolean? {
+        val seen by notificationOnboardingViewModel.seen.collectAsState()
+        val needed = remember { viewModel.notificationPermission.canRequest() }
+        return if (!needed) false else seen?.not()
+    }
+
+    @Composable
+    private fun NotificationOnboarding() {
+        NotificationOnboardingScreen(
+            onAllow = {
+                notificationOnboardingViewModel.dismiss()
+                toggleLowBatteryNotification(true)
+            },
+            onNotNow = notificationOnboardingViewModel::dismiss,
+        )
     }
 
     @Composable
@@ -284,6 +349,12 @@ class MainActivity : ComponentActivity() {
         if (showDsuHelp) DsuSetupSheet(onDismiss = { showDsuHelp = false })
     }
 
+    private val lowBatteryActions = LowBatteryActions(
+        toggleNotification = ::toggleLowBatteryNotification,
+        toggleVibration = { settingsViewModel.toggleLowBatteryVibration(it) },
+        setWarnings = { first, final -> settingsViewModel.setLowBatteryWarnings(first, final) },
+    )
+
     private val mappingActions = MappingActions(
         selectLayout = { body, layoutId -> controllerMappingViewModel.selectLayout(body, layoutId) },
         selectGlobalLayout = { controllerMappingViewModel.selectGlobalLayout(it) },
@@ -318,6 +389,8 @@ class MainActivity : ComponentActivity() {
         val showTips by settingsViewModel.showTips.collectAsState()
         val warnUnsavedMapping by settingsViewModel.warnUnsavedMapping.collectAsState()
         val launchOnMainScreen by settingsViewModel.launchOnMainScreen.collectAsState()
+        val lowBatteryAlert by settingsViewModel.lowBatteryAlert.collectAsState()
+        val notificationsAllowed by viewModel.notificationsAllowed.collectAsState()
         val mainScreenLaunchAvailable = remember {
             (application as JoyconApplication).container.deviceScreens.canLaunchOnMainScreen()
         }
@@ -333,6 +406,8 @@ class MainActivity : ComponentActivity() {
                         warnUnsavedMapping = warnUnsavedMapping,
                         mainScreenLaunchAvailable = mainScreenLaunchAvailable,
                         launchOnMainScreen = launchOnMainScreen,
+                        lowBatteryAlert = lowBatteryAlert,
+                        notificationsAllowed = notificationsAllowed,
                     ),
                     onViewModeChange = viewModel::setViewMode,
                     onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
@@ -340,6 +415,7 @@ class MainActivity : ComponentActivity() {
                     onShowTipsToggle = settingsViewModel::toggleShowTips,
                     onWarnUnsavedMappingToggle = settingsViewModel::toggleWarnUnsavedMapping,
                     onLaunchOnMainScreenToggle = settingsViewModel::toggleLaunchOnMainScreen,
+                    lowBatteryActions = lowBatteryActions,
                 )
             },
             containerColor = Background,

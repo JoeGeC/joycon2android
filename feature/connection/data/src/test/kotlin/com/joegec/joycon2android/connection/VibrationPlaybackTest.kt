@@ -16,9 +16,16 @@ class VibrationPlaybackTest {
     }
 
     @Test
-    fun `a click is the one stored sample`() {
+    fun `a click is the stored click-click`() {
         val step = VibrationPlayback.steps(VibrationSample.CLICK).single() as VibrationPlayback.Sample
 
         assertArrayEquals(ControllerCommands.vibrationSample(0x03), step.command)
+    }
+
+    @Test
+    fun `a low battery warning is the stored rising beep-beep`() {
+        val step = VibrationPlayback.steps(VibrationSample.LOW_BATTERY).single() as VibrationPlayback.Sample
+
+        assertArrayEquals(ControllerCommands.vibrationSample(0x04), step.command)
     }
 }
