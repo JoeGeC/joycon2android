@@ -6,18 +6,23 @@ import org.junit.Test
 class BatteryGaugeTest {
 
     @Test
-    fun `floor voltage reads empty`() {
-        assertEquals(0, BatteryGauge.percentFromVolts(2.7f))
+    fun `shutdown voltage reads empty`() {
+        assertEquals(0, BatteryGauge.percentFromVolts(2.39f))
     }
 
     @Test
-    fun `below floor voltage clamps to empty`() {
-        assertEquals(0, BatteryGauge.percentFromVolts(2.4f))
+    fun `below shutdown voltage clamps to empty`() {
+        assertEquals(0, BatteryGauge.percentFromVolts(2.2f))
     }
 
     @Test
-    fun `full voltage reads full`() {
-        assertEquals(100, BatteryGauge.percentFromVolts(3.6f))
+    fun `a controller still running below the old floor reads above empty`() {
+        assertEquals(1, BatteryGauge.percentFromVolts(2.80f))
+    }
+
+    @Test
+    fun `fresh off the charger reads full`() {
+        assertEquals(100, BatteryGauge.percentFromVolts(3.685f))
     }
 
     @Test
@@ -26,22 +31,20 @@ class BatteryGaugeTest {
     }
 
     @Test
-    fun `level boundaries map to quartiles`() {
-        assertEquals(25, BatteryGauge.percentFromVolts(3.0f))
-        assertEquals(50, BatteryGauge.percentFromVolts(3.16f))
-        assertEquals(75, BatteryGauge.percentFromVolts(3.3f))
+    fun `measured anchors read their share of play time`() {
+        assertEquals(5, BatteryGauge.percentFromVolts(3.09f))
+        assertEquals(20, BatteryGauge.percentFromVolts(3.178f))
+        assertEquals(50, BatteryGauge.percentFromVolts(3.279f))
+        assertEquals(90, BatteryGauge.percentFromVolts(3.592f))
     }
 
     @Test
-    fun `interpolates within a band`() {
-        assertEquals(12, BatteryGauge.percentFromVolts(2.85f))
-        assertEquals(88, BatteryGauge.percentFromVolts(3.45f))
+    fun `interpolates between anchors`() {
+        assertEquals(55, BatteryGauge.percentFromVolts(3.312f))
     }
 
     @Test
-    fun `matches charge levels observed on a switch 2`() {
-        // Controllers reading ~3.59-3.61 V over BLE showed 100% when docked on a Switch 2.
-        assertEquals(99, BatteryGauge.percentFromVolts(3.59f))
-        assertEquals(100, BatteryGauge.percentFromVolts(3.61f))
+    fun `the old gauge's half charge reads near empty`() {
+        assertEquals(12, BatteryGauge.percentFromVolts(3.137f))
     }
 }

@@ -8,7 +8,7 @@ class BatteryChargeTest {
 
     @Test
     fun `a voltage becomes the gauge percentage`() {
-        assertEquals(75, BatteryCharge.fromVolts(3.30f)?.percent)
+        assertEquals(50, BatteryCharge.fromVolts(3.279f)?.percent)
     }
 
     @Test

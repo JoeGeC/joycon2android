@@ -3,13 +3,29 @@ package com.joegec.joycon2android.model
 import kotlin.math.roundToInt
 
 object BatteryGauge {
-    // Anchors and the 0.6 V offset: docs/protocol.md#battery
+    // Share of a full charge's play time left, measured: docs/protocol.md#battery
     private val voltsToPercent = listOf(
-        2.70f to 0,
-        3.00f to 25,
-        3.16f to 50,
-        3.30f to 75,
-        3.60f to 100,
+        2.390f to 0,
+        2.804f to 1,
+        2.921f to 2,
+        2.997f to 3,
+        3.050f to 4,
+        3.090f to 5,
+        3.116f to 6,
+        3.127f to 8,
+        3.132f to 10,
+        3.135f to 12,
+        3.152f to 15,
+        3.178f to 20,
+        3.196f to 25,
+        3.212f to 30,
+        3.242f to 40,
+        3.279f to 50,
+        3.345f to 60,
+        3.423f to 70,
+        3.503f to 80,
+        3.592f to 90,
+        3.685f to 100,
     )
 
     fun percentFromVolts(volts: Float): Int {
