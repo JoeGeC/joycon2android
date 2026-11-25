@@ -63,7 +63,6 @@ fun NotificationOnboardingScreen(onAllow: () -> Unit, onNotNow: () -> Unit, modi
                 textAlign = TextAlign.Center,
             )
             OnboardingParagraph(stringResource(R.string.onboarding_notifications_why))
-            OnboardingParagraph(stringResource(R.string.onboarding_notifications_also))
             Spacer(Modifier.height(Dimens.elementSpacing))
             Button(
                 onClick = onAllow,

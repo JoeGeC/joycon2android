@@ -116,13 +116,13 @@ The gear at the top right opens the settings panel:
   to turn them all off.
 - **Warn about unsaved mappings** (on by default) — asks first when switching layout, or the **Pro Controller**
   switch, would replace a **Custom** mapping. Ticking **Don't show again** in that popup turns this off.
-- **Low battery warning notification** and **Low battery warning vibration** (both on by default) —
+- **Low battery warning notification** and **Low battery warning beep** (both on by default) —
   a notification naming the player and controller, and a beep-beep on the controller itself, when its
   battery falls to **Warn at** (10% by default, 5–50%), once each time it runs down. Drag **Warn at**'s
   two handles apart for an earlier warning as well, e.g. 20% then 10%. A full charge streamed for about
   26 hours in testing, so 10% leaves around 2½ hours, less with rumble. The first time the app opens it
   explains this and asks to allow notifications; after that, turning the notification on asks. It
-  stays off until they're allowed. The vibration doesn't need them.
+  stays off until they're allowed. The beep doesn't need them.
 - **Disconnect notification** (on by default) — a notification naming the player and controller when
   one drops out, saying if its battery ran out. It clears when the controller comes back. Like the
   low battery notification, it needs notifications allowed.

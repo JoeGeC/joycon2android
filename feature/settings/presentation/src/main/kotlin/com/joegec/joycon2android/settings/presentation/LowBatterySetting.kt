@@ -25,7 +25,7 @@ internal fun LowBatterySetting(
             titleStyle = MaterialTheme.typography.titleMedium,
         )
         SettingSwitch(
-            title = stringResource(R.string.settings_low_battery_vibration_title),
+            title = stringResource(R.string.settings_low_battery_beep_title),
             description = null,
             checked = alert.vibrate,
             onCheckedChange = actions.toggleVibration,
