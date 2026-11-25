@@ -48,7 +48,7 @@ internal class CommonSession(
     @Volatile private var ledBitmask = initialLedBitmask
     private var ledSentAfterFirstPacket = false
     private val led = LedDelivery(scheduler, ::sendPlayerLed)
-    private var rumbleCounter = 0
+    private val rumbleEncoder = channel.rumbleEncoder()
     private val rumbleStream = RumbleStream(::sendRumble)
 
     // A frame still queued is dropped, so a slow link falls behind by one frame, not a backlog.
@@ -110,14 +110,13 @@ internal class CommonSession(
         rumbleQueued = true
         ops.enqueue {
             rumbleQueued = false
-            writeRumble(HdRumble.packet(rumbleCounter++, rumble, channel.rumbleMotors))
+            writeRumble(rumbleEncoder.packet(rumble))
         }
     }
 
     private fun play(step: VibrationPlayback.Step): Boolean = when (step) {
         is VibrationPlayback.Sample -> write(step.command)
-        is VibrationPlayback.Rumble ->
-            writeRumble(HdRumble.packet(rumbleCounter++, step.amplitude, step.amplitude, channel.rumbleMotors))
+        is VibrationPlayback.Rumble -> writeRumble(rumbleEncoder.packet(step.amplitude))
     }
 
     private fun writeRumble(packet: ByteArray): Boolean = channel.vibration?.let { write(it, packet) } ?: false

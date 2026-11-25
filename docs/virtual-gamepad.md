@@ -225,7 +225,8 @@ leaves on it.
 
 An app vibrates the pad; the relay reports each motor's strength, and `GamepadManager` hands it to
 `ControllerRumble` (`:app`), which plays it on the player's controllers as
-[HD rumble](protocol.md#hd-rumble): strong on the low band, weak on the high.
+[HD rumble](protocol.md#hd-rumble): strong on the low band, weak on the high. A GameCube controller's
+motor is [on or off](protocol.md#gamecube-rumble).
 
 **Rumble strength** is a per-player slider in the mapping editor's Rumble section: the share of the actuator's safe
 maximum ([SDL's cap](protocol.md#hd-rumble)) a game's full rumble reaches, 0–100% in steps of 5,

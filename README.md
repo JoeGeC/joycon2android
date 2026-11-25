@@ -212,7 +212,8 @@ GameCube controller has layouts of its own, with Z on its Z button and analog L/
   Billiards' cue. Not offered with Classic. Leave it off for swings: with it on, Wii Sports Golf putts too hard and Bowling
   misses your swing. Every layout starts with it off; saved layouts remember it.
 - **Rumble strength.** In each player's **Rumble** section, a slider from Off to 100% of what the controller can safely do sets how
-  strongly a game's rumble plays on that player's controllers. It starts at 20%. Saved layouts
+  strongly a game's rumble plays on that player's controllers. It starts at 20%. A GameCube controller's
+  motor is only on or off, so for it the slider just turns rumble off at Off. Saved layouts
   remember it. Mouse & keys has none. DSU can't carry rumble, so Wii's comes through the virtual
   gamepad (needs Shizuku); Dolphin (Wii) takes only the rumble from that pad, so tap **Auto set up** again
   after turning it on or off.

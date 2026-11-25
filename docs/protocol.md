@@ -215,8 +215,6 @@ Switch 2 codec, bit packing and frequencies from SDL's `SDL_hidapi_switch2.c`:
   and caps amplitude at ~44%.
 - **Cadence:** a packet carries ~12 ms. SDL resends every 12 ms while it rumbles, then sends zero
   amplitude to stop.
-- The GameCube controller takes 4 bytes in another format, on `3f8fb670-ab25-45bf-b540-38c72834d064`;
-  the app doesn't rumble it.
 
 A virtual gamepad's rumble ([virtual-gamepad.md](virtual-gamepad.md#rumble)) streams through
 `RumbleStream`: a packet every 12 ms while either motor is on, then one at zero. A packet still
@@ -229,6 +227,27 @@ default.
 
 When the mapping editor binds a press, the app plays three packets at amplitude `0x040` 12 ms apart, then
 silence: a ~36 ms faint buzz (`VibrationPlayback`). Clones are untested.
+
+### GameCube rumble
+
+The NSO GameCube controller has one on/off motor, not HD rumble. Layout from
+[ndeadly](https://github.com/ndeadly/switch2_controller_research/blob/master/hid_reports.md#output-report-0x03)
+and SDL's `SDL_hidapi_switch2.c`, written without response to `3f8fb670-ab25-45bf-b540-38c72834d064`:
+
+```
+00 <0x50 | counter> <state> 00 00
+```
+
+| State | Motor |
+|---|---|
+| `0x00` | coast |
+| `0x01` | on |
+| `0x02` | brake |
+
+The packet streams on the HD rumble cadence. SDL runs the motor for a share of frames to give it a
+strength. The app runs it on at any strength and brakes it at zero (`GameCubeRumbleEncoder`): Dolphin
+sends GameCube rumble at 75%, which the default 20% strength would cut to one frame in seven, too
+short for the motor to spin up. So the strength slider only turns it off, at 0%. Untested on hardware.
 
 ### Analog triggers
 
