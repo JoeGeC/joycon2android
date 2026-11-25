@@ -79,7 +79,6 @@ class JoyconConnection(
     @Volatile private var securityRequested = false
     @Volatile private var servicesDiscovered = false
     @Volatile private var commonReportSeen = false
-    @Volatile private var commandReplySeen = false
     @Volatile private var assignedPlayer: PlayerNumber? = null
     @Volatile private var everReady = false
     @Volatile private var released = false
@@ -99,7 +98,7 @@ class JoyconConnection(
         securityRequested = true
         Log.i(TAG, "[$side] SMP security request received")
         val g = gatt ?: return
-        if (servicesDiscovered && !commonChannelAnswered()) mainHandler.post { startConsoleSession(g) }
+        if (servicesDiscovered && !commonReportSeen) mainHandler.post { startConsoleSession(g) }
     }
 
     fun onPairingFailed() {
@@ -268,17 +267,13 @@ class JoyconConnection(
             commonReportSeen = true
             // Only a controller that speaks the common protocol notifies here, so the fallback misfired.
             if (console != null && common != null) returnToCommonChannel()
-        } else if (console == null && uuid == CommonChannel.COMMAND_RESPONSE) {
-            commandReplySeen = true
         }
         protocol?.onCharacteristicChanged(uuid, data)
     }
 
-    private fun commonChannelAnswered() = commonReportSeen || commandReplySeen
-
     private fun fallBackToConsoleIfSilent(g: BluetoothGatt) {
-        if (commonChannelAnswered() || !mayUseConsole) return
-        Log.i(TAG, "[$side] No reply on the common channel; switching to the console protocol")
+        if (commonReportSeen || !mayUseConsole) return
+        Log.i(TAG, "[$side] No input report on the common channel; switching to the console protocol")
         startConsoleSession(g)
     }
 
@@ -335,7 +330,6 @@ class JoyconConnection(
         securityRequested = false
         servicesDiscovered = false
         commonReportSeen = false
-        commandReplySeen = false
     }
 
     // Android keeps a pending connect armed after a drop: docs/protocol.md#coming-back-after-a-drop

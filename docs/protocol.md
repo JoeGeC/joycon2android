@@ -484,8 +484,9 @@ left `[2]` Down Right Left Up L ZL − LS, `[3]` Capture `0x01`, SR `0x40`, SL `
 
 **Detection.** These controllers send an SMP Security Request on every connection; a genuine
 Joy-Con 2 never does. Android pairs one device at a time, so a second clone connecting while the
-first one's pairing is pending sends none, and silence on the common channel 1.5 s after init
-switches it over instead. Genuine Joy-Con 2s answer the console channel too, so a controller moved
+first one's pairing is pending sends none, and no input report on `...fd2` 1.5 s after init
+switches it over instead. Command replies don't count: some clones (NYXI Hyperion 3 Ultra, #75)
+answer common commands but never send a report there. Genuine Joy-Con 2s answer the console channel too, so a controller moved
 over by that timeout returns to the common path on its first report on `...fd2`, which only a
 controller speaking that protocol sends. A controller with analog triggers (the GameCube controller)
 never switches: the console report has no trigger bytes, and it answers on the common channel.
