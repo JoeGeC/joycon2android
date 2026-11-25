@@ -92,6 +92,14 @@ import com.joegec.joycon2android.dsu.PushDsuPadDataUseCase
 import com.joegec.joycon2android.battery.LowBatteryAlertPolicy
 import com.joegec.joycon2android.battery.LowBatteryNotification
 import com.joegec.joycon2android.battery.LowBatteryWarning
+import com.joegec.joycon2android.connectionloss.ConnectionLossAlertPolicy
+import com.joegec.joycon2android.connectionloss.ConnectionLossNotification
+import com.joegec.joycon2android.notification.AlertPoster
+import com.joegec.joycon2android.notification.ControllerNames
+import com.joegec.joycon2android.settings.ConnectionLossAlertDataStore
+import com.joegec.joycon2android.settings.ConnectionLossAlertRepository
+import com.joegec.joycon2android.settings.ObserveConnectionLossNotificationUseCase
+import com.joegec.joycon2android.settings.SetConnectionLossNotificationUseCase
 import com.joegec.joycon2android.settings.LowBatteryAlertDataStore
 import com.joegec.joycon2android.settings.LowBatteryAlertRepository
 import com.joegec.joycon2android.settings.MainScreenLaunchDataStore
@@ -229,6 +237,10 @@ class AppContainer(context: Context) {
     val setLowBatteryNotification = SetLowBatteryNotificationUseCase(lowBatteryAlertRepository)
     val setLowBatteryVibration = SetLowBatteryVibrationUseCase(lowBatteryAlertRepository)
     val setLowBatteryWarnings = SetLowBatteryWarningsUseCase(lowBatteryAlertRepository)
+
+    private val connectionLossAlertRepository: ConnectionLossAlertRepository = ConnectionLossAlertDataStore(appContext)
+    val observeConnectionLossNotification = ObserveConnectionLossNotificationUseCase(connectionLossAlertRepository)
+    val setConnectionLossNotification = SetConnectionLossNotificationUseCase(connectionLossAlertRepository)
 
     private val notificationOnboardingRepository: NotificationOnboardingRepository =
         NotificationOnboardingDataStore(appContext)
@@ -576,14 +588,28 @@ class AppContainer(context: Context) {
         declare = DeclareKeyboardKeysUseCase(keyboardRepository)::invoke,
     ).also { it.start() }
 
+    private val alertPoster = AlertPoster(appContext)
+    private val controllerNames = ControllerNames(appContext)
+
     private val lowBatteryAlertPolicy = LowBatteryAlertPolicy(
         scope = scope,
         session = sessionCoordinator.uiState,
         alert = observeLowBatteryAlert(),
         warn = LowBatteryWarning(
-            LowBatteryNotification(appContext).apply { createChannel() },
+            LowBatteryNotification(appContext, alertPoster, controllerNames).apply { createChannel() },
             controllerRepository,
         )::warn,
+    ).also { it.start() }
+
+    private val connectionLossNotification =
+        ConnectionLossNotification(appContext, alertPoster, controllerNames).apply { createChannel() }
+
+    private val connectionLossAlertPolicy = ConnectionLossAlertPolicy(
+        scope = scope,
+        session = sessionCoordinator.uiState,
+        notify = observeConnectionLossNotification(),
+        show = connectionLossNotification::show,
+        clear = connectionLossNotification::clear,
     ).also { it.start() }
 
     val observeSession = ObserveSessionUseCase(sessionCoordinator)

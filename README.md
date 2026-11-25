@@ -123,6 +123,9 @@ The gear at the top right opens the settings panel:
   26 hours in testing, so 10% leaves around 2½ hours, less with rumble. The first time the app opens it
   explains this and asks to allow notifications; after that, turning the notification on asks. It
   stays off until they're allowed. The vibration doesn't need them.
+- **Disconnect notification** (on by default) — a notification naming the player and controller when
+  one drops out, saying if its battery ran out. It clears when the controller comes back. Like the
+  low battery notification, it needs notifications allowed.
 - **Open emulators on the main screen** (on by default, two-screen devices such as the AYN Thor) —
   when the app offers to start the emulator after setup, it opens on the main screen instead of the
   one this app is on.
@@ -342,7 +345,7 @@ shoulder buttons its body lacks.
 | Controller stops responding | Press SYNC and reconnect; wait a moment if it stays silent |
 | Controller shows "Connection lost" | Press SYNC on it and it reconnects to the same player by itself, or tap Scan. After two minutes it's removed |
 | Battery percentage looks wrong after a short charge | A Joy-Con charged only a few minutes reads high until it settles; it's accurate after a full charge |
-| No low battery notification | Settings: turn **Low battery warning notification** on and allow notifications when Android asks. If it won't stay on, allow the app's notifications in Android's settings |
+| No low battery or disconnect notification | Settings: turn **Low battery warning notification** or **Disconnect notification** on and allow notifications when Android asks. If it won't stay on, allow the app's notifications in Android's settings |
 | Controllers drop when a game starts | Some phones clear background apps when a game launches. Tap the yellow banner at the top to let the app run in the background (or set its battery use to unrestricted), and exclude it from the game launcher's cleanup |
 | Gamepad doesn't show up in games | Check `adb shell getevent -p` lists "Joy-Con Virtual Gamepad" |
 | No rumble in Eden, or the phone vibrates instead | Tap **Auto set up** for Eden again, or turn off **Use system vibrator** in Eden's controller settings |

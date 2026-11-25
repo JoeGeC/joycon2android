@@ -51,6 +51,14 @@ class SteadyBatteryTest {
     }
 
     @Test
+    fun `below five percent every change is shown`() {
+        feed(6)
+
+        assertEquals(BatteryCharge(4), feed(4))
+        assertEquals(BatteryCharge(1), feed(1))
+    }
+
+    @Test
     fun `a reset starts a fresh window`() {
         feed(80)
         battery.reset()

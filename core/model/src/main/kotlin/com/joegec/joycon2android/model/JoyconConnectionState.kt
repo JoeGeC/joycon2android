@@ -6,6 +6,7 @@ data class JoyconConnectionState(
     val ready: Boolean = false,
     /** Dropped, and held for a while in case it comes back. */
     val connectionLost: Boolean = false,
+    val batteryAtLoss: BatteryCharge? = null,
     val deviceName: String? = null,
     val error: String? = null,
     /** 0xRRGGBB from SPI flash; null until read, or unset on the controller. */

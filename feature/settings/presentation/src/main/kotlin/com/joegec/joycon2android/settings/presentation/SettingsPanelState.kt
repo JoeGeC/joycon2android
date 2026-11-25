@@ -14,4 +14,5 @@ data class SettingsPanelState(
     val launchOnMainScreen: Boolean = true,
     val lowBatteryAlert: LowBatteryAlert = LowBatteryAlert(),
     val notificationsAllowed: Boolean = true,
+    val connectionLossNotification: Boolean = true,
 )

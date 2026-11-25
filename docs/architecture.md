@@ -199,7 +199,7 @@ One **ViewModel per feature**, in its presentation module, built in `MainActivit
 - `GamepadViewModel` — the virtual gamepad, keyboard and mouse status, and Shizuku availability.
 - `UpdateViewModel` — the once-per-launch release check and the update prompt.
 - `SettingsViewModel` — the settings that apply to whichever outputs run (faster updates, the Eden
-  motion block), the low battery warning (run by `LowBatteryAlertPolicy` in `:app`), **Show tips**, which `MainActivity` hands every screen through `LocalTips`, and
+  motion block), the low battery warning and the disconnect notification (run by `LowBatteryAlertPolicy` and `ConnectionLossAlertPolicy` in `:app`), **Show tips**, which `MainActivity` hands every screen through `LocalTips`, and
   which screen `EmulatorLauncher` starts an emulator on. The panel's layout choice stays with `Joycon2ViewModel`, which renders it.
 - `NotificationOnboardingViewModel` (in `:feature:settings:presentation`) — whether the one-time
   notification explainer has been seen.

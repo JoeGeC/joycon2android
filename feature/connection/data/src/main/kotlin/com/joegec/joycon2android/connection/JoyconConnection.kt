@@ -13,6 +13,7 @@ import android.os.Looper
 import android.util.Log
 import com.joegec.joycon2android.connection.console.ConsoleChannel
 import com.joegec.joycon2android.connection.console.ConsoleSession
+import com.joegec.joycon2android.model.BatteryCharge
 import com.joegec.joycon2android.model.ControllerModel
 import com.joegec.joycon2android.model.JoyconConnectionState
 import com.joegec.joycon2android.model.JoyconInput
@@ -175,10 +176,11 @@ class JoyconConnection(
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     Log.w(TAG, "[$side] Disconnected (status=$status)")
+                    val lastBattery = _input.value.battery
                     endSession(g)
                     _input.value = JoyconInput()
                     battery.reset()
-                    if (!released && (everReady || awaitingReturn) && awaitReturn(status)) return
+                    if (!released && (everReady || awaitingReturn) && awaitReturn(status, lastBattery)) return
                     _connectionState.value = JoyconConnectionState(
                         deviceName = deviceName,
                         error = if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -337,14 +339,18 @@ class JoyconConnection(
     }
 
     // Android keeps a pending connect armed after a drop: docs/protocol.md#coming-back-after-a-drop
-    private fun awaitReturn(status: Int): Boolean {
+    private fun awaitReturn(status: Int, lastBattery: BatteryCharge?): Boolean {
         val target = device ?: return false
         val reopened = target.connectGatt(context, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
             ?: return false
         Log.i(TAG, "[$side] Connection lost (status $status); waiting for the controller to come back")
         gatt = reopened
         returnWindow.open()
-        _connectionState.value = JoyconConnectionState(deviceName = deviceName, connectionLost = true)
+        _connectionState.value = JoyconConnectionState(
+            deviceName = deviceName,
+            connectionLost = true,
+            batteryAtLoss = lastBattery,
+        )
         return true
     }
 

@@ -43,8 +43,16 @@
     <string name="low_battery_title">Low battery</string>
     <string name="low_battery_text">Player %1$d\'s %2$s is at %3$d%%</string>
     <string name="low_battery_text_unassigned">%1$s is at %2$d%%</string>
-    <string name="low_battery_joycon_left">Left Joy-Con</string>
-    <string name="low_battery_joycon_right">Right Joy-Con</string>
-    <string name="low_battery_pro">Pro Controller</string>
-    <string name="low_battery_gamecube">GameCube controller</string>
+    <string name="notification_controller_joycon_left">Left Joy-Con</string>
+    <string name="notification_controller_joycon_right">Right Joy-Con</string>
+    <string name="notification_controller_pro">Pro Controller</string>
+    <string name="notification_controller_gamecube">GameCube controller</string>
+    <string name="notification_connection_lost_channel_name">Controller disconnected</string>
+    <string name="notification_connection_lost_channel_description">When a controller drops out or runs out of battery</string>
+    <string name="notification_connection_lost_title">Controller disconnected</string>
+    <string name="notification_connection_lost_text">Player %1$d\'s %2$s lost connection. Press SYNC on it to reconnect.</string>
+    <string name="notification_connection_lost_text_unassigned">%1$s lost connection. Press SYNC on it to reconnect.</string>
+    <string name="notification_battery_flat_title">Controller out of battery</string>
+    <string name="notification_battery_flat_text">Player %1$d\'s %2$s ran out of battery. Charge it, then reconnect it.</string>
+    <string name="notification_battery_flat_text_unassigned">%1$s ran out of battery. Charge it, then reconnect it.</string>
 </resources>

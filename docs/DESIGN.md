@@ -121,7 +121,7 @@ In `JoyconScreen.kt`:
   icon, a `titleLarge` heading, why the app wants notifications, **Allow notifications** (the large
   accent button) and **Not now**. Either choice marks it seen.
 - **It asks in context.** Android's prompt opens from **Allow notifications**, never on launch.
-  Afterwards only the **Low battery warning notification** switch asks.
+  Afterwards only the **Low battery warning notification** and **Disconnect notification** switches ask.
 
 ### Output card
 

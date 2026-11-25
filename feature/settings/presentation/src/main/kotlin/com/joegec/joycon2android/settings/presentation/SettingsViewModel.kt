@@ -3,6 +3,7 @@ package com.joegec.joycon2android.settings.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joegec.joycon2android.settings.LowBatteryAlert
+import com.joegec.joycon2android.settings.ObserveConnectionLossNotificationUseCase
 import com.joegec.joycon2android.settings.ObserveLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.ObserveLowBatteryAlertUseCase
 import com.joegec.joycon2android.settings.ObserveOutputSettingsUseCase
@@ -10,6 +11,7 @@ import com.joegec.joycon2android.settings.ObserveShowTipsUseCase
 import com.joegec.joycon2android.settings.ObserveWarnUnsavedMappingUseCase
 import com.joegec.joycon2android.settings.OutputSettings
 import com.joegec.joycon2android.settings.SetBlockDeviceMotionUseCase
+import com.joegec.joycon2android.settings.SetConnectionLossNotificationUseCase
 import com.joegec.joycon2android.settings.SetFasterUpdatesUseCase
 import com.joegec.joycon2android.settings.SetLaunchOnMainScreenUseCase
 import com.joegec.joycon2android.settings.SetLowBatteryNotificationUseCase
@@ -36,6 +38,8 @@ class SettingsViewModel(
     private val setLowBatteryNotification: SetLowBatteryNotificationUseCase,
     private val setLowBatteryVibration: SetLowBatteryVibrationUseCase,
     private val setLowBatteryWarningPercents: SetLowBatteryWarningsUseCase,
+    observeConnectionLossNotification: ObserveConnectionLossNotificationUseCase,
+    private val setConnectionLossNotification: SetConnectionLossNotificationUseCase,
 ) : ViewModel() {
 
     val outputSettings: StateFlow<OutputSettings> = observeOutputSettings()
@@ -66,6 +70,13 @@ class SettingsViewModel(
 
     fun setLowBatteryWarnings(first: Int, final: Int) {
         viewModelScope.launch { setLowBatteryWarningPercents(first, final) }
+    }
+
+    val connectionLossNotification: StateFlow<Boolean> = observeConnectionLossNotification()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), true)
+
+    fun toggleConnectionLossNotification(enabled: Boolean) {
+        viewModelScope.launch { setConnectionLossNotification(enabled) }
     }
 
     fun toggleWarnUnsavedMapping(enabled: Boolean) {

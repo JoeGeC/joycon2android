@@ -26,6 +26,7 @@ fun SettingsPanel(
     onWarnUnsavedMappingToggle: (Boolean) -> Unit,
     onLaunchOnMainScreenToggle: (Boolean) -> Unit,
     lowBatteryActions: LowBatteryActions,
+    onConnectionLossNotificationToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -61,6 +62,15 @@ fun SettingsPanel(
         }
         SettingsSection {
             LowBatterySetting(state.lowBatteryAlert, state.notificationsAllowed, lowBatteryActions)
+        }
+        SettingsSection {
+            SettingSwitch(
+                title = stringResource(R.string.settings_connection_loss_notification_title),
+                description = stringResource(R.string.settings_connection_loss_notification_description),
+                checked = state.connectionLossNotification && state.notificationsAllowed,
+                onCheckedChange = onConnectionLossNotificationToggle,
+                titleStyle = MaterialTheme.typography.titleMedium,
+            )
         }
         if (state.mainScreenLaunchAvailable) {
             SettingsSection {

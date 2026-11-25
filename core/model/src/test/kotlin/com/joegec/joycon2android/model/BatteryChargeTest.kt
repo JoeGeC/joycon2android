@@ -1,7 +1,9 @@
 package com.joegec.joycon2android.model
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BatteryChargeTest {
@@ -21,5 +23,15 @@ class BatteryChargeTest {
         assertEquals(100, BatteryCharge.fromLevel(9, 9).percent)
         assertEquals(55, BatteryCharge.fromLevel(5, 9).percent)
         assertEquals(0, BatteryCharge.fromLevel(0, 9).percent)
+    }
+
+    @Test
+    fun `one percent is flat`() {
+        assertTrue(BatteryCharge(1).flat)
+    }
+
+    @Test
+    fun `two percent is not flat`() {
+        assertFalse(BatteryCharge(2).flat)
     }
 }

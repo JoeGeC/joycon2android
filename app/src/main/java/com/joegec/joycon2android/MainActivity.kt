@@ -128,6 +128,8 @@ class MainActivity : ComponentActivity() {
                     c.setLowBatteryNotification,
                     c.setLowBatteryVibration,
                     c.setLowBatteryWarnings,
+                    c.observeConnectionLossNotification,
+                    c.setConnectionLossNotification,
                 )
             }
         }
@@ -202,6 +204,11 @@ class MainActivity : ComponentActivity() {
     // Stored on before asking, so the switch shows on as soon as notifications are allowed.
     private fun toggleLowBatteryNotification(enabled: Boolean) {
         settingsViewModel.toggleLowBatteryNotification(enabled)
+        if (enabled && !viewModel.notificationsAllowed.value) requestNotifications()
+    }
+
+    private fun toggleConnectionLossNotification(enabled: Boolean) {
+        settingsViewModel.toggleConnectionLossNotification(enabled)
         if (enabled && !viewModel.notificationsAllowed.value) requestNotifications()
     }
 
@@ -391,6 +398,7 @@ class MainActivity : ComponentActivity() {
         val launchOnMainScreen by settingsViewModel.launchOnMainScreen.collectAsState()
         val lowBatteryAlert by settingsViewModel.lowBatteryAlert.collectAsState()
         val notificationsAllowed by viewModel.notificationsAllowed.collectAsState()
+        val connectionLossNotification by settingsViewModel.connectionLossNotification.collectAsState()
         val mainScreenLaunchAvailable = remember {
             (application as JoyconApplication).container.deviceScreens.canLaunchOnMainScreen()
         }
@@ -408,6 +416,7 @@ class MainActivity : ComponentActivity() {
                         launchOnMainScreen = launchOnMainScreen,
                         lowBatteryAlert = lowBatteryAlert,
                         notificationsAllowed = notificationsAllowed,
+                        connectionLossNotification = connectionLossNotification,
                     ),
                     onViewModeChange = viewModel::setViewMode,
                     onFasterUpdatesToggle = settingsViewModel::toggleFasterUpdates,
@@ -416,6 +425,7 @@ class MainActivity : ComponentActivity() {
                     onWarnUnsavedMappingToggle = settingsViewModel::toggleWarnUnsavedMapping,
                     onLaunchOnMainScreenToggle = settingsViewModel::toggleLaunchOnMainScreen,
                     lowBatteryActions = lowBatteryActions,
+                    onConnectionLossNotificationToggle = ::toggleConnectionLossNotification,
                 )
             },
             containerColor = Background,

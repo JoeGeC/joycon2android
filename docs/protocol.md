@@ -330,7 +330,12 @@ Readings wobble by a few mV from packet to packet, a few percent on the plateau,
 them ~10 mV for a few packets: on the plateau one sagging packet reads 5% low. `SteadyBattery`
 takes the median of the last 64 reports (~1–2 s), shows nothing until it has them, and holds the
 shown charge until that median is 5% away, so neither the UI nor the low-battery warning reacts
-to one packet.
+to one packet. Below 5% it shows every change: tens of mV per percent there, well above the noise.
+
+**Ran out of battery.** A dead cell and a controller out of range drop the link alike, so the
+cause comes from the charge: `JoyconConnection` keeps the last reading on the lost state
+(`batteryAtLoss`), and ≤1% (`BatteryCharge.flat`, 2.80 V, ~15 minutes from shutdown) counts as
+flat.
 
 ## Stick range and centre
 
@@ -493,6 +498,8 @@ Every controller, genuine or clone, is held for two minutes after it drops (`Ret
 - `JoyconConnection` keeps its pool entry, player slot and LEDs, and arms
   `connectGatt(autoConnect = true)`.
 - The UI marks it **Connection lost** and asks for SYNC, on the player card and the unassigned card.
+- `ConnectionLossAlertPolicy` posts a notification for the drop, saying if the battery ran out
+  ([Ran out of battery](#battery)), and clears it when the controller connects again.
 - A scan that finds it hands it to the waiting connection (`ConnectionPool.connect` →
   `reconnect`), which connects directly instead of skipping a known address.
 - After two minutes, or a tap on Disconnect, it leaves the pool as any dropped controller did.
