@@ -185,8 +185,44 @@ The only place abstractions and implementations meet. It:
 - exposes a flat surface of use cases that `MainActivity` hands to each feature's ViewModel.
 
 It's held by `JoyconApplication`, so connections and servers **outlive any Activity or the
-foreground service**. The `Service` only manages the foreground-notification lifetime; it reads
-no state of its own.
+foreground service**. The `Service` only manages the foreground-notification lifetime (while
+anything is connected or a scan runs, `ForegroundReason`); it reads no state of its own.
+
+## Home-screen widget
+
+The widget is cross-feature (session, mapping, output), so it lives in `:app` (`widget/`), as
+`Joycon2ViewModel` does.
+
+- **State:** `HomeWidgetStateSource` folds the session, what's being played and its emulator, the
+  group layout of whoever's playing for that game's console (`ObserveGlobalMappingUseCase`), Shizuku
+  against the game, and `ScanReadiness` into one `HomeWidgetState`. It drops live input, so a packet redraws nothing.
+- **Redraws:** outside an open Glance session the widget redraws only when asked.
+  `HomeWidgetRefreshPolicy` asks with `updateAll` once the state has settled for 500 ms, and never
+  cancels an ask midway: each one can replace a Glance session that's still starting, so the burst of
+  states at process start would otherwise restart it several times. `ScanReadiness` re-checks on
+  Bluetooth and Location broadcasts, and when `MainActivity` stops, since Android broadcasts no
+  permission grant.
+- **Hosts only show updates while they listen.** Cocoon on the AYN Thor's second screen listens only
+  while its top-screen activity is resumed, so the widget freezes behind another app (or after the app
+  is reinstalled or the widget re-added, on Glance's loading layout, until Cocoon restarts) and catches up when Cocoon is back on top.; the app's
+  views reach `AppWidgetManager` either way (Android 13, 2026-11-27).
+- **Sizes in Cocoon:** Cocoon 3.12 offers a widget `ceil(minResize px / 74)` up to 3 cells each way,
+  default `ceil(min px / 74)`, capped the same. In pixels, so the dp that make 2 cells shrink with
+  density: `minResizeWidth`/`Height` of 45 dp give 2 cells up to about 3.3x (the Thor is 2.3x, where
+  110 dp made 4, capped to 3: one size only). Ordinary launchers then allow 1x1, hence the Scan-only
+  layout.
+- **Scan:** the button starts `Joycon2Service` with `ACTION_SCAN` as a foreground service; a widget
+  tap is allowed to start one from the background (Android 16 emulator, 2026-11-27). Missing
+  permission, Bluetooth or Location turns the button into "open the app" instead, since
+  `startForeground` with `connectedDevice` throws without the Bluetooth permissions.
+- **Pickers:** `PlayingPickerActivity` and `GroupLayoutPickerActivity`, translucent activities over
+  the home screen, show `PlayingPickerDialog` (`:feature:output:presentation`, the Output card's
+  options from `playingOptions`) and `GroupLayoutPickerDialog` (`:core:buttonmapping:presentation`,
+  the editor's group options from `groupLayoutChoice`), both on `OptionListDialog`. They take their
+  ViewModels from `ContainerViewModels.kt`, as `MainActivity` does, and close once the choice is
+  saved, not before, since the ViewModel's scope ends with them.
+- **Names outside Compose:** Glance has no `stringResource`, so `layoutLabels(resources)`,
+  `PlayerBody.label(resources)` and `Playing.label(resources)` name them from `Resources`.
 
 ## ViewModels and the UI
 

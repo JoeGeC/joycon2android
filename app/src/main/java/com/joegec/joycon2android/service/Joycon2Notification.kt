@@ -24,9 +24,9 @@ class Joycon2Notification(private val context: Context) {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
-    fun build(): Notification = NotificationCompat.Builder(context, CHANNEL_ID)
-        .setContentTitle(context.getString(R.string.notification_title))
-        .setContentText(context.getString(R.string.notification_text))
+    fun build(reason: ForegroundReason): Notification = NotificationCompat.Builder(context, CHANNEL_ID)
+        .setContentTitle(context.getString(reason.title()))
+        .setContentText(context.getString(reason.text()))
         .setSmallIcon(R.drawable.ic_launcher_foreground)
         .setOngoing(true)
         .setContentIntent(openAppIntent(context))
@@ -42,6 +42,16 @@ class Joycon2Notification(private val context: Context) {
             action = Joycon2Service.ACTION_DISCONNECT_ALL
         }
         return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+    }
+
+    private fun ForegroundReason.title() = when (this) {
+        ForegroundReason.CONNECTED -> R.string.notification_title
+        ForegroundReason.SCANNING -> R.string.notification_scanning_title
+    }
+
+    private fun ForegroundReason.text() = when (this) {
+        ForegroundReason.CONNECTED -> R.string.notification_text
+        ForegroundReason.SCANNING -> R.string.notification_scanning_text
     }
 
     companion object {

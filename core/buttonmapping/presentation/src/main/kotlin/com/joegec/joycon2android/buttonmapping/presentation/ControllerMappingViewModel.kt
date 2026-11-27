@@ -23,6 +23,7 @@ import com.joegec.joycon2android.buttonmapping.SetWiiControllerUseCase
 import com.joegec.joycon2android.buttonmapping.WiiController
 import com.joegec.joycon2android.model.PlayerState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -114,9 +115,10 @@ class ControllerMappingViewModel(
         observeSavedLayouts(target.console),
     ) { mapping, saved -> controllerMappingUiState(target.console, mapping, saved) }
 
-    private fun onTarget(block: suspend (MappingTarget) -> Unit) {
-        val target = editing.value ?: return
-        viewModelScope.launch { block(target) }
+    /** Null with nothing being edited. */
+    private fun onTarget(block: suspend (MappingTarget) -> Unit): Job? {
+        val target = editing.value ?: return null
+        return viewModelScope.launch { block(target) }
     }
 
     private companion object {

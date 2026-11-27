@@ -62,6 +62,31 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".widget.GroupLayoutPickerActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Joycon2Android.Dialog" />
+
+        <activity
+            android:name=".widget.PlayingPickerActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Joycon2Android.Dialog" />
+
+        <receiver
+            android:name=".widget.HomeWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/home_widget_info" />
+        </receiver>
+
         <service
             android:name=".service.Joycon2Service"
             android:exported="false"

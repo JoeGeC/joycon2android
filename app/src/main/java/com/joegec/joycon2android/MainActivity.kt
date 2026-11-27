@@ -96,17 +96,7 @@ class MainActivity : ComponentActivity() {
     private val outputViewModel: OutputViewModel by viewModels {
         viewModelFactory {
             initializer {
-                val c = (application as JoyconApplication).container
-                OutputViewModel(
-                    c.observePlaying,
-                    c.observeOutputOn,
-                    c.setPlaying,
-                    c.selectEmulator,
-                    c.setMotion,
-                    c.setPad,
-                    emulators = c.emulatorTargets,
-                    configure = c::configureEmulator,
-                )
+                (application as JoyconApplication).container.outputViewModel()
             }
         }
     }
@@ -153,25 +143,7 @@ class MainActivity : ComponentActivity() {
     private val controllerMappingViewModel: ControllerMappingViewModel by viewModels {
         viewModelFactory {
             initializer {
-                val c = (application as JoyconApplication).container
-                ControllerMappingViewModel(
-                    c.observeGlobalMapping,
-                    c.observeSavedLayouts,
-                    c.applyMappingLayout,
-                    c.applyGlobalLayout,
-                    c.setControllerMapping,
-                    c.setWiiController,
-                    c.setThrust,
-                    c.setSensitivity,
-                    c.setRumbleStrength,
-                    c.setProController,
-                    c.setDeviceKeysPaused,
-                    c.confirmPress,
-                    c.saveCustomLayout,
-                    c.saveGlobalLayout,
-                    c.deleteCustomLayout,
-                    c.deleteGlobalLayout,
-                )
+                (application as JoyconApplication).container.controllerMappingViewModel()
             }
         }
     }
@@ -181,6 +153,11 @@ class MainActivity : ComponentActivity() {
         viewModel.recheckPermissions()
         viewModel.recheckBatteryOptimization()
         viewModel.recheckNotifications()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        (application as JoyconApplication).container.scanReadiness.recheck()
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(

@@ -123,6 +123,29 @@ In `JoyconScreen.kt`:
 - **It asks in context.** Android's prompt opens from **Allow notifications**, never on launch.
   Afterwards only the **Low battery warning notification** and **Disconnect notification** switches ask.
 
+### Home-screen widget
+
+- **The app's dark palette and `Dimens`**, not the launcher's dynamic colours, so it reads as the app.
+- **A tap in the middle (status and players) opens the app.** A gap separates it from **Scan** and the
+  cells, so a near-miss on a control does nothing; the Scan-only size has no middle.
+- **Top to bottom:** app name, the accent **Scan** button (**Scanning** while it runs),
+  one status line, the players in a three-column grid ("P1 L/R", each controller's letter in its shell
+  colour, brightened like the app's active controller so black shells stay readable; a dropped one all
+  warning orange), then a row of
+  picker cells: **Playing** (the emulator's name, or the game's) always, and **Layout** beside it once
+  someone plays.
+- **One status line, most urgent first:** what blocks a scan, Shizuku missing for a game that needs
+  the pad, then the next step: **Hold SYNC** while scanning, **Press L+R** while a controller waits for a
+  player (both while both). Nothing before a scan or once everyone's in. Blockers and Shizuku are
+  warning orange; the rest dim.
+- **Three layouts by the smaller side** (`SizeMode.Exact`): under 100 dp only **Scan**; under 180 dp the compact one drops
+  the app name and the cells' titles, halves the padding, puts a slim **Scan** full width (Glance's `Button` is too
+  tall for 2×2), and keeps cell values to one line. Eight players fit the grid at 2×2; RemoteViews can't scroll
+  sideways, and Glance text takes one colour, so they can't share a wrapping line. The full layout wraps cell values to two lines rather than cutting them off.
+- **Each cell opens a radio-list dialog over the home screen**, not the app (`OptionListDialog`).
+  **Playing** offers the Output card's rows, one per installed emulator. **Layout** offers the group
+  layouts that fit who's playing for that game, with the unsaved-mapping warning the editor gives.
+
 ### Output card
 
 - **It asks what you're playing, not which output.** One picker (`PlayingPicker`) after a "Playing:" label, its
@@ -224,6 +247,8 @@ Shared in `core/designsystem/.../ui/components/`:
 - `SettingSwitch` — a titled, described switch (the settings panel)
 - `EndDrawer` — a modal drawer from the end edge (the settings panel)
 - `ConfirmDialog` · `TextInputDialog` — ask before a change lands, or ask it for a name
+- `OptionListDialog` — `DropdownOption`s as a radio list in a dialog, for picking with no screen
+  behind it (the widget's pickers)
 - `InfoSheet` — help behind an info icon, as a bottom sheet (DSU mapping)
 - `ErrorBox` · `WarningBox` · `ExpandableInfoSection` · `CopyableCode`
 - `InfoBox` — an accent note with an exclamation-circle icon, at the top of a screen (mapping tips)

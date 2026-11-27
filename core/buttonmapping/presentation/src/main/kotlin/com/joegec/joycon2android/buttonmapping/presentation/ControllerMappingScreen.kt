@@ -40,7 +40,6 @@ import com.joegec.joycon2android.buttonmapping.Console
 import com.joegec.joycon2android.buttonmapping.GlobalMapping
 import com.joegec.joycon2android.buttonmapping.MappingLayouts
 import com.joegec.joycon2android.buttonmapping.SavedLayout
-import com.joegec.joycon2android.ui.components.DropdownOption
 import com.joegec.joycon2android.ui.components.InfoBox
 import com.joegec.joycon2android.ui.components.LocalTips
 import com.joegec.joycon2android.buttonmapping.PlayerBody
@@ -184,27 +183,7 @@ private fun GroupLayoutRow(
     onSelect: (String) -> Unit,
     onDialog: (MappingDialog) -> Unit,
 ) {
-    val named = playerLayouts.groupBy { it.name }
-    val forBodies = named.map { (name, layouts) ->
-        val sides = layouts.map { it.side }.distinct()
-        DropdownOption(
-            id = layouts.first().id,
-            label = name,
-            subLabel = stringResource(R.string.controller_mapping_body_layout, sides.map { it.shortLabel() }.joinToString(", ")),
-            available = global.bodies.any { it.side in sides },
-            deletable = true,
-        )
-    }
-    val saved = global.savedLayouts.map {
-        DropdownOption(
-            id = it.id,
-            label = labels.name(it),
-            subLabel = it.playerSummary(),
-            available = it.fits(global.bodies),
-            deletable = true,
-        )
-    }
-
+    val choice = groupLayoutChoice(console, global, playerLayouts, labels)
     val layoutName = labels.sessionName(global)
 
     Column(
@@ -217,17 +196,15 @@ private fun GroupLayoutRow(
             description = stringResource(R.string.controller_mapping_group_layout_description),
         ) {
             LayoutRow(
-                options = MappingLayouts.forGroup(console, global.bodies.map { it.side }).map { labels.option(it) } + forBodies + saved,
-                selectedId = global.matchingSaved?.id
-                    ?: global.sharedSavedName?.let { named[it]?.first()?.id }
-                    ?: global.sharedLayout?.id,
+                options = choice.options,
+                selectedId = choice.selectedId,
                 layoutName = layoutName,
                 subLabel = global.matchingSaved?.let { it.playerSummary() },
                 onSelect = onSelect,
                 onSave = { onDialog(MappingDialog.Save(body = null)) },
                 onDelete = { option ->
                     val group = global.savedLayouts.any { it.id == option.id }
-                    val ids = if (group) listOf(option.id) else named.getValue(option.label).map { it.id }
+                    val ids = if (group) listOf(option.id) else choice.named.getValue(option.label).map { it.id }
                     onDialog(MappingDialog.Delete(ids, option.label, global = group))
                 },
             )

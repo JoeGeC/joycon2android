@@ -1,5 +1,7 @@
 package com.joegec.joycon2android.buttonmapping.presentation
 
+import android.content.res.Resources
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.joegec.joycon2android.buttonmapping.Console
@@ -44,12 +46,17 @@ internal fun Console.tip(): String = stringResource(
 
 /** Short enough to sit in a list of players, as in "P1 L, P2 R". */
 @Composable
-internal fun JoyconSide.shortLabel(): String = when (this) {
-    JoyconSide.LEFT -> stringResource(R.string.side_left_short)
-    JoyconSide.RIGHT -> stringResource(R.string.side_right_short)
-    JoyconSide.DUAL -> stringResource(R.string.side_dual_short)
-    JoyconSide.GAMECUBE -> stringResource(R.string.side_gamecube_short)
+internal fun JoyconSide.shortLabel(): String = stringResource(shortLabelRes())
+
+@StringRes
+private fun JoyconSide.shortLabelRes(): Int = when (this) {
+    JoyconSide.LEFT -> R.string.side_left_short
+    JoyconSide.RIGHT -> R.string.side_right_short
+    JoyconSide.DUAL -> R.string.side_dual_short
+    JoyconSide.GAMECUBE -> R.string.side_gamecube_short
 }
+
+fun JoyconSide.shortLabel(resources: Resources): String = resources.getString(shortLabelRes())
 
 @Composable
 internal fun GlobalLayout.playerSummary(): String = bodies

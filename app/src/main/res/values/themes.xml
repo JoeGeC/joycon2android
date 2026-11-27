@@ -4,4 +4,6 @@
     <style name="Theme.Joycon2Android" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/ic_launcher_background</item>
     </style>
+
+    <style name="Theme.Joycon2Android.Dialog" parent="android:Theme.Translucent.NoTitleBar" />
 </resources>

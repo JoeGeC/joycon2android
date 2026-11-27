@@ -17,6 +17,7 @@ import com.joegec.joycon2android.output.selected
 import com.joegec.joycon2android.ui.components.DolphinSetupPhase
 import com.joegec.joycon2android.ui.components.EmulatorOption
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -52,13 +53,13 @@ class OutputViewModel(
 
     private fun selectedIn(selection: PlayingSelection) = emulators[selection.playing].orEmpty().selected(selection.emulatorId)
 
-    fun select(playing: Playing, emulatorId: String?) {
-        viewModelScope.launch {
+    fun select(playing: Playing, emulatorId: String?): Job {
+        _emulatorToClose.value = null
+        resetSetupPhase()
+        return viewModelScope.launch {
             emulatorId?.let { saveEmulatorChoice(playing, it) }
             savePlaying(playing)
         }
-        _emulatorToClose.value = null
-        resetSetupPhase()
     }
 
     fun setMotion(on: Boolean) {

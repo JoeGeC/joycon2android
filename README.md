@@ -28,6 +28,8 @@ as an ordinary gamepad.
   keyboard key, a mouse click or scroll, or Android's Home, Back and Screenshot.
 - **One Output card** — pick an emulator, any other game or emulator, or mouse and keyboard, and it
   runs what that needs.
+- **Home-screen widget** — shows who's playing, the game and the layout; tap **Scan** to reconnect
+  without opening the app.
 - **Joy-Con mouse** — stand a Joy-Con 2 on its rail on a desk and it moves Android's pointer.
 - **Live readout** of buttons, sticks, motion and battery, with each card in the controller's real
   shell colour.
@@ -69,6 +71,13 @@ as an ordinary gamepad.
 3. If a controller shows as the wrong type, tap its type at the top of its card and pick the right one
    before assigning it. The choice is remembered for that controller; **Auto** goes back to what it
    reports.
+
+**Reconnecting from the home screen.** Add the Joycon2Android widget (long-press the home screen →
+**Widgets**). Tap **Scan** on it, hold **SYNC** on each controller and press its combo: each player
+gets the mapping they last had. Tap **Playing** to pick the game, as on the Output card, and **Layout**
+to switch everyone to another group layout for it. If the
+widget says to open the app, it needs Bluetooth permission, Bluetooth or Location first. A controller
+still needs SYNC every time ([why](docs/protocol.md#why-sync-is-needed-every-time)).
 
 ### 3. Turn on the output
 
@@ -344,6 +353,7 @@ shoulder buttons its body lacks.
 | Controller not found (Android 11 or older, Fire tablets) | Turn Location on and allow the app Location: before Android 12, Bluetooth scans find nothing without it. The app shows a banner when either is off |
 | Controller shows as the wrong type (stick turned sideways, no right stick) | Tap its type at the top of its card, pick the right one, then assign it |
 | Controller stops responding | Press SYNC and reconnect; wait a moment if it stays silent |
+| Widget on Cocoon's second screen stops updating or keeps spinning (AYN Thor) | Go Home on the top screen: Cocoon updates widgets only while it's on the top screen. If it still spins (after adding the widget, or updating the app), force-stop Cocoon in Android's app settings |
 | Controller shows "Connection lost" | Press SYNC on it and it reconnects to the same player by itself, or tap Scan. After two minutes it's removed |
 | Battery percentage looks wrong after a short charge | A Joy-Con charged only a few minutes reads high until it settles; it's accurate after a full charge |
 | No low battery or disconnect notification | Settings: turn **Low battery warning notification** or **Disconnect notification** on and allow notifications when Android asks. If it won't stay on, allow the app's notifications in Android's settings |

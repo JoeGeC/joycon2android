@@ -55,4 +55,23 @@
     <string name="notification_battery_flat_title">Controller out of battery</string>
     <string name="notification_battery_flat_text">Player %1$d\'s %2$s ran out of battery. Charge it, then reconnect it.</string>
     <string name="notification_battery_flat_text_unassigned">%1$s ran out of battery. Charge it, then reconnect it.</string>
+
+    <string name="notification_scanning_title">Looking for controllers</string>
+    <string name="notification_scanning_text">Hold SYNC on each controller</string>
+
+    <string name="widget_description">Your players, what they\'re playing and their layout, with a button to scan</string>
+    <string name="widget_scan">Scan</string>
+    <string name="widget_scanning">Scanning</string>
+    <string name="widget_layout">Layout</string>
+    <string name="widget_layout_custom">Custom</string>
+    <string name="widget_playing">Playing</string>
+    <string name="widget_player_number">P%1$d</string>
+    <string name="widget_pair_separator">/</string>
+    <string name="widget_status_permission">Open the app to allow Nearby devices</string>
+    <string name="widget_status_bluetooth_off">Bluetooth is off</string>
+    <string name="widget_status_location_off">Turn Location on to find controllers</string>
+    <string name="widget_status_shizuku">Start Shizuku: this game reads the virtual gamepad</string>
+    <string name="widget_status_scanning">Hold SYNC</string>
+    <string name="widget_status_scanning_with_waiting">Hold SYNC · Press L+R</string>
+    <string name="widget_status_waiting">Press L+R</string>
 </resources>

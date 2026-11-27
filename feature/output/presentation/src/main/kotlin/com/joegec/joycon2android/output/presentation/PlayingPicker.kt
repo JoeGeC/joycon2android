@@ -18,14 +18,9 @@ import com.joegec.joycon2android.ui.theme.Background
 import com.joegec.joycon2android.ui.theme.Dimens
 import com.joegec.joycon2android.ui.theme.TextDim
 
-/** One row per installed emulator, so Eden and Eden Nightly are each a choice of their own. */
 @Composable
 internal fun PlayingPicker(state: OutputCardState, onSelect: (Playing, String?) -> Unit) {
-    val options = Playing.entries.flatMap { playing ->
-        val targets = state.emulators[playing].orEmpty()
-        if (targets.isEmpty()) listOf(DropdownOption(playing.name, playing.label()))
-        else targets.map { DropdownOption(optionId(playing, it.id), it.label()) }
-    }
+    val options = playingOptions(state.emulators)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.elementSpacing),
@@ -39,18 +34,11 @@ internal fun PlayingPicker(state: OutputCardState, onSelect: (Playing, String?) 
 private fun RowScope.Dropdown(state: OutputCardState, options: List<DropdownOption>, onSelect: (Playing, String?) -> Unit) {
     OptionDropdown(
         options = options,
-        selectedId = state.target?.let { optionId(state.playing, it.id) } ?: state.playing.name,
+        selectedId = playingOptionId(state.playing, state.target),
         label = state.target?.label() ?: state.playing.label(),
-        onSelect = { id ->
-            val playing = Playing.valueOf(id.substringBefore(SEPARATOR))
-            onSelect(playing, id.substringAfter(SEPARATOR, "").ifEmpty { null })
-        },
+        onSelect = { id -> PlayingOption.parse(id).let { onSelect(it.playing, it.emulatorId) } },
         modifier = Modifier
             .weight(1f)
             .background(Background, RoundedCornerShape(Dimens.buttonCorner)),
     )
 }
-
-private fun optionId(playing: Playing, emulatorId: String) = "${playing.name}$SEPARATOR$emulatorId"
-
-private const val SEPARATOR = '|'

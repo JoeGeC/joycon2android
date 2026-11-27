@@ -5,6 +5,8 @@
     <string name="output_status_mouse_off">%1$s · mouse off for %2$s</string>
     <string name="player_label">P%1$d</string>
     <string name="output_playing">Playing:</string>
+    <string name="playing_picker_title">Playing</string>
+    <string name="playing_picker_cancel">Cancel</string>
     <string name="output_set_up">Auto set up</string>
     <string name="output_mapping">Mapping</string>
     <string name="output_no_privileged_access">No privileged access — set up Shizuku</string>

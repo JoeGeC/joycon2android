@@ -1,5 +1,12 @@
 package com.joegec.joycon2android
 
+import androidx.glance.appwidget.updateAll
+import com.joegec.joycon2android.ble.ScanReadiness
+import com.joegec.joycon2android.output.selected
+import com.joegec.joycon2android.widget.HomeWidget
+import com.joegec.joycon2android.widget.HomeWidgetRefreshPolicy
+import com.joegec.joycon2android.widget.HomeWidgetState
+import com.joegec.joycon2android.widget.HomeWidgetStateSource
 import android.content.Context
 import android.os.SystemClock
 import com.joegec.joycon2android.connection.ConnectionPriorityRepository
@@ -616,6 +623,21 @@ class AppContainer(context: Context) {
     val assignController = AssignControllerUseCase(sessionCoordinator)
     val unassignController = UnassignControllerUseCase(sessionCoordinator)
     val setControllerType = SetControllerTypeUseCase(sessionCoordinator)
+
+    val scanReadiness = ScanReadiness(appContext)
+
+    val homeWidgetState: StateFlow<HomeWidgetState> = HomeWidgetStateSource(
+        session = observeSession(),
+        playing = playing,
+        emulatorFor = { emulatorTargets[it.playing].orEmpty().selected(it.emulatorId) },
+        shizukuAvailable = observeShizukuAvailability(),
+        blocker = scanReadiness.observe(),
+        observeGlobalMapping = observeGlobalMapping::invoke,
+    ).observe().stateIn(scope, SharingStarted.Eagerly, HomeWidgetState())
+
+    private val homeWidgetRefreshPolicy = HomeWidgetRefreshPolicy(scope, homeWidgetState) {
+        HomeWidget().updateAll(appContext)
+    }.also { it.start() }
 
     /** Switches the card off, and the pad and DSU with it at once, not when the policy next runs. */
     fun stopOutputs() {

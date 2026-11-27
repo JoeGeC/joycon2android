@@ -23,6 +23,8 @@ class LocationServices(private val context: Context) {
     fun observeBlocksScanning(): Flow<Boolean> =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) flowOf(false) else observeOff()
 
+    fun blocksScanning(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.S && isOff()
+
     fun buildSettingsIntent(): Intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
 
     private fun observeOff(): Flow<Boolean> = callbackFlow {
