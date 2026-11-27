@@ -27,12 +27,17 @@ object PacketParser {
         0x0100000000L to JoyconButton.GR, 0x0200000000L to JoyconButton.GL,
     )
 
+    private val leftJoyconMask = maskOf(JoyconButton.leftJoycon)
+    private val rightJoyconMask = maskOf(JoyconButton.rightJoycon)
+
     fun parse(data: ByteArray, side: Side): JoyconInput? {
         if (data.size < MIN_PACKET_SIZE) return null
         val bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
 
-        val buttons = (bb.getInt(0x03).toLong() and 0xFFFFFFFFL) or
-            ((data[0x07].toInt() and 0xFF).toLong() shl 32)
+        val buttons = ownButtons(
+            (bb.getInt(0x03).toLong() and 0xFFFFFFFFL) or ((data[0x07].toInt() and 0xFF).toLong() shl 32),
+            side,
+        )
         val (sx, sy) = resolveStick(data, side)
         val (rsx, rsy) = if (side == Side.PRO) decodeStick(data, 0x0D) else (2048 to 2048)
 
@@ -56,6 +61,16 @@ object PacketParser {
             mouse = if (side == Side.LEFT || side == Side.RIGHT) decodeMouse(bb) else null,
         )
     }
+
+    // docs/protocol.md#buttons-uint32-at-0x03: some clones set the other half's bits too.
+    private fun ownButtons(buttons: Long, side: Side): Long = when (side) {
+        Side.LEFT -> buttons and leftJoyconMask
+        Side.RIGHT -> buttons and rightJoyconMask
+        Side.PRO, Side.UNKNOWN -> buttons
+    }
+
+    private fun maskOf(buttons: Set<JoyconButton>): Long =
+        buttonMasks.filter { (_, button) -> button in buttons }.fold(0L) { acc, (mask, _) -> acc or mask }
 
     private fun decodeMouse(bb: ByteBuffer) =
         MouseSensor(x = bb.getShort(0x10).toInt(), y = bb.getShort(0x12).toInt(), distance = bb.getShort(0x16).toInt())

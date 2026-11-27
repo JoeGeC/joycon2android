@@ -16,10 +16,16 @@ class PacketParserTest {
         leftStick: Pair<Int, Int> = 0x123 to 0x456,
         rightStick: Pair<Int, Int> = 0x789 to 0xABC,
         paddleByte: Int = 0,
+        buttons: Int = 0,
     ): ByteArray = ByteArray(64).apply {
+        putButtons(buttons)
         putStick(0x0A, leftStick)
         putStick(0x0D, rightStick)
         this[0x07] = paddleByte.toByte()
+    }
+
+    private fun ByteArray.putButtons(buttons: Int) {
+        for (i in 0 until 4) this[0x03 + i] = ((buttons shr (8 * i)) and 0xFF).toByte()
     }
 
     private fun ByteArray.putStick(offset: Int, stick: Pair<Int, Int>) {
@@ -50,6 +56,25 @@ class PacketParserTest {
         assertEquals(0x123, input.stickX)
         assertEquals(2048, input.rightStickX)
         assertEquals(2048, input.rightStickY)
+    }
+
+    @Test
+    fun `a left joy-con drops the right half's buttons a clone mirrors into its report`() {
+        val input = PacketParser.parse(packet(buttons = 0x01000100), Side.LEFT)!! // Down | Y
+        assertEquals(setOf(JoyconButton.Down.id), input.pressed)
+        assertEquals(0x01000000L, input.buttons)
+    }
+
+    @Test
+    fun `a right joy-con drops the left half's buttons a clone mirrors into its report`() {
+        val input = PacketParser.parse(packet(buttons = 0x40104000), Side.RIGHT)!! // L | Home | R
+        assertEquals(setOf(JoyconButton.Home.id, JoyconButton.R.id), input.pressed)
+    }
+
+    @Test
+    fun `a pro controller keeps both halves' buttons`() {
+        val input = PacketParser.parse(packet(buttons = 0x01000100), Side.PRO)!!
+        assertEquals(setOf(JoyconButton.Down.id, JoyconButton.Y.id), input.pressed)
     }
 
     @Test

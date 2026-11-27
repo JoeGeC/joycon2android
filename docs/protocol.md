@@ -133,6 +133,9 @@ A left Joy-Con's right-stick bytes are garbage, and a right Joy-Con's left-stick
 0x00000400 B           0x00000800 A
 ```
 
+A left or right Joy-Con keeps only its own half's bits. A NYXI Hyperion 3 Ultra (#75, 2026-11) sets
+each pressed button's bit in both halves (Down with Y, L with R, Capture with Home).
+
 ### Back paddles (uint8 at 0x07)
 
 ```
@@ -485,8 +488,8 @@ left `[2]` Down Right Left Up L ZL − LS, `[3]` Capture `0x01`, SR `0x40`, SL `
 **Detection.** These controllers send an SMP Security Request on every connection; a genuine
 Joy-Con 2 never does. Android pairs one device at a time, so a second clone connecting while the
 first one's pairing is pending sends none, and no input report on `...fd2` 1.5 s after init
-switches it over instead. Command replies don't count: some clones (NYXI Hyperion 3 Ultra, #75)
-answer common commands but never send a report there. Genuine Joy-Con 2s answer the console channel too, so a controller moved
+switches it over instead. Command replies don't count: a NYXI Hyperion 3 Ultra (#75) answers
+common commands but sends no report there until the console channel opens, then reports on `...fd2`. Genuine Joy-Con 2s answer the console channel too, so a controller moved
 over by that timeout returns to the common path on its first report on `...fd2`, which only a
 controller speaking that protocol sends. A controller with analog triggers (the GameCube controller)
 never switches: the console report has no trigger bytes, and it answers on the common channel.

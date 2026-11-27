@@ -26,4 +26,10 @@ enum class JoyconButton(val id: String, val label: String) {
     A("A", "A"),
     GL("GL", "GL"),
     GR("GR", "GR"),
+    ;
+
+    companion object {
+        val leftJoycon: Set<JoyconButton> = setOf(ZL, L, Minus, LS, Up, Down, Left, Right, Capture, SlLeft, SrLeft)
+        val rightJoycon: Set<JoyconButton> = setOf(ZR, R, Plus, RS, A, B, X, Y, Home, Chat, SlRight, SrRight)
+    }
 }
